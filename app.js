@@ -12,6 +12,17 @@ const gradeOrder = {
   "입사예정": 99
 };
 
+const pageMeta = {
+  ledger: ["조직관리 · 사원대장", "조직관리 내 사원대장 화면입니다. 직원 목록, 회사, 부서, 재직상태, 직급순 정렬을 관리합니다."],
+  card: ["조직관리 · 인사카드", "경영지원에서 직원 상세 인사정보, 인사변동, 반복정보, 자산, 증명서를 관리합니다."],
+  analysis: ["조직관리 · 직원증감분석", "입사, 퇴사, 계약만료, 근속연수, 총 경력을 분석합니다."],
+  approval: ["조직관리 · 승인관리", "증명서, 첨부파일, 인사정보 변경 승인 요청을 관리합니다."],
+  cost: ["비용보고", "비용보고 대분류 화면입니다. 현재는 메뉴 구조 우선 구성 상태입니다."],
+  asset: ["자산대장", "자산대장 대분류 화면입니다. 자산 등록, 배정, 반납 상태를 관리합니다."],
+  admin: ["관리자 설정", "권한, 정책, 표시 순서, 캘린더 연동 기준을 관리합니다."],
+  code: ["관리자 설정 · 코드관리", "관리자 설정 하위 메뉴로 코드값과 표시 순서를 관리합니다."]
+};
+
 const employees = [
   {
     empNo: "EMP-2018-001",
@@ -52,30 +63,22 @@ const employees = [
       detail: "등록자: 경영지원 / 최종수정자: 경영지원 / 최종수정일: 2026-04-20 / 수정항목: 신분증번호"
     },
     histories: {
-      join: [
-        { type: "입사", before: "-", after: "재직", date: "2018-04-01", reason: "신규 입사", manager: "경영지원" }
-      ],
+      join: [{ type: "입사", before: "-", after: "재직", date: "2018-04-01", reason: "신규 입사", manager: "경영지원" }],
       org: [
         { type: "부서", before: "구조팀", after: "BIM파트", date: "2026-04-01", reason: "조직개편", manager: "경영지원" },
         { type: "직급", before: "선임", after: "수석", date: "2025-01-01", reason: "정기승급", manager: "경영지원" }
       ],
-      leave: [
-        { type: "병가", before: "정상근무", after: "병가 3일", date: "2024-06-10", reason: "진단서 제출", manager: "경영지원" }
-      ]
+      leave: [{ type: "병가", before: "정상근무", after: "병가 3일", date: "2024-06-10", reason: "진단서 제출", manager: "경영지원" }]
     },
     repeat: [
       { type: "학력", content: "대학교 / 전공명", start: "2011-03-01", end: "2015-02-28", period: "4년", file: "졸업증명서.pdf", note: "졸업" },
-      { type: "경력", content: "이전 회사 구조팀", start: "2015-03-01", end: "2017-02-28", period: "2년", file: "-", note: "외부경력" },
-      { type: "자격증", content: "관련 자격증", start: "2020-01-01", end: "-", period: "-", file: "certificate.pdf", note: "만료일 관리" },
-      { type: "부양가족", content: "비상연락 가족", start: "-", end: "-", period: "-", file: "-", note: "단순 관리용" }
+      { type: "경력", content: "이전 회사 구조팀", start: "2015-03-01", end: "2017-02-28", period: "2년", file: "-", note: "외부경력" }
     ],
     worklogs: [
-      { date: "2026-04-10", type: "야근", project: "A-101 BIM 검토", time: "3시간", reason: "납품 전 QC", approver: "PM" },
-      { date: "2026-04-15", type: "야근", project: "A-101 BIM 검토", time: "2시간", reason: "오류 수정", approver: "GM" }
+      { date: "2026-04-10", type: "야근", project: "A-101 BIM 검토", time: "3시간", reason: "납품 전 QC", approver: "PM" }
     ],
     files: [
-      { type: "근로계약서", name: "contract_park.pdf", date: "2026-01-01", status: "승인완료" },
-      { type: "자격증", name: "certificate.pdf", date: "2026-02-03", status: "승인대기" }
+      { type: "근로계약서", name: "contract_park.pdf", date: "2026-01-01", status: "승인완료" }
     ]
   },
   {
@@ -121,15 +124,9 @@ const employees = [
       org: [{ type: "직책", before: "사원", after: "매니저", date: "2024-01-01", reason: "승진", manager: "경영지원" }],
       leave: []
     },
-    repeat: [
-      { type: "경력", content: "이전 회사 총무팀", start: "2018-01-01", end: "2020-12-31", period: "3년", file: "-", note: "외부경력" }
-    ],
-    worklogs: [
-      { date: "2026-03-12", type: "야근", project: "그룹웨어 검토", time: "2시간", reason: "자료 정리", approver: "본부장" }
-    ],
-    files: [
-      { type: "근로계약서", name: "contract_kim.pdf", date: "2021-03-15", status: "승인완료" }
-    ]
+    repeat: [{ type: "경력", content: "이전 회사 총무팀", start: "2018-01-01", end: "2020-12-31", period: "3년", file: "-", note: "외부경력" }],
+    worklogs: [],
+    files: []
   },
   {
     empNo: "VQS-2024-033",
@@ -177,15 +174,9 @@ const employees = [
       org: [{ type: "소속", before: "-", after: "Viet QS 구조팀", date: "2024-09-01", reason: "초기 배치", manager: "HR Manager" }],
       leave: []
     },
-    repeat: [
-      { type: "경력", content: "Local QS Office", start: "2023-01-01", end: "2023-12-31", period: "1년", file: "-", note: "외부경력" }
-    ],
-    worklogs: [
-      { date: "2026-04-07", type: "야근", project: "VQS-STRUCT-22", time: "4시간", reason: "납품 대응", approver: "팀장" }
-    ],
-    files: [
-      { type: "신분증", name: "id_an.pdf", date: "2024-09-01", status: "승인완료" }
-    ]
+    repeat: [{ type: "경력", content: "Local QS Office", start: "2023-01-01", end: "2023-12-31", period: "1년", file: "-", note: "외부경력" }],
+    worklogs: [{ date: "2026-04-07", type: "야근", project: "VQS-STRUCT-22", time: "4시간", reason: "납품 대응", approver: "팀장" }],
+    files: [{ type: "신분증", name: "id_an.pdf", date: "2024-09-01", status: "승인완료" }]
   },
   {
     empNo: "EMP-2026-002",
@@ -277,13 +268,9 @@ const employees = [
       org: [{ type: "직책", before: "팀원", after: "팀장", date: "2024-06-01", reason: "업무역량 평가", manager: "HR Manager" }],
       leave: [{ type: "무급휴직", before: "정상근무", after: "무급휴직 14일", date: "2025-08-01", reason: "개인 사유", manager: "HR Manager" }]
     },
-    repeat: [
-      { type: "경력", content: "Local Design Office", start: "2019-01-01", end: "2022-12-31", period: "4년", file: "-", note: "외부경력" }
-    ],
+    repeat: [{ type: "경력", content: "Local Design Office", start: "2019-01-01", end: "2022-12-31", period: "4년", file: "-", note: "외부경력" }],
     worklogs: [],
-    files: [
-      { type: "계약서", name: "contract_mai.pdf", date: "2023-01-10", status: "승인완료" }
-    ]
+    files: [{ type: "계약서", name: "contract_mai.pdf", date: "2023-01-10", status: "승인완료" }]
   }
 ];
 
@@ -321,29 +308,15 @@ let selectedEmployeeId = employees[0].empNo;
 let currentSortKey = "gradeOrder";
 let sortDirection = 1;
 
-const mainTabs = document.querySelectorAll(".menu-tab");
-const panels = document.querySelectorAll(".panel");
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
 
-mainTabs.forEach(tab => {
-  tab.addEventListener("click", () => {
-    mainTabs.forEach(t => t.classList.remove("active"));
-    panels.forEach(p => p.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.main).classList.add("active");
-  });
-});
-
-const detailTabs = document.querySelectorAll(".inner-tab");
-const detailPanels = document.querySelectorAll(".detail-panel");
-
-detailTabs.forEach(tab => {
-  tab.addEventListener("click", () => {
-    detailTabs.forEach(t => t.classList.remove("active"));
-    detailPanels.forEach(p => p.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.detail).classList.add("active");
-  });
-});
+function setFormValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value || "";
+}
 
 function displayName(emp) {
   if (emp.company === "Viet QS" && emp.koreanName) {
@@ -370,16 +343,6 @@ function companyBadge(company) {
   return `<span class="company-chip ${cls}">${company}</span>`;
 }
 
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
-
-function setFormValue(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.value = value || "";
-}
-
 function monthDiff(start, end = new Date()) {
   if (!start) return 0;
   const s = new Date(start);
@@ -394,6 +357,54 @@ function formatMonths(months) {
   if (m === 0) return `${y}년`;
   return `${y}년 ${m}개월`;
 }
+
+function switchPanel(panelId) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".side-main, .side-item").forEach(b => b.classList.remove("active"));
+
+  const panel = document.getElementById(panelId);
+  if (panel) panel.classList.add("active");
+
+  const activeBtn = document.querySelector(`[data-main="${panelId}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  const meta = pageMeta[panelId] || pageMeta.ledger;
+  setText("pageTitle", meta[0]);
+  setText("pageDesc", meta[1]);
+}
+
+document.querySelectorAll(".side-main").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const groupId = btn.dataset.group;
+    const panelId = btn.dataset.main;
+
+    if (groupId) {
+      document.querySelectorAll(".side-sub").forEach(s => s.classList.remove("active"));
+      document.getElementById(groupId)?.classList.add("active");
+      document.querySelectorAll(".side-main").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    if (panelId) {
+      switchPanel(panelId);
+    }
+  });
+});
+
+document.querySelectorAll(".side-item").forEach(btn => {
+  btn.addEventListener("click", () => {
+    switchPanel(btn.dataset.main);
+  });
+});
+
+document.querySelectorAll(".inner-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".inner-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".detail-panel").forEach(p => p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.detail)?.classList.add("active");
+  });
+});
 
 function renderKpis() {
   setText("kpiTotal", employees.length);
@@ -413,7 +424,6 @@ function sortList(list) {
   return [...list].sort((a, b) => {
     const av = getSortValue(a, currentSortKey);
     const bv = getSortValue(b, currentSortKey);
-
     if (typeof av === "number" && typeof bv === "number") return (av - bv) * sortDirection;
     return String(av).localeCompare(String(bv), "ko") * sortDirection;
   });
@@ -433,9 +443,7 @@ function renderLedger(list = employees) {
   const tbody = document.getElementById("ledgerBody");
   if (!tbody) return;
 
-  const sorted = sortList(list);
-
-  tbody.innerHTML = sorted.map(emp => `
+  tbody.innerHTML = sortList(list).map(emp => `
     <tr>
       <td><div class="emp-photo">${displayName(emp)[0]}</div></td>
       <td>${emp.empNo}</td>
@@ -524,7 +532,6 @@ function selectEmployee(empNo, el) {
   setFormValue("reportLine", emp.reportLine);
   setFormValue("pmRole", emp.pmRole);
   setFormValue("multiDept", emp.multiDept);
-
   setText("basicAudit", emp.audit.basic);
   setText("detailAudit", emp.audit.detail);
 
@@ -533,7 +540,6 @@ function selectEmployee(empNo, el) {
   renderEmployeeAssets(emp);
   renderWorklogs(emp);
   renderFiles(emp);
-  renderMiniCard(emp);
 }
 
 function renderHistories(emp) {
@@ -654,49 +660,9 @@ function renderFiles(emp) {
   `).join("");
 }
 
-function renderMiniCard(emp) {
-  setText("miniPhoto", displayName(emp)[0]);
-  setText("miniName", displayName(emp));
-  setText("miniCompany", emp.company);
-  setText("miniDept", emp.dept);
-  setText("miniGrade", emp.grade);
-  setText("miniEmail", emp.email);
-  setText("miniPhone", emp.phone);
-  setText("miniWorkplace", emp.workplace);
-
-  const miniTags = document.getElementById("miniTags");
-  if (miniTags) {
-    miniTags.innerHTML = `
-      ${companyBadge(emp.company)}
-      <span class="badge blue">${emp.dept}</span>
-      <span class="badge gray">${emp.grade}</span>
-      ${statusBadge(emp.status)}
-    `;
-  }
-}
-
 function openCard(empNo) {
-  const cardTab = document.querySelector('[data-main="card"]');
-  if (!cardTab) return;
-
-  cardTab.click();
-
-  setTimeout(() => {
-    const items = [...document.querySelectorAll(".employee-item")];
-    const targetIndex = employees.findIndex(e => e.empNo === empNo);
-
-    if (items[targetIndex]) {
-      selectEmployee(empNo, items[targetIndex]);
-    } else {
-      selectEmployee(empNo);
-    }
-  }, 0);
-}
-
-function openMiniCard() {
-  document.querySelector('[data-main="mini"]').click();
-  const emp = employees.find(e => e.empNo === selectedEmployeeId);
-  if (emp) renderMiniCard(emp);
+  switchPanel("card");
+  setTimeout(() => selectEmployee(empNo), 0);
 }
 
 function filterEmployees(keyword = "") {
@@ -708,16 +674,7 @@ function filterEmployees(keyword = "") {
   const year = document.getElementById("yearFilter")?.value || "전체";
 
   return employees.filter(emp => {
-    const searchTarget = [
-      emp.name,
-      emp.localName,
-      emp.koreanName,
-      emp.empNo,
-      emp.id,
-      emp.company,
-      emp.dept,
-      emp.email
-    ].join(" ").toLowerCase();
+    const searchTarget = [emp.name, emp.localName, emp.koreanName, emp.empNo, emp.id, emp.company, emp.dept, emp.email].join(" ").toLowerCase();
 
     return (!q || searchTarget.includes(q)) &&
       (company === "전체" || emp.company === company) &&
@@ -756,20 +713,14 @@ function renderAnalysis() {
   const companies = ["CON-COST", "Viet QS"];
   body.innerHTML = companies.map(company => {
     const target = employees.filter(e => e.company === company);
-    const active = target.filter(e => e.status === "재직").length;
-    const join = target.filter(e => e.join.startsWith("2026")).length;
-    const exit = target.filter(e => ["퇴사", "계약만료"].includes(e.status)).length;
-    const expected = target.filter(e => e.status === "입사예정").length;
-    const leave = target.filter(e => e.status === "휴직").length;
-
     return `
       <tr>
         <td>${company}</td>
-        <td>${active}</td>
-        <td>${join}</td>
-        <td>${exit}</td>
-        <td>${expected}</td>
-        <td>${leave}</td>
+        <td>${target.filter(e => e.status === "재직").length}</td>
+        <td>${target.filter(e => e.join.startsWith("2026")).length}</td>
+        <td>${target.filter(e => ["퇴사", "계약만료"].includes(e.status)).length}</td>
+        <td>${target.filter(e => e.status === "입사예정").length}</td>
+        <td>${target.filter(e => e.status === "휴직").length}</td>
       </tr>
     `;
   }).join("");
@@ -920,16 +871,51 @@ function closePermissionModal() {
   document.getElementById("permissionModal")?.classList.remove("active");
 }
 
+function openOrgChart() {
+  document.getElementById("orgChartModal")?.classList.add("active");
+}
+
+function closeOrgChart() {
+  document.getElementById("orgChartModal")?.classList.remove("active");
+}
+
+function openMiniCardPopup(empNo) {
+  const emp = employees.find(e => e.empNo === empNo);
+  if (!emp) return;
+
+  setText("miniPopupPhoto", displayName(emp)[0]);
+  setText("miniPopupName", displayName(emp));
+  setText("miniPopupCompany", emp.company);
+  setText("miniPopupDept", emp.dept);
+  setText("miniPopupGrade", emp.grade);
+  setText("miniPopupEmail", emp.email);
+  setText("miniPopupPhone", emp.phone);
+  setText("miniPopupWorkplace", emp.workplace);
+
+  const tags = document.getElementById("miniPopupTags");
+  if (tags) {
+    tags.innerHTML = `
+      ${companyBadge(emp.company)}
+      <span class="badge blue">${emp.dept}</span>
+      <span class="badge gray">${emp.grade}</span>
+      ${statusBadge(emp.status)}
+    `;
+  }
+
+  document.getElementById("miniCardModal")?.classList.add("active");
+}
+
+function closeMiniCardPopup() {
+  document.getElementById("miniCardModal")?.classList.remove("active");
+}
+
 function showToast(message) {
   const toast = document.getElementById("toast");
   if (!toast) return;
 
   toast.textContent = message;
   toast.classList.add("active");
-
-  setTimeout(() => {
-    toast.classList.remove("active");
-  }, 2200);
+  setTimeout(() => toast.classList.remove("active"), 2200);
 }
 
 function formatPhoneByCountry(value, country) {
@@ -951,11 +937,10 @@ function bindPhoneFormatter(inputSelector, countrySelector) {
   const country = document.querySelector(countrySelector);
   if (!input || !country) return;
 
-  const apply = () => {
+  input.addEventListener("input", () => {
     input.value = formatPhoneByCountry(input.value, country.value);
-  };
+  });
 
-  input.addEventListener("input", apply);
   country.addEventListener("change", () => {
     input.value = "";
     input.placeholder = country.value === "VN" ? "0987-654-321" : "010-1234-5678";
@@ -964,10 +949,8 @@ function bindPhoneFormatter(inputSelector, countrySelector) {
 
 function formatNationalId(value, country) {
   const digits = value.replace(/\D/g, "");
-
   if (country === "VN") return digits.slice(0, 13);
   if (digits.length <= 6) return digits;
-
   return `${digits.slice(0, 6)}-${digits.slice(6, 13)}`;
 }
 
@@ -990,10 +973,14 @@ document.addEventListener("click", e => {
   const employeeModal = document.getElementById("employeeModal");
   const permissionModal = document.getElementById("permissionModal");
   const excelModal = document.getElementById("excelModal");
+  const orgChartModal = document.getElementById("orgChartModal");
+  const miniCardModal = document.getElementById("miniCardModal");
 
   if (e.target === employeeModal) closeModal();
   if (e.target === permissionModal) closePermissionModal();
   if (e.target === excelModal) closeExcelModal();
+  if (e.target === orgChartModal) closeOrgChart();
+  if (e.target === miniCardModal) closeMiniCardPopup();
 });
 
 document.querySelectorAll(".switch-toggle input").forEach(toggle => {
