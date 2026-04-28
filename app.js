@@ -958,34 +958,82 @@ function orgNodeLabel(node) {
   return { emp, title, name };
 }
 
-function renderOrgNode(node) {
+function renderOrgPersonButton(node, extraClass = "") {
   const { emp, title, name } = orgNodeLabel(node);
-  const childHtml = (node.children || []).map(renderOrgNode).join("");
-  const className = `org-tree-node ${node.className || ""} ${emp ? "clickable" : ""}`.trim();
+  const labelName = name || title;
+  const labelTitle = emp ? (emp.position || emp.grade || title) : title;
+  const company = emp ? emp.company : "";
+  const dept = emp ? emp.dept : "";
   const onclick = emp ? ` onclick="openMiniCardPopup('${emp.empNo}')"` : "";
   return `
-    <div class="org-tree-item">
-      <button class="${className}"${onclick}>
-        <strong>${title}</strong>
-        ${name ? `<b>${name}</b>` : ""}
-        ${emp ? `<span>${emp.company}</span><small>${emp.dept}</small>` : ""}
-      </button>
-      ${childHtml ? `<div class="org-tree-children">${childHtml}</div>` : ""}
-    </div>
+    <button class="org-mini-person ${extraClass} ${emp ? "clickable" : ""}"${onclick}>
+      <span>${labelTitle}</span>
+      <strong>${labelName}</strong>
+      ${company ? `<small>${company} · ${dept}</small>` : ""}
+    </button>
+  `;
+}
+
+function collectOrgMembers(node, rows = []) {
+  if (node.employeeId) rows.push(node);
+  (node.children || []).forEach(child => collectOrgMembers(child, rows));
+  return rows;
+}
+
+function renderOrgBranchCard(node) {
+  const { emp, title, name } = orgNodeLabel(node);
+  const children = node.children || [];
+  const directLead = emp ? renderOrgPersonButton(node, "lead") : "";
+  const childMembers = children.flatMap(child => collectOrgMembers(child, []));
+  const childOnly = childMembers.filter(child => child.employeeId !== node.employeeId);
+
+  return `
+    <section class="org-overview-card">
+      <div class="org-overview-card-title">${title}</div>
+      ${directLead || (name ? `<div class="org-overview-lead">${name}</div>` : "")}
+      <div class="org-overview-members">
+        ${childOnly.map(child => renderOrgPersonButton(child)).join("") || `<div class="org-empty">하위 인원 없음</div>`}
+      </div>
+    </section>
   `;
 }
 
 function renderOrgChart(company = currentOrgCompany) {
   const target = document.getElementById("orgChartContent");
   if (!target) return;
+
   const data = orgStructures[company];
   currentOrgCompany = company;
+
+  const root = data.root;
+  const topNodes = [root, ...(root.children || [])].slice(0, 3);
+  const branchParent = (root.children || [])[0] || root;
+  const branchNodes = branchParent.children || root.children || [];
+  const totalMembers = collectOrgMembers(root, []).length;
+  const linkedCards = new Set(collectOrgMembers(root, []).map(node => node.employeeId).filter(Boolean)).size;
+
   target.innerHTML = `
-    <div class="org-chart-header">
-      <div><span>${data.date}</span><h3>${data.title}</h3></div>
-      <button class="btn btn-line" onclick="switchPanel('orgEdit'); closeOrgChart();">조직도관리로 이동</button>
+    <div class="org-chart-header compact">
+      <div>
+        <span>${data.date}</span>
+        <h3>${data.title}</h3>
+      </div>
+      <div class="org-chart-header-actions">
+        <div class="org-stat"><span>조직도 표기 인원</span><strong>${totalMembers}</strong></div>
+        <div class="org-stat"><span>단일 인사카드</span><strong>${linkedCards}</strong></div>
+        <button class="btn btn-line" onclick="switchPanel('orgEdit'); closeOrgChart();">조직도관리로 이동</button>
+      </div>
     </div>
-    <div class="org-tree-scroll"><div class="org-tree">${renderOrgNode(data.root)}</div></div>
+
+    <div class="org-overview-fit">
+      <div class="org-overview-exec">
+        ${topNodes.map((node, index) => renderOrgPersonButton(node, index === 0 ? "primary" : "secondary")).join("")}
+      </div>
+      <div class="org-overview-line"></div>
+      <div class="org-overview-grid">
+        ${branchNodes.map(renderOrgBranchCard).join("")}
+      </div>
+    </div>
   `;
 }
 
