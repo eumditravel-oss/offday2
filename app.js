@@ -13,7 +13,7 @@ const employees = [
   },
   {
     empNo: "EMP-2021-014",
-    name: "김태영",
+    name: "김철수",
     id: "tykim",
     dept: "경영지원본부",
     grade: "매니저",
