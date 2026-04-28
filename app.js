@@ -315,20 +315,115 @@ const orgStructures = {
   "CON-COST": {
     title: "㈜컨코스트 조직도",
     date: "2026. 4. 9.",
-    root: { title: "대표이사", className: "primary", children: [
-      { title: "부사장", className: "secondary", children: [
-        { title: "경영지원본부", employeeId: "CC-001", children: [{ employeeId: "CC-002" }, { employeeId: "CC-003" }, { employeeId: "CC-004" }, { employeeId: "CC-005" }] },
-        { title: "개발 T/F", children: [{ employeeId: "EMP-2018-001" }, { employeeId: "CC-006" }, { employeeId: "CC-007" }] },
-        { title: "QC", children: [{ employeeId: "CC-008" }, { employeeId: "CC-009" }] },
-        { title: "기술본부", employeeId: "CC-010", children: [
-          { title: "마감", employeeId: "CC-009", children: [{ employeeId: "CC-011" }, { employeeId: "CC-012" }, { employeeId: "CC-013" }, { employeeId: "CC-014" }, { employeeId: "CC-015" }, { employeeId: "CC-016" }, { employeeId: "CC-017" }, { employeeId: "CC-018" }, { employeeId: "CC-019" }, { employeeId: "CC-020" }, { employeeId: "CC-021" }, { employeeId: "CC-022" }] },
-          { title: "BIM 파트", employeeId: "CC-029", children: [{ employeeId: "EMP-2018-001" }] },
-          { title: "구조/토목 조경", employeeId: "CC-008", children: [{ employeeId: "CC-023" }, { employeeId: "CC-024" }, { employeeId: "CC-025" }, { employeeId: "CC-026" }, { employeeId: "CC-027" }, { employeeId: "CC-028" }, { title: "토목·조경파트", employeeId: "CC-030" }] }
-        ] },
-        { title: "클레임센터", employeeId: "CC-031", children: [{ employeeId: "CC-010" }, { employeeId: "CC-008" }, { employeeId: "CC-032" }, { employeeId: "CC-033" }] }
-      ] },
-      { title: "공사비닷컴", className: "dotted" }
-    ] }
+    root: {
+      title: "대표이사",
+      className: "primary",
+      children: [
+        {
+          title: "부사장",
+          className: "secondary",
+          children: [
+            {
+              title: "경영지원본부",
+              employeeId: "CC-001",
+              area: "left",
+              children: [
+                { employeeId: "CC-002" },
+                { employeeId: "CC-003" },
+                { employeeId: "CC-004" },
+                { employeeId: "CC-005" }
+              ]
+            },
+            {
+              title: "기술본부",
+              employeeId: "CC-010",
+              area: "center",
+              children: [
+                {
+                  title: "마감팀",
+                  employeeId: "CC-009",
+                  children: [
+                    {
+                      title: "마감 실무",
+                      children: [
+                        { employeeId: "CC-011" },
+                        { employeeId: "CC-012" },
+                        { employeeId: "CC-013" },
+                        { employeeId: "CC-014" },
+                        { employeeId: "CC-015" },
+                        { employeeId: "CC-016" },
+                        { employeeId: "CC-017" },
+                        { employeeId: "CC-018" },
+                        { employeeId: "CC-019" },
+                        { employeeId: "CC-020" },
+                        { employeeId: "CC-021" },
+                        { employeeId: "CC-022" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  title: "구조/토목ㆍ조경팀",
+                  employeeId: "CC-008",
+                  children: [
+                    {
+                      title: "구조팀",
+                      employeeId: "CC-023",
+                      children: [
+                        { employeeId: "CC-024" },
+                        { employeeId: "CC-025" },
+                        { employeeId: "CC-026" },
+                        { employeeId: "CC-027" },
+                        { employeeId: "CC-028" }
+                      ]
+                    },
+                    {
+                      title: "BIM 파트",
+                      employeeId: "CC-029",
+                      children: [{ employeeId: "EMP-2018-001" }]
+                    },
+                    {
+                      title: "토목·조경파트",
+                      employeeId: "CC-030",
+                      children: []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              title: "개발 T/F",
+              area: "right",
+              children: [
+                { employeeId: "EMP-2018-001" },
+                { employeeId: "CC-006" },
+                { employeeId: "CC-007" }
+              ]
+            },
+            {
+              title: "QC",
+              area: "right",
+              children: [
+                { employeeId: "CC-008" },
+                { employeeId: "CC-009" }
+              ]
+            },
+            {
+              title: "클레임센터",
+              employeeId: "CC-031",
+              area: "right",
+              children: [
+                { employeeId: "CC-010" },
+                { employeeId: "CC-008" },
+                { employeeId: "CC-032" },
+                { employeeId: "CC-033" }
+              ]
+            }
+          ]
+        },
+        { title: "공사비닷컴", className: "dotted" }
+      ]
+    }
   },
   "Viet QS": {
     title: "Viet QS Organization Chart",
@@ -344,7 +439,7 @@ const orgStructures = {
           { title: "Partition&Opening", children: [{ employeeId: "VQS-022" }, { employeeId: "VQS-023" }, { employeeId: "VQS-024" }, { employeeId: "VQS-025" }, { employeeId: "VQS-026" }] },
           { title: "External", children: [{ employeeId: "VQS-027" }, { employeeId: "VQS-028" }, { employeeId: "VQS-029" }, { employeeId: "VQS-030" }, { employeeId: "VQS-031" }] }
         ] },
-        { title: "Structure/Civil", children: [
+        { title: "Structure/Civil", employeeId: "CC-008", children: [
           { title: "Vertical", children: [{ employeeId: "VQS-032" }, { employeeId: "VQS-033" }, { employeeId: "VQS-034" }, { employeeId: "VQS-035" }, { employeeId: "VQS-036" }, { employeeId: "VQS-037" }, { employeeId: "VQS-038" }, { employeeId: "VQS-039" }, { employeeId: "VQS-040" }, { employeeId: "VQS-041" }, { employeeId: "VQS-042" }, { employeeId: "VQS-043" }, { employeeId: "VQS-044" }, { employeeId: "VQS-045" }, { employeeId: "VQS-046" }, { employeeId: "VQS-047" }, { employeeId: "VQS-048" }] },
           { title: "Horizon / Foundation", children: [{ employeeId: "VQS-049" }, { employeeId: "VQS-050" }, { employeeId: "VQS-051" }, { employeeId: "VQS-052" }] },
           { title: "Civil", employeeId: "CC-008", children: [{ employeeId: "VQS-053" }, { employeeId: "VQS-054" }] }
@@ -980,39 +1075,62 @@ function collectOrgMembers(node, rows = []) {
   return rows;
 }
 
-function renderOrgBranchCard(node) {
+function renderOrgSubGroup(node) {
+  const children = node.children || [];
+  const directLead = node.employeeId ? renderOrgPersonButton(node, "lead") : "";
+  const memberNodes = children.filter(child => child.employeeId && !(child.children || []).length);
+  const nestedGroups = children.filter(child => child.title && (child.children || []).length);
+
+  return `
+    <section class="org-subgroup-card">
+      <div class="org-subgroup-title">${node.title || "중분류"}</div>
+      ${directLead}
+      <div class="org-subgroup-members">
+        ${memberNodes.map(child => renderOrgPersonButton(child)).join("")}
+        ${nestedGroups.map(group => renderOrgSubGroup(group)).join("")}
+        ${!directLead && memberNodes.length === 0 && nestedGroups.length === 0 ? `<div class="org-empty">하위 인원 없음</div>` : ""}
+      </div>
+    </section>
+  `;
+}
+
+function renderOrgBranchCard(node, mode = "default") {
   const { emp, title, name } = orgNodeLabel(node);
   const children = node.children || [];
   const directLead = emp ? renderOrgPersonButton(node, "lead") : "";
-  const childMembers = children.flatMap(child => collectOrgMembers(child, []));
-  const childOnly = childMembers.filter(child => child.employeeId !== node.employeeId);
+  const subGroups = children.filter(child => child.title && (child.children || []).length);
+  const directMembers = children.filter(child => child.employeeId && !(child.children || []).length);
+  const flatMembers = children.flatMap(child => collectOrgMembers(child, [])).filter(child => child.employeeId !== node.employeeId);
+
+  if (mode === "nested" && subGroups.length) {
+    return `
+      <section class="org-overview-card nested">
+        <div class="org-overview-card-title">${title}</div>
+        ${directLead || (name ? `<div class="org-overview-lead">${name}</div>` : "")}
+        <div class="org-subgroup-grid">
+          ${subGroups.map(group => renderOrgSubGroup(group)).join("")}
+          ${directMembers.map(child => renderOrgPersonButton(child)).join("")}
+        </div>
+      </section>
+    `;
+  }
 
   return `
     <section class="org-overview-card">
       <div class="org-overview-card-title">${title}</div>
       ${directLead || (name ? `<div class="org-overview-lead">${name}</div>` : "")}
       <div class="org-overview-members">
-        ${childOnly.map(child => renderOrgPersonButton(child)).join("") || `<div class="org-empty">하위 인원 없음</div>`}
+        ${flatMembers.map(child => renderOrgPersonButton(child)).join("") || `<div class="org-empty">하위 인원 없음</div>`}
       </div>
     </section>
   `;
 }
 
-function renderOrgChart(company = currentOrgCompany) {
-  const target = document.getElementById("orgChartContent");
-  if (!target) return;
-
-  const data = orgStructures[company];
-  currentOrgCompany = company;
-
-  const root = data.root;
-  const topNodes = [root, ...(root.children || [])].slice(0, 3);
-  const branchParent = (root.children || [])[0] || root;
-  const branchNodes = branchParent.children || root.children || [];
+function renderOrgHeader(data, root) {
   const totalMembers = collectOrgMembers(root, []).length;
   const linkedCards = new Set(collectOrgMembers(root, []).map(node => node.employeeId).filter(Boolean)).size;
 
-  target.innerHTML = `
+  return `
     <div class="org-chart-header compact">
       <div>
         <span>${data.date}</span>
@@ -1024,17 +1142,81 @@ function renderOrgChart(company = currentOrgCompany) {
         <button class="btn btn-line" onclick="switchPanel('orgEdit'); closeOrgChart();">조직도관리로 이동</button>
       </div>
     </div>
+  `;
+}
 
-    <div class="org-overview-fit">
+function renderConcostOrgChart(data) {
+  const root = data.root;
+  const vice = (root.children || []).find(node => node.title === "부사장") || (root.children || [])[0] || root;
+  const branches = vice.children || [];
+  const support = branches.find(node => node.title === "경영지원본부");
+  const tech = branches.find(node => node.title === "기술본부");
+  const rightBranches = branches.filter(node => ["개발 T/F", "QC", "클레임센터"].includes(node.title));
+  const dotcom = (root.children || []).find(node => node.title === "공사비닷컴");
+
+  return `
+    ${renderOrgHeader(data, root)}
+    <div class="org-concost-fit">
+      <div class="org-concost-exec-row">
+        ${renderOrgPersonButton(root, "primary")}
+        ${renderOrgPersonButton(vice, "secondary")}
+        ${dotcom ? renderOrgPersonButton(dotcom, "dotted") : ""}
+      </div>
+
+      <div class="org-concost-body">
+        <div class="org-side-column left">
+          ${support ? renderOrgBranchCard(support) : ""}
+        </div>
+
+        <div class="org-center-column">
+          ${tech ? `
+            <section class="org-tech-card">
+              <div class="org-tech-head">
+                ${renderOrgPersonButton(tech, "lead tech-lead")}
+              </div>
+              <div class="org-tech-main-grid">
+                ${(tech.children || []).map(node => renderOrgBranchCard(node, "nested")).join("")}
+              </div>
+            </section>
+          ` : ""}
+        </div>
+
+        <div class="org-side-column right">
+          ${rightBranches.map(node => renderOrgBranchCard(node)).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDefaultOrgChart(data) {
+  const root = data.root;
+  const topNodes = [root, ...(root.children || [])].slice(0, 3);
+  const branchParent = (root.children || [])[0] || root;
+  const branchNodes = branchParent.children || root.children || [];
+
+  return `
+    ${renderOrgHeader(data, root)}
+    <div class="org-overview-fit org-overview-fit-nested">
       <div class="org-overview-exec">
         ${topNodes.map((node, index) => renderOrgPersonButton(node, index === 0 ? "primary" : "secondary")).join("")}
       </div>
       <div class="org-overview-line"></div>
-      <div class="org-overview-grid">
-        ${branchNodes.map(renderOrgBranchCard).join("")}
+      <div class="org-overview-grid nested-grid">
+        ${branchNodes.map(node => renderOrgBranchCard(node, "nested")).join("")}
       </div>
     </div>
   `;
+}
+
+function renderOrgChart(company = currentOrgCompany) {
+  const target = document.getElementById("orgChartContent");
+  if (!target) return;
+
+  const data = orgStructures[company];
+  currentOrgCompany = company;
+
+  target.innerHTML = company === "CON-COST" ? renderConcostOrgChart(data) : renderDefaultOrgChart(data);
 }
 
 function switchOrgCompany(company, el) {
