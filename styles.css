@@ -369,6 +369,24 @@ tr:hover td{
 .badge.blue{background:var(--sky);color:var(--blue)}
 .badge.gray{background:#f1f5f9;color:var(--gray)}
 
+.company-chip{
+  display:inline-flex;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.company-chip.concost{
+  background:#eaf2ff;
+  color:#1d4ed8;
+}
+
+.company-chip.vietqs{
+  background:#ecfdf5;
+  color:#047857;
+}
+
 .layout{
   display:grid;
   grid-template-columns:340px 1fr;
@@ -537,6 +555,38 @@ tr:hover td{
   grid-column:1/-1;
 }
 
+.phone-row{
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:10px;
+}
+
+.permission-field,
+.permission-text{
+  cursor:pointer;
+  color:#111827;
+  background:#f8fafc;
+  font-weight:800;
+}
+
+.permission-text{
+  display:inline-flex;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#f1f5f9;
+  border:1px solid var(--line2);
+}
+
+.history-group{
+  margin-bottom:22px;
+}
+
+.history-group h3{
+  font-size:16px;
+  margin-bottom:10px;
+  color:#0f172a;
+}
+
 textarea{
   min-height:92px;
   resize:vertical;
@@ -651,7 +701,8 @@ textarea{
   margin-top:18px;
 }
 
-.modal-backdrop{
+.modal-backdrop,
+.permission-modal{
   position:fixed;
   inset:0;
   background:rgba(15,23,42,.36);
@@ -662,7 +713,8 @@ textarea{
   padding:20px;
 }
 
-.modal-backdrop.active{
+.modal-backdrop.active,
+.permission-modal.active{
   display:flex;
 }
 
@@ -694,6 +746,26 @@ textarea{
   display:flex;
   justify-content:flex-end;
   gap:8px;
+}
+
+.permission-box{
+  width:360px;
+  background:#fff;
+  border-radius:22px;
+  padding:26px;
+  box-shadow:0 30px 90px rgba(15,23,42,.25);
+  text-align:center;
+}
+
+.permission-box h3{
+  font-size:20px;
+  margin-bottom:10px;
+}
+
+.permission-box p{
+  color:#475569;
+  margin-bottom:20px;
+  font-weight:800;
 }
 
 .close{
@@ -760,7 +832,8 @@ textarea{
   .quick-grid,
   .form-grid,
   .filter-grid,
-  .admin-form-grid{
+  .admin-form-grid,
+  .phone-row{
     grid-template-columns:1fr;
   }
 
