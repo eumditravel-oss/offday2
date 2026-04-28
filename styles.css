@@ -1411,3 +1411,81 @@ tr:hover td{background:#fbfdff}
 .status-pill{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 8px;font-size:12px;font-weight:900;background:#f1f5f9;color:#475569}
 @media(max-width:1280px){.process-grid{grid-template-columns:repeat(2,1fr)}.checklist-toolbar{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.process-grid,.checklist-toolbar{grid-template-columns:1fr}.work-kpi-grid{grid-template-columns:1fr 1fr}}
+
+/* 수량산출 체크리스트 확인 체크/처리 이력 */
+.excel-grid th:nth-child(9),
+.excel-grid td:nth-child(9){
+  width:92px;
+  min-width:92px;
+  text-align:center;
+}
+
+.excel-grid th:nth-child(11),
+.excel-grid td:nth-child(11){
+  width:190px;
+  min-width:190px;
+}
+
+.done-cell{
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding:8px !important;
+}
+
+.done-check-wrap{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:1px solid var(--line2);
+  border-radius:999px;
+  padding:6px 8px;
+  background:#fff;
+  font-size:12px;
+  font-weight:900;
+  color:#475569;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.done-check-wrap input{
+  width:15px;
+  height:15px;
+  accent-color:var(--blue);
+}
+
+.row-done td{
+  background:#f8fbff !important;
+}
+
+.row-done .done-check-wrap{
+  border-color:#bfdbfe;
+  background:#eef6ff;
+  color:var(--blue);
+}
+
+.history-cell{
+  min-height:40px;
+  padding:7px 8px;
+  display:grid;
+  gap:4px;
+  align-content:center;
+}
+
+.history-line{
+  display:grid;
+  gap:2px;
+  line-height:1.25;
+}
+
+.history-line strong{
+  font-size:12px;
+  color:#0f172a;
+}
+
+.history-line span,
+.history-empty{
+  font-size:11px;
+  color:#64748b;
+  font-weight:800;
+}
