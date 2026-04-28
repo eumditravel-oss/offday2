@@ -1325,24 +1325,24 @@ const workPageMeta = {
 };
 
 let checklistRows = [
-  { checked:false, group:"프로젝트 수주시", trade:"계약방식", no:"001", item:"프로젝트 업무 특성 파악 (구조선수행, 입찰, 본실행, 설계내역 등)", method:"접수자료 확인. 특이사항 작성 후 프로젝트 PM 전달", owner:"QC TEAM", status:"진행중", comment:"" },
-  { checked:false, group:"프로젝트 수주시", trade:"접수자료", no:"002", item:"입찰 내역서, 산출기준서, 공사 특기사항 접수 파악", method:"접수자료 확인. 특이사항 작성 후 프로젝트 PM 전달", owner:"QC TEAM", status:"진행중", comment:"" },
-  { checked:false, group:"프로젝트 수주시", trade:"도면검토", no:"003", item:"도면 접수 여부 확인 (구조 / 건축 / 토목)", method:"도면목록표와 접수 도면상 일치 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, group:"프로젝트 수주시", trade:"접수자료", no:"004", item:"내역서, 산출서, 기준서 접수 여부 확인", method:"내역서, 산출서, 기준서 파일 수신 여부 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, group:"프로젝트 초기", trade:"프로젝트 유형", no:"005", item:"프로젝트 유형 파악 (입찰 / 본실행 / 구조선수행 등)", method:"계약방식과 발주처 요청사항 기준으로 유형 분류", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, group:"프로젝트 초기", trade:"특이사항", no:"006", item:"프로젝트별 특이사항 확인 및 정리", method:"정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, group:"기초 산출 담당자", trade:"파일공사", no:"007", item:"파일길이 및 항타장비, 동재하 정재하 시험횟수 확인", method:"지질조서도 확인", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, group:"기초 산출 담당자", trade:"토공사", no:"008", item:"토공사 산출유무 확인", method:"토목팀 투입 유무 확인 및 건축터파기 산출 여부 협의", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, group:"프로젝트 초기", trade:"합벽", no:"009", item:"합벽유무 및 합벽구간 추가이음 발생 여부 확인", method:"토목도면 흙막이 또는 가시설계획도 확인", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, group:"프로젝트 초기", trade:"끊어치기", no:"010", item:"끊어치기(C.J Joint) 구간 확인", method:"발주처 및 건설사 질의사항 작성. Zoning 및 분할타설 계획도 요청", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, group:"전체 공통", trade:"커플러", no:"011", item:"커플러 산출기준 확인", method:"건설사별 견적지침서 확인. 별도 표현 없을 시 담당자 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, group:"전체 공통", trade:"철근강도", no:"012", item:"철근 강도에 따른 정착/이음값 오류 확인", method:"구조일반사항 및 구조계산서 검토", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, group:"전체 공통", trade:"내진철근", no:"013", item:"내진철근 적용 유무 확인", method:"SD400S, SD500S, SD600S 등의 표현 유무 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, group:"기초", trade:"기초", no:"014", item:"버림두께 확인", method:"건축단면도 기준 적용. 미표현 시 60mm 적용", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, group:"기둥", trade:"기둥", no:"015", item:"기초두께 입력시 이음 산출 유무 확인", method:"산출식 확인 후 기초두께 입력 시 주근 이음 산출 여부 검토", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, group:"보", trade:"보", no:"016", item:"각 층별 슬라브 두께별 공제 확인", method:"산출내용 재확인", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, group:"슬라브", trade:"슬라브", no:"017", item:"부호별 데크타입 오류 확인", method:"RC 평면자료를 Excel 변환 후 필터로 데크부호별 코드입력 체크", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, group:"옹벽", trade:"옹벽", no:"018", item:"옹벽 상부 슬라브 또는 보 공제값 오류 체크", method:"RC 프로그램 산식 확인", owner:"산출 담당자", status:"진행전", comment:"" }
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주시", trade:"계약방식", no:"001", item:"프로젝트 업무 특성 파악 (구조선수행, 입찰, 본실행, 설계내역 등)", method:"접수자료 확인. 특이사항 작성 후 프로젝트 PM 전달", owner:"QC TEAM", status:"진행중", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주시", trade:"접수자료", no:"002", item:"입찰 내역서, 산출기준서, 공사 특기사항 접수 파악", method:"접수자료 확인. 특이사항 작성 후 프로젝트 PM 전달", owner:"QC TEAM", status:"진행중", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주시", trade:"도면검토", no:"003", item:"도면 접수 여부 확인 (구조 / 건축 / 토목)", method:"도면목록표와 접수 도면상 일치 확인", owner:"QC TEAM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주시", trade:"접수자료", no:"004", item:"내역서, 산출서, 기준서 접수 여부 확인", method:"내역서, 산출서, 기준서 파일 수신 여부 확인", owner:"QC TEAM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 초기", trade:"프로젝트 유형", no:"005", item:"프로젝트 유형 파악 (입찰 / 본실행 / 구조선수행 등)", method:"계약방식과 발주처 요청사항 기준으로 유형 분류", owner:"PM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 초기", trade:"특이사항", no:"006", item:"프로젝트별 특이사항 확인 및 정리", method:"정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송", owner:"PM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"기초 산출 담당자", trade:"파일공사", no:"007", item:"파일길이 및 항타장비, 동재하 정재하 시험횟수 확인", method:"지질조서도 확인", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"기초 산출 담당자", trade:"토공사", no:"008", item:"토공사 산출유무 확인", method:"토목팀 투입 유무 확인 및 건축터파기 산출 여부 협의", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 초기", trade:"합벽", no:"009", item:"합벽유무 및 합벽구간 추가이음 발생 여부 확인", method:"토목도면 흙막이 또는 가시설계획도 확인", owner:"PM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 초기", trade:"끊어치기", no:"010", item:"끊어치기(C.J Joint) 구간 확인", method:"발주처 및 건설사 질의사항 작성. Zoning 및 분할타설 계획도 요청", owner:"PM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"전체 공통", trade:"커플러", no:"011", item:"커플러 산출기준 확인", method:"건설사별 견적지침서 확인. 별도 표현 없을 시 담당자 확인", owner:"QC TEAM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"전체 공통", trade:"철근강도", no:"012", item:"철근 강도에 따른 정착/이음값 오류 확인", method:"구조일반사항 및 구조계산서 검토", owner:"QC TEAM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"전체 공통", trade:"내진철근", no:"013", item:"내진철근 적용 유무 확인", method:"SD400S, SD500S, SD600S 등의 표현 유무 확인", owner:"QC TEAM", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"기초", trade:"기초", no:"014", item:"버림두께 확인", method:"건축단면도 기준 적용. 미표현 시 60mm 적용", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"기둥", trade:"기둥", no:"015", item:"기초두께 입력시 이음 산출 유무 확인", method:"산출식 확인 후 기초두께 입력 시 주근 이음 산출 여부 검토", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"보", trade:"보", no:"016", item:"각 층별 슬라브 두께별 공제 확인", method:"산출내용 재확인", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"슬라브", trade:"슬라브", no:"017", item:"부호별 데크타입 오류 확인", method:"RC 평면자료를 Excel 변환 후 필터로 데크부호별 코드입력 체크", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"옹벽", trade:"옹벽", no:"018", item:"옹벽 상부 슬라브 또는 보 공제값 오류 체크", method:"RC 프로그램 산식 확인", owner:"산출 담당자", status:"진행전", comment:"" }
 ];
 
 const checklistStatuses = ["진행전", "진행중", "확인완료", "PM 검토", "수정요청", "최종완료"];
@@ -1391,8 +1391,8 @@ function renderChecklistGrid() {
   if (!body) return;
   const rows = getChecklistFilteredRows();
   body.innerHTML = rows.map(({ row, realIndex }) => `
-    <tr>
-      <td><input type="checkbox" ${row.checked ? "checked" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)"></td>
+    <tr class="${row.done ? "row-done" : ""}">
+      <td><input type="checkbox" ${row.checked ? "checked" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
       <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'group', this.innerText)">${escapeHtml(row.group)}</div></td>
       <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)">${escapeHtml(row.trade)}</div></td>
       <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)">${escapeHtml(row.no)}</div></td>
@@ -1400,27 +1400,90 @@ function renderChecklistGrid() {
       <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)">${escapeHtml(row.method)}</div></td>
       <td><select class="excel-select" onchange="updateChecklistCell(${realIndex}, 'owner', this.value)">${checklistOwners.map(o => `<option ${o === row.owner ? "selected" : ""}>${o}</option>`).join("")}</select></td>
       <td><select class="excel-select" onchange="updateChecklistCell(${realIndex}, 'status', this.value)">${checklistStatuses.map(s => `<option ${s === row.status ? "selected" : ""}>${s}</option>`).join("")}</select></td>
+      <td class="done-cell"><label class="done-check-wrap" title="체크 시 상태가 확인완료로 자동 변경됩니다."><input type="checkbox" ${row.done ? "checked" : ""} onchange="toggleChecklistDone(${realIndex}, this.checked)"><span>${row.done ? "확인완료" : "미확인"}</span></label></td>
       <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
+      <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
       <td><div class="row-actions"><button class="btn btn-line" onclick="insertChecklistRowAfter(${realIndex})">삽입</button><button class="btn btn-danger" onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
     </tr>
   `).join("");
 }
 
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 }
-function updateChecklistCell(index, key, value) { if (checklistRows[index]) checklistRows[index][key] = String(value).trim(); }
+function getCurrentWorkerName() {
+  return document.querySelector(".user")?.textContent?.trim() || "현재 작업자";
+}
+
+function getChecklistTimeText() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mi = String(now.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+function renderChecklistHistory(row) {
+  const history = Array.isArray(row.history) ? row.history : [];
+  if (history.length) {
+    return history.slice(-2).reverse().map(item => `
+      <div class="history-line"><strong>${escapeHtml(item.worker)}</strong><span>${escapeHtml(item.action)} · ${escapeHtml(item.time)}</span></div>
+    `).join("");
+  }
+  if (row.done && row.checkedBy) {
+    return `<div class="history-line"><strong>${escapeHtml(row.checkedBy)}</strong><span>확인완료 · ${escapeHtml(row.checkedAt)}</span></div>`;
+  }
+  return `<span class="history-empty">이력 없음</span>`;
+}
+
+function toggleChecklistDone(index, checked) {
+  const row = checklistRows[index];
+  if (!row) return;
+  const worker = getCurrentWorkerName();
+  const time = getChecklistTimeText();
+  row.done = checked;
+  row.checkedBy = worker;
+  row.checkedAt = time;
+  row.history = Array.isArray(row.history) ? row.history : [];
+  if (checked) {
+    row.status = "확인완료";
+    row.history.push({ action: "확인완료", worker, time });
+    showToast(`${row.no}번 항목이 확인완료 처리되었습니다.`);
+  } else {
+    row.status = row.status === "확인완료" ? "진행중" : row.status;
+    row.history.push({ action: "체크 해제", worker, time });
+    showToast(`${row.no}번 항목의 확인 체크가 해제되었습니다.`);
+  }
+  renderChecklistGrid();
+}
+function updateChecklistCell(index, key, value) {
+  if (!checklistRows[index]) return;
+  checklistRows[index][key] = String(value).trim();
+  if (key === "status") {
+    checklistRows[index].done = checklistRows[index].status === "확인완료";
+    if (checklistRows[index].done && !checklistRows[index].checkedBy) {
+      checklistRows[index].checkedBy = getCurrentWorkerName();
+      checklistRows[index].checkedAt = getChecklistTimeText();
+      checklistRows[index].history = Array.isArray(checklistRows[index].history) ? checklistRows[index].history : [];
+      checklistRows[index].history.push({ action: "확인완료", worker: checklistRows[index].checkedBy, time: checklistRows[index].checkedAt });
+    }
+  }
+}
+
 function updateChecklistCheck(index, checked) { if (checklistRows[index]) checklistRows[index].checked = checked; }
 function toggleAllChecklistRows(box) { getChecklistFilteredRows().forEach(({ realIndex }) => checklistRows[realIndex].checked = box.checked); renderChecklistGrid(); }
 function nextChecklistNo() { const nums = checklistRows.map(r => Number(String(r.no).replace(/\D/g, ""))).filter(Boolean); return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0"); }
-function addChecklistRow() { checklistRows.push({ checked:false, group:"프로젝트 초기", trade:"신규", no:nextChecklistNo(), item:"새 검토항목", method:"검토방법 입력", owner:"QC TEAM", status:"진행전", comment:"" }); renderChecklistGrid(); showToast("체크리스트 행이 추가되었습니다."); }
-function insertChecklistRowAfter(index) { checklistRows.splice(index + 1, 0, { checked:false, group:checklistRows[index]?.group || "프로젝트 초기", trade:"신규", no:nextChecklistNo(), item:"새 검토항목", method:"검토방법 입력", owner:"QC TEAM", status:"진행전", comment:"" }); renderChecklistGrid(); }
+function addChecklistRow() { checklistRows.push({ checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 초기", trade:"신규", no:nextChecklistNo(), item:"새 검토항목", method:"검토방법 입력", owner:"QC TEAM", status:"진행전", comment:"" }); renderChecklistGrid(); showToast("체크리스트 행이 추가되었습니다."); }
+function insertChecklistRowAfter(index) { checklistRows.splice(index + 1, 0, { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:checklistRows[index]?.group || "프로젝트 초기", trade:"신규", no:nextChecklistNo(), item:"새 검토항목", method:"검토방법 입력", owner:"QC TEAM", status:"진행전", comment:"" }); renderChecklistGrid(); }
 function deleteChecklistRow(index) { checklistRows.splice(index, 1); renderChecklistGrid(); }
 function deleteCheckedRows() { const before = checklistRows.length; checklistRows = checklistRows.filter(row => !row.checked); renderChecklistGrid(); showToast(`${before - checklistRows.length}개 행을 삭제했습니다.`); }
-function duplicateCheckedRows() { const selected = checklistRows.filter(row => row.checked).map(row => ({ ...row, checked:false, no:nextChecklistNo() })); checklistRows.push(...selected); renderChecklistGrid(); showToast(`${selected.length}개 행을 복제했습니다.`); }
+function duplicateCheckedRows() { const selected = checklistRows.filter(row => row.checked).map(row => ({ ...row, checked:false, done:false, checkedBy:"", checkedAt:"", history:[], status:"진행전", no:nextChecklistNo() })); checklistRows.push(...selected); renderChecklistGrid(); showToast(`${selected.length}개 행을 복제했습니다.`); }
 function downloadChecklistCsv() {
-  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "담당자", "상태", "코멘트"];
-  const rows = checklistRows.map(r => [r.group, r.trade, r.no, r.item, r.method, r.owner, r.status, r.comment]);
+  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "담당자", "상태", "체크 여부", "코멘트", "처리자", "처리일시", "처리 이력"];
+  const rows = checklistRows.map(r => [r.group, r.trade, r.no, r.item, r.method, r.owner, r.status, r.done ? "확인완료" : "미확인", r.comment, r.checkedBy || "", r.checkedAt || "", (r.history || []).map(h => `${h.action}/${h.worker}/${h.time}`).join(" | ")]);
   const csv = [headers, ...rows].map(row => row.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
