@@ -1329,3 +1329,56 @@ tr:hover td{background:#fbfdff}
   .modal-org-wide .modal-body{overflow:auto !important;}
   .org-chart-canvas{overflow:auto !important;}
 }
+
+/* 조직도 세로 배치 보정 - CON-COST */
+.vertical-org-section .org-overview-members,
+.vertical-members{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:5px !important;
+  align-content:start;
+}
+
+.vertical-org-section .org-person,
+.vertical-members .org-person{
+  min-height:34px;
+  padding:5px 7px;
+  text-align:center;
+}
+
+.vertical-org-section .org-overview-card{
+  min-height:auto;
+}
+
+.concost-org-layout{
+  grid-template-columns:340px minmax(760px,1fr) 330px !important;
+  align-items:start;
+}
+
+.team-mid-grid.three-col{
+  display:grid;
+  grid-template-columns:1fr 1.15fr .85fr;
+  gap:7px;
+  padding:7px;
+  min-height:0;
+  flex:1;
+}
+
+.team-mid-grid.three-col .team-mid-card{
+  min-width:0;
+}
+
+.civil-only-card .org-overview-members{
+  align-content:start;
+}
+
+.concost-left .org-overview-members,
+.concost-right .org-overview-members{
+  max-height:none;
+  overflow:visible;
+}
+
+@media (max-width:1300px){
+  .concost-org-layout{grid-template-columns:1fr !important;}
+  .team-mid-grid.three-col{grid-template-columns:1fr;}
+}
