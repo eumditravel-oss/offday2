@@ -702,14 +702,14 @@
                   <div class="actions"><button class="btn btn-line" onclick="addChecklistRow()">+ 행 추가</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">엑셀 내보내기</button></div>
                 </div>
                 <div class="card-body">
-                  <div class="notice">정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송하는 것을 전제로 구성했습니다. 셀을 클릭해 바로 수정할 수 있습니다.</div>
+                  <div class="notice">정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송하는 것을 전제로 구성했습니다. 셀을 클릭해 바로 수정할 수 있으며, 체크 여부를 클릭하면 상태가 확인완료로 자동 변경되고 처리 이력이 기록됩니다.</div>
                   <div class="checklist-toolbar">
                     <div class="field"><label>프로젝트</label><select id="checklistProject"><option>ㅇㅇ시설 신축공사</option><option>샘플 프로젝트 A</option></select></div>
                     <div class="field"><label>담당자 필터</label><select id="checklistOwnerFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>QC TEAM</option><option>PM</option><option>산출 담당자</option><option>실장</option></select></div>
                     <div class="field"><label>상태 필터</label><select id="checklistStatusFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>진행전</option><option>진행중</option><option>확인완료</option><option>PM 검토</option><option>수정요청</option><option>최종완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="renderChecklistGrid()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
-                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>구분</th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>담당자</th><th>상태</th><th>코멘트</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
+                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>구분</th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>담당자</th><th>상태</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
                 </div>
               </article>
             </section>
