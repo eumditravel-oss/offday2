@@ -1489,3 +1489,10 @@ tr:hover td{background:#fbfdff}
   color:#64748b;
   font-weight:800;
 }
+
+
+/* QC 검토/승인 안에 수량산출 체크리스트 포함 */
+.qc-review-guide .notice{margin-bottom:0}
+#qcReview .checklist-card{margin-bottom:18px}
+#qcReview .excel-grid-wrap{max-height:560px}
+#qcReview .card-head .subcopy{max-width:900px}
