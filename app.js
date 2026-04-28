@@ -95,6 +95,7 @@ function statusBadge(status) {
 
 function renderLedger(list = employees) {
   const tbody = document.getElementById("ledgerBody");
+  if (!tbody) return;
 
   tbody.innerHTML = list.map(emp => `
     <tr>
@@ -115,6 +116,7 @@ function renderLedger(list = employees) {
 
 function renderEmployeeList(list = employees) {
   const box = document.getElementById("employeeList");
+  if (!box) return;
 
   box.innerHTML = list.map((emp, index) => `
     <div class="employee-item ${index === 0 ? "active" : ""}" onclick="selectEmployee('${emp.empNo}', this)">
@@ -134,22 +136,33 @@ function selectEmployee(empNo, el) {
   document.querySelectorAll(".employee-item").forEach(item => item.classList.remove("active"));
   if (el) el.classList.add("active");
 
-  document.getElementById("profilePhoto").textContent = emp.name[0];
-  document.getElementById("profileName").textContent = emp.name;
-  document.getElementById("quickProject").textContent = emp.project;
-  document.getElementById("quickGrade").textContent = emp.eval;
+  const profilePhoto = document.getElementById("profilePhoto");
+  const profileName = document.getElementById("profileName");
+  const quickProject = document.getElementById("quickProject");
+  const quickGrade = document.getElementById("quickGrade");
+  const profileTags = document.getElementById("profileTags");
 
-  document.getElementById("profileTags").innerHTML = `
-    <span class="badge blue">${emp.dept}</span>
-    <span class="badge gray">${emp.grade}</span>
-    ${statusBadge(emp.status)}
-    <span class="badge blue">${emp.join} 입사</span>
-    <span class="badge gray">${emp.empNo}</span>
-  `;
+  if (profilePhoto) profilePhoto.textContent = emp.name[0];
+  if (profileName) profileName.textContent = emp.name;
+  if (quickProject) quickProject.textContent = emp.project;
+  if (quickGrade) quickGrade.textContent = emp.eval;
+
+  if (profileTags) {
+    profileTags.innerHTML = `
+      <span class="badge blue">${emp.dept}</span>
+      <span class="badge gray">${emp.grade}</span>
+      ${statusBadge(emp.status)}
+      <span class="badge blue">${emp.join} 입사</span>
+      <span class="badge gray">${emp.empNo}</span>
+    `;
+  }
 }
 
 function openCard(empNo) {
-  document.querySelector('[data-main="card"]').click();
+  const cardTab = document.querySelector('[data-main="card"]');
+  if (!cardTab) return;
+
+  cardTab.click();
 
   setTimeout(() => {
     const items = [...document.querySelectorAll(".employee-item")];
@@ -173,16 +186,24 @@ function filterEmployees(keyword) {
   );
 }
 
-document.getElementById("ledgerSearch").addEventListener("input", e => {
-  renderLedger(filterEmployees(e.target.value));
-});
+const ledgerSearch = document.getElementById("ledgerSearch");
+if (ledgerSearch) {
+  ledgerSearch.addEventListener("input", e => {
+    renderLedger(filterEmployees(e.target.value));
+  });
+}
 
-document.getElementById("employeeSearch").addEventListener("input", e => {
-  renderEmployeeList(filterEmployees(e.target.value));
-});
+const employeeSearch = document.getElementById("employeeSearch");
+if (employeeSearch) {
+  employeeSearch.addEventListener("input", e => {
+    renderEmployeeList(filterEmployees(e.target.value));
+  });
+}
 
 function validateRequired() {
   const activePanel = document.querySelector(".detail-panel.active");
+  if (!activePanel) return;
+
   const requiredInputs = activePanel.querySelectorAll("[required]");
   let valid = true;
 
@@ -204,6 +225,8 @@ function validateRequired() {
 
 function validateModal() {
   const modal = document.getElementById("employeeModal");
+  if (!modal) return;
+
   const requiredInputs = modal.querySelectorAll("[required]");
   let valid = true;
 
@@ -225,15 +248,19 @@ function validateModal() {
 }
 
 function openModal() {
-  document.getElementById("employeeModal").classList.add("active");
+  const modal = document.getElementById("employeeModal");
+  if (modal) modal.classList.add("active");
 }
 
 function closeModal() {
-  document.getElementById("employeeModal").classList.remove("active");
+  const modal = document.getElementById("employeeModal");
+  if (modal) modal.classList.remove("active");
 }
 
 function showToast(message) {
   const toast = document.getElementById("toast");
+  if (!toast) return;
+
   toast.textContent = message;
   toast.classList.add("active");
 
@@ -248,6 +275,18 @@ document.addEventListener("click", e => {
   if (e.target === modal) {
     closeModal();
   }
+});
+
+document.querySelectorAll(".admin-edit-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    showToast("근태 정책 편집 화면 예시입니다.");
+  });
+});
+
+document.querySelectorAll(".switch-toggle input").forEach(toggle => {
+  toggle.addEventListener("change", () => {
+    showToast("관리자 설정값이 변경되었습니다. 저장 버튼을 눌러 반영하세요.");
+  });
 });
 
 renderLedger();
