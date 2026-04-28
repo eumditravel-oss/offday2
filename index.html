@@ -37,7 +37,7 @@
       <section class="page-head">
         <div>
           <h1>경영지원 · 사원대장 / 인사카드</h1>
-          <p>사원대장, 인사카드, 발령이력, 평가, 연봉, 자산, 증명서, 권한 정보를 통합 관리하는 화면 구성안입니다.</p>
+          <p>사원대장, 인사카드, 관리자 설정, 평가, 연봉, 자산, 증명서, 권한 정보를 통합 관리하는 화면 구성안입니다.</p>
         </div>
 
         <div class="actions">
@@ -51,6 +51,7 @@
       <div class="menu-tabs">
         <button class="menu-tab active" data-main="ledger">사원대장</button>
         <button class="menu-tab" data-main="card">인사카드</button>
+        <button class="menu-tab" data-main="admin">관리자 설정</button>
         <button class="menu-tab" data-main="code">코드관리</button>
         <button class="menu-tab" data-main="approval">증명서/파일 승인</button>
       </div>
@@ -334,6 +335,226 @@
               </div>
             </article>
           </section>
+        </div>
+      </section>
+
+      <section id="admin" class="panel">
+        <div class="kpi-grid">
+          <div class="kpi-card"><span>근태 유형</span><strong>12</strong></div>
+          <div class="kpi-card"><span>자동 정책</span><strong>7</strong></div>
+          <div class="kpi-card"><span>승인 선택형</span><strong>4</strong></div>
+          <div class="kpi-card"><span>증빙 필수</span><strong>5</strong></div>
+          <div class="kpi-card"><span>활성 정책</span><strong>18</strong></div>
+        </div>
+
+        <div class="admin-layout">
+          <section>
+            <article class="card">
+              <div class="card-head">
+                <h2>근태 유형 정책 관리</h2>
+                <button class="btn btn-primary" onclick="showToast('근태 유형 추가 기능 예시입니다.')">+ 유형 추가</button>
+              </div>
+
+              <div class="card-body table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>유형</th>
+                      <th>연차 차감</th>
+                      <th>일정 반영</th>
+                      <th>근무일 제외</th>
+                      <th>증빙서류</th>
+                      <th>사용 대상</th>
+                      <th>관리</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td>연차</td>
+                      <td><span class="badge red">자동 차감</span></td>
+                      <td><span class="badge green">자동 반영</span></td>
+                      <td><span class="badge green">제외</span></td>
+                      <td><span class="badge blue">불필요</span></td>
+                      <td>전체 직원</td>
+                      <td><button class="btn btn-line admin-edit-btn">편집</button></td>
+                    </tr>
+
+                    <tr>
+                      <td>출장</td>
+                      <td><span class="badge blue">차감 없음</span></td>
+                      <td><span class="badge green">자동 반영</span></td>
+                      <td><span class="badge blue">제외 안함</span></td>
+                      <td><span class="badge blue">불필요</span></td>
+                      <td>전체 직원</td>
+                      <td><button class="btn btn-line admin-edit-btn">편집</button></td>
+                    </tr>
+
+                    <tr>
+                      <td>병가</td>
+                      <td><span class="badge yellow">승인 시 선택</span></td>
+                      <td><span class="badge green">자동 반영</span></td>
+                      <td><span class="badge yellow">승인 시 선택</span></td>
+                      <td><span class="badge red">필수</span></td>
+                      <td>전체 직원</td>
+                      <td><button class="btn btn-line admin-edit-btn">편집</button></td>
+                    </tr>
+
+                    <tr>
+                      <td>공가 / 예비군</td>
+                      <td><span class="badge yellow">승인 시 선택</span></td>
+                      <td><span class="badge green">자동 반영</span></td>
+                      <td><span class="badge yellow">승인 시 선택</span></td>
+                      <td><span class="badge red">필수</span></td>
+                      <td>한국 법인</td>
+                      <td><button class="btn btn-line admin-edit-btn">편집</button></td>
+                    </tr>
+
+                    <tr>
+                      <td>육아휴직</td>
+                      <td><span class="badge blue">차감 없음</span></td>
+                      <td><span class="badge green">자동 반영</span></td>
+                      <td><span class="badge green">제외</span></td>
+                      <td><span class="badge red">필수</span></td>
+                      <td>전체 직원</td>
+                      <td><button class="btn btn-line admin-edit-btn">편집</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <h2>경영지원 승인 시 처리 기준</h2>
+              </div>
+
+              <div class="card-body table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>구분</th>
+                      <th>승인 시 선택 항목</th>
+                      <th>자동 반영 위치</th>
+                      <th>상태값</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td>병가</td>
+                      <td>연차 차감 여부 / 근무일 제외 여부 / 증빙 확인</td>
+                      <td>일정관리, 마이페이지, 연차현황</td>
+                      <td><span class="badge yellow">승인 시 선택</span></td>
+                    </tr>
+
+                    <tr>
+                      <td>공가</td>
+                      <td>공가 인정 여부 / 연차 차감 여부 / 증빙 확인</td>
+                      <td>일정관리, 근태현황</td>
+                      <td><span class="badge yellow">승인 시 선택</span></td>
+                    </tr>
+
+                    <tr>
+                      <td>출장</td>
+                      <td>출장 기간 및 일정 반영 확인</td>
+                      <td>일정관리</td>
+                      <td><span class="badge green">자동 처리</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <aside>
+            <article class="card">
+              <div class="card-head">
+                <h2>정책 편집 예시</h2>
+              </div>
+
+              <div class="card-body">
+                <div class="form-grid admin-form-grid">
+                  <div class="field">
+                    <label>유형명</label>
+                    <input value="병가" />
+                  </div>
+
+                  <div class="field">
+                    <label>사용 대상</label>
+                    <select>
+                      <option>전체 직원</option>
+                      <option>한국 법인</option>
+                      <option>베트남 법인</option>
+                      <option>특정 부서</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label>연차 차감 정책</label>
+                    <select>
+                      <option>승인 시 선택</option>
+                      <option>자동 차감</option>
+                      <option>차감 없음</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label>근무일 제외 정책</label>
+                    <select>
+                      <option>승인 시 선택</option>
+                      <option>자동 제외</option>
+                      <option>제외 안함</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="admin-toggle-list">
+                  <div class="admin-toggle-item">
+                    <span>일정 자동 등록</span>
+                    <label class="switch-toggle">
+                      <input type="checkbox" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="admin-toggle-item">
+                    <span>증빙서류 필수</span>
+                    <label class="switch-toggle">
+                      <input type="checkbox" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="admin-toggle-item">
+                    <span>경영지원 최종 선택 허용</span>
+                    <label class="switch-toggle">
+                      <input type="checkbox" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="admin-save-area">
+                  <button class="btn btn-line" onclick="showToast('정책 변경사항이 초기화되었습니다.')">초기화</button>
+                  <button class="btn btn-primary" onclick="showToast('정책 설정이 저장되었습니다.')">정책 저장</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <h2>연차 계산 참고</h2>
+              </div>
+
+              <div class="card-body">
+                <div class="notice">
+                  현재 발생 연차 계산은 외부 기준표를 참고하여 내부 그룹웨어에 맞게 로직화해야 합니다.<br><br>
+                  입사일, 근속기간, 회계연도 기준, 중도입사자, 휴직자, 퇴사자 기준을 관리자 설정에서 조정할 수 있도록 구성하는 것이 적합합니다.
+                </div>
+              </div>
+            </article>
+          </aside>
         </div>
       </section>
 
