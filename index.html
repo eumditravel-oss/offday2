@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CON-COST Groupware | 사원대장 · 인사카드</title>
+  <title>CON-COST Groupware | 경영지원 · HR Master</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
@@ -36,13 +36,13 @@
     <main class="content">
       <section class="page-head">
         <div>
-          <h1>경영지원 · 사원대장 / 인사카드</h1>
-          <p>국내·베트남 직원의 인사정보, 재직상태, 인사변동, 신분증번호, 연락처, 캘린더 연동 설정을 통합 관리합니다.</p>
+          <h1>경영지원 · 조직관리</h1>
+          <p>사원대장, 인사카드, 개인용 미니카드, 인사변동, 직원 증감 분석, 자산대장, 권한 설정을 통합 관리합니다.</p>
         </div>
 
         <div class="actions">
           <button class="btn btn-line" onclick="showToast('엑셀 양식 다운로드 기능 예시입니다.')">엑셀 양식 다운로드</button>
-          <button class="btn btn-line" onclick="showToast('엑셀 업로드 전 미리보기 기능 예시입니다.')">엑셀 일괄 업로드</button>
+          <button class="btn btn-line" onclick="openExcelModal()">엑셀 일괄 업로드</button>
           <button class="btn btn-line" onclick="showToast('현재 조회 조건 기준으로 엑셀 내보내기 처리됩니다.')">엑셀 내보내기</button>
           <button class="btn btn-primary" onclick="openModal()">신규 직원 등록</button>
         </div>
@@ -51,9 +51,12 @@
       <div class="menu-tabs">
         <button class="menu-tab active" data-main="ledger">사원대장</button>
         <button class="menu-tab" data-main="card">인사카드</button>
+        <button class="menu-tab" data-main="mini">개인 인사카드</button>
+        <button class="menu-tab" data-main="analysis">직원 증감/경력</button>
+        <button class="menu-tab" data-main="asset">자산대장</button>
         <button class="menu-tab" data-main="admin">관리자 설정</button>
         <button class="menu-tab" data-main="code">코드관리</button>
-        <button class="menu-tab" data-main="approval">증명서/파일 승인</button>
+        <button class="menu-tab" data-main="approval">승인관리</button>
       </div>
 
       <section id="ledger" class="panel active">
@@ -91,12 +94,13 @@
                 <label>부서</label>
                 <select id="deptFilter">
                   <option value="전체">전체</option>
-                  <option value="BIM파트">BIM파트</option>
                   <option value="경영지원본부">경영지원본부</option>
+                  <option value="BIM파트">BIM파트</option>
                   <option value="구조·BIM팀">구조·BIM팀</option>
                   <option value="마감팀">마감팀</option>
                   <option value="토목팀">토목팀</option>
                   <option value="Viet QS 구조팀">Viet QS 구조팀</option>
+                  <option value="Viet QS 마감1팀">Viet QS 마감1팀</option>
                 </select>
               </div>
 
@@ -104,12 +108,17 @@
                 <label>직급</label>
                 <select id="gradeFilter">
                   <option value="전체">전체</option>
-                  <option value="입사예정">입사예정</option>
-                  <option value="사원">사원</option>
-                  <option value="팀장">팀장</option>
+                  <option value="대표">대표</option>
+                  <option value="부사장">부사장</option>
+                  <option value="상무">상무</option>
+                  <option value="센터장">센터장</option>
+                  <option value="본부장">본부장</option>
                   <option value="실장">실장</option>
+                  <option value="팀장">팀장</option>
                   <option value="수석">수석</option>
                   <option value="매니저">매니저</option>
+                  <option value="사원">사원</option>
+                  <option value="입사예정">입사예정</option>
                 </select>
               </div>
 
@@ -134,6 +143,7 @@
                   <option value="2026">2026</option>
                   <option value="2025">2025</option>
                   <option value="2024">2024</option>
+                  <option value="2023">2023</option>
                   <option value="2021">2021</option>
                   <option value="2018">2018</option>
                 </select>
@@ -148,7 +158,9 @@
           <div class="card-head">
             <h2>사원대장 목록</h2>
             <div class="actions">
-              <button class="btn btn-line" onclick="showToast('오류행 다운로드 예시입니다.')">오류행 다운로드</button>
+              <button class="btn btn-line" onclick="toggleSort('company')">회사 정렬</button>
+              <button class="btn btn-line" onclick="toggleSort('dept')">부서 정렬</button>
+              <button class="btn btn-line" onclick="toggleSort('gradeOrder')">직급순 정렬</button>
               <button class="btn btn-primary" onclick="openModal()">+ 직원 등록</button>
             </div>
           </div>
@@ -158,15 +170,15 @@
               <thead>
                 <tr>
                   <th>사진</th>
-                  <th>사번</th>
-                  <th>성명</th>
-                  <th>회사</th>
+                  <th onclick="toggleSort('empNo')">사번 ▲▼</th>
+                  <th onclick="toggleSort('name')">성명 ▲▼</th>
+                  <th onclick="toggleSort('company')">회사 ▲▼</th>
                   <th>아이디</th>
-                  <th>부서</th>
-                  <th>직급</th>
-                  <th>재직상태</th>
-                  <th>입사일</th>
-                  <th>평가등급</th>
+                  <th onclick="toggleSort('dept')">부서 ▲▼</th>
+                  <th onclick="toggleSort('gradeOrder')">직급 ▲▼</th>
+                  <th onclick="toggleSort('status')">재직상태 ▲▼</th>
+                  <th onclick="toggleSort('join')">입사일 ▲▼</th>
+                  <th>평가</th>
                   <th>프로젝트</th>
                   <th>관리</th>
                 </tr>
@@ -182,9 +194,8 @@
           <aside class="card">
             <div class="card-head">
               <h2>직원 목록</h2>
-              <span class="badge green">통합</span>
+              <span class="badge green">경영지원용</span>
             </div>
-
             <div class="card-body">
               <input class="employee-search" id="employeeSearch" placeholder="직원 검색" />
               <div class="employee-list" id="employeeList"></div>
@@ -196,6 +207,7 @@
               <div class="card-head">
                 <h2>인사카드 상세</h2>
                 <div class="actions">
+                  <button class="btn btn-line" onclick="openMiniCard()">개인용 화면 보기</button>
                   <button class="btn btn-line" onclick="showToast('인사카드 PDF 출력 예시입니다.')">PDF</button>
                   <button class="btn btn-line" onclick="showToast('수정모드로 전환되었습니다.')">수정</button>
                   <button class="btn btn-primary" onclick="validateRequired()">저장</button>
@@ -216,10 +228,10 @@
                 </div>
 
                 <div class="quick-grid">
-                  <div class="quick-box"><span>프로젝트 참여</span><strong id="quickProject">8</strong></div>
-                  <div class="quick-box"><span>평가등급</span><strong id="quickGrade">A</strong></div>
-                  <div class="quick-box"><span>승인 대기</span><strong>2</strong></div>
-                  <div class="quick-box"><span>근태 이상</span><strong>0</strong></div>
+                  <div class="quick-box"><span>총 근속</span><strong id="quickTenure">-</strong></div>
+                  <div class="quick-box"><span>총 경력</span><strong id="quickCareer">-</strong></div>
+                  <div class="quick-box"><span>프로젝트</span><strong id="quickProject">0</strong></div>
+                  <div class="quick-box permission-card"><span>평가등급</span><strong id="quickGrade">A</strong></div>
                 </div>
               </div>
             </article>
@@ -232,127 +244,108 @@
                   <button class="inner-tab" data-detail="org">조직/권한</button>
                   <button class="inner-tab" data-detail="history">인사변동이력</button>
                   <button class="inner-tab" data-detail="eval">평가/연봉</button>
-                  <button class="inner-tab" data-detail="career">학력/경력/자격</button>
-                  <button class="inner-tab" data-detail="asset">자산관리</button>
+                  <button class="inner-tab" data-detail="repeat">반복정보</button>
+                  <button class="inner-tab" data-detail="assetDetail">자산관리</button>
+                  <button class="inner-tab" data-detail="worklog">직원 몰아보기</button>
                   <button class="inner-tab" data-detail="cert">증명서</button>
                   <button class="inner-tab" data-detail="file">파일관리</button>
                 </div>
 
                 <div id="basic" class="detail-panel active">
                   <div class="form-grid">
-                    <div class="field"><label class="required">성명</label><input id="cardName" required value="박용진"><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label class="required">성명</label><input id="cardName" required><div class="error-text">필수 입력 항목입니다.</div></div>
                     <div class="field"><label>베트남어 이름</label><input id="cardLocalName" placeholder="베트남 직원만 입력"></div>
                     <div class="field"><label>한국 표기명</label><input id="cardKoreanName" placeholder="베트남 직원 한국표기명"></div>
 
-                    <div class="field"><label class="required">사번</label><input id="cardEmpNo" required value="EMP-2018-001"><div class="error-text">필수 입력 항목입니다.</div></div>
-                    <div class="field"><label class="required">아이디</label><input id="cardUserId" required value="yjpark"><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label class="required">사번</label><input id="cardEmpNo" required><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label class="required">아이디</label><input id="cardUserId" required><div class="error-text">필수 입력 항목입니다.</div></div>
                     <div class="field"><label class="required">소속회사</label><select id="cardCompany" required><option>CON-COST</option><option>Viet QS</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
 
-                    <div class="field"><label class="required">부서</label><select id="cardDept" required><option>BIM파트</option><option>경영지원본부</option><option>구조·BIM팀</option><option>Viet QS 구조팀</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
-                    <div class="field"><label class="required">직급</label><select id="cardGrade" required><option>수석</option><option>매니저</option><option>팀장</option><option>사원</option><option>입사예정</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
-                    <div class="field"><label>직책</label><input id="cardPosition" value="파트 담당"></div>
+                    <div class="field"><label class="required">부서</label><select id="cardDept" required><option>경영지원본부</option><option>BIM파트</option><option>구조·BIM팀</option><option>마감팀</option><option>Viet QS 구조팀</option><option>Viet QS 마감1팀</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label class="required">직급</label><select id="cardGrade" required><option>대표</option><option>부사장</option><option>상무</option><option>센터장</option><option>본부장</option><option>실장</option><option>팀장</option><option>수석</option><option>매니저</option><option>사원</option><option>입사예정</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label>직책</label><input id="cardPosition"></div>
 
-                    <div class="field"><label class="required">재직상태</label><select id="cardStatus" required><option>입사예정</option><option selected>재직</option><option>휴직</option><option>퇴사예정</option><option>퇴사</option><option>계약만료</option><option>입사취소</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
-                    <div class="field"><label class="required">입사일</label><input id="cardJoin" type="date" required value="2018-04-01"><div class="error-text">필수 입력 항목입니다.</div></div>
-                    <div class="field"><label>퇴사/계약만료 예정일</label><input id="cardEndDate" type="date"></div>
+                    <div class="field"><label class="required">재직상태</label><select id="cardStatus" required><option>입사예정</option><option>재직</option><option>휴직</option><option>퇴사예정</option><option>퇴사</option><option>계약만료</option><option>입사취소</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label class="required">입사일</label><input id="cardJoin" type="date" required><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label>퇴사/계약만료일</label><input id="cardEndDate" type="date"></div>
 
                     <div class="field"><label>법인구분</label><select id="cardCorp"><option>한국 본사</option><option>베트남 지사</option></select></div>
-                    <div class="field"><label>근무지</label><input id="cardWorkplace" value="서울 본사"></div>
-                    <div class="field"><label class="required">이메일</label><input id="cardEmail" required value="yjpark@con-cost.com"><div class="error-text">필수 입력 항목입니다.</div></div>
+                    <div class="field"><label>근무지</label><input id="cardWorkplace"></div>
+                    <div class="field"><label class="required">이메일</label><input id="cardEmail" required><div class="error-text">필수 입력 항목입니다.</div></div>
 
                     <div class="field full">
                       <label class="required">휴대폰</label>
                       <div class="phone-row">
-                        <select id="phoneCountry">
-                          <option value="KR">+82 대한민국</option>
-                          <option value="VN">+84 베트남</option>
-                        </select>
-                        <input id="phoneInput" required inputmode="numeric" placeholder="010-1234-5678" value="010-7700-7859">
+                        <select id="phoneCountry"><option value="KR">+82 대한민국</option><option value="VN">+84 베트남</option></select>
+                        <input id="phoneInput" required inputmode="numeric" placeholder="010-1234-5678">
                       </div>
                       <div class="error-text">필수 입력 항목입니다.</div>
                     </div>
 
-                    <div class="field full"><label>주소</label><input id="cardAddress" value="서울특별시 강북구"></div>
-                    <div class="field full"><label>비상연락망</label><input id="cardEmergency" value="010-0000-0000"></div>
+                    <div class="field full"><label>주소</label><input id="cardAddress"></div>
+                    <div class="field full"><label>비상연락망</label><input id="cardEmergency"></div>
                   </div>
+
+                  <div class="audit-box" id="basicAudit"></div>
                 </div>
 
                 <div id="detail" class="detail-panel">
                   <div class="form-grid">
-                    <div class="field">
-                      <label>신분증 국가구분</label>
-                      <select id="idCountry">
-                        <option value="KR">한국</option>
-                        <option value="VN">베트남</option>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label>신분증번호</label>
-                      <input id="nationalId" placeholder="한국: 990301-1111111 / 베트남: 0792123456123">
-                    </div>
-                    <div class="field">
-                      <label>주민등록번호 / 민감정보</label>
-                      <input class="permission-field" readonly value="권한 필요">
-                    </div>
+                    <div class="field"><label>신분증 국가구분</label><select id="idCountry"><option value="KR">한국</option><option value="VN">베트남</option></select></div>
+                    <div class="field"><label>신분증번호</label><input id="nationalId" placeholder="한국: 990301-1111111 / 베트남: 0792123456123"></div>
+                    <div class="field field-permission"><label>주민등록번호 / 민감정보</label><input class="permission-field" readonly value="권한 필요"></div>
 
                     <div class="field"><label>성별</label><select id="cardGender"><option>남</option><option>여</option></select></div>
-                    <div class="field"><label>생년월일</label><input id="cardBirthday" type="date" value="1992-02-23"></div>
-                    <div class="field"><label>국적</label><input id="cardNationality" value="대한민국"></div>
+                    <div class="field"><label>생년월일</label><input id="cardBirthday" type="date"></div>
+                    <div class="field"><label>국적</label><input id="cardNationality"></div>
 
-                    <div class="field"><label>혈액형</label><input value="-"></div>
-                    <div class="field"><label>결혼여부</label><select><option>미혼</option><option>기혼</option></select></div>
+                    <div class="field"><label>혈액형</label><input id="cardBlood" value="-"></div>
+                    <div class="field"><label>결혼여부</label><select id="cardMarried"><option>미혼</option><option>기혼</option></select></div>
                     <div class="field"><label>결혼기념일</label><input id="cardWedding" type="date"></div>
 
-                    <div class="field"><label>은행</label><input class="permission-field" readonly value="권한 필요"></div>
-                    <div class="field"><label>계좌번호</label><input class="permission-field" readonly value="권한 필요"></div>
+                    <div class="field field-permission"><label>은행</label><input class="permission-field" readonly value="권한 필요"></div>
+                    <div class="field field-permission"><label>계좌번호</label><input class="permission-field" readonly value="권한 필요"></div>
                     <div class="field"><label>급여지급방식</label><select><option>월급</option></select></div>
                   </div>
+
+                  <div class="audit-box" id="detailAudit"></div>
                 </div>
 
                 <div id="org" class="detail-panel">
                   <div class="form-grid">
-                    <div class="field"><label>조직도 위치</label><input value="경영지원 > BIM파트"></div>
-                    <div class="field"><label>보고라인</label><input value="PM → GM → 본부장"></div>
+                    <div class="field"><label>조직도 위치</label><input id="orgPath"></div>
+                    <div class="field"><label>보고라인</label><input id="reportLine"></div>
                     <div class="field"><label>전자결재 권한</label><select><option>일반 사용자</option><option>승인자</option><option>관리자</option></select></div>
-                    <div class="field"><label>PM 권한</label><select><option>사용</option><option>미사용</option></select></div>
-                    <div class="field"><label>GM 권한</label><select><option>미사용</option><option>사용</option></select></div>
-                    <div class="field"><label>시스템 관리자</label><select><option>미사용</option><option>사용</option></select></div>
+                    <div class="field"><label>PM 여부</label><select id="pmRole"><option>미사용</option><option>사용</option></select></div>
+                    <div class="field"><label>GM 여부</label><select><option>미사용</option><option>사용</option></select></div>
+                    <div class="field"><label>겸직/중복부서</label><input id="multiDept"></div>
                   </div>
                 </div>
 
                 <div id="history" class="detail-panel">
                   <div class="history-group">
-                    <h3>입사 / 퇴사 / 재입사 이력</h3>
+                    <h3>입사 / 퇴사 / 재입사 / 수습전환 이력</h3>
                     <div class="table-wrap">
-                      <table>
-                        <thead><tr><th>구분</th><th>이전값</th><th>이후값</th><th>변경일</th><th>변경사유</th><th>처리자</th></tr></thead>
-                        <tbody id="joinHistoryBody"></tbody>
-                      </table>
+                      <table><thead><tr><th>구분</th><th>이전값</th><th>이후값</th><th>변경일</th><th>변경사유</th><th>처리자</th></tr></thead><tbody id="joinHistoryBody"></tbody></table>
                     </div>
                   </div>
 
                   <div class="history-group">
                     <h3>소속 / 부서 / 직위 / 직책 이력</h3>
                     <div class="table-wrap">
-                      <table>
-                        <thead><tr><th>구분</th><th>이전값</th><th>이후값</th><th>변경일</th><th>변경사유</th><th>처리자</th></tr></thead>
-                        <tbody id="orgHistoryBody"></tbody>
-                      </table>
+                      <table><thead><tr><th>구분</th><th>이전값</th><th>이후값</th><th>변경일</th><th>변경사유</th><th>처리자</th></tr></thead><tbody id="orgHistoryBody"></tbody></table>
                     </div>
                   </div>
 
                   <div class="history-group">
-                    <h3>휴직 이력</h3>
+                    <h3>출산전후 / 육아 / 병가 / 무급 휴직 이력</h3>
                     <div class="table-wrap">
-                      <table>
-                        <thead><tr><th>휴직구분</th><th>이전값</th><th>이후값</th><th>변경일</th><th>변경사유</th><th>처리자</th></tr></thead>
-                        <tbody id="leaveHistoryBody"></tbody>
-                      </table>
+                      <table><thead><tr><th>휴직구분</th><th>이전값</th><th>이후값</th><th>변경일</th><th>변경사유</th><th>처리자</th></tr></thead><tbody id="leaveHistoryBody"></tbody></table>
                     </div>
                   </div>
                 </div>
 
-                <div id="eval" class="detail-panel table-wrap">
+                <div id="eval" class="detail-panel table-wrap field-permission">
                   <table>
                     <thead><tr><th>평가년도</th><th>역량평가</th><th>업적평가</th><th>종합평가</th><th>연봉등급</th><th>인상률</th><th>최종승인자</th><th>비고</th></tr></thead>
                     <tbody>
@@ -362,32 +355,46 @@
                   </table>
                 </div>
 
-                <div id="career" class="detail-panel table-wrap">
+                <div id="repeat" class="detail-panel">
+                  <div class="repeat-actions">
+                    <button class="btn btn-line" onclick="showToast('학력 행 추가 예시입니다.')">+ 학력</button>
+                    <button class="btn btn-line" onclick="showToast('경력 행 추가 예시입니다.')">+ 경력</button>
+                    <button class="btn btn-line" onclick="showToast('자격증 행 추가 예시입니다.')">+ 자격증</button>
+                    <button class="btn btn-line" onclick="showToast('부양가족 행 추가 예시입니다.')">+ 부양가족</button>
+                  </div>
+                  <div class="table-wrap">
+                    <table>
+                      <thead><tr><th>구분</th><th>내용</th><th>시작일</th><th>종료일</th><th>기간</th><th>첨부</th><th>비고</th></tr></thead>
+                      <tbody id="repeatBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div id="assetDetail" class="detail-panel table-wrap">
                   <table>
-                    <thead><tr><th>구분</th><th>내용</th><th>기간/취득일</th><th>첨부</th><th>비고</th></tr></thead>
-                    <tbody>
-                      <tr><td>학력</td><td>대학교 / 전공명</td><td>-</td><td><span class="badge blue">첨부 가능</span></td><td>졸업</td></tr>
-                      <tr><td>경력</td><td>이전 회사 경력</td><td>-</td><td><span class="badge blue">첨부 가능</span></td><td>경력년수 관리</td></tr>
-                      <tr><td>자격증</td><td>관련 자격증</td><td>-</td><td><span class="badge blue">첨부 가능</span></td><td>만료일 관리</td></tr>
-                      <tr><td>외국어</td><td>영어 / 베트남어</td><td>-</td><td><span class="badge gray">선택</span></td><td>회화·작문·독해</td></tr>
-                    </tbody>
+                    <thead><tr><th>자산구분</th><th>자산명</th><th>관리번호</th><th>지급일</th><th>반납일</th><th>상태</th></tr></thead>
+                    <tbody id="employeeAssetBody"></tbody>
                   </table>
                 </div>
 
-                <div id="asset" class="detail-panel table-wrap">
-                  <table>
-                    <thead><tr><th>자산구분</th><th>자산명</th><th>관리번호</th><th>지급일</th><th>반납일</th><th>상태</th></tr></thead>
-                    <tbody>
-                      <tr><td>노트북</td><td>LG Gram</td><td>AS-2026-001</td><td>2026-01-05</td><td>-</td><td><span class="badge green">사용중</span></td></tr>
-                      <tr><td>라이선스</td><td>AutoCAD</td><td>LIC-2026-018</td><td>2026-01-01</td><td>-</td><td><span class="badge green">사용중</span></td></tr>
-                    </tbody>
-                  </table>
+                <div id="worklog" class="detail-panel">
+                  <div class="summary-grid">
+                    <div class="summary-box"><span>올해 휴가 사용</span><strong id="usedLeave">-</strong></div>
+                    <div class="summary-box"><span>올해 야근</span><strong id="otTotal">-</strong></div>
+                    <div class="summary-box"><span>주요 야근 프로젝트</span><strong id="mainOtProject">-</strong></div>
+                  </div>
+                  <div class="table-wrap">
+                    <table>
+                      <thead><tr><th>일자</th><th>구분</th><th>프로젝트</th><th>시간</th><th>사유</th><th>승인자</th></tr></thead>
+                      <tbody id="worklogBody"></tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <div id="cert" class="detail-panel">
                   <div class="approval-flow">
                     <div class="flow-item"><div><strong>재직증명서</strong><br><span>경영지원 승인 후 PDF 다운로드</span></div><button class="btn btn-primary">출력 신청</button></div>
-                    <div class="flow-item"><div><strong>원천징수영수증</strong><br><span>연도 선택 후 승인 필요</span></div><button class="btn btn-primary">출력 신청</button></div>
+                    <div class="flow-item field-permission"><div><strong>원천징수영수증</strong><br><span>권한자 승인 필요</span></div><button class="btn btn-line permission-text">권한 필요</button></div>
                     <div class="flow-item"><div><strong>경력증명서</strong><br><span>퇴사자 포함 발급 가능</span></div><button class="btn btn-line">신청 대기</button></div>
                   </div>
                 </div>
@@ -395,10 +402,7 @@
                 <div id="file" class="detail-panel table-wrap">
                   <table>
                     <thead><tr><th>파일구분</th><th>파일명</th><th>등록일</th><th>상태</th><th>다운로드</th><th>변경</th></tr></thead>
-                    <tbody>
-                      <tr><td>근로계약서</td><td>contract_park.pdf</td><td>2026-01-01</td><td><span class="badge green">승인완료</span></td><td><button class="btn btn-line">다운로드</button></td><td><button class="btn btn-line">변경신청</button></td></tr>
-                      <tr><td>자격증</td><td>certificate.pdf</td><td>2026-02-03</td><td><span class="badge yellow">승인대기</span></td><td><button class="btn btn-line">대기</button></td><td><button class="btn btn-line">변경신청</button></td></tr>
-                    </tbody>
+                    <tbody id="fileBody"></tbody>
                   </table>
                 </div>
 
@@ -408,74 +412,117 @@
         </div>
       </section>
 
-      <section id="admin" class="panel">
+      <section id="mini" class="panel">
+        <article class="card mini-card">
+          <div class="card-head">
+            <h2>개인용 미니 인사카드</h2>
+            <span class="badge blue">본인 및 직원 공개용</span>
+          </div>
+
+          <div class="card-body">
+            <div class="mini-profile">
+              <div class="profile-photo" id="miniPhoto">박</div>
+              <div>
+                <h2 id="miniName">박용진</h2>
+                <div class="profile-tags" id="miniTags"></div>
+              </div>
+            </div>
+
+            <div class="mini-grid">
+              <div class="mini-box"><span>회사</span><strong id="miniCompany">CON-COST</strong></div>
+              <div class="mini-box"><span>부서</span><strong id="miniDept">BIM파트</strong></div>
+              <div class="mini-box"><span>직급</span><strong id="miniGrade">수석</strong></div>
+              <div class="mini-box"><span>이메일</span><strong id="miniEmail">-</strong></div>
+              <div class="mini-box"><span>전화번호</span><strong id="miniPhone">-</strong></div>
+              <div class="mini-box"><span>근무지</span><strong id="miniWorkplace">-</strong></div>
+            </div>
+
+            <div class="notice">
+              개인용 화면에서는 평가, 연봉, 주민등록번호, 계좌번호, 민감 첨부파일 등은 표시하지 않습니다.
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="analysis" class="panel">
         <div class="kpi-grid">
-          <div class="kpi-card"><span>근태 유형</span><strong>12</strong></div>
-          <div class="kpi-card"><span>자동 정책</span><strong>7</strong></div>
-          <div class="kpi-card"><span>승인 선택형</span><strong>4</strong></div>
-          <div class="kpi-card"><span>증빙 필수</span><strong>5</strong></div>
-          <div class="kpi-card"><span>일정 연동</span><strong>2</strong></div>
+          <div class="kpi-card"><span>2026 입사</span><strong id="analysisJoin">0</strong></div>
+          <div class="kpi-card"><span>2026 퇴사/만료</span><strong id="analysisExit">0</strong></div>
+          <div class="kpi-card"><span>퇴사율</span><strong id="analysisExitRate">0%</strong></div>
+          <div class="kpi-card"><span>평균 근속</span><strong id="analysisAvgTenure">-</strong></div>
+          <div class="kpi-card"><span>평균 총경력</span><strong id="analysisAvgCareer">-</strong></div>
         </div>
 
+        <article class="card">
+          <div class="card-head">
+            <h2>기준일 직원 증감 분석</h2>
+            <div class="actions">
+              <input id="baseDate" type="date" value="2026-12-31" />
+              <button class="btn btn-primary" onclick="renderAnalysis()">분석</button>
+            </div>
+          </div>
+
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>회사</th><th>기준일 재직자</th><th>입사자</th><th>퇴사/계약만료</th><th>입사예정</th><th>휴직</th></tr></thead>
+              <tbody id="analysisBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h2>직원 총 경력 / 근속연수 보기</h2>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>성명</th><th>회사</th><th>입사일</th><th>현재 근속</th><th>외부경력</th><th>총 경력</th><th>재입사 이력</th></tr></thead>
+              <tbody id="careerSummaryBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="asset" class="panel">
+        <article class="card">
+          <div class="card-head">
+            <h2>자산대장</h2>
+            <button class="btn btn-primary" onclick="showToast('자산 등록 기능 예시입니다.')">+ 자산 등록</button>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>자산구분</th><th>자산명</th><th>관리번호</th><th>배정자</th><th>배정일</th><th>상태</th><th>관리</th></tr></thead>
+              <tbody id="assetLedgerBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="admin" class="panel">
         <div class="admin-layout">
           <section>
             <article class="card">
               <div class="card-head">
-                <h2>재직상태 코드 관리</h2>
-                <button class="btn btn-primary" onclick="showToast('재직상태 코드 추가 기능 예시입니다.')">+ 상태 추가</button>
+                <h2>항목별 권한 설정</h2>
+                <span class="badge blue">경영지원 내부 권한 분리</span>
               </div>
-
               <div class="card-body table-wrap">
                 <table>
-                  <thead>
-                    <tr>
-                      <th>상태명</th>
-                      <th>사용여부</th>
-                      <th>사원대장 노출</th>
-                      <th>기본조회 포함</th>
-                      <th>관리</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>입사예정</td><td><span class="badge green">사용</span></td><td>노출</td><td>미포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>재직</td><td><span class="badge green">사용</span></td><td>노출</td><td>포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>휴직</td><td><span class="badge yellow">사용</span></td><td>노출</td><td>미포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>퇴사예정</td><td><span class="badge yellow">사용</span></td><td>노출</td><td>미포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>퇴사</td><td><span class="badge gray">사용</span></td><td>노출</td><td>미포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>계약만료</td><td><span class="badge gray">사용</span></td><td>노출</td><td>미포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>입사취소</td><td><span class="badge red">사용</span></td><td>노출</td><td>미포함</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                  </tbody>
+                  <thead><tr><th>항목</th><th>대표/임원</th><th>경영지원 관리자</th><th>경영지원 일반</th><th>직원 본인</th><th>전체 직원</th></tr></thead>
+                  <tbody id="permissionBody"></tbody>
                 </table>
               </div>
             </article>
 
             <article class="card">
               <div class="card-head">
-                <h2>근태 유형 정책 관리</h2>
-                <button class="btn btn-primary" onclick="showToast('근태 유형 추가 기능 예시입니다.')">+ 유형 추가</button>
+                <h2>표시 순서 관리</h2>
+                <span class="badge gray">코드는 고정, 순서만 변경</span>
               </div>
-
               <div class="card-body table-wrap">
                 <table>
-                  <thead>
-                    <tr>
-                      <th>유형</th>
-                      <th>연차 차감</th>
-                      <th>일정 반영</th>
-                      <th>근무일 제외</th>
-                      <th>증빙서류</th>
-                      <th>사용 대상</th>
-                      <th>관리</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>연차</td><td><span class="badge red">자동 차감</span></td><td><span class="badge green">자동 반영</span></td><td><span class="badge green">제외</span></td><td><span class="badge blue">불필요</span></td><td>전체 직원</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>출장</td><td><span class="badge blue">차감 없음</span></td><td><span class="badge green">자동 반영</span></td><td><span class="badge blue">제외 안함</span></td><td><span class="badge blue">불필요</span></td><td>전체 직원</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>병가</td><td><span class="badge yellow">승인 시 선택</span></td><td><span class="badge green">자동 반영</span></td><td><span class="badge yellow">승인 시 선택</span></td><td><span class="badge red">필수</span></td><td>전체 직원</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>출산전후휴가</td><td><span class="badge blue">차감 없음</span></td><td><span class="badge green">자동 반영</span></td><td><span class="badge green">제외</span></td><td><span class="badge red">필수</span></td><td>전체 직원</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>육아휴직</td><td><span class="badge blue">차감 없음</span></td><td><span class="badge green">자동 반영</span></td><td><span class="badge green">제외</span></td><td><span class="badge red">필수</span></td><td>전체 직원</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                    <tr><td>무급휴직</td><td><span class="badge blue">차감 없음</span></td><td><span class="badge green">자동 반영</span></td><td><span class="badge green">제외</span></td><td><span class="badge red">필수</span></td><td>전체 직원</td><td><button class="btn btn-line admin-edit-btn">편집</button></td></tr>
-                  </tbody>
+                  <thead><tr><th>구분</th><th>코드</th><th>표시명</th><th>표시순서</th><th>사용여부</th><th>관리</th></tr></thead>
+                  <tbody id="orderBody"></tbody>
                 </table>
               </div>
             </article>
@@ -484,54 +531,16 @@
           <aside>
             <article class="card">
               <div class="card-head">
-                <h2>정책 편집 예시</h2>
+                <h2>정책 설정</h2>
               </div>
-
               <div class="card-body">
-                <div class="form-grid admin-form-grid">
-                  <div class="field">
-                    <label>유형명</label>
-                    <input value="병가" />
-                  </div>
-
-                  <div class="field">
-                    <label>사용 대상</label>
-                    <select>
-                      <option>전체 직원</option>
-                      <option>CON-COST</option>
-                      <option>Viet QS</option>
-                      <option>한국 법인</option>
-                      <option>베트남 법인</option>
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label>연차 차감 정책</label>
-                    <select>
-                      <option>승인 시 선택</option>
-                      <option>자동 차감</option>
-                      <option>차감 없음</option>
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label>근무일 제외 정책</label>
-                    <select>
-                      <option>승인 시 선택</option>
-                      <option>자동 제외</option>
-                      <option>제외 안함</option>
-                    </select>
-                  </div>
-                </div>
-
                 <div class="admin-toggle-list">
                   <div class="admin-toggle-item"><span>일정 자동 등록</span><label class="switch-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
                   <div class="admin-toggle-item"><span>증빙서류 필수</span><label class="switch-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-                  <div class="admin-toggle-item"><span>경영지원 최종 선택 허용</span><label class="switch-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-                  <div class="admin-toggle-item"><span>생일 사내 일정 캘린더 연동</span><label class="switch-toggle"><input id="birthdayCalendarToggle" type="checkbox" checked><span class="slider"></span></label></div>
-                  <div class="admin-toggle-item"><span>결혼기념일 사내 일정 캘린더 연동</span><label class="switch-toggle"><input id="weddingCalendarToggle" type="checkbox"><span class="slider"></span></label></div>
+                  <div class="admin-toggle-item"><span>생일 사내 일정 캘린더 연동</span><label class="switch-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+                  <div class="admin-toggle-item"><span>결혼기념일 사내 일정 캘린더 연동</span><label class="switch-toggle"><input type="checkbox"><span class="slider"></span></label></div>
+                  <div class="admin-toggle-item"><span>직원 본인 수정 허용</span><label class="switch-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
                 </div>
-
                 <div class="admin-save-area">
                   <button class="btn btn-line" onclick="showToast('정책 변경사항이 초기화되었습니다.')">초기화</button>
                   <button class="btn btn-primary" onclick="showToast('정책 설정이 저장되었습니다.')">정책 저장</button>
@@ -543,11 +552,10 @@
               <div class="card-head">
                 <h2>국가별 신분증번호 기준</h2>
               </div>
-
               <div class="card-body">
                 <div class="notice">
-                  한국: 990301-1111111<br>
-                  베트남: 0792123456123<br><br>
+                  한국: 990301-1111111<br />
+                  베트남: 0792123456123<br /><br />
                   국가코드에 따라 신분증번호 입력 형식과 검증 방식을 분리 관리합니다.
                 </div>
               </div>
@@ -560,19 +568,17 @@
         <article class="card">
           <div class="card-head">
             <h2>코드관리</h2>
-            <button class="btn btn-primary">+ 코드 추가</button>
+            <button class="btn btn-primary" onclick="showToast('코드 추가 기능 예시입니다.')">+ 코드 추가</button>
           </div>
-
           <div class="card-body table-wrap">
             <table>
-              <thead>
-                <tr><th>코드그룹</th><th>코드명</th><th>사용여부</th><th>정렬</th><th>관리자 수정</th><th>비고</th></tr>
-              </thead>
+              <thead><tr><th>코드그룹</th><th>코드명</th><th>사용여부</th><th>순서 변경</th><th>비고</th></tr></thead>
               <tbody>
-                <tr><td>재직상태</td><td>입사예정 / 재직 / 휴직 / 퇴사예정 / 퇴사 / 계약만료 / 입사취소</td><td><span class="badge green">사용</span></td><td>1</td><td>가능</td><td>사원대장 필터 연동</td></tr>
-                <tr><td>회사</td><td>CON-COST / Viet QS</td><td><span class="badge green">사용</span></td><td>2</td><td>가능</td><td>사원대장 노출</td></tr>
-                <tr><td>국가코드</td><td>+82 대한민국 / +84 베트남</td><td><span class="badge green">사용</span></td><td>3</td><td>가능</td><td>연락처·신분증번호 연동</td></tr>
-                <tr><td>부서</td><td>BIM파트 / Viet QS 구조팀 등</td><td><span class="badge green">사용</span></td><td>4</td><td>가능</td><td>조직도 연동</td></tr>
+                <tr><td>재직상태</td><td>입사예정 / 재직 / 휴직 / 퇴사예정 / 퇴사 / 계약만료 / 입사취소</td><td><span class="badge green">사용</span></td><td>가능</td><td>사원대장 필터 연동</td></tr>
+                <tr><td>회사</td><td>CON-COST / Viet QS</td><td><span class="badge green">사용</span></td><td>가능</td><td>사원대장 노출</td></tr>
+                <tr><td>국가코드</td><td>+82 대한민국 / +84 베트남</td><td><span class="badge green">사용</span></td><td>가능</td><td>연락처·신분증번호 연동</td></tr>
+                <tr><td>직급/직책</td><td>대표 / 부사장 / 상무 / 센터장 / 본부장 / 실장 / 팀장 / 수석 / 사원 / PM</td><td><span class="badge green">사용</span></td><td>가능</td><td>출력 순서 기준</td></tr>
+                <tr><td>인사발령</td><td>채용 / 퇴직 / 재입사 / 보직 / 전환배치 / 파견 / 휴직 / 복직</td><td><span class="badge green">사용</span></td><td>가능</td><td>인사변동 이력 드롭다운</td></tr>
               </tbody>
             </table>
           </div>
@@ -585,12 +591,9 @@
             <h2>증명서 / 첨부파일 승인 대기</h2>
             <span class="badge yellow">승인 필요</span>
           </div>
-
           <div class="card-body table-wrap">
             <table>
-              <thead>
-                <tr><th>요청일</th><th>요청자</th><th>구분</th><th>요청내용</th><th>상태</th><th>처리</th></tr>
-              </thead>
+              <thead><tr><th>요청일</th><th>요청자</th><th>구분</th><th>요청내용</th><th>상태</th><th>처리</th></tr></thead>
               <tbody>
                 <tr><td>2026-04-27</td><td>박용진</td><td>재직증명서</td><td>PDF 출력 신청</td><td><span class="badge yellow">대기</span></td><td><button class="btn btn-primary">승인</button> <button class="btn btn-danger">반려</button></td></tr>
                 <tr><td>2026-04-27</td><td>Nguyen Van An(응우옌반안)</td><td>첨부파일</td><td>신분증 파일 교체</td><td><span class="badge yellow">대기</span></td><td><button class="btn btn-primary">승인</button> <button class="btn btn-danger">반려</button></td></tr>
@@ -620,8 +623,6 @@
           <div class="field"><label class="required">소속회사</label><select required><option>CON-COST</option><option>Viet QS</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label class="required">사번</label><input required placeholder="예: EMP-2026-001"><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label class="required">아이디</label><input required placeholder="중복 불가"><div class="error-text">필수 입력 항목입니다.</div></div>
-          <div class="field"><label class="required">부서</label><select required><option value="">선택</option><option>BIM파트</option><option>경영지원본부</option><option>Viet QS 구조팀</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
-          <div class="field"><label class="required">직급</label><select required><option value="">선택</option><option>입사예정</option><option>사원</option><option>수석</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label class="required">재직상태</label><select required><option>입사예정</option><option>재직</option><option>휴직</option><option>퇴사예정</option><option>퇴사</option><option>계약만료</option><option>입사취소</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label class="required">입사일</label><input type="date" required><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label class="required">이메일</label><input required placeholder="email@con-cost.com"><div class="error-text">필수 입력 항목입니다.</div></div>
@@ -639,6 +640,34 @@
       <div class="modal-foot">
         <button class="btn btn-line" onclick="closeModal()">취소</button>
         <button class="btn btn-primary" onclick="validateModal()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="excelModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>엑셀 일괄 업로드 미리보기</h2>
+        <button class="close" onclick="closeExcelModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="notice">
+          기존 재직자·퇴사자 데이터를 엑셀로 정리한 뒤 업로드하는 화면 예시입니다. 양식은 자유롭지만 컬럼명은 통일되어야 합니다.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>성명</th><th>회사</th><th>사번</th><th>부서</th><th>재직상태</th><th>오류여부</th></tr></thead>
+            <tbody>
+              <tr><td>홍길동</td><td>CON-COST</td><td>EMP-2026-010</td><td>BIM파트</td><td>입사예정</td><td><span class="badge green">정상</span></td></tr>
+              <tr><td>Tran Van Binh(쩐반빈)</td><td>Viet QS</td><td>VQS-2026-011</td><td>Viet QS 구조팀</td><td>재직</td><td><span class="badge green">정상</span></td></tr>
+              <tr><td>-</td><td>CON-COST</td><td>EMP-2026-012</td><td>마감팀</td><td>재직</td><td><span class="badge red">성명 누락</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-line" onclick="showToast('오류행 다운로드 예시입니다.')">오류행 다운로드</button>
+        <button class="btn btn-primary" onclick="showToast('정상행만 업로드 처리됩니다.')">정상행 업로드</button>
       </div>
     </div>
   </div>
