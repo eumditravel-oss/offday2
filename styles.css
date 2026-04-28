@@ -1007,3 +1007,82 @@ tr:hover td{background:#fbfdff}
   .org-overview-grid{grid-template-columns:1fr}
   .org-overview-fit{overflow:visible}
 }
+
+
+/* CON-COST 조직도: 중앙 기술본부 + 우측 개발/QC/클레임 배치 */
+.concost-fit{min-width:0;}
+.concost-exec{justify-content:center;}
+.concost-org-layout{
+  display:grid;
+  grid-template-columns:minmax(190px,.9fr) minmax(560px,2.6fr) minmax(220px,1fr);
+  gap:10px;
+  align-items:stretch;
+  height:430px;
+  overflow:hidden;
+}
+.concost-left,.concost-center,.concost-right{min-width:0;display:grid;gap:8px;}
+.concost-right{grid-template-rows:repeat(3,1fr);}
+.concost-org-layout .org-overview-card{min-height:0;margin:0;}
+.tech-main-card{border:2px solid #bfdbfe;background:#fbfdff;}
+.team-major-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  padding:8px;
+  height:calc(100% - 92px);
+  min-height:0;
+}
+.team-major-card{
+  border:1px solid #cfe0f7;
+  border-radius:16px;
+  background:#fff;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.team-major-title{
+  background:#dbeafe;
+  color:#0b4ac7;
+  font-weight:900;
+  text-align:center;
+  padding:8px 10px;
+  border-bottom:1px solid #cfe0f7;
+}
+.team-mid-grid{display:grid;grid-template-columns:1fr;gap:7px;padding:7px;min-height:0;flex:1;}
+.team-mid-grid.two-col{grid-template-columns:1fr 1fr;}
+.team-mid-card{
+  border:1px dashed #cbd5e1;
+  border-radius:14px;
+  background:#f8fafc;
+  overflow:hidden;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+.team-mid-title{
+  padding:7px 8px;
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+  color:#334155;
+  border-bottom:1px solid #e2e8f0;
+}
+.compact-members{
+  flex:1;
+  overflow:auto;
+  grid-template-columns:repeat(auto-fit,minmax(82px,1fr));
+  align-content:start;
+}
+.concost-org-layout .org-overview-members{overflow:auto;}
+.concost-org-layout .org-mini-person{min-height:48px;padding:5px 6px;}
+.concost-org-layout .org-mini-person span{font-size:10px;}
+.concost-org-layout .org-mini-person strong{font-size:11px;}
+.concost-org-layout .org-mini-person small{font-size:9px;}
+.vietqs-grid{grid-template-columns:repeat(4,minmax(230px,1fr));}
+
+@media(max-width:1280px){
+  .concost-org-layout{grid-template-columns:1fr;height:auto;overflow:visible;}
+  .concost-right{grid-template-rows:auto;}
+  .team-major-grid,.team-mid-grid.two-col{grid-template-columns:1fr;}
+}
