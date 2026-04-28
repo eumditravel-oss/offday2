@@ -14,14 +14,14 @@ const employees = [
   {
     empNo: "EMP-2021-014",
     name: "김철수",
-    id: "tykim",
+    id: "chkim",
     dept: "경영지원본부",
     grade: "매니저",
     status: "재직",
     join: "2021-03-15",
     eval: "A-",
     project: 3,
-    email: "tykim@con-cost.com"
+    email: "chkim@con-cost.com"
   },
   {
     empNo: "EMP-2024-033",
