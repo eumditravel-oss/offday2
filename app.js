@@ -1,3 +1,17 @@
+const gradeOrder = {
+  "대표": 1,
+  "부사장": 2,
+  "상무": 3,
+  "센터장": 4,
+  "본부장": 5,
+  "실장": 6,
+  "팀장": 7,
+  "수석": 8,
+  "매니저": 9,
+  "사원": 10,
+  "입사예정": 99
+};
+
 const employees = [
   {
     empNo: "EMP-2018-001",
@@ -23,6 +37,20 @@ const employees = [
     wedding: "",
     nationality: "대한민국",
     workplace: "서울 본사",
+    address: "서울특별시 강북구",
+    emergency: "010-0000-0000",
+    externalCareerMonths: 24,
+    usedLeave: "7일",
+    otTotal: "18시간",
+    mainOtProject: "A-101 BIM 검토",
+    orgPath: "경영지원 > BIM파트",
+    reportLine: "PM → GM → 본부장",
+    pmRole: "사용",
+    multiDept: "개발지원 TF",
+    audit: {
+      basic: "등록자: 경영지원 / 최종수정자: 박용진 / 최종수정일: 2026-04-28 / 수정항목: 휴대폰",
+      detail: "등록자: 경영지원 / 최종수정자: 경영지원 / 최종수정일: 2026-04-20 / 수정항목: 신분증번호"
+    },
     histories: {
       join: [
         { type: "입사", before: "-", after: "재직", date: "2018-04-01", reason: "신규 입사", manager: "경영지원" }
@@ -34,7 +62,21 @@ const employees = [
       leave: [
         { type: "병가", before: "정상근무", after: "병가 3일", date: "2024-06-10", reason: "진단서 제출", manager: "경영지원" }
       ]
-    }
+    },
+    repeat: [
+      { type: "학력", content: "대학교 / 전공명", start: "2011-03-01", end: "2015-02-28", period: "4년", file: "졸업증명서.pdf", note: "졸업" },
+      { type: "경력", content: "이전 회사 구조팀", start: "2015-03-01", end: "2017-02-28", period: "2년", file: "-", note: "외부경력" },
+      { type: "자격증", content: "관련 자격증", start: "2020-01-01", end: "-", period: "-", file: "certificate.pdf", note: "만료일 관리" },
+      { type: "부양가족", content: "비상연락 가족", start: "-", end: "-", period: "-", file: "-", note: "단순 관리용" }
+    ],
+    worklogs: [
+      { date: "2026-04-10", type: "야근", project: "A-101 BIM 검토", time: "3시간", reason: "납품 전 QC", approver: "PM" },
+      { date: "2026-04-15", type: "야근", project: "A-101 BIM 검토", time: "2시간", reason: "오류 수정", approver: "GM" }
+    ],
+    files: [
+      { type: "근로계약서", name: "contract_park.pdf", date: "2026-01-01", status: "승인완료" },
+      { type: "자격증", name: "certificate.pdf", date: "2026-02-03", status: "승인대기" }
+    ]
   },
   {
     empNo: "EMP-2021-014",
@@ -60,11 +102,34 @@ const employees = [
     wedding: "2020-05-20",
     nationality: "대한민국",
     workplace: "서울 본사",
+    address: "서울특별시",
+    emergency: "010-1111-0000",
+    externalCareerMonths: 36,
+    usedLeave: "5일",
+    otTotal: "6시간",
+    mainOtProject: "경영지원 세팅",
+    orgPath: "경영지원본부",
+    reportLine: "본부장",
+    pmRole: "미사용",
+    multiDept: "-",
+    audit: {
+      basic: "등록자: 경영지원 / 최종수정자: 김철수 / 최종수정일: 2026-04-21 / 수정항목: 주소",
+      detail: "등록자: 경영지원 / 최종수정자: 경영지원 / 최종수정일: 2026-04-21 / 수정항목: 계좌"
+    },
     histories: {
       join: [{ type: "입사", before: "-", after: "재직", date: "2021-03-15", reason: "신규 입사", manager: "경영지원" }],
       org: [{ type: "직책", before: "사원", after: "매니저", date: "2024-01-01", reason: "승진", manager: "경영지원" }],
       leave: []
-    }
+    },
+    repeat: [
+      { type: "경력", content: "이전 회사 총무팀", start: "2018-01-01", end: "2020-12-31", period: "3년", file: "-", note: "외부경력" }
+    ],
+    worklogs: [
+      { date: "2026-03-12", type: "야근", project: "그룹웨어 검토", time: "2시간", reason: "자료 정리", approver: "본부장" }
+    ],
+    files: [
+      { type: "근로계약서", name: "contract_kim.pdf", date: "2021-03-15", status: "승인완료" }
+    ]
   },
   {
     empNo: "VQS-2024-033",
@@ -90,11 +155,37 @@ const employees = [
     wedding: "",
     nationality: "베트남",
     workplace: "베트남 지사",
+    address: "Ho Chi Minh",
+    emergency: "0987-000-000",
+    externalCareerMonths: 12,
+    usedLeave: "3일",
+    otTotal: "12시간",
+    mainOtProject: "VQS-STRUCT-22",
+    orgPath: "Viet QS > 구조팀",
+    reportLine: "팀장 → 센터장",
+    pmRole: "미사용",
+    multiDept: "-",
+    audit: {
+      basic: "등록자: HR Manager / 최종수정자: HR Manager / 최종수정일: 2026-04-22 / 수정항목: 연락처",
+      detail: "등록자: HR Manager / 최종수정자: HR Manager / 최종수정일: 2026-04-22 / 수정항목: 신분증번호"
+    },
     histories: {
-      join: [{ type: "입사", before: "-", after: "재직", date: "2024-09-01", reason: "Viet QS 신규 채용", manager: "HR Manager" }],
+      join: [
+        { type: "입사", before: "-", after: "수습", date: "2024-09-01", reason: "Viet QS 신규 채용", manager: "HR Manager" },
+        { type: "수습전환", before: "수습", after: "정규직", date: "2024-11-01", reason: "2개월 수습 종료", manager: "HR Manager" }
+      ],
       org: [{ type: "소속", before: "-", after: "Viet QS 구조팀", date: "2024-09-01", reason: "초기 배치", manager: "HR Manager" }],
       leave: []
-    }
+    },
+    repeat: [
+      { type: "경력", content: "Local QS Office", start: "2023-01-01", end: "2023-12-31", period: "1년", file: "-", note: "외부경력" }
+    ],
+    worklogs: [
+      { date: "2026-04-07", type: "야근", project: "VQS-STRUCT-22", time: "4시간", reason: "납품 대응", approver: "팀장" }
+    ],
+    files: [
+      { type: "신분증", name: "id_an.pdf", date: "2024-09-01", status: "승인완료" }
+    ]
   },
   {
     empNo: "EMP-2026-002",
@@ -120,11 +211,28 @@ const employees = [
     wedding: "",
     nationality: "대한민국",
     workplace: "서울 본사",
+    address: "",
+    emergency: "",
+    externalCareerMonths: 0,
+    usedLeave: "-",
+    otTotal: "-",
+    mainOtProject: "-",
+    orgPath: "마감팀",
+    reportLine: "팀장",
+    pmRole: "미사용",
+    multiDept: "-",
+    audit: {
+      basic: "등록자: 경영지원 / 최종수정자: 경영지원 / 최종수정일: 2026-04-27 / 수정항목: 신규등록",
+      detail: "등록자: - / 최종수정자: - / 최종수정일: -"
+    },
     histories: {
       join: [{ type: "입사예정", before: "-", after: "입사예정", date: "2026-04-27", reason: "채용 확정", manager: "경영지원" }],
       org: [],
       leave: []
-    }
+    },
+    repeat: [],
+    worklogs: [],
+    files: []
   },
   {
     empNo: "VQS-2023-021",
@@ -133,7 +241,7 @@ const employees = [
     koreanName: "쩐티마이",
     id: "maitran",
     company: "Viet QS",
-    dept: "Viet QS 구조팀",
+    dept: "Viet QS 마감1팀",
     grade: "팀장",
     position: "팀장",
     status: "계약만료",
@@ -150,13 +258,68 @@ const employees = [
     wedding: "2018-11-11",
     nationality: "베트남",
     workplace: "베트남 지사",
+    address: "Ho Chi Minh",
+    emergency: "0912-000-000",
+    externalCareerMonths: 48,
+    usedLeave: "9일",
+    otTotal: "0시간",
+    mainOtProject: "-",
+    orgPath: "Viet QS > 마감1팀",
+    reportLine: "센터장",
+    pmRole: "사용",
+    multiDept: "-",
+    audit: {
+      basic: "등록자: HR Manager / 최종수정자: HR Manager / 최종수정일: 2026-01-09 / 수정항목: 계약만료",
+      detail: "등록자: HR Manager / 최종수정자: HR Manager / 최종수정일: 2025-08-01"
+    },
     histories: {
       join: [{ type: "계약만료", before: "재직", after: "계약만료", date: "2026-01-09", reason: "계약기간 종료", manager: "HR Manager" }],
       org: [{ type: "직책", before: "팀원", after: "팀장", date: "2024-06-01", reason: "업무역량 평가", manager: "HR Manager" }],
       leave: [{ type: "무급휴직", before: "정상근무", after: "무급휴직 14일", date: "2025-08-01", reason: "개인 사유", manager: "HR Manager" }]
-    }
+    },
+    repeat: [
+      { type: "경력", content: "Local Design Office", start: "2019-01-01", end: "2022-12-31", period: "4년", file: "-", note: "외부경력" }
+    ],
+    worklogs: [],
+    files: [
+      { type: "계약서", name: "contract_mai.pdf", date: "2023-01-10", status: "승인완료" }
+    ]
   }
 ];
+
+const assetLedger = [
+  { category: "노트북", name: "LG Gram", code: "AS-2026-001", owner: "박용진", date: "2026-01-05", status: "사용중" },
+  { category: "라이선스", name: "AutoCAD", code: "LIC-2026-018", owner: "박용진", date: "2026-01-01", status: "사용중" },
+  { category: "모니터", name: "Dell 27", code: "MN-2025-012", owner: "Nguyen Van An", date: "2025-03-02", status: "사용중" },
+  { category: "노트북", name: "Lenovo ThinkPad", code: "AS-2024-021", owner: "Tran Thi Mai", date: "2024-01-10", status: "반납대기" }
+];
+
+const permissionRows = [
+  ["기본정보", "보기/수정", "보기/수정", "보기", "본인 수정", "일부 공개"],
+  ["상세정보", "보기/수정", "보기/수정", "일부 보기", "본인 수정", "비공개"],
+  ["평가/연봉", "보기", "보기", "비공개", "비공개", "비공개"],
+  ["주민등록번호/신분증", "보기", "보기/수정", "비공개", "비공개", "비공개"],
+  ["계좌정보", "보기", "보기/수정", "비공개", "비공개", "비공개"],
+  ["인사변동이력", "보기", "보기/수정", "보기", "일부 보기", "비공개"],
+  ["자산관리", "보기", "보기/수정", "보기", "본인 보기", "비공개"]
+];
+
+const orderRows = [
+  ["직급", "G001", "대표", 1, "사용"],
+  ["직급", "G002", "부사장", 2, "사용"],
+  ["직급", "G003", "상무", 3, "사용"],
+  ["직급", "G004", "센터장", 4, "사용"],
+  ["직급", "G005", "본부장", 5, "사용"],
+  ["직급", "G006", "실장", 6, "사용"],
+  ["직급", "G007", "팀장", 7, "사용"],
+  ["직급", "G008", "수석", 8, "사용"],
+  ["직책", "R001", "PM", 20, "사용"],
+  ["직책", "R002", "파트장", 21, "사용"]
+];
+
+let selectedEmployeeId = employees[0].empNo;
+let currentSortKey = "gradeOrder";
+let sortDirection = 1;
 
 const mainTabs = document.querySelectorAll(".menu-tab");
 const panels = document.querySelectorAll(".panel");
@@ -199,7 +362,6 @@ function statusBadge(status) {
     "계약만료": "gray",
     "입사취소": "red"
   };
-
   return `<span class="badge ${map[status] || "gray"}">${status}</span>`;
 }
 
@@ -208,30 +370,72 @@ function companyBadge(company) {
   return `<span class="company-chip ${cls}">${company}</span>`;
 }
 
-function renderKpis() {
-  const total = employees.length;
-  const concost = employees.filter(e => e.company === "CON-COST").length;
-  const vietqs = employees.filter(e => e.company === "Viet QS").length;
-  const active = employees.filter(e => e.status === "재직").length;
-  const expected = employees.filter(e => e.status === "입사예정").length;
-
-  setText("kpiTotal", total);
-  setText("kpiConcost", concost);
-  setText("kpiVietqs", vietqs);
-  setText("kpiActive", active);
-  setText("kpiExpected", expected);
-}
-
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+function setFormValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value || "";
+}
+
+function monthDiff(start, end = new Date()) {
+  if (!start) return 0;
+  const s = new Date(start);
+  const e = new Date(end);
+  return Math.max(0, (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()));
+}
+
+function formatMonths(months) {
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  if (y === 0) return `${m}개월`;
+  if (m === 0) return `${y}년`;
+  return `${y}년 ${m}개월`;
+}
+
+function renderKpis() {
+  setText("kpiTotal", employees.length);
+  setText("kpiConcost", employees.filter(e => e.company === "CON-COST").length);
+  setText("kpiVietqs", employees.filter(e => e.company === "Viet QS").length);
+  setText("kpiActive", employees.filter(e => e.status === "재직").length);
+  setText("kpiExpected", employees.filter(e => e.status === "입사예정").length);
+}
+
+function getSortValue(emp, key) {
+  if (key === "name") return displayName(emp);
+  if (key === "gradeOrder") return gradeOrder[emp.grade] || 999;
+  return emp[key] || "";
+}
+
+function sortList(list) {
+  return [...list].sort((a, b) => {
+    const av = getSortValue(a, currentSortKey);
+    const bv = getSortValue(b, currentSortKey);
+
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * sortDirection;
+    return String(av).localeCompare(String(bv), "ko") * sortDirection;
+  });
+}
+
+function toggleSort(key) {
+  if (currentSortKey === key) {
+    sortDirection *= -1;
+  } else {
+    currentSortKey = key;
+    sortDirection = 1;
+  }
+  applyLedgerFilters(false);
 }
 
 function renderLedger(list = employees) {
   const tbody = document.getElementById("ledgerBody");
   if (!tbody) return;
 
-  tbody.innerHTML = list.map(emp => `
+  const sorted = sortList(list);
+
+  tbody.innerHTML = sorted.map(emp => `
     <tr>
       <td><div class="emp-photo">${displayName(emp)[0]}</div></td>
       <td>${emp.empNo}</td>
@@ -253,8 +457,8 @@ function renderEmployeeList(list = employees) {
   const box = document.getElementById("employeeList");
   if (!box) return;
 
-  box.innerHTML = list.map((emp, index) => `
-    <div class="employee-item ${index === 0 ? "active" : ""}" onclick="selectEmployee('${emp.empNo}', this)">
+  box.innerHTML = list.map(emp => `
+    <div class="employee-item ${emp.empNo === selectedEmployeeId ? "active" : ""}" onclick="selectEmployee('${emp.empNo}', this)">
       <div class="emp-photo">${displayName(emp)[0]}</div>
       <div>
         <div class="emp-name">${displayName(emp)}</div>
@@ -268,11 +472,15 @@ function selectEmployee(empNo, el) {
   const emp = employees.find(e => e.empNo === empNo);
   if (!emp) return;
 
+  selectedEmployeeId = empNo;
+
   document.querySelectorAll(".employee-item").forEach(item => item.classList.remove("active"));
   if (el) el.classList.add("active");
 
   setText("profilePhoto", displayName(emp)[0]);
   setText("profileName", displayName(emp));
+  setText("quickTenure", formatMonths(monthDiff(emp.join)));
+  setText("quickCareer", formatMonths(monthDiff(emp.join) + emp.externalCareerMonths));
   setText("quickProject", emp.project);
   setText("quickGrade", emp.eval);
 
@@ -305,18 +513,27 @@ function selectEmployee(empNo, el) {
   setFormValue("cardEmail", emp.email);
   setFormValue("phoneCountry", emp.phoneCountry);
   setFormValue("phoneInput", emp.phone);
+  setFormValue("cardAddress", emp.address);
+  setFormValue("cardEmergency", emp.emergency);
   setFormValue("idCountry", emp.idCountry);
   setFormValue("nationalId", emp.nationalId);
   setFormValue("cardBirthday", emp.birthday);
   setFormValue("cardWedding", emp.wedding);
   setFormValue("cardNationality", emp.nationality);
+  setFormValue("orgPath", emp.orgPath);
+  setFormValue("reportLine", emp.reportLine);
+  setFormValue("pmRole", emp.pmRole);
+  setFormValue("multiDept", emp.multiDept);
+
+  setText("basicAudit", emp.audit.basic);
+  setText("detailAudit", emp.audit.detail);
 
   renderHistories(emp);
-}
-
-function setFormValue(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.value = value || "";
+  renderRepeat(emp);
+  renderEmployeeAssets(emp);
+  renderWorklogs(emp);
+  renderFiles(emp);
+  renderMiniCard(emp);
 }
 
 function renderHistories(emp) {
@@ -346,6 +563,118 @@ function renderHistoryRows(targetId, rows) {
   `).join("");
 }
 
+function renderRepeat(emp) {
+  const tbody = document.getElementById("repeatBody");
+  if (!tbody) return;
+
+  if (!emp.repeat || emp.repeat.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7">등록된 반복 정보가 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = emp.repeat.map(row => `
+    <tr>
+      <td>${row.type}</td>
+      <td>${row.content}</td>
+      <td>${row.start}</td>
+      <td>${row.end}</td>
+      <td>${row.period}</td>
+      <td>${row.file}</td>
+      <td>${row.note}</td>
+    </tr>
+  `).join("");
+}
+
+function renderEmployeeAssets(emp) {
+  const tbody = document.getElementById("employeeAssetBody");
+  if (!tbody) return;
+
+  const assets = assetLedger.filter(a => a.owner === emp.name || a.owner === emp.localName || a.owner === displayName(emp));
+
+  if (assets.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">배정된 자산이 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = assets.map(a => `
+    <tr>
+      <td>${a.category}</td>
+      <td>${a.name}</td>
+      <td>${a.code}</td>
+      <td>${a.date}</td>
+      <td>-</td>
+      <td><span class="badge green">${a.status}</span></td>
+    </tr>
+  `).join("");
+}
+
+function renderWorklogs(emp) {
+  setText("usedLeave", emp.usedLeave);
+  setText("otTotal", emp.otTotal);
+  setText("mainOtProject", emp.mainOtProject);
+
+  const tbody = document.getElementById("worklogBody");
+  if (!tbody) return;
+
+  if (!emp.worklogs || emp.worklogs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">등록된 업무/야근 이력이 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = emp.worklogs.map(row => `
+    <tr>
+      <td>${row.date}</td>
+      <td>${row.type}</td>
+      <td>${row.project}</td>
+      <td>${row.time}</td>
+      <td>${row.reason}</td>
+      <td>${row.approver}</td>
+    </tr>
+  `).join("");
+}
+
+function renderFiles(emp) {
+  const tbody = document.getElementById("fileBody");
+  if (!tbody) return;
+
+  if (!emp.files || emp.files.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">등록된 파일이 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = emp.files.map(file => `
+    <tr>
+      <td>${file.type}</td>
+      <td>${file.name}</td>
+      <td>${file.date}</td>
+      <td><span class="badge ${file.status === "승인완료" ? "green" : "yellow"}">${file.status}</span></td>
+      <td><button class="btn btn-line">다운로드</button></td>
+      <td><button class="btn btn-line">변경신청</button></td>
+    </tr>
+  `).join("");
+}
+
+function renderMiniCard(emp) {
+  setText("miniPhoto", displayName(emp)[0]);
+  setText("miniName", displayName(emp));
+  setText("miniCompany", emp.company);
+  setText("miniDept", emp.dept);
+  setText("miniGrade", emp.grade);
+  setText("miniEmail", emp.email);
+  setText("miniPhone", emp.phone);
+  setText("miniWorkplace", emp.workplace);
+
+  const miniTags = document.getElementById("miniTags");
+  if (miniTags) {
+    miniTags.innerHTML = `
+      ${companyBadge(emp.company)}
+      <span class="badge blue">${emp.dept}</span>
+      <span class="badge gray">${emp.grade}</span>
+      ${statusBadge(emp.status)}
+    `;
+  }
+}
+
 function openCard(empNo) {
   const cardTab = document.querySelector('[data-main="card"]');
   if (!cardTab) return;
@@ -362,6 +691,12 @@ function openCard(empNo) {
       selectEmployee(empNo);
     }
   }, 0);
+}
+
+function openMiniCard() {
+  document.querySelector('[data-main="mini"]').click();
+  const emp = employees.find(e => e.empNo === selectedEmployeeId);
+  if (emp) renderMiniCard(emp);
 }
 
 function filterEmployees(keyword = "") {
@@ -384,45 +719,23 @@ function filterEmployees(keyword = "") {
       emp.email
     ].join(" ").toLowerCase();
 
-    const matchKeyword = !q || searchTarget.includes(q);
-    const matchCompany = company === "전체" || emp.company === company;
-    const matchDept = dept === "전체" || emp.dept === dept;
-    const matchGrade = grade === "전체" || emp.grade === grade;
-    const matchStatus = status === "전체" || emp.status === status;
-    const matchYear = year === "전체" || emp.join.startsWith(year);
-
-    return matchKeyword && matchCompany && matchDept && matchGrade && matchStatus && matchYear;
+    return (!q || searchTarget.includes(q)) &&
+      (company === "전체" || emp.company === company) &&
+      (dept === "전체" || emp.dept === dept) &&
+      (grade === "전체" || emp.grade === grade) &&
+      (status === "전체" || emp.status === status) &&
+      (year === "전체" || emp.join.startsWith(year));
   });
 }
 
-function applyLedgerFilters() {
+function applyLedgerFilters(show = true) {
   const keyword = document.getElementById("ledgerSearch")?.value || "";
   renderLedger(filterEmployees(keyword));
-  showToast("검색 조건이 적용되었습니다.");
-}
-
-const ledgerSearch = document.getElementById("ledgerSearch");
-if (ledgerSearch) {
-  ledgerSearch.addEventListener("input", e => {
-    renderLedger(filterEmployees(e.target.value));
-  });
-}
-
-["companyFilter", "deptFilter", "gradeFilter", "statusFilter", "yearFilter"].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener("change", applyLedgerFilters);
-});
-
-const employeeSearch = document.getElementById("employeeSearch");
-if (employeeSearch) {
-  employeeSearch.addEventListener("input", e => {
-    renderEmployeeList(filterEmployeesForList(e.target.value));
-  });
+  if (show) showToast("검색 조건이 적용되었습니다.");
 }
 
 function filterEmployeesForList(keyword) {
   const q = keyword.trim().toLowerCase();
-
   return employees.filter(emp =>
     emp.name.toLowerCase().includes(q) ||
     emp.localName.toLowerCase().includes(q) ||
@@ -433,6 +746,111 @@ function filterEmployeesForList(keyword) {
     emp.company.toLowerCase().includes(q) ||
     emp.email.toLowerCase().includes(q)
   );
+}
+
+function renderAnalysis() {
+  const body = document.getElementById("analysisBody");
+  const careerBody = document.getElementById("careerSummaryBody");
+  if (!body || !careerBody) return;
+
+  const companies = ["CON-COST", "Viet QS"];
+  body.innerHTML = companies.map(company => {
+    const target = employees.filter(e => e.company === company);
+    const active = target.filter(e => e.status === "재직").length;
+    const join = target.filter(e => e.join.startsWith("2026")).length;
+    const exit = target.filter(e => ["퇴사", "계약만료"].includes(e.status)).length;
+    const expected = target.filter(e => e.status === "입사예정").length;
+    const leave = target.filter(e => e.status === "휴직").length;
+
+    return `
+      <tr>
+        <td>${company}</td>
+        <td>${active}</td>
+        <td>${join}</td>
+        <td>${exit}</td>
+        <td>${expected}</td>
+        <td>${leave}</td>
+      </tr>
+    `;
+  }).join("");
+
+  careerBody.innerHTML = employees.map(emp => {
+    const tenureMonths = monthDiff(emp.join);
+    const totalCareer = tenureMonths + emp.externalCareerMonths;
+    const rejoin = emp.histories.join.some(h => h.type === "재입사") ? "있음" : "없음";
+
+    return `
+      <tr>
+        <td>${displayName(emp)}</td>
+        <td>${companyBadge(emp.company)}</td>
+        <td>${emp.join}</td>
+        <td>${formatMonths(tenureMonths)}</td>
+        <td>${formatMonths(emp.externalCareerMonths)}</td>
+        <td>${formatMonths(totalCareer)}</td>
+        <td>${rejoin}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const join2026 = employees.filter(e => e.join.startsWith("2026")).length;
+  const exit2026 = employees.filter(e => ["퇴사", "계약만료"].includes(e.status)).length;
+  const avgTenure = Math.round(employees.reduce((sum, e) => sum + monthDiff(e.join), 0) / employees.length);
+  const avgCareer = Math.round(employees.reduce((sum, e) => sum + monthDiff(e.join) + e.externalCareerMonths, 0) / employees.length);
+
+  setText("analysisJoin", join2026);
+  setText("analysisExit", exit2026);
+  setText("analysisExitRate", `${Math.round((exit2026 / employees.length) * 100)}%`);
+  setText("analysisAvgTenure", formatMonths(avgTenure));
+  setText("analysisAvgCareer", formatMonths(avgCareer));
+}
+
+function renderAssetLedger() {
+  const tbody = document.getElementById("assetLedgerBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = assetLedger.map(a => `
+    <tr>
+      <td>${a.category}</td>
+      <td>${a.name}</td>
+      <td>${a.code}</td>
+      <td>${a.owner}</td>
+      <td>${a.date}</td>
+      <td><span class="badge ${a.status === "사용중" ? "green" : "yellow"}">${a.status}</span></td>
+      <td><button class="btn btn-line" onclick="showToast('자산 배정/반납 관리 예시입니다.')">관리</button></td>
+    </tr>
+  `).join("");
+}
+
+function renderPermissionRows() {
+  const tbody = document.getElementById("permissionBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = permissionRows.map(row => `
+    <tr>
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td>${row[4]}</td>
+      <td>${row[5]}</td>
+    </tr>
+  `).join("");
+}
+
+function renderOrderRows() {
+  const tbody = document.getElementById("orderBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = orderRows.map(row => `
+    <tr>
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td><span class="badge green">${row[4]}</span></td>
+      <td><button class="btn btn-line" onclick="showToast('표시순서 변경 예시입니다.')">↑↓</button></td>
+    </tr>
+  `).join("");
 }
 
 function validateRequired() {
@@ -451,11 +869,7 @@ function validateRequired() {
     }
   });
 
-  if (valid) {
-    showToast("필수 입력값 검증 완료. 저장 처리 예시입니다.");
-  } else {
-    showToast("* 필수 입력값을 확인해 주세요.");
-  }
+  showToast(valid ? "필수 입력값 검증 완료. 저장 처리 예시입니다." : "* 필수 입력값을 확인해 주세요.");
 }
 
 function validateModal() {
@@ -483,23 +897,27 @@ function validateModal() {
 }
 
 function openModal() {
-  const modal = document.getElementById("employeeModal");
-  if (modal) modal.classList.add("active");
+  document.getElementById("employeeModal")?.classList.add("active");
 }
 
 function closeModal() {
-  const modal = document.getElementById("employeeModal");
-  if (modal) modal.classList.remove("active");
+  document.getElementById("employeeModal")?.classList.remove("active");
+}
+
+function openExcelModal() {
+  document.getElementById("excelModal")?.classList.add("active");
+}
+
+function closeExcelModal() {
+  document.getElementById("excelModal")?.classList.remove("active");
 }
 
 function openPermissionModal() {
-  const modal = document.getElementById("permissionModal");
-  if (modal) modal.classList.add("active");
+  document.getElementById("permissionModal")?.classList.add("active");
 }
 
 function closePermissionModal() {
-  const modal = document.getElementById("permissionModal");
-  if (modal) modal.classList.remove("active");
+  document.getElementById("permissionModal")?.classList.remove("active");
 }
 
 function showToast(message) {
@@ -531,7 +949,6 @@ function formatPhoneByCountry(value, country) {
 function bindPhoneFormatter(inputSelector, countrySelector) {
   const input = document.querySelector(inputSelector);
   const country = document.querySelector(countrySelector);
-
   if (!input || !country) return;
 
   const apply = () => {
@@ -548,25 +965,21 @@ function bindPhoneFormatter(inputSelector, countrySelector) {
 function formatNationalId(value, country) {
   const digits = value.replace(/\D/g, "");
 
-  if (country === "VN") {
-    return digits.slice(0, 13);
-  }
-
+  if (country === "VN") return digits.slice(0, 13);
   if (digits.length <= 6) return digits;
+
   return `${digits.slice(0, 6)}-${digits.slice(6, 13)}`;
 }
 
 function bindNationalIdFormatter() {
   const input = document.getElementById("nationalId");
   const country = document.getElementById("idCountry");
-
   if (!input || !country) return;
 
-  const apply = () => {
+  input.addEventListener("input", () => {
     input.value = formatNationalId(input.value, country.value);
-  };
+  });
 
-  input.addEventListener("input", apply);
   country.addEventListener("change", () => {
     input.value = "";
     input.placeholder = country.value === "VN" ? "0792123456123" : "990301-1111111";
@@ -576,15 +989,11 @@ function bindNationalIdFormatter() {
 document.addEventListener("click", e => {
   const employeeModal = document.getElementById("employeeModal");
   const permissionModal = document.getElementById("permissionModal");
+  const excelModal = document.getElementById("excelModal");
 
   if (e.target === employeeModal) closeModal();
   if (e.target === permissionModal) closePermissionModal();
-});
-
-document.querySelectorAll(".admin-edit-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    showToast("정책 편집 화면 예시입니다.");
-  });
+  if (e.target === excelModal) closeExcelModal();
 });
 
 document.querySelectorAll(".switch-toggle input").forEach(toggle => {
@@ -593,9 +1002,28 @@ document.querySelectorAll(".switch-toggle input").forEach(toggle => {
   });
 });
 
-document.querySelectorAll(".permission-field, .permission-text").forEach(el => {
+document.querySelectorAll(".permission-field, .permission-text, .permission-card").forEach(el => {
   el.addEventListener("click", openPermissionModal);
 });
+
+const ledgerSearch = document.getElementById("ledgerSearch");
+if (ledgerSearch) {
+  ledgerSearch.addEventListener("input", e => {
+    renderLedger(filterEmployees(e.target.value));
+  });
+}
+
+["companyFilter", "deptFilter", "gradeFilter", "statusFilter", "yearFilter"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", () => applyLedgerFilters(false));
+});
+
+const employeeSearch = document.getElementById("employeeSearch");
+if (employeeSearch) {
+  employeeSearch.addEventListener("input", e => {
+    renderEmployeeList(filterEmployeesForList(e.target.value));
+  });
+}
 
 bindPhoneFormatter("#phoneInput", "#phoneCountry");
 bindPhoneFormatter(".modal-phone-input", ".modal-phone-country");
@@ -604,4 +1032,8 @@ bindNationalIdFormatter();
 renderKpis();
 renderLedger(filterEmployees(""));
 renderEmployeeList();
+renderAnalysis();
+renderAssetLedger();
+renderPermissionRows();
+renderOrderRows();
 selectEmployee("EMP-2018-001");
