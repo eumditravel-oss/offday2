@@ -1317,8 +1317,8 @@ selectEmployee("EMP-2018-001");
 const workPageMeta = {
   projectReceive: ["프로젝트 접수", "계약 및 기초자료 수집, 도면/내역서 접수, 프로젝트 유형과 특이사항을 관리합니다."],
   pmSchedule: ["PM 배정 / 일정", "PM 지정, 인원 배정, 일정 승인, 지연사유 결재 흐름을 관리합니다."],
-  quantityChecklist: ["수량산출 체크리스트", "Excel Grid 방식으로 프로젝트 초기 검토 및 수량산출 체크리스트를 자유롭게 추가·삭제합니다."],
-  qcReview: ["QC 검토 / 승인", "체크리스트 검토, 이의제기, 오류 소거, 최종 수량 검토를 관리합니다."],
+  quantityChecklist: ["QC 검토 / 승인", "수량산출 체크리스트는 QC 검토 / 승인 안에 포함됩니다."],
+  qcReview: ["QC 검토 / 승인", "수량산출 체크리스트, 체크리스트 검토, 이의제기, 오류 소거, 최종 수량 검토를 한 화면에서 관리합니다."],
   estimateCondition: ["견적조건 작성", "작업자와 PM이 작성한 견적조건을 결합하고 Excel로 내려받습니다."],
   deliveryData: ["납품 및 데이터관리", "차수별 납품자료와 다운로드 권한 승인 흐름을 관리합니다."],
   dailyReport: ["업무일지 / 진행률", "아침 업무 계획, 저녁 최종 업무일지, 진행률과 지연사유를 관리합니다."]
@@ -1371,7 +1371,7 @@ function switchWorkPanel(panelId) {
   const meta = workPageMeta[panelId] || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
   setText("workPageDesc", meta[1]);
-  if (panelId === "quantityChecklist") renderChecklistGrid();
+  if (panelId === "qcReview" || panelId === "quantityChecklist") renderChecklistGrid();
 }
 
 function getChecklistFilteredRows() {
