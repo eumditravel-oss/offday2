@@ -642,7 +642,6 @@
             <div class="side-title">업무관리 좌측 카테고리</div>
             <div class="side-group"><button class="side-main active" data-work-main="projectReceive">대분류 : 프로젝트 접수</button></div>
             <div class="side-group"><button class="side-main" data-work-main="pmSchedule">대분류 : PM 배정 / 일정</button></div>
-            <div class="side-group"><button class="side-main" data-work-main="quantityChecklist">대분류 : 수량산출 체크리스트</button></div>
             <div class="side-group"><button class="side-main" data-work-main="qcReview">대분류 : QC 검토 / 승인</button></div>
             <div class="side-group"><button class="side-main" data-work-main="estimateCondition">대분류 : 견적조건 작성</button></div>
             <div class="side-group"><button class="side-main" data-work-main="deliveryData">대분류 : 납품 및 데이터관리</button></div>
@@ -695,7 +694,16 @@
               </article>
             </section>
 
-            <section id="quantityChecklist" class="work-panel">
+            <section id="qcReview" class="work-panel">
+              <article class="card">
+                <div class="card-head">
+                  <div><h2>QC 검토 / 승인</h2><p class="subcopy">수량산출 체크리스트를 포함하여 오류 등록, 이의제기, 소거, 최종 승인을 한 화면에서 관리합니다.</p></div>
+                  <span class="badge yellow">체크리스트 포함</span>
+                </div>
+                <div class="card-body qc-review-guide">
+                  <div class="notice">수량산출 체크리스트는 QC 검토 / 승인 안에 포함됩니다. 체크 여부를 클릭하면 상태가 확인완료로 변경되고 작업자 처리 이력이 기록됩니다.</div>
+                </div>
+              </article>
               <article class="card checklist-card">
                 <div class="card-head">
                   <div><h2>수량산출 체크리스트 · Excel Grid</h2><p class="subcopy">도면 접수, 내역서/산출서/기준서 접수, 프로젝트 유형, 특이사항 정리 구간을 자유롭게 추가·삭제할 수 있습니다.</p></div>
@@ -712,10 +720,7 @@
                   <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>구분</th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>담당자</th><th>상태</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
                 </div>
               </article>
-            </section>
-
-            <section id="qcReview" class="work-panel">
-              <article class="card"><div class="card-head"><h2>QC 검토 / 승인</h2><span class="badge yellow">오류 등록 · 이의제기 · 소거</span></div><div class="card-body"><div class="approval-flow">
+              <article class="card"><div class="card-head"><h2>QC 승인 단계</h2><span class="badge yellow">오류 등록 · 이의제기 · 소거</span></div><div class="card-body"><div class="approval-flow">
                 <div class="flow-item"><div><strong>체크리스트 검토</strong><br><span>작업자 산출완료 자료 기반 오류 검토 후 작업자에게 전달</span></div><button class="btn btn-line">오류등록</button></div>
                 <div class="flow-item"><div><strong>체크리스트 확인</strong><br><span>오류가 맞으면 수정 후 확인 버튼으로 소거</span></div><button class="btn btn-line">확인</button></div>
                 <div class="flow-item"><div><strong>체크리스트 재확인</strong><br><span>이의제기 검토 후 납득 시 제외 처리</span></div><button class="btn btn-line">재확인</button></div>
