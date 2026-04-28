@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CON-COST Groupware | 사원대장 · 인사카드</title>
+
+<style>
+:root{
+  --bg:#f4f6fb;
+  --panel:#ffffff;
+  --text:#111827;
+  --muted:#64748b;
+  --line:#e5e7eb;
+  --line2:#dbe3ef;
+  --blue:#2563eb;
+  --blue2:#1d4ed8;
+  --sky:#eef6ff;
+  --green:#16a34a;
+  --red:#dc2626;
+  --yellow:#d97706;
+  --gray:#475569;
+  --radius:22px;
+  --shadow:0 14px 44px rgba(15,23,42,.06);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
+  font-size:14px;
+}
+
+button,input,select,textarea{
+  font-family:inherit;
+}
+
+.app{
+  min-height:100vh;
+}
+
+.topbar{
+  height:72px;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 34px;
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand-mark{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+}
+
+.brand-text strong{
+  display:block;
+  font-size:18px;
+  letter-spacing:-.5px;
+}
+
+.brand-text span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.top-tabs{
+  display:flex;
+  gap:22px;
+  font-weight:900;
+  color:#475569;
+}
+
+.top-tabs span{
+  cursor:pointer;
+}
+
+.top-tabs .active{
+  color:var(--blue);
+}
+
+.top-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.lang,.bell,.user{
+  border:1px solid var(--line2);
+  background:#fff;
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:900;
+  color:#334155;
+}
+
+.bell{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  position:relative;
+}
+
+.bell::after{
+  content:"3";
+  position:absolute;
+  top:-5px;
+  right:-5px;
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background:var(--red);
+  color:#fff;
+  font-size:11px;
+  display:grid;
+  place-items:center;
+}
+
+.content{
+  padding:28px 34px 46px;
+}
+
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin-bottom:22px;
+}
+
+.page-head h1{
+  font-size:30px;
+  letter-spacing:-1px;
+  margin-bottom:8px;
+}
+
+.page-head p{
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:0;
+  border-radius:13px;
+  padding:10px 15px;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.btn-primary{
+  background:var(--blue);
+  color:#fff;
+}
+
+.btn-primary:hover{
+  background:var(--blue2);
+}
+
+.btn-line{
+  background:#fff;
+  color:#334155;
+  border:1px solid var(--line2);
+}
+
+.btn-danger{
+  background:#fee2e2;
+  color:var(--red);
+}
+
+.menu-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:20px;
+}
+
+.menu-tab{
+  background:#fff;
+  border:1px solid var(--line2);
+  color:#475569;
+  padding:12px 18px;
+  border-radius:15px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.menu-tab.active{
+  background:var(--blue);
+  border-color:var(--blue);
+  color:#fff;
+}
+
+.panel{
+  display:none;
+}
+
+.panel.active{
+  display:block;
+}
+
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+  margin-bottom:18px;
+}
+
+.kpi-card{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+
+.kpi-card span{
+  display:block;
+  color:var(--muted);
+  font-weight:900;
+  font-size:12px;
+  margin-bottom:9px;
+}
+
+.kpi-card strong{
+  font-size:26px;
+  letter-spacing:-.7px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  margin-bottom:18px;
+}
+
+.card-head{
+  padding:17px 20px;
+  background:#fbfdff;
+  border-bottom:1px solid #edf2f7;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.card-head h2{
+  font-size:18px;
+  letter-spacing:-.4px;
+}
+
+.card-body{
+  padding:20px;
+}
+
+.filter-grid{
+  display:grid;
+  grid-template-columns:1.4fr repeat(5,1fr) auto;
+  gap:10px;
+  align-items:end;
+}
+
+.field label{
+  display:block;
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:7px;
+  color:#334155;
+}
+
+.required::after{
+  content:" *";
+  color:var(--red);
+}
+
+input,select,textarea{
+  width:100%;
+  border:1px solid var(--line2);
+  border-radius:13px;
+  padding:11px 12px;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+
+input:focus,select:focus,textarea:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+}
+
+input.invalid,select.invalid,textarea.invalid{
+  border-color:var(--red);
+  background:#fff7f7;
+}
+
+.error-text{
+  display:none;
+  color:var(--red);
+  font-size:12px;
+  font-weight:800;
+  margin-top:6px;
+}
+
+.invalid + .error-text{
+  display:block;
+}
+
+.table-wrap{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:980px;
+}
+
+th,td{
+  padding:13px 11px;
+  border-bottom:1px solid #edf2f7;
+  text-align:left;
+  vertical-align:middle;
+  font-size:13px;
+}
+
+th{
+  background:#f8fafc;
+  color:#475569;
+  font-weight:900;
+}
+
+tr:hover td{
+  background:#fbfdff;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.badge.green{background:#eaf7ef;color:var(--green)}
+.badge.red{background:#fee2e2;color:var(--red)}
+.badge.yellow{background:#fff7ed;color:var(--yellow)}
+.badge.blue{background:var(--sky);color:var(--blue)}
+.badge.gray{background:#f1f5f9;color:var(--gray)}
+
+.layout{
+  display:grid;
+  grid-template-columns:340px 1fr;
+  gap:18px;
+  align-items:start;
+}
+
+.employee-search{
+  margin-bottom:14px;
+}
+
+.employee-list{
+  display:grid;
+  gap:10px;
+  max-height:680px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.employee-item{
+  border:1px solid var(--line2);
+  background:#fff;
+  border-radius:18px;
+  padding:13px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  cursor:pointer;
+}
+
+.employee-item:hover{
+  border-color:#bfdbfe;
+}
+
+.employee-item.active{
+  border-color:var(--blue);
+  background:#f8fbff;
+  box-shadow:0 0 0 3px rgba(37,99,235,.06);
+}
+
+.emp-photo{
+  width:48px;
+  height:48px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  flex:0 0 auto;
+}
+
+.emp-name{
+  font-weight:900;
+  margin-bottom:4px;
+}
+
+.emp-meta{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+}
+
+.profile-head{
+  display:grid;
+  grid-template-columns:108px 1fr auto;
+  gap:18px;
+  align-items:center;
+}
+
+.profile-photo{
+  width:108px;
+  height:132px;
+  border-radius:24px;
+  border:1px solid var(--line2);
+  background:#e2e8f0;
+  color:#64748b;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+}
+
+.profile-main h2{
+  font-size:26px;
+  letter-spacing:-.8px;
+  margin-bottom:10px;
+}
+
+.profile-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.profile-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.quick-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-top:18px;
+}
+
+.quick-box{
+  border:1px solid var(--line2);
+  background:#fbfdff;
+  border-radius:18px;
+  padding:15px;
+}
+
+.quick-box span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+}
+
+.quick-box strong{
+  display:block;
+  margin-top:8px;
+  font-size:22px;
+}
+
+.inner-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.inner-tab{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:999px;
+  padding:9px 13px;
+  font-weight:900;
+  color:#475569;
+  cursor:pointer;
+}
+
+.inner-tab.active{
+  background:#0f172a;
+  color:#fff;
+  border-color:#0f172a;
+}
+
+.detail-panel{
+  display:none;
+}
+
+.detail-panel.active{
+  display:block;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.field.full{
+  grid-column:1/-1;
+}
+
+textarea{
+  min-height:92px;
+  resize:vertical;
+}
+
+.notice{
+  border:1px solid #fed7aa;
+  background:#fff7ed;
+  color:#9a3412;
+  border-radius:16px;
+  padding:14px;
+  line-height:1.7;
+  font-weight:700;
+}
+
+.approval-flow{
+  display:grid;
+  gap:10px;
+}
+
+.flow-item{
+  border:1px solid var(--line2);
+  border-radius:16px;
+  padding:14px;
+  background:#fbfdff;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.36);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+  padding:20px;
+}
+
+.modal-backdrop.active{
+  display:flex;
+}
+
+.modal{
+  width:min(860px,100%);
+  background:#fff;
+  border-radius:24px;
+  box-shadow:0 30px 90px rgba(15,23,42,.25);
+  overflow:hidden;
+}
+
+.modal-head{
+  padding:18px 22px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.modal-body{
+  padding:22px;
+  max-height:72vh;
+  overflow:auto;
+}
+
+.modal-foot{
+  padding:16px 22px;
+  border-top:1px solid var(--line);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.close{
+  border:0;
+  background:#f1f5f9;
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:900;
+}
+
+.toast{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  background:#0f172a;
+  color:#fff;
+  border-radius:16px;
+  padding:14px 18px;
+  font-weight:900;
+  display:none;
+  z-index:80;
+}
+
+.toast.active{
+  display:block;
+}
+
+@media(max-width:1280px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .filter-grid{grid-template-columns:repeat(3,1fr)}
+  .layout{grid-template-columns:1fr}
+}
+
+@media(max-width:760px){
+  .topbar{
+    height:auto;
+    align-items:flex-start;
+    flex-direction:column;
+    gap:12px;
+    padding:16px;
+  }
+
+  .top-tabs{
+    flex-wrap:wrap;
+    gap:12px;
+  }
+
+  .content{
+    padding:18px;
+  }
+
+  .page-head{
+    display:block;
+  }
+
+  .actions{
+    margin-top:14px;
+  }
+
+  .kpi-grid,.quick-grid,.form-grid,.filter-grid{
+    grid-template-columns:1fr;
+  }
+
+  .profile-head{
+    grid-template-columns:1fr;
+  }
+
+  .profile-actions{
+    justify-content:flex-start;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div class="brand-text">
+        <strong>CON-COST Groupware</strong>
+        <span>Management Support · HR Master</span>
+      </div>
+    </div>
+
+    <nav class="top-tabs">
+      <span>전자메일</span>
+      <span>전자결재</span>
+      <span>업무관리</span>
+      <span>일정관리</span>
+      <span class="active">경영지원</span>
+    </nav>
+
+    <div class="top-right">
+      <div class="lang">한국어</div>
+      <div class="bell">🔔</div>
+      <div class="user">박용진 수석</div>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="page-head">
+      <div>
+        <h1>경영지원 · 사원대장 / 인사카드</h1>
+        <p>사원대장, 인사카드, 발령이력, 평가, 연봉, 자산, 증명서, 권한 정보를 통합 관리하는 화면 구성안입니다.</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-line" onclick="showToast('엑셀 양식 다운로드 기능 예시입니다.')">엑셀 양식 다운로드</button>
+        <button class="btn btn-line" onclick="showToast('엑셀 업로드 전 미리보기 기능 예시입니다.')">엑셀 일괄 업로드</button>
+        <button class="btn btn-line" onclick="showToast('현재 조회 조건 기준으로 엑셀 내보내기 처리됩니다.')">엑셀 내보내기</button>
+        <button class="btn btn-primary" onclick="openModal()">신규 직원 등록</button>
+      </div>
+    </section>
+
+    <div class="menu-tabs">
+      <button class="menu-tab active" data-main="ledger">사원대장</button>
+      <button class="menu-tab" data-main="card">인사카드</button>
+      <button class="menu-tab" data-main="code">코드관리</button>
+      <button class="menu-tab" data-main="approval">증명서/파일 승인</button>
+    </div>
+
+    <section id="ledger" class="panel active">
+      <div class="kpi-grid">
+        <div class="kpi-card"><span>총 직원</span><strong>156</strong></div>
+        <div class="kpi-card"><span>재직자</span><strong>142</strong></div>
+        <div class="kpi-card"><span>휴직자</span><strong>4</strong></div>
+        <div class="kpi-card"><span>퇴사자</span><strong>10</strong></div>
+        <div class="kpi-card"><span>이번달 입사</span><strong>3</strong></div>
+      </div>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>사원대장 검색 / 필터</h2>
+          <span class="badge blue">기본값: 재직자만 조회</span>
+        </div>
+        <div class="card-body">
+          <div class="filter-grid">
+            <div class="field">
+              <label>검색어</label>
+              <input id="ledgerSearch" placeholder="성명, 사번, 부서, 이메일 검색" />
+            </div>
+            <div class="field">
+              <label>부서</label>
+              <select>
+                <option>전체</option>
+                <option>BIM파트</option>
+                <option>경영지원본부</option>
+                <option>구조·BIM팀</option>
+                <option>마감팀</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>직급</label>
+              <select>
+                <option>전체</option>
+                <option>사원</option>
+                <option>팀장</option>
+                <option>실장</option>
+                <option>수석</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>재직상태</label>
+              <select>
+                <option>재직</option>
+                <option>휴직</option>
+                <option>퇴사</option>
+                <option>전체</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>법인</label>
+              <select>
+                <option>전체</option>
+                <option>한국 본사</option>
+                <option>베트남 지사</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>입사년도</label>
+              <select>
+                <option>전체</option>
+                <option>2026</option>
+                <option>2025</option>
+                <option>2024</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="showToast('검색 조건이 적용되었습니다.')">조회</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>사원대장 목록</h2>
+          <div class="actions">
+            <button class="btn btn-line" onclick="showToast('오류행 다운로드 예시입니다.')">오류행 다운로드</button>
+            <button class="btn btn-primary" onclick="openModal()">+ 직원 등록</button>
+          </div>
+        </div>
+        <div class="card-body table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>사진</th>
+                <th>사번</th>
+                <th>성명</th>
+                <th>아이디</th>
+                <th>부서</th>
+                <th>직급</th>
+                <th>재직상태</th>
+                <th>입사일</th>
+                <th>평가등급</th>
+                <th>프로젝트</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="card" class="panel">
+      <div class="layout">
+        <aside class="card">
+          <div class="card-head">
+            <h2>직원 목록</h2>
+            <span class="badge green">재직</span>
+          </div>
+          <div class="card-body">
+            <input class="employee-search" id="employeeSearch" placeholder="직원 검색" />
+            <div class="employee-list" id="employeeList"></div>
+          </div>
+        </aside>
+
+        <section>
+          <article class="card">
+            <div class="card-head">
+              <h2>인사카드 상세</h2>
+              <div class="actions">
+                <button class="btn btn-line" onclick="showToast('인사카드 PDF 출력 예시입니다.')">PDF</button>
+                <button class="btn btn-line" onclick="showToast('수정모드로 전환되었습니다.')">수정</button>
+                <button class="btn btn-primary" onclick="validateRequired()">저장</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="profile-head">
+                <div class="profile-photo" id="profilePhoto">박</div>
+                <div class="profile-main">
+                  <h2 id="profileName">박용진</h2>
+                  <div class="profile-tags" id="profileTags"></div>
+                </div>
+                <div class="profile-actions">
+                  <button class="btn btn-line" onclick="showToast('재직증명서 신청이 접수되었습니다.')">재직증명서</button>
+                  <button class="btn btn-line" onclick="showToast('원천징수영수증 신청이 접수되었습니다.')">원천징수영수증</button>
+                </div>
+              </div>
+
+              <div class="quick-grid">
+                <div class="quick-box"><span>프로젝트 참여</span><strong id="quickProject">8</strong></div>
+                <div class="quick-box"><span>평가등급</span><strong id="quickGrade">A</strong></div>
+                <div class="quick-box"><span>승인 대기</span><strong>2</strong></div>
+                <div class="quick-box"><span>근태 이상</span><strong>0</strong></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-body">
+              <div class="inner-tabs">
+                <button class="inner-tab active" data-detail="basic">기본정보</button>
+                <button class="inner-tab" data-detail="detail">상세정보</button>
+                <button class="inner-tab" data-detail="org">조직/권한</button>
+                <button class="inner-tab" data-detail="history">발령이력</button>
+                <button class="inner-tab" data-detail="eval">평가/연봉</button>
+                <button class="inner-tab" data-detail="career">학력/경력/자격</button>
+                <button class="inner-tab" data-detail="asset">자산관리</button>
+                <button class="inner-tab" data-detail="cert">증명서</button>
+                <button class="inner-tab" data-detail="file">파일관리</button>
+              </div>
+
+              <div id="basic" class="detail-panel active">
+                <div class="form-grid">
+                  <div class="field"><label class="required">성명</label><input required value="박용진"><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label class="required">사번</label><input required value="EMP-2018-001"><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label class="required">아이디</label><input required value="yjpark"><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label class="required">부서</label><select required><option>BIM파트</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label class="required">직급</label><select required><option>수석</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label>직책</label><input value="파트 담당"></div>
+                  <div class="field"><label class="required">재직상태</label><select required><option>재직</option><option>휴직</option><option>퇴사</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label class="required">입사일</label><input type="date" required value="2018-04-01"><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label>퇴사일</label><input type="date"></div>
+                  <div class="field"><label>법인구분</label><select><option>한국 본사</option><option>베트남 지사</option></select></div>
+                  <div class="field"><label>근무지</label><input value="서울 본사"></div>
+                  <div class="field"><label class="required">이메일</label><input required value="yjpark@con-cost.com"><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field"><label class="required">휴대폰</label><input required value="010-7700-7859"><div class="error-text">필수 입력 항목입니다.</div></div>
+                  <div class="field full"><label>주소</label><input value="서울특별시 강북구"></div>
+                  <div class="field full"><label>비상연락망</label><input value="010-0000-0000"></div>
+                </div>
+              </div>
+
+              <div id="detail" class="detail-panel">
+                <div class="form-grid">
+                  <div class="field"><label>주민등록번호</label><input value="권한 필요"></div>
+                  <div class="field"><label>성별</label><select><option>남</option><option>여</option></select></div>
+                  <div class="field"><label>생년월일</label><input type="date" value="1992-02-23"></div>
+                  <div class="field"><label>국적</label><input value="대한민국"></div>
+                  <div class="field"><label>혈액형</label><input value="-"></div>
+                  <div class="field"><label>결혼여부</label><select><option>미혼</option><option>기혼</option></select></div>
+                  <div class="field"><label>은행</label><input value="권한 필요"></div>
+                  <div class="field"><label>계좌번호</label><input value="권한 필요"></div>
+                  <div class="field"><label>급여지급방식</label><select><option>월급</option></select></div>
+                </div>
+              </div>
+
+              <div id="org" class="detail-panel">
+                <div class="form-grid">
+                  <div class="field"><label>조직도 위치</label><input value="경영지원 > BIM파트"></div>
+                  <div class="field"><label>보고라인</label><input value="PM → GM → 본부장"></div>
+                  <div class="field"><label>전자결재 권한</label><select><option>일반 사용자</option><option>승인자</option><option>관리자</option></select></div>
+                  <div class="field"><label>PM 권한</label><select><option>사용</option><option>미사용</option></select></div>
+                  <div class="field"><label>GM 권한</label><select><option>미사용</option><option>사용</option></select></div>
+                  <div class="field"><label>시스템 관리자</label><select><option>미사용</option><option>사용</option></select></div>
+                </div>
+              </div>
+
+              <div id="history" class="detail-panel table-wrap">
+                <table>
+                  <thead><tr><th>발령일</th><th>변경항목</th><th>변경 전</th><th>변경 후</th><th>처리자</th><th>승인자</th></tr></thead>
+                  <tbody>
+                    <tr><td>2026-04-01</td><td>부서</td><td>구조팀</td><td>BIM파트</td><td>경영지원</td><td>본부장</td></tr>
+                    <tr><td>2025-01-01</td><td>직급</td><td>선임</td><td>수석</td><td>경영지원</td><td>대표</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="eval" class="detail-panel table-wrap">
+                <table>
+                  <thead><tr><th>평가년도</th><th>역량평가</th><th>업적평가</th><th>종합평가</th><th>연봉등급</th><th>인상률</th><th>최종승인자</th><th>비고</th></tr></thead>
+                  <tbody>
+                    <tr><td>2026</td><td>A</td><td>A-</td><td>A</td><td>권한 필요</td><td>권한 필요</td><td>대표</td><td>권한자 전용</td></tr>
+                    <tr><td>2025</td><td>B+</td><td>A</td><td>A-</td><td>권한 필요</td><td>권한 필요</td><td>대표</td><td>권한자 전용</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="career" class="detail-panel table-wrap">
+                <table>
+                  <thead><tr><th>구분</th><th>내용</th><th>기간/취득일</th><th>첨부</th><th>비고</th></tr></thead>
+                  <tbody>
+                    <tr><td>학력</td><td>대학교 / 전공명</td><td>-</td><td><span class="badge blue">첨부 가능</span></td><td>졸업</td></tr>
+                    <tr><td>경력</td><td>이전 회사 경력</td><td>-</td><td><span class="badge blue">첨부 가능</span></td><td>경력년수 관리</td></tr>
+                    <tr><td>자격증</td><td>관련 자격증</td><td>-</td><td><span class="badge blue">첨부 가능</span></td><td>만료일 관리</td></tr>
+                    <tr><td>외국어</td><td>영어 / 베트남어</td><td>-</td><td><span class="badge gray">선택</span></td><td>회화·작문·독해</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="asset" class="detail-panel table-wrap">
+                <table>
+                  <thead><tr><th>자산구분</th><th>자산명</th><th>관리번호</th><th>지급일</th><th>반납일</th><th>상태</th></tr></thead>
+                  <tbody>
+                    <tr><td>노트북</td><td>LG Gram</td><td>AS-2026-001</td><td>2026-01-05</td><td>-</td><td><span class="badge green">사용중</span></td></tr>
+                    <tr><td>라이선스</td><td>AutoCAD</td><td>LIC-2026-018</td><td>2026-01-01</td><td>-</td><td><span class="badge green">사용중</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="cert" class="detail-panel">
+                <div class="approval-flow">
+                  <div class="flow-item"><div><strong>재직증명서</strong><br><span class="muted">경영지원 승인 후 PDF 다운로드</span></div><button class="btn btn-primary">출력 신청</button></div>
+                  <div class="flow-item"><div><strong>원천징수영수증</strong><br><span class="muted">연도 선택 후 승인 필요</span></div><button class="btn btn-primary">출력 신청</button></div>
+                  <div class="flow-item"><div><strong>경력증명서</strong><br><span class="muted">퇴사자 포함 발급 가능</span></div><button class="btn btn-line">신청 대기</button></div>
+                </div>
+              </div>
+
+              <div id="file" class="detail-panel table-wrap">
+                <table>
+                  <thead><tr><th>파일구분</th><th>파일명</th><th>등록일</th><th>상태</th><th>다운로드</th><th>변경</th></tr></thead>
+                  <tbody>
+                    <tr><td>근로계약서</td><td>contract_park.pdf</td><td>2026-01-01</td><td><span class="badge green">승인완료</span></td><td><button class="btn btn-line">다운로드</button></td><td><button class="btn btn-line">변경신청</button></td></tr>
+                    <tr><td>자격증</td><td>certificate.pdf</td><td>2026-02-03</td><td><span class="badge yellow">승인대기</span></td><td><button class="btn btn-line">대기</button></td><td><button class="btn btn-line">변경신청</button></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <section id="code" class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>코드관리</h2>
+          <button class="btn btn-primary">+ 코드 추가</button>
+        </div>
+        <div class="card-body table-wrap">
+          <table>
+            <thead>
+              <tr><th>코드그룹</th><th>코드명</th><th>사용여부</th><th>정렬</th><th>관리자 수정</th><th>비고</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>부서</td><td>BIM파트</td><td><span class="badge green">사용</span></td><td>1</td><td>가능</td><td>조직도 연동</td></tr>
+              <tr><td>직급</td><td>수석</td><td><span class="badge green">사용</span></td><td>2</td><td>가능</td><td>결재라인 연동</td></tr>
+              <tr><td>재직상태</td><td>재직 / 휴직 / 퇴사</td><td><span class="badge green">사용</span></td><td>3</td><td>가능</td><td>퇴사자는 삭제 금지</td></tr>
+              <tr><td>고용형태</td><td>정규직 / 계약직</td><td><span class="badge green">사용</span></td><td>4</td><td>가능</td><td>사원대장 필터 연동</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="approval" class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>증명서 / 첨부파일 승인 대기</h2>
+          <span class="badge yellow">승인 필요</span>
+        </div>
+        <div class="card-body table-wrap">
+          <table>
+            <thead>
+              <tr><th>요청일</th><th>요청자</th><th>구분</th><th>요청내용</th><th>상태</th><th>처리</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2026-04-27</td><td>박용진</td><td>재직증명서</td><td>PDF 출력 신청</td><td><span class="badge yellow">대기</span></td><td><button class="btn btn-primary">승인</button> <button class="btn btn-danger">반려</button></td></tr>
+              <tr><td>2026-04-27</td><td>김태영</td><td>첨부파일</td><td>자격증 파일 교체</td><td><span class="badge yellow">대기</span></td><td><button class="btn btn-primary">승인</button> <button class="btn btn-danger">반려</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="employeeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>신규 직원 등록</h2>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice" style="margin-bottom:16px;">
+        * 표시 항목은 필수 입력값입니다. 필수값이 누락되면 저장할 수 없으며, 엑셀 업로드 시 오류행으로 분류됩니다.
+      </div>
+
+      <div class="form-grid">
+        <div class="field"><label class="required">성명</label><input required placeholder="예: 홍길동"><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">사번</label><input required placeholder="예: EMP-2026-001"><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">아이디</label><input required placeholder="중복 불가"><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">부서</label><select required><option value="">선택</option><option>BIM파트</option><option>경영지원본부</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">직급</label><select required><option value="">선택</option><option>사원</option><option>수석</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">재직상태</label><select required><option>재직</option><option>휴직</option></select><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">입사일</label><input type="date" required><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">이메일</label><input required placeholder="email@con-cost.com"><div class="error-text">필수 입력 항목입니다.</div></div>
+        <div class="field"><label class="required">휴대폰</label><input required placeholder="010-0000-0000"><div class="error-text">필수 입력 항목입니다.</div></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-line" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="validateModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const employees = [
+  {
+    empNo:"EMP-2018-001",
+    name:"박용진",
+    id:"yjpark",
+    dept:"BIM파트",
+    grade:"수석",
+    status:"재직",
+    join:"2018-04-01",
+    eval:"A",
+    project:8,
+    email:"yjpark@con-cost.com"
+  },
+  {
+    empNo:"EMP-2021-014",
+    name:"김태영",
+    id:"tykim",
+    dept:"경영지원본부",
+    grade:"매니저",
+    status:"재직",
+    join:"2021-03-15",
+    eval:"A-",
+    project:3,
+    email:"tykim@con-cost.com"
+  },
+  {
+    empNo:"EMP-2024-033",
+    name:"홍길동",
+    id:"gdhong",
+    dept:"구조·BIM팀",
+    grade:"사원",
+    status:"재직",
+    join:"2024-09-01",
+    eval:"B+",
+    project:5,
+    email:"gdhong@con-cost.com"
+  },
+  {
+    empNo:"EMP-2020-006",
+    name:"이민수",
+    id:"mslee",
+    dept:"마감팀",
+    grade:"팀장",
+    status:"휴직",
+    join:"2020-02-10",
+    eval:"B",
+    project:2,
+    email:"mslee@con-cost.com"
+  },
+  {
+    empNo:"EMP-2019-021",
+    name:"정하늘",
+    id:"hnjung",
+    dept:"토목팀",
+    grade:"실장",
+    status:"퇴사",
+    join:"2019-06-20",
+    eval:"-",
+    project:0,
+    email:"hnjung@con-cost.com"
+  }
+];
+
+const mainTabs = document.querySelectorAll(".menu-tab");
+const panels = document.querySelectorAll(".panel");
+
+mainTabs.forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    mainTabs.forEach(t=>t.classList.remove("active"));
+    panels.forEach(p=>p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.main).classList.add("active");
+  });
+});
+
+const detailTabs = document.querySelectorAll(".inner-tab");
+const detailPanels = document.querySelectorAll(".detail-panel");
+
+detailTabs.forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    detailTabs.forEach(t=>t.classList.remove("active"));
+    detailPanels.forEach(p=>p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.detail).classList.add("active");
+  });
+});
+
+function statusBadge(status){
+  if(status === "재직") return `<span class="badge green">재직</span>`;
+  if(status === "휴직") return `<span class="badge yellow">휴직</span>`;
+  return `<span class="badge gray">퇴사</span>`;
+}
+
+function renderLedger(list = employees){
+  const tbody = document.getElementById("ledgerBody");
+  tbody.innerHTML = list.map(emp=>`
+    <tr>
+      <td><div class="emp-photo">${emp.name[0]}</div></td>
+      <td>${emp.empNo}</td>
+      <td><strong>${emp.name}</strong></td>
+      <td>${emp.id}</td>
+      <td>${emp.dept}</td>
+      <td>${emp.grade}</td>
+      <td>${statusBadge(emp.status)}</td>
+      <td>${emp.join}</td>
+      <td><span class="badge blue">${emp.eval}</span></td>
+      <td>${emp.project}</td>
+      <td><button class="btn btn-line" onclick="openCard('${emp.empNo}')">상세</button></td>
+    </tr>
+  `).join("");
+}
+
+function renderEmployeeList(list = employees){
+  const box = document.getElementById("employeeList");
+  box.innerHTML = list.map((emp,index)=>`
+    <div class="employee-item ${index===0 ? "active" : ""}" onclick="selectEmployee('${emp.empNo}', this)">
+      <div class="emp-photo">${emp.name[0]}</div>
+      <div>
+        <div class="emp-name">${emp.name}</div>
+        <div class="emp-meta">${emp.dept} · ${emp.grade} · ${emp.status}<br>${emp.empNo}</div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function selectEmployee(empNo, el){
+  const emp = employees.find(e=>e.empNo === empNo);
+  if(!emp) return;
+
+  document.querySelectorAll(".employee-item").forEach(item=>item.classList.remove("active"));
+  if(el) el.classList.add("active");
+
+  document.getElementById("profilePhoto").textContent = emp.name[0];
+  document.getElementById("profileName").textContent = emp.name;
+  document.getElementById("quickProject").textContent = emp.project;
+  document.getElementById("quickGrade").textContent = emp.eval;
+
+  document.getElementById("profileTags").innerHTML = `
+    <span class="badge blue">${emp.dept}</span>
+    <span class="badge gray">${emp.grade}</span>
+    ${statusBadge(emp.status)}
+    <span class="badge blue">${emp.join} 입사</span>
+    <span class="badge gray">${emp.empNo}</span>
+  `;
+}
+
+function openCard(empNo){
+  document.querySelector('[data-main="card"]').click();
+  setTimeout(()=>{
+    const items = [...document.querySelectorAll(".employee-item")];
+    const targetIndex = employees.findIndex(e=>e.empNo === empNo);
+    if(items[targetIndex]){
+      selectEmployee(empNo, items[targetIndex]);
+    }
+  },0);
+}
+
+function filterEmployees(keyword){
+  const q = keyword.trim().toLowerCase();
+  return employees.filter(emp =>
+    emp.name.toLowerCase().includes(q) ||
+    emp.empNo.toLowerCase().includes(q) ||
+    emp.id.toLowerCase().includes(q) ||
+    emp.dept.toLowerCase().includes(q) ||
+    emp.email.toLowerCase().includes(q)
+  );
+}
+
+document.getElementById("ledgerSearch").addEventListener("input", e=>{
+  renderLedger(filterEmployees(e.target.value));
+});
+
+document.getElementById("employeeSearch").addEventListener("input", e=>{
+  renderEmployeeList(filterEmployees(e.target.value));
+});
+
+function validateRequired(){
+  const activePanel = document.querySelector(".detail-panel.active");
+  const requiredInputs = activePanel.querySelectorAll("[required]");
+  let valid = true;
+
+  requiredInputs.forEach(input=>{
+    if(!input.value.trim()){
+      input.classList.add("invalid");
+      valid = false;
+    }else{
+      input.classList.remove("invalid");
+    }
+  });
+
+  if(valid){
+    showToast("필수 입력값 검증 완료. 저장 처리 예시입니다.");
+  }else{
+    showToast("* 필수 입력값을 확인해 주세요.");
+  }
+}
+
+function validateModal(){
+  const modal = document.getElementById("employeeModal");
+  const requiredInputs = modal.querySelectorAll("[required]");
+  let valid = true;
+
+  requiredInputs.forEach(input=>{
+    if(!input.value.trim()){
+      input.classList.add("invalid");
+      valid = false;
+    }else{
+      input.classList.remove("invalid");
+    }
+  });
+
+  if(valid){
+    closeModal();
+    showToast("신규 직원 등록 예시가 저장되었습니다.");
+  }else{
+    showToast("* 필수 입력값을 확인해 주세요.");
+  }
+}
+
+function openModal(){
+  document.getElementById("employeeModal").classList.add("active");
+}
+
+function closeModal(){
+  document.getElementById("employeeModal").classList.remove("active");
+}
+
+function showToast(message){
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("active");
+
+  setTimeout(()=>{
+    toast.classList.remove("active");
+  },2200);
+}
+
+document.addEventListener("click", e=>{
+  const modal = document.getElementById("employeeModal");
+  if(e.target === modal){
+    closeModal();
+  }
+});
+
+renderLedger();
+renderEmployeeList();
+selectEmployee("EMP-2018-001");
+</script>
+</body>
+</html>
