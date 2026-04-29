@@ -1913,43 +1913,81 @@ table td:nth-child(10){
 }
 
 
-/* 체크 여부 칸 줄넘김 방지 최종 보정
-   - 체크 여부 배지는 한 줄 유지
-   - 칸 높이 내부에서 이의제기 버튼까지 세로 정렬
-   - 검토항목/검토방법 영역은 상대적으로 넓게 유지 */
+/* === QC 체크리스트 테이블 깨짐 복구 최종 패치 ===
+   기존 nth-child 강제 폭 지정 때문에 공종/일련번호가 세로로 찢어지는 문제를 방지합니다. */
 .excel-grid{
   table-layout:fixed !important;
-  min-width:1480px !important;
+  width:100% !important;
+  min-width:1540px !important;
+  border-collapse:collapse;
 }
 
-/* 검토항목 */
+/* colgroup 기준 폭 */
+.excel-grid col.qc-col-select{width:44px;}
+.excel-grid col.qc-col-trade{width:78px;}
+.excel-grid col.qc-col-no{width:74px;}
+.excel-grid col.qc-col-item{width:260px;}
+.excel-grid col.qc-col-method{width:320px;}
+.excel-grid col.qc-col-target{width:96px;}
+.excel-grid col.qc-col-check{width:160px;}
+.excel-grid col.qc-col-comment{width:230px;}
+.excel-grid col.qc-col-attach{width:100px;}
+.excel-grid col.qc-col-history{width:155px;}
+.excel-grid col.qc-col-manage{width:90px;}
+
+/* 기존 전역 nth-child 폭 강제값 무력화 후 재정렬 */
+.excel-grid th,
+.excel-grid td{
+  box-sizing:border-box;
+  vertical-align:middle !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow:visible !important;
+  text-align:left;
+}
+
+.excel-grid th:nth-child(1),
+.excel-grid td:nth-child(1){
+  text-align:center !important;
+  padding:8px 6px !important;
+}
+
+.excel-grid th:nth-child(2),
+.excel-grid td:nth-child(2),
+.excel-grid th:nth-child(3),
+.excel-grid td:nth-child(3){
+  text-align:center !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+  padding:10px 8px !important;
+}
+
 .excel-grid th:nth-child(4),
-.excel-grid td:nth-child(4){
-  width:24% !important;
-  min-width:300px !important;
-}
-
-/* 검토방법 */
+.excel-grid td:nth-child(4),
 .excel-grid th:nth-child(5),
 .excel-grid td:nth-child(5){
-  width:25% !important;
-  min-width:320px !important;
-}
-
-/* 체크 여부 */
-.excel-grid th:nth-child(7),
-.excel-grid td:nth-child(7){
-  width:158px !important;
-  min-width:158px !important;
-  max-width:158px !important;
-  padding:8px 6px !important;
-  text-align:center !important;
-  vertical-align:middle !important;
-  overflow:visible !important;
-}
-
-.excel-grid td:nth-child(7){
   white-space:normal !important;
+  word-break:keep-all !important;
+  line-height:1.55 !important;
+}
+
+.excel-grid th:nth-child(6),
+.excel-grid td:nth-child(6),
+.excel-grid th:nth-child(9),
+.excel-grid td:nth-child(9),
+.excel-grid th:nth-child(10),
+.excel-grid td:nth-child(10),
+.excel-grid th:nth-child(11),
+.excel-grid td:nth-child(11){
+  text-align:center !important;
+}
+
+/* 체크 여부 칸: 한 줄 유지 */
+.excel-grid td:nth-child(7){
+  text-align:center !important;
+  padding:8px 6px !important;
 }
 
 .excel-grid td:nth-child(7) .done-check-wrap,
@@ -1958,37 +1996,32 @@ table td:nth-child(10){
   align-items:center !important;
   justify-content:center !important;
   gap:5px !important;
+  max-width:148px !important;
   width:auto !important;
-  max-width:146px !important;
-  min-width:0 !important;
   padding:7px 10px !important;
   margin:0 auto !important;
-  border-radius:999px !important;
   white-space:nowrap !important;
+  word-break:keep-all !important;
   line-height:1 !important;
-  font-size:12px !important;
 }
 
 .excel-grid td:nth-child(7) .done-check-wrap span,
 .excel-grid td:nth-child(7) .target-done-wrap span{
   display:inline-block !important;
+  max-width:112px !important;
   white-space:nowrap !important;
-  word-break:keep-all !important;
   overflow:hidden !important;
   text-overflow:ellipsis !important;
-  max-width:112px !important;
-  line-height:1 !important;
+  word-break:keep-all !important;
 }
 
-.excel-grid td:nth-child(7) .done-check-wrap input,
-.excel-grid td:nth-child(7) .target-done-wrap input{
+.excel-grid td:nth-child(7) input[type="checkbox"]{
   width:14px !important;
   height:14px !important;
   flex:0 0 14px !important;
   margin:0 !important;
 }
 
-/* 체크 여부 칸의 이의제기 버튼은 배지 아래에만 정렬 */
 .excel-grid td:nth-child(7) .objection-area{
   display:flex !important;
   flex-direction:column !important;
@@ -1997,50 +2030,38 @@ table td:nth-child(10){
   margin-top:8px !important;
 }
 
-.excel-grid td:nth-child(7) .btn-objection,
-.excel-grid td:nth-child(7) .btn-mini{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:auto !important;
-  min-width:58px !important;
-  max-width:90px !important;
+.excel-grid td:nth-child(7) .btn-objection{
+  white-space:nowrap !important;
   padding:5px 8px !important;
   font-size:12px !important;
-  line-height:1.1 !important;
+}
+
+/* 관리 칸 compact */
+.excel-grid td:nth-child(11) .row-actions,
+.excel-grid td:nth-child(11) .actions{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:5px !important;
+  align-items:center !important;
+}
+
+.excel-grid td:nth-child(11) button,
+.excel-grid td:nth-child(11) .btn{
+  padding:6px 8px !important;
+  font-size:12px !important;
+  min-width:44px !important;
+}
+
+/* 기존에 마지막 줄에서 넣은 전역 max-width 해제 */
+table th:nth-child(7),
+table td:nth-child(7),
+table th:last-child,
+table td:last-child{
+  max-width:none !important;
+}
+
+/* 그룹행은 전체 폭 사용 */
+.excel-grid .group-row td{
+  text-align:left !important;
   white-space:nowrap !important;
-}
-
-/* 관리 칸 컴팩트 유지 */
-.excel-grid th:nth-child(11),
-.excel-grid td:nth-child(11){
-  width:78px !important;
-  min-width:78px !important;
-  max-width:78px !important;
-  padding:6px 4px !important;
-  text-align:center !important;
-}
-
-/* 첨부/이력 칸은 현재 표시 유지 */
-.excel-grid th:nth-child(9),
-.excel-grid td:nth-child(9){
-  width:98px !important;
-  min-width:98px !important;
-  max-width:98px !important;
-}
-
-.excel-grid th:nth-child(10),
-.excel-grid td:nth-child(10){
-  width:150px !important;
-  min-width:150px !important;
-  max-width:150px !important;
-}
-
-/* 행 내부에서 체크 배지가 다음 행처럼 보이지 않게 높이 안정화 */
-.excel-grid td{
-  vertical-align:middle !important;
-}
-
-.excel-grid tr:not(.group-row) td{
-  min-height:64px;
 }
