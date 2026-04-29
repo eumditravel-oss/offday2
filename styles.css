@@ -1593,3 +1593,73 @@ tr:hover td{background:#fbfdff}
 .locked-row td{background:#f8fafc;color:#64748b}
 .locked-row .cell,.locked-row .target-chip-list,.locked-row .history-cell{opacity:.78}
 .row-actions .btn:disabled,.group-mini-btn:disabled,.done-check-wrap input:disabled,.excel-grid input:disabled{cursor:not-allowed;opacity:.55}
+
+
+.objection-preview-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:10px;
+}
+
+.preview-box,
+.attach-grid{
+  border:1px dashed var(--line2);
+  border-radius:12px;
+  background:#fbfdff;
+  padding:6px;
+}
+
+.preview-image,
+.mini-attach-image{
+  width:100%;
+  height:100px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+.empty-upload{
+  color:#94a3b8;
+  font-size:12px;
+  font-weight:700;
+}
+
+.objection-detail{
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+}
+
+.objection-detail p{
+  margin:8px 0;
+  line-height:1.6;
+}
+
+.objection-content{
+  display:none;
+}
+
+.objection-content.active{
+  display:block;
+}
+
+.eliminated-row{
+  background:#f3f4f6 !important;
+  opacity:.75;
+}
+
+.eliminated-row td{
+  color:#94a3b8 !important;
+  text-decoration:line-through;
+}
+
+.btn-objection{
+  background:#fff7ed;
+  border:1px solid #fdba74;
+  color:#c2410c;
+  border-radius:10px;
+  padding:6px 10px;
+  font-weight:800;
+  cursor:pointer;
+}
