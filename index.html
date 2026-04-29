@@ -717,15 +717,9 @@
                     <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="renderChecklistGrid()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
-                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>첨부사진</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
+                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
                 </div>
               </article>
-              <article class="card"><div class="card-head"><h2>QC 승인 단계</h2><span class="badge yellow">오류 등록 · 이의제기 · 소거</span></div><div class="card-body"><div class="approval-flow">
-                <div class="flow-item"><div><strong>체크리스트 검토</strong><br><span>작업자 산출완료 자료 기반 오류 검토 후 작업자에게 전달</span></div><button class="btn btn-line">오류등록</button></div>
-                <div class="flow-item"><div><strong>체크리스트 확인</strong><br><span>오류가 맞으면 수정 후 확인 버튼으로 소거</span></div><button class="btn btn-line">확인</button></div>
-                <div class="flow-item"><div><strong>체크리스트 재확인</strong><br><span>이의제기 검토 후 납득 시 제외 처리</span></div><button class="btn btn-line">재확인</button></div>
-                <div class="flow-item"><div><strong>최종 수량 검토</strong><br><span>유사 프로젝트 대비 비교, 수량 이상 및 편차 분석, 최종 코멘트 작성</span></div><button class="btn btn-primary">최종승인</button></div>
-              </div></div></article>
             </section>
 
             <section id="estimateCondition" class="work-panel">
@@ -757,41 +751,18 @@
         <div class="notice">구분, 공종, 검토항목, 검토방법, 체크 요청 대상과 코멘트를 작성하면 QC 검토 / 승인 리스트에 반영됩니다. 요청 대상은 여러 명 또는 여러 역할을 선택할 수 있습니다.</div>
         <input type="hidden" id="checklistEditIndex" value="">
         <div class="form-grid">
-          <div class="field"><label class="required">구분</label><select id="checklistModalGroup" required onchange="onChecklistModalGroupChange(this.value)"></select><div class="error-text">필수 입력 항목입니다.</div></div>
+          <div class="field"><label class="required">구분</label><select id="checklistModalGroup" required></select><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label class="required">공종</label><input id="checklistModalTrade" placeholder="예: 도면검토" required><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field"><label>일련번호</label><input id="checklistModalNo" placeholder="자동 생성"></div>
           <div class="field full"><label class="required">검토항목</label><textarea id="checklistModalItem" rows="3" placeholder="검토할 항목을 입력합니다." required></textarea><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field full"><label class="required">검토방법</label><textarea id="checklistModalMethod" rows="3" placeholder="검토 기준과 확인 방법을 입력합니다." required></textarea><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field full"><label class="required">체크 요청 대상</label><div class="target-check-grid" id="checklistTargetChecks"></div><div class="error-text" id="checklistTargetError">대상을 1개 이상 선택해야 합니다.</div></div>
           <div class="field full"><label>코멘트</label><textarea id="checklistModalComment" rows="3" placeholder="요청사항 또는 참고사항을 입력합니다."></textarea></div>
-          <div class="field full"><label>첨부사진</label><input id="checklistModalImages" type="file" accept="image/*" multiple onchange="handleChecklistModalImages(this)"><div class="help-text">검토항목별 사진을 1개 또는 여러 개 첨부할 수 있습니다.</div><div id="checklistModalImagePreview" class="image-preview-grid"></div></div>
         </div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-line" onclick="closeChecklistModal()">취소</button>
         <button class="btn btn-primary" onclick="saveChecklistModal()">리스트에 반영</button>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="modal-backdrop" id="checklistObjectionModal">
-    <div class="modal modal-wide">
-      <div class="modal-head">
-        <h2>이의제기 작성</h2>
-        <button class="close" onclick="closeChecklistObjectionModal()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="notice">오류사항이 아니라고 판단되는 경우 산출 담당자가 이의제기 내용을 작성합니다. 이의제기 내용이 인정되면 해당 검토사항은 삭제되지 않고 소거 상태로 표시됩니다.</div>
-        <input type="hidden" id="checklistObjectionIndex" value="">
-        <div class="form-grid">
-          <div class="field full"><label class="required">이의제기 내용</label><textarea id="checklistObjectionText" rows="6" placeholder="이의제기 사유와 근거를 작성합니다."></textarea><div class="error-text">필수 입력 항목입니다.</div></div>
-          <div class="field full"><label>이의제기 첨부사진</label><input id="checklistObjectionImages" type="file" accept="image/*" multiple onchange="handleChecklistObjectionImages(this)"><div class="help-text">사진은 1개 또는 여러 개 첨부할 수 있습니다.</div><div id="checklistObjectionImagePreview" class="image-preview-grid"></div></div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-line" onclick="closeChecklistObjectionModal()">취소</button>
-        <button class="btn btn-primary" onclick="saveChecklistObjection()">이의제기 저장</button>
       </div>
     </div>
   </div>
