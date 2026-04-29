@@ -1580,3 +1580,16 @@ tr:hover td{background:#fbfdff}
 @media(max-width:760px){
   .target-check-grid{grid-template-columns:1fr 1fr}
 }
+
+
+/* 구분 드롭다운 고정 목록 / 질의차수 송부완료 잠금 */
+.group-band-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.group-band-inner em{margin-left:8px;font-style:normal;color:#64748b;font-size:12px;font-weight:900}
+.group-band-inner b{display:inline-flex;margin-left:8px;padding:3px 8px;border-radius:999px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:900}
+.group-band-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.group-mini-btn{padding:6px 9px;border-radius:10px;font-size:11px}
+.next-round-guide{color:#0f766e;font-size:11px;font-weight:900;white-space:nowrap}
+.group-separator-row.group-locked td{background:#fff7ed !important}
+.locked-row td{background:#f8fafc;color:#64748b}
+.locked-row .cell,.locked-row .target-chip-list,.locked-row .history-cell{opacity:.78}
+.row-actions .btn:disabled,.group-mini-btn:disabled,.done-check-wrap input:disabled,.excel-grid input:disabled{cursor:not-allowed;opacity:.55}
