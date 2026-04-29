@@ -1348,7 +1348,11 @@ const checklistCategoryAliases = {
   "프로젝트 초기": "작업 착수 전 확인 필요사항(PM)",
   "기초 산출 담당자": "작업 착수 전 확인 필요사항(PM)",
   "전체 공통": "자가검토 체크리스트(QC)",
-  "기둥": "자가검토 체크리스트(QC)"
+  "기둥": "자가검토 체크리스트(QC)",
+  "기초": "제출자료 검토사항(PM)",
+  "보": "제출자료 검토사항(PM)",
+  "슬라브": "제출자료 검토사항(PM)",
+  "옹벽": "제출자료 검토사항(PM)"
 };
 
 const questionCategories = checklistCategoryOptions.filter(category => category.startsWith("Z") && category.includes("질의사항"));
@@ -1403,11 +1407,11 @@ let checklistRows = [
   { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"커플러", no:"011", item:"커플러 산출기준 확인", method:"건설사별 견적지침서 확인. 별도 표현 없을 시 담당자 확인", owner:"QC TEAM", status:"진행전", comment:"" },
   { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"철근강도", no:"012", item:"철근 강도에 따른 정착/이음값 오류 확인", method:"구조일반사항 및 구조계산서 검토", owner:"QC TEAM", status:"진행전", comment:"" },
   { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"내진철근", no:"013", item:"내진철근 적용 유무 확인", method:"SD400S, SD500S, SD600S 등의 표현 유무 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"기초", trade:"기초", no:"014", item:"버림두께 확인", method:"건축단면도 기준 적용. 미표현 시 60mm 적용", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"기초", no:"014", item:"버림두께 확인", method:"건축단면도 기준 적용. 미표현 시 60mm 적용", owner:"산출 담당자", status:"진행전", comment:"" },
   { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"기둥", no:"015", item:"기초두께 입력시 이음 산출 유무 확인", method:"산출식 확인 후 기초두께 입력 시 주근 이음 산출 여부 검토", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"보", trade:"보", no:"016", item:"각 층별 슬라브 두께별 공제 확인", method:"산출내용 재확인", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"슬라브", trade:"슬라브", no:"017", item:"부호별 데크타입 오류 확인", method:"RC 평면자료를 Excel 변환 후 필터로 데크부호별 코드입력 체크", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"옹벽", trade:"옹벽", no:"018", item:"옹벽 상부 슬라브 또는 보 공제값 오류 체크", method:"RC 프로그램 산식 확인", owner:"산출 담당자", status:"진행전", comment:"" }
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"보", no:"016", item:"각 층별 슬라브 두께별 공제 확인", method:"산출내용 재확인", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"슬라브", no:"017", item:"부호별 데크타입 오류 확인", method:"RC 평면자료를 Excel 변환 후 필터로 데크부호별 코드입력 체크", owner:"산출 담당자", status:"진행전", comment:"" },
+  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"옹벽", no:"018", item:"옹벽 상부 슬라브 또는 보 공제값 오류 체크", method:"RC 프로그램 산식 확인", owner:"산출 담당자", status:"진행전", comment:"" }
 ];
 
 const checklistStatuses = ["진행전", "진행중", "확인완료", "PM 검토", "수정요청", "최종완료"];
