@@ -1874,3 +1874,89 @@ document.querySelectorAll("[data-work-main]").forEach(btn => {
   btn.addEventListener("click", () => switchWorkPanel(btn.dataset.workMain));
 });
 renderChecklistGrid();
+
+
+let activeObjectionRow = null;
+
+function getWriterByGroup(groupName){
+  const writerMap = {
+    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "QC TEAM 최초작성",
+    "작업 착수 전 확인 필요사항(PM)": "PM 최초작성",
+    "자가검토 체크리스트(QC)": "QC TEAM 최초작성",
+    "제출자료 검토사항(PM)": "PM 최초작성"
+  };
+  return writerMap[groupName] || "경영지원 최초작성";
+}
+
+function getCheckerByGroup(groupName){
+  const checkerMap = {
+    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "PM",
+    "작업 착수 전 확인 필요사항(PM)": "산출 담당자",
+    "자가검토 체크리스트(QC)": "산출 담당자",
+    "제출자료 검토사항(PM)": "산출 담당자"
+  };
+  return checkerMap[groupName] || "산출 담당자";
+}
+
+function renderAttachmentCell(images = []){
+  const items = images.map(src => `<img src="${src}" class="mini-attach-image">`).join("");
+  return `<div class="attach-grid">${items || '<span class="empty-upload">첨부 없음</span>'}</div>`;
+}
+
+function openObjectionModal(rowId){
+  activeObjectionRow = rowId;
+  const modal = document.getElementById("objectionModal");
+  if(modal) modal.classList.add("active");
+}
+
+function closeObjectionModal(){
+  const modal = document.getElementById("objectionModal");
+  if(modal) modal.classList.remove("active");
+  const txt = document.getElementById("objectionText");
+  const img = document.getElementById("objectionImages");
+  const preview = document.getElementById("objectionPreview");
+  if(txt) txt.value = "";
+  if(img) img.value = "";
+  if(preview) preview.innerHTML = "";
+}
+
+document.addEventListener("change", function(e){
+  if(e.target && e.target.id === "objectionImages"){
+    const preview = document.getElementById("objectionPreview");
+    if(!preview) return;
+    preview.innerHTML = "";
+
+    [...e.target.files].forEach(file=>{
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        const div = document.createElement("div");
+        div.className = "preview-box";
+        div.innerHTML = `<img src="${ev.target.result}" class="preview-image">`;
+        preview.appendChild(div);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+function saveObjection(){
+  const txt = document.getElementById("objectionText");
+  const preview = document.getElementById("objectionPreview");
+  const row = document.querySelector(`[data-objection-row="${activeObjectionRow}"]`);
+  if(!row) return closeObjectionModal();
+
+  const objectionBox = row.querySelector(".objection-content");
+  if(objectionBox){
+    objectionBox.innerHTML = `
+      <div class="objection-detail">
+        <strong>이의제기 내용</strong>
+        <p>${txt.value || "내용 없음"}</p>
+        <div class="objection-preview-grid">${preview.innerHTML}</div>
+      </div>
+    `;
+    objectionBox.classList.add("active");
+  }
+
+  row.classList.add("eliminated-row");
+  closeObjectionModal();
+}
