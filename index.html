@@ -632,7 +632,7 @@
           </div>
           <div class="actions">
             <button class="btn btn-line" onclick="downloadChecklistCsv()">체크리스트 엑셀 내보내기</button>
-            <button class="btn btn-line" onclick="addChecklistRow()">+ 행 추가</button>
+            <button class="btn btn-line" onclick="openChecklistModal()">+ 추가하기</button>
             <button class="btn btn-primary" onclick="showToast('업무관리 저장 예시입니다.')">저장</button>
           </div>
         </section>
@@ -701,23 +701,23 @@
                   <span class="badge yellow">체크리스트 포함</span>
                 </div>
                 <div class="card-body qc-review-guide">
-                  <div class="notice">수량산출 체크리스트는 QC 검토 / 승인 안에 포함됩니다. 체크 여부를 클릭하면 상태가 확인완료로 변경되고 작업자 처리 이력이 기록됩니다.</div>
+                  <div class="notice">수량산출 체크리스트는 QC 검토 / 승인 안에 포함됩니다. 체크 여부를 클릭하면 요청 대상별 확인완료 이력이 기록되며, 체크 해제 시 해당 확인완료 로그는 처리 이력에서 제외됩니다.</div>
                 </div>
               </article>
               <article class="card checklist-card">
                 <div class="card-head">
-                  <div><h2>수량산출 체크리스트 · Excel Grid</h2><p class="subcopy">도면 접수, 내역서/산출서/기준서 접수, 프로젝트 유형, 특이사항 정리 구간을 자유롭게 추가·삭제할 수 있습니다.</p></div>
-                  <div class="actions"><button class="btn btn-line" onclick="addChecklistRow()">+ 행 추가</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">엑셀 내보내기</button></div>
+                  <div><h2>수량산출 체크리스트 · Excel Grid</h2><p class="subcopy">추가하기 버튼으로 구분, 공종, 검토항목, 검토방법, 요청 대상, 코멘트를 등록하고 리스트에서 확인합니다.</p></div>
+                  <div class="actions"><button class="btn btn-line" onclick="openChecklistModal()">+ 추가하기</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">엑셀 내보내기</button></div>
                 </div>
                 <div class="card-body">
-                  <div class="notice">정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송하는 것을 전제로 구성했습니다. 셀을 클릭해 바로 수정할 수 있으며, 체크 여부를 클릭하면 상태가 확인완료로 자동 변경되고 처리 이력이 기록됩니다.</div>
+                  <div class="notice">정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송하는 것을 전제로 구성했습니다. 추가하기 버튼에서 새 항목을 작성하고, 요청 대상별 체크 여부와 최초 작성자/확인 이력을 관리합니다.</div>
                   <div class="checklist-toolbar">
                     <div class="field"><label>프로젝트</label><select id="checklistProject"><option>ㅇㅇ시설 신축공사</option><option>샘플 프로젝트 A</option></select></div>
                     <div class="field"><label>담당자 필터</label><select id="checklistOwnerFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>QC TEAM</option><option>PM</option><option>산출 담당자</option><option>실장</option></select></div>
-                    <div class="field"><label>상태 필터</label><select id="checklistStatusFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>진행전</option><option>진행중</option><option>확인완료</option><option>PM 검토</option><option>수정요청</option><option>최종완료</option></select></div>
+                    <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="renderChecklistGrid()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
-                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>구분</th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>담당자</th><th>상태</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
+                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
                 </div>
               </article>
               <article class="card"><div class="card-head"><h2>QC 승인 단계</h2><span class="badge yellow">오류 등록 · 이의제기 · 소거</span></div><div class="card-body"><div class="approval-flow">
@@ -744,6 +744,33 @@
       </section>
 
     </main>
+  </div>
+
+
+  <div class="modal-backdrop" id="checklistItemModal">
+    <div class="modal modal-wide">
+      <div class="modal-head">
+        <h2 id="checklistModalTitle">수량산출 체크리스트 추가</h2>
+        <button class="close" onclick="closeChecklistModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="notice">구분, 공종, 검토항목, 검토방법, 체크 요청 대상과 코멘트를 작성하면 QC 검토 / 승인 리스트에 반영됩니다. 요청 대상은 여러 명 또는 여러 역할을 선택할 수 있습니다.</div>
+        <input type="hidden" id="checklistEditIndex" value="">
+        <div class="form-grid">
+          <div class="field"><label class="required">구분</label><input id="checklistModalGroup" placeholder="예: 프로젝트 수주시" required><div class="error-text">필수 입력 항목입니다.</div></div>
+          <div class="field"><label class="required">공종</label><input id="checklistModalTrade" placeholder="예: 도면검토" required><div class="error-text">필수 입력 항목입니다.</div></div>
+          <div class="field"><label>일련번호</label><input id="checklistModalNo" placeholder="자동 생성"></div>
+          <div class="field full"><label class="required">검토항목</label><textarea id="checklistModalItem" rows="3" placeholder="검토할 항목을 입력합니다." required></textarea><div class="error-text">필수 입력 항목입니다.</div></div>
+          <div class="field full"><label class="required">검토방법</label><textarea id="checklistModalMethod" rows="3" placeholder="검토 기준과 확인 방법을 입력합니다." required></textarea><div class="error-text">필수 입력 항목입니다.</div></div>
+          <div class="field full"><label class="required">체크 요청 대상</label><div class="target-check-grid" id="checklistTargetChecks"></div><div class="error-text" id="checklistTargetError">대상을 1개 이상 선택해야 합니다.</div></div>
+          <div class="field full"><label>코멘트</label><textarea id="checklistModalComment" rows="3" placeholder="요청사항 또는 참고사항을 입력합니다."></textarea></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-line" onclick="closeChecklistModal()">취소</button>
+        <button class="btn btn-primary" onclick="saveChecklistModal()">리스트에 반영</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-backdrop" id="employeeModal">
