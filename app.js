@@ -1722,7 +1722,7 @@ function renderChecklistGroupBand(group) {
   const locked = isChecklistCategoryLocked(group);
   const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === group).length;
   const controls = [];
-  if (group === firstCategoryName) controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadFirstCategoryCsv()">1번 항목 엑셀</button>`);
+  if (group === firstCategoryName) controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button>`);
   if (isQuestion) {
     controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadQuestionCategoryCsv('${escapeJs(group)}')">질의 엑셀</button>`);
     controls.push(`<button class="btn ${locked ? "btn-line" : "btn-primary"} group-mini-btn" ${locked ? "disabled" : ""} onclick="markQuestionCategorySent('${escapeJs(group)}')">${locked ? "송부완료" : "송부 완료 체크"}</button>`);
