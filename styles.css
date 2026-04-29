@@ -2627,3 +2627,95 @@ table td:last-child{
   padding-top:14px;
   padding-bottom:12px;
 }
+
+
+/* === QC 체크리스트 내부 스크롤 제거 ===
+   내부 테이블/카드 스크롤을 없애고 페이지 전체 스크롤로만 하단 내용을 확인하도록 변경 */
+#workModule,
+#workModule .main-area,
+#workModule .panel,
+#workModule .card,
+#workModule .card-body,
+#workModule .table-wrap,
+#workModule .work-qc-table-wrap,
+#workModule .qc-review-table-wrap,
+#workModule #qcReviewTableWrap,
+#workModule #workQcPanel .table-wrap,
+#workModule #workQcApproval .table-wrap,
+#workModule .excel-grid-wrap,
+#workModule .checklist-grid-wrap,
+#workModule .grid-scroll,
+#workModule .table-scroll,
+.work-qc-table-wrap,
+.qc-review-table-wrap,
+#qcReviewTableWrap,
+#workQcPanel .table-wrap,
+#workQcApproval .table-wrap,
+.excel-grid-wrap,
+.checklist-grid-wrap,
+.grid-scroll,
+.table-scroll{
+  max-height:none !important;
+  height:auto !important;
+  overflow-y:visible !important;
+}
+
+/* 세로 스크롤바가 카드 내부에 생기지 않도록 강제 */
+#workModule .card,
+#workModule .card-body,
+#workModule .table-wrap,
+#workModule .work-qc-table-wrap,
+#workModule .qc-review-table-wrap,
+#workModule #qcReviewTableWrap,
+.work-qc-table-wrap,
+.qc-review-table-wrap,
+#qcReviewTableWrap{
+  overflow-x:hidden !important;
+  overflow-y:visible !important;
+}
+
+/* 테이블은 한 화면 폭 안에서 유지하고, 행은 전체 페이지 길이만큼 자연스럽게 확장 */
+#workModule .excel-grid,
+.excel-grid{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  table-layout:fixed !important;
+}
+
+/* 혹시 tbody 또는 별도 리스트에 높이 제한이 걸린 경우 해제 */
+#workModule tbody,
+#workModule .excel-grid tbody,
+#workModule #checklistBody,
+#workModule #qcChecklistBody,
+#workModule #reviewBody,
+#workModule .checklist-body,
+#workModule .grid-body{
+  max-height:none !important;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+/* 브라우저 큰 스크롤 사용을 명확히 유지 */
+html,
+body{
+  overflow-y:auto !important;
+}
+
+body{
+  min-height:100vh;
+}
+
+/* 내부 스크롤 제거 후 카드 하단 여백 보정 */
+#workModule .card{
+  margin-bottom:28px !important;
+}
+
+#workModule .card-body{
+  padding-bottom:22px !important;
+}
+
+/* 테이블 하단이 잘리지 않도록 */
+#workModule .excel-grid tr:last-child td{
+  border-bottom:1px solid #dbe3ef !important;
+}
