@@ -2720,34 +2720,28 @@ body{
   border-bottom:1px solid #dbe3ef !important;
 }
 
-
 /* === 요청 이미지 기준 더미데이터 표시 보정 === */
 .excel-grid tr:not(.group-row) td{
   height:86px;
   vertical-align:middle !important;
 }
-
 .excel-grid .group-row td{
   height:38px;
   padding:8px 10px !important;
   background:#f8fbff !important;
   font-weight:900;
 }
-
 .excel-grid td:nth-child(4),
 .excel-grid td:nth-child(5){
   text-align:center !important;
   line-height:1.5 !important;
 }
-
 .excel-grid td:nth-child(8){
   text-align:center !important;
 }
-
 .excel-grid td:nth-child(10) .history-row strong{
   font-size:12px !important;
 }
-
 .excel-grid td:nth-child(10) .history-row span{
   font-size:11px !important;
 }
