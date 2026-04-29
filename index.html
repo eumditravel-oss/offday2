@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -893,5 +892,37 @@
   <div class="toast" id="toast"></div>
 
   <script src="./app.js"></script>
+
+<!-- QC / PM objection modal -->
+<div class="modal-backdrop" id="objectionModal">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h2>이의제기 작성</h2>
+      <button class="close" onclick="closeObjectionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label>이의제기 내용</label>
+          <textarea id="objectionText" rows="6" placeholder="이의제기 사유를 작성하세요"></textarea>
+        </div>
+
+        <div class="field full">
+          <label>첨부 이미지 (다중 업로드)</label>
+          <input type="file" id="objectionImages" accept="image/*" multiple />
+        </div>
+
+        <div class="field full">
+          <div id="objectionPreview" class="objection-preview-grid"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-line" onclick="closeObjectionModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveObjection()">저장</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
