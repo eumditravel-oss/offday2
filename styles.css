@@ -2465,3 +2465,86 @@ table td:last-child{
 .excel-grid tr:not(.group-row) td{
   vertical-align:middle !important;
 }
+
+
+/* === 요청 대상 칼럼 중앙정렬 최종 보정 ===
+   요청 대상 셀 안의 산출 담당자 배지가 칼럼 중앙에 오도록 강제 */
+.excel-grid th:nth-child(6),
+.excel-grid td:nth-child(6){
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding-left:4px !important;
+  padding-right:4px !important;
+}
+
+/* 요청 대상 셀의 내부 요소를 중앙에 고정 */
+.excel-grid td:nth-child(6){
+  position:relative !important;
+}
+
+.excel-grid td:nth-child(6) > *{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+/* badge / span / button 형태 모두 대응 */
+.excel-grid td:nth-child(6) .badge,
+.excel-grid td:nth-child(6) span,
+.excel-grid td:nth-child(6) button,
+.excel-grid td:nth-child(6) .target-badge,
+.excel-grid td:nth-child(6) .request-target,
+.excel-grid td:nth-child(6) .owner-chip{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  float:none !important;
+}
+
+/* 셀 안에 div wrapper가 있을 경우도 중앙 정렬 */
+.excel-grid td:nth-child(6) div{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  width:100% !important;
+}
+
+/* 요청 대상 배지 자체 폭은 내용 기준, 위치만 중앙 */
+.excel-grid td:nth-child(6) .badge{
+  width:auto !important;
+  max-width:100% !important;
+  white-space:nowrap !important;
+}
+
+/* 체크 여부와 관리도 같은 기준으로 중앙 유지 */
+.excel-grid th:nth-child(7),
+.excel-grid td:nth-child(7),
+.excel-grid th:nth-child(11),
+.excel-grid td:nth-child(11){
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+/* 체크 여부 셀 내부 중앙 고정 */
+.excel-grid td:nth-child(7){
+  padding-left:4px !important;
+  padding-right:4px !important;
+}
+
+.excel-grid td:nth-child(7) .done-check-wrap,
+.excel-grid td:nth-child(7) .target-done-wrap{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+/* 코멘트 헤더 중앙, 본문은 좌측 유지 */
+.excel-grid th:nth-child(8){
+  text-align:center !important;
+}
+
+.excel-grid td:nth-child(8){
+  text-align:left !important;
+}
