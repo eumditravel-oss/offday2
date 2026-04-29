@@ -1594,129 +1594,35 @@ tr:hover td{background:#fbfdff}
 .locked-row .cell,.locked-row .target-chip-list,.locked-row .history-cell{opacity:.78}
 .row-actions .btn:disabled,.group-mini-btn:disabled,.done-check-wrap input:disabled,.excel-grid input:disabled{cursor:not-allowed;opacity:.55}
 
-
-.help-text{
-  margin-top:6px;
-  color:#64748b;
-  font-size:12px;
-  font-weight:700;
+/* QC 승인 단계 제거 후 리스트 세로 확장 */
+.qc-approval-card,
+.qc-approval-stage,
+.qc-stage-panel{
+  display:none !important;
 }
 
-.image-preview-grid,
-.attachment-grid{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  align-items:center;
+.qc-review-card .card-body.table-wrap,
+.qc-review-table-wrap,
+#qcReviewTableWrap{
+  max-height:calc(100vh - 280px);
+  overflow:auto;
 }
 
-.image-preview-item{
-  position:relative;
-  width:92px;
-  height:74px;
-  border:1px solid var(--line2);
-  border-radius:12px;
-  overflow:hidden;
-  background:#f8fafc;
+.work-qc-table-wrap{
+  max-height:calc(100vh - 280px);
+  overflow:auto;
 }
 
-.image-preview-item img,
-.attachment-thumb{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
+#qcReviewBody,
+#reviewBody{
+  min-height:520px;
 }
 
-.image-preview-item span{
-  position:absolute;
-  right:4px;
-  bottom:4px;
-  background:rgba(15,23,42,.75);
-  color:#fff;
-  font-size:11px;
-  border-radius:999px;
-  padding:2px 6px;
-  font-weight:900;
-}
 
-.attachment-thumb{
-  width:46px;
-  height:46px;
-  border-radius:10px;
-  border:1px solid var(--line2);
-}
-
-.objection-action-wrap{
-  margin-top:8px;
-  display:grid;
-  gap:6px;
-}
-
-.btn-objection,
-.btn-objection-view{
-  border:1px solid #fdba74;
-  background:#fff7ed;
-  color:#c2410c;
-  border-radius:999px;
-  padding:6px 10px;
-  font-size:12px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.btn-objection-view{
-  border-color:#bfdbfe;
-  background:#eff6ff;
-  color:#1d4ed8;
-}
-
-.btn-objection:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-}
-
-.objection-detail-box{
-  display:none;
-  margin-top:8px;
-  border:1px solid #fed7aa;
-  background:#fff7ed;
-  border-radius:14px;
-  padding:10px;
-  color:#7c2d12;
-  text-align:left;
-  line-height:1.55;
-}
-
-.objection-detail-box.active{
-  display:block;
-}
-
-.objection-detail-box p{
-  margin:6px 0 8px;
-  white-space:pre-wrap;
-}
-
-.objection-meta{
-  color:#9a3412;
-  font-size:11px;
-  font-weight:900;
-  margin-top:6px;
-}
-
-.objection-accept-btn{
-  margin-top:8px;
-}
-
-.row-eliminated td{
-  background:#f1f5f9 !important;
-  color:#94a3b8 !important;
-  text-decoration:line-through;
-}
-
-.row-eliminated .objection-detail-box,
-.row-eliminated .btn,
-.row-eliminated .target-done-wrap,
-.row-eliminated .attachment-grid{
-  text-decoration:none !important;
+#qc .table-wrap,
+#qcApproval .table-wrap,
+#workQcPanel .table-wrap,
+#workQcApproval .table-wrap{
+  max-height:calc(100vh - 260px);
+  overflow:auto;
 }
