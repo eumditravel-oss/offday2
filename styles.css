@@ -2352,3 +2352,116 @@ table td:last-child{
   min-width:0 !important;
   max-width:none !important;
 }
+
+
+/* === QC 체크리스트 중앙정렬 보정 ===
+   요청 대상 / 체크 여부 / 코멘트 / 첨부 / 처리 이력 / 관리 칼럼의 시각적 중앙 정렬 */
+.excel-grid th:nth-child(6),
+.excel-grid td:nth-child(6),
+.excel-grid th:nth-child(7),
+.excel-grid td:nth-child(7),
+.excel-grid th:nth-child(8),
+.excel-grid td:nth-child(8),
+.excel-grid th:nth-child(9),
+.excel-grid td:nth-child(9),
+.excel-grid th:nth-child(10),
+.excel-grid td:nth-child(10),
+.excel-grid th:nth-child(11),
+.excel-grid td:nth-child(11){
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+/* 요청 대상 배지 중앙 */
+.excel-grid td:nth-child(6) .badge{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 auto !important;
+  text-align:center !important;
+}
+
+/* 체크 여부 칸 내부 중앙 */
+.excel-grid td:nth-child(7) .done-check-wrap,
+.excel-grid td:nth-child(7) .target-done-wrap{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 auto !important;
+  text-align:center !important;
+}
+
+.excel-grid td:nth-child(7) .objection-area{
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+
+/* 코멘트 칼럼 헤더는 중앙, 본문은 입력/메모 가독성을 위해 좌측 정렬 */
+.excel-grid th:nth-child(8){
+  text-align:center !important;
+}
+
+.excel-grid td:nth-child(8){
+  text-align:left !important;
+  vertical-align:middle !important;
+}
+
+/* 첨부 칸 중앙 */
+.excel-grid td:nth-child(9) .attachment-cell,
+.excel-grid td:nth-child(9) .readonly-attachment-cell{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 auto !important;
+}
+
+.excel-grid td:nth-child(9) .attach-thumb-list{
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 auto !important;
+}
+
+/* 처리 이력 중앙 */
+.excel-grid td:nth-child(10) .history-cell,
+.excel-grid td:nth-child(10) .history-row{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 auto !important;
+}
+
+.excel-grid td:nth-child(10) .history-row strong,
+.excel-grid td:nth-child(10) .history-row span{
+  text-align:center !important;
+  white-space:nowrap !important;
+}
+
+/* 관리 버튼 중앙 */
+.excel-grid td:nth-child(11) .row-actions,
+.excel-grid td:nth-child(11) .actions{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  margin:0 auto !important;
+  text-align:center !important;
+}
+
+.excel-grid td:nth-child(11) button,
+.excel-grid td:nth-child(11) .btn{
+  margin:0 auto !important;
+}
+
+/* 행 높이 안에서 세로 중앙이 어긋나지 않도록 보정 */
+.excel-grid tr:not(.group-row) td{
+  vertical-align:middle !important;
+}
