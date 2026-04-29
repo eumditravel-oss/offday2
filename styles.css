@@ -1913,162 +1913,134 @@ table td:nth-child(10){
 }
 
 
-/* 체크리스트 그리드 가로폭 최종 조정
-   - 체크 여부 / 관리 칸은 최대한 컴팩트
-   - 검토항목 / 검토방법 칸은 확장
-   - 첨부 / 처리이력은 유지 가능한 최소 폭 */
-#workQcPanel .excel-grid,
-#workQcApproval .excel-grid,
+/* 체크 여부 칸 줄넘김 방지 최종 보정
+   - 체크 여부 배지는 한 줄 유지
+   - 칸 높이 내부에서 이의제기 버튼까지 세로 정렬
+   - 검토항목/검토방법 영역은 상대적으로 넓게 유지 */
 .excel-grid{
-  table-layout:fixed;
-  min-width:1320px;
+  table-layout:fixed !important;
+  min-width:1480px !important;
 }
 
-/* 1 체크 */
-.excel-grid th:nth-child(1),
-.excel-grid td:nth-child(1){
-  width:42px !important;
-  min-width:42px !important;
-  max-width:42px !important;
-  text-align:center;
-  padding-left:6px !important;
-  padding-right:6px !important;
-}
-
-/* 2 공종 */
-.excel-grid th:nth-child(2),
-.excel-grid td:nth-child(2){
-  width:72px !important;
-  min-width:72px !important;
-  max-width:72px !important;
-}
-
-/* 3 일련번호 */
-.excel-grid th:nth-child(3),
-.excel-grid td:nth-child(3){
-  width:66px !important;
-  min-width:66px !important;
-  max-width:66px !important;
-  text-align:center;
-}
-
-/* 4 검토항목: 확대 */
+/* 검토항목 */
 .excel-grid th:nth-child(4),
 .excel-grid td:nth-child(4){
-  width:23% !important;
-  min-width:260px !important;
+  width:24% !important;
+  min-width:300px !important;
 }
 
-/* 5 검토방법: 확대 */
+/* 검토방법 */
 .excel-grid th:nth-child(5),
 .excel-grid td:nth-child(5){
   width:25% !important;
-  min-width:290px !important;
+  min-width:320px !important;
 }
 
-/* 6 요청 대상 */
-.excel-grid th:nth-child(6),
-.excel-grid td:nth-child(6){
-  width:92px !important;
-  min-width:92px !important;
-  max-width:92px !important;
-  text-align:center;
-}
-
-/* 7 체크 여부: 컴팩트 */
+/* 체크 여부 */
 .excel-grid th:nth-child(7),
 .excel-grid td:nth-child(7){
-  width:120px !important;
-  min-width:120px !important;
-  max-width:120px !important;
-  text-align:center;
-  padding-left:6px !important;
-  padding-right:6px !important;
+  width:158px !important;
+  min-width:158px !important;
+  max-width:158px !important;
+  padding:8px 6px !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+  overflow:visible !important;
+}
+
+.excel-grid td:nth-child(7){
+  white-space:normal !important;
 }
 
 .excel-grid td:nth-child(7) .done-check-wrap,
 .excel-grid td:nth-child(7) .target-done-wrap{
-  padding:6px 8px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  width:auto !important;
+  max-width:146px !important;
+  min-width:0 !important;
+  padding:7px 10px !important;
+  margin:0 auto !important;
+  border-radius:999px !important;
+  white-space:nowrap !important;
+  line-height:1 !important;
   font-size:12px !important;
-  white-space:nowrap;
-  justify-content:center;
 }
 
-.excel-grid td:nth-child(7) .btn-objection{
+.excel-grid td:nth-child(7) .done-check-wrap span,
+.excel-grid td:nth-child(7) .target-done-wrap span{
+  display:inline-block !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  max-width:112px !important;
+  line-height:1 !important;
+}
+
+.excel-grid td:nth-child(7) .done-check-wrap input,
+.excel-grid td:nth-child(7) .target-done-wrap input{
+  width:14px !important;
+  height:14px !important;
+  flex:0 0 14px !important;
+  margin:0 !important;
+}
+
+/* 체크 여부 칸의 이의제기 버튼은 배지 아래에만 정렬 */
+.excel-grid td:nth-child(7) .objection-area{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  gap:5px !important;
+  margin-top:8px !important;
+}
+
+.excel-grid td:nth-child(7) .btn-objection,
+.excel-grid td:nth-child(7) .btn-mini{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:auto !important;
+  min-width:58px !important;
+  max-width:90px !important;
   padding:5px 8px !important;
   font-size:12px !important;
-  margin-top:5px;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
 }
 
-/* 8 코멘트 */
-.excel-grid th:nth-child(8),
-.excel-grid td:nth-child(8){
-  width:18% !important;
-  min-width:220px !important;
-}
-
-/* 9 첨부 */
-.excel-grid th:nth-child(9),
-.excel-grid td:nth-child(9){
-  width:94px !important;
-  min-width:94px !important;
-  max-width:94px !important;
-  text-align:center;
-  padding-left:6px !important;
-  padding-right:6px !important;
-}
-
-.excel-grid td:nth-child(9) .attach-thumb{
-  width:30px !important;
-  height:30px !important;
-}
-
-/* 10 처리 이력 */
-.excel-grid th:nth-child(10),
-.excel-grid td:nth-child(10){
-  width:145px !important;
-  min-width:145px !important;
-  max-width:145px !important;
-}
-
-/* 11 관리: 컴팩트 */
+/* 관리 칸 컴팩트 유지 */
 .excel-grid th:nth-child(11),
 .excel-grid td:nth-child(11){
-  width:82px !important;
-  min-width:82px !important;
-  max-width:82px !important;
-  text-align:center;
-  padding-left:5px !important;
-  padding-right:5px !important;
+  width:78px !important;
+  min-width:78px !important;
+  max-width:78px !important;
+  padding:6px 4px !important;
+  text-align:center !important;
 }
 
-.excel-grid td:nth-child(11) .row-actions,
-.excel-grid td:nth-child(11) .actions{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  align-items:center;
+/* 첨부/이력 칸은 현재 표시 유지 */
+.excel-grid th:nth-child(9),
+.excel-grid td:nth-child(9){
+  width:98px !important;
+  min-width:98px !important;
+  max-width:98px !important;
 }
 
-.excel-grid td:nth-child(11) .btn,
-.excel-grid td:nth-child(11) button{
-  padding:6px 8px !important;
-  font-size:12px !important;
-  min-width:44px;
+.excel-grid th:nth-child(10),
+.excel-grid td:nth-child(10){
+  width:150px !important;
+  min-width:150px !important;
+  max-width:150px !important;
 }
 
-/* 셀 내부 텍스트는 항목/방법 영역에서 충분히 줄바꿈 */
-.excel-grid td:nth-child(4) .cell,
-.excel-grid td:nth-child(5) .cell{
-  line-height:1.55;
-  word-break:keep-all;
-  white-space:normal;
+/* 행 내부에서 체크 배지가 다음 행처럼 보이지 않게 높이 안정화 */
+.excel-grid td{
+  vertical-align:middle !important;
 }
 
-/* 이전 nth-child 전역 폭 지정 무효화 보정 */
-table th:nth-child(7),
-table td:nth-child(7),
-table th:last-child,
-table td:last-child{
-  max-width:none;
+.excel-grid tr:not(.group-row) td{
+  min-height:64px;
 }
