@@ -1496,3 +1496,87 @@ tr:hover td{background:#fbfdff}
 #qcReview .checklist-card{margin-bottom:18px}
 #qcReview .excel-grid-wrap{max-height:560px}
 #qcReview .card-head .subcopy{max-width:900px}
+
+/* 요청 반영: QC 체크리스트 상태 컬럼 제거 / 요청 대상별 체크 / 구분 가로 구분선 / 추가 모달 */
+.excel-grid{min-width:1460px}
+.group-separator-row td{
+  background:#f8fafc !important;
+  border-top:2px solid #cbd5e1;
+  border-bottom:1px solid #dbe3ef;
+  padding:9px 12px !important;
+  text-align:left !important;
+}
+.group-separator-row span{
+  display:inline-flex;
+  align-items:center;
+  margin-right:8px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#e2e8f0;
+  color:#475569;
+  font-size:11px;
+  font-weight:900;
+}
+.group-separator-row strong{
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+}
+.target-chip-list{
+  min-height:40px;
+  padding:7px 8px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  align-content:flex-start;
+}
+.target-chip{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid #bfdbfe;
+  background:#eef6ff;
+  color:#1d4ed8;
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.target-done-wrap{
+  margin:3px;
+}
+.done-cell{
+  min-width:190px;
+}
+.history-line.created strong,
+.history-line.created span{
+  color:#0f766e;
+}
+.target-check-grid{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(130px, 1fr));
+  gap:8px;
+}
+.target-option{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid var(--line2);
+  border-radius:13px;
+  background:#fbfdff;
+  padding:10px 12px;
+  font-weight:900;
+  color:#334155;
+  cursor:pointer;
+}
+.target-option input{
+  width:16px;
+  height:16px;
+  accent-color:var(--blue);
+}
+#checklistTargetError.show{
+  display:block;
+}
+@media(max-width:760px){
+  .target-check-grid{grid-template-columns:1fr 1fr}
+}
