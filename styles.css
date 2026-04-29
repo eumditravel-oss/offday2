@@ -1626,3 +1626,11 @@ tr:hover td{background:#fbfdff}
   max-height:calc(100vh - 260px);
   overflow:auto;
 }
+
+/* QC 검토/승인 상단 중복 안내 카드 제거 */
+.qc-intro,
+.qc-summary-card,
+.qc-approval-intro,
+.qc-review-intro{
+  display:none !important;
+}
