@@ -1394,25 +1394,424 @@ function getNextQuestionCategory(category) {
 }
 
 let checklistRows = [
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주 시점(PM,작업자,발주처 송부용)", trade:"계약방식", no:"001", item:"프로젝트 업무 특성 파악 (구조선수행, 입찰, 본실행, 설계내역 등)", method:"접수자료 확인. 특이사항 작성 후 프로젝트 PM 전달", owner:"QC TEAM", status:"진행중", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주 시점(PM,작업자,발주처 송부용)", trade:"접수자료", no:"002", item:"입찰 내역서, 산출기준서, 공사 특기사항 접수 파악", method:"접수자료 확인. 특이사항 작성 후 프로젝트 PM 전달", owner:"QC TEAM", status:"진행중", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주 시점(PM,작업자,발주처 송부용)", trade:"도면검토", no:"003", item:"도면 접수 여부 확인 (구조 / 건축 / 토목)", method:"도면목록표와 접수 도면상 일치 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 수주 시점(PM,작업자,발주처 송부용)", trade:"접수자료", no:"004", item:"내역서, 산출서, 기준서 접수 여부 확인", method:"내역서, 산출서, 기준서 파일 수신 여부 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"작업 착수 전 확인 필요사항(PM)", trade:"프로젝트 유형", no:"005", item:"프로젝트 유형 파악 (입찰 / 본실행 / 구조선수행 등)", method:"계약방식과 발주처 요청사항 기준으로 유형 분류", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"작업 착수 전 확인 필요사항(PM)", trade:"특이사항", no:"006", item:"프로젝트별 특이사항 확인 및 정리", method:"정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"작업 착수 전 확인 필요사항(PM)", trade:"파일공사", no:"007", item:"파일길이 및 항타장비, 동재하 정재하 시험횟수 확인", method:"지질조서도 확인", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"작업 착수 전 확인 필요사항(PM)", trade:"토공사", no:"008", item:"토공사 산출유무 확인", method:"토목팀 투입 유무 확인 및 건축터파기 산출 여부 협의", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"작업 착수 전 확인 필요사항(PM)", trade:"합벽", no:"009", item:"합벽유무 및 합벽구간 추가이음 발생 여부 확인", method:"토목도면 흙막이 또는 가시설계획도 확인", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"작업 착수 전 확인 필요사항(PM)", trade:"끊어치기", no:"010", item:"끊어치기(C.J Joint) 구간 확인", method:"발주처 및 건설사 질의사항 작성. Zoning 및 분할타설 계획도 요청", owner:"PM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"커플러", no:"011", item:"커플러 산출기준 확인", method:"건설사별 견적지침서 확인. 별도 표현 없을 시 담당자 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"철근강도", no:"012", item:"철근 강도에 따른 정착/이음값 오류 확인", method:"구조일반사항 및 구조계산서 검토", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"내진철근", no:"013", item:"내진철근 적용 유무 확인", method:"SD400S, SD500S, SD600S 등의 표현 유무 확인", owner:"QC TEAM", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"기초", no:"014", item:"버림두께 확인", method:"건축단면도 기준 적용. 미표현 시 60mm 적용", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"자가검토 체크리스트(QC)", trade:"기둥", no:"015", item:"기초두께 입력시 이음 산출 유무 확인", method:"산출식 확인 후 기초두께 입력 시 주근 이음 산출 여부 검토", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"보", no:"016", item:"각 층별 슬라브 두께별 공제 확인", method:"산출내용 재확인", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"슬라브", no:"017", item:"부호별 데크타입 오류 확인", method:"RC 평면자료를 Excel 변환 후 필터로 데크부호별 코드입력 체크", owner:"산출 담당자", status:"진행전", comment:"" },
-  { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"제출자료 검토사항(PM)", trade:"옹벽", no:"018", item:"옹벽 상부 슬라브 또는 보 공제값 오류 체크", method:"RC 프로그램 산식 확인", owner:"산출 담당자", status:"진행전", comment:"" }
+  {
+    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "trade": "계약",
+    "no": "001",
+    "item": "프로젝트 업무 특성 파악\n(구조선수행, 입찰, 본실행,\n설계내역 등)",
+    "method": "접수자료 확인. 특이사항 작성 후 프로젝트\nPM 전달",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "trade": "접수자료",
+    "no": "002",
+    "item": "입찰 내역서, 산출기준서, 공사\n특기사항 접수 파악",
+    "method": "접수자료 확인. 특이사항 작성 후 프로젝트\nPM 전달",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "trade": "도면검토",
+    "no": "003",
+    "item": "도면 접수 여부 확인 (구조 / 건축 /\n토목)",
+    "method": "도면목록표와 접수 도면상 일치 확인",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "trade": "접수자료",
+    "no": "004",
+    "item": "내역서, 산출서, 기준서 접수 여부\n확인",
+    "method": "내역서, 산출서, 기준서 파일 수신 여부 확인",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "QC팀 전달사항(유형 및 특이사항 관리)",
+    "trade": "프로젝트\n유형",
+    "no": "005",
+    "item": "프로젝트 유형 파악 (입찰 / 본실행\n/ 구조선수행 등)",
+    "method": "계약방식과 발주처 요청사항 기준으로 유형\n분류",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "QC팀 전달사항(유형 및 특이사항 관리)",
+    "trade": "토공사",
+    "no": "008",
+    "item": "토공사 산출유무 확인",
+    "method": "토목팀 투입 유무 확인 및 건축디따기 산출\n여부 협의",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "QC팀 전달사항(유형 및 특이사항 관리)",
+    "trade": "합벽",
+    "no": "009",
+    "item": "합벽유무 및 합벽구간 추가이음\n발생 여부 확인",
+    "method": "토목도면 흙막이 또는 가시설계획도 확인",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "QC팀 전달사항(유형 및 특이사항 관리)",
+    "trade": "도면목록표",
+    "no": "019",
+    "item": "도면목록표와 도서가 일치하는지\n확인",
+    "method": "PM과 산출 담당자 모두 도면 누락본 확인할\n것",
+    "owner": "PM, 산출 담당자",
+    "targets": [
+      "PM",
+      "산출 담당자"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 18:25",
+    "comment": "누락본이 있을 시 질의사항 작성 바랍니다.",
+    "attachments": [],
+    "checks": [
+      {
+        "target": "PM",
+        "done": true,
+        "checkedBy": "박용진 수석",
+        "checkedAt": "2026-04-29 18:25"
+      },
+      {
+        "target": "산출 담당자",
+        "done": true,
+        "checkedBy": "박용진 수석",
+        "checkedAt": "2026-04-29 18:25"
+      }
+    ],
+    "history": [
+      {
+        "action": "확인완료(PM)",
+        "worker": "박용진 수석",
+        "time": "2026-04-29 18:25"
+      },
+      {
+        "action": "확인완료(산출 담당자)",
+        "worker": "박용진 수석",
+        "time": "2026-04-29 18:25"
+      },
+      {
+        "action": "최초작성",
+        "worker": "경영지원",
+        "time": "2026-04-29 18:25"
+      }
+    ]
+  },
+  {
+    "group": "작업 착수 전 확인 필요사항(PM)",
+    "trade": "특이사항",
+    "no": "006",
+    "item": "프로젝트별 특이사항 확인 및 정리",
+    "method": "정리 완료 후 내부 PM 및 외부 발주처\n담당자에게 동시 발송",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "작업 착수 전 확인 필요사항(PM)",
+    "trade": "파일공사",
+    "no": "007",
+    "item": "파일길이 및 항타장비, 동재하\n정재하 시험횟수 확인",
+    "method": "지질조서도 확인",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "작업 착수 전 확인 필요사항(PM)",
+    "trade": "끊어치기",
+    "no": "010",
+    "item": "끊어치기(C.J Joint) 구간 확인",
+    "method": "발주처 및 건설사 질의사항 작성. Zoning 및\n분할타설 계획도 요청",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "작업 진행 중 추가 전달사항(PM)",
+    "trade": "철근\n규격\n변경",
+    "no": "020",
+    "item": "데크 슬라브 구분이 필요하여 H-\nBAR → D-BAR 구분 필요",
+    "method": "데크슬라브 철근만 D-BAR로 구분 바랍니다.",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 18:26",
+    "comment": "만약 이음 값이 없을 시 질의 바랍니다.",
+    "attachments": []
+  },
+  {
+    "group": "작업 진행 중 추가 전달사항(PM)",
+    "trade": "띠장\n이음",
+    "no": "021",
+    "item": "띠장구간 이음1회 추가",
+    "method": "띠장 도면 참조하여 띠장이 걸리는 구간은 1회\n이음을 추가 해 주세요",
+    "owner": "PM",
+    "targets": [
+      "PM"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 18:27",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "자가검토 체크리스트(QC)",
+    "trade": "커플러",
+    "no": "011",
+    "item": "커플러 산출기준 확인",
+    "method": "건설사별 견적지침서 확인. 별도 표현 없음 시\n담당자 확인",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "자가검토 체크리스트(QC)",
+    "trade": "철근강도",
+    "no": "012",
+    "item": "철근 강도에 따른 정착/이음값 오류\n확인",
+    "method": "구조일반사항 및 구조계산서 검토",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "자가검토 체크리스트(QC)",
+    "trade": "내진철근",
+    "no": "013",
+    "item": "내진철근 적용 유무 확인",
+    "method": "SD400S, SD500S, SD600S 등의 표현 유무\n확인",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "자가검토 체크리스트(QC)",
+    "trade": "기둥",
+    "no": "015",
+    "item": "기초두께 입력시 이음 산출 유무\n확인",
+    "method": "산출식 확인 후 기초두께 입력 시 주근 이음\n산출 여부 검토",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "QC TEAM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "제출자료 검토사항(PM)",
+    "trade": "기초",
+    "no": "014",
+    "item": "버림두께 확인",
+    "method": "건축단면도 기준 적용. 미표현 시 60mm 적용",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "제출자료 검토사항(PM)",
+    "trade": "보",
+    "no": "016",
+    "item": "각 층별 슬라브 두께별 공제 확인",
+    "method": "산출내용 재확인",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "제출자료 검토사항(PM)",
+    "trade": "슬라브",
+    "no": "017",
+    "item": "부호별 데크타입 오류 확인",
+    "method": "RC 평면자료를 Excel 변환 후 필터로\n데크부호별 코드입력 체크",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "제출자료 검토사항(PM)",
+    "trade": "옹벽",
+    "no": "018",
+    "item": "옹벽 상부 슬라브 또는 보 공제값\n오류 체크",
+    "method": "RC 프로그램 산식 확인",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 09:00",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "제출자료 검토사항(PM)",
+    "trade": "보",
+    "no": "022",
+    "item": "B2G1 늑근 간격 150mm가 아닌\n300mm로 잘못 산출 됨",
+    "method": "배근의 전반적인 검토가 필요함.",
+    "owner": "산출 담당자",
+    "targets": [
+      "산출 담당자"
+    ],
+    "creator": "PM",
+    "createdAt": "2026-04-29 18:29",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "최종자료 검토사항(QC)",
+    "trade": "계수",
+    "no": "023",
+    "item": "유사 프로젝트 대비 콘크리트 계수\n확인",
+    "method": "비슷한 형태의 프로젝트를 찾아 콘크리트\n계수가 비슷한지 확인 해 주세요",
+    "owner": "PM, 산출 담당자",
+    "targets": [
+      "PM",
+      "산출 담당자"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 18:32",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "최종자료 검토사항(QC)",
+    "trade": "계수",
+    "no": "024",
+    "item": "유사프로젝트 거푸집 계수 검토",
+    "method": "비슷한 형식의 프로젝트를 찾아 거푸집 계수\n확인을 해 주세요",
+    "owner": "PM, 산출 담당자",
+    "targets": [
+      "PM",
+      "산출 담당자"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 18:32",
+    "comment": "",
+    "attachments": []
+  },
+  {
+    "group": "최종자료 검토사항(QC)",
+    "trade": "계수",
+    "no": "025",
+    "item": "유사 프로젝트 대비 철근 계수 검토",
+    "method": "비슷한 유형의 프로젝트를 찾아서 계수 검토\n해 주세요",
+    "owner": "PM, 산출 담당자",
+    "targets": [
+      "PM",
+      "산출 담당자"
+    ],
+    "creator": "경영지원",
+    "createdAt": "2026-04-29 18:33",
+    "comment": "",
+    "attachments": []
+  }
 ];
+// QC 체크리스트 더미데이터가 기존 브라우저 저장값에 덮이지 않도록 초기 표시용 저장값만 제거
+try {
+  localStorage.removeItem("qcChecklistRows");
+  localStorage.removeItem("checklistRows");
+  localStorage.removeItem("workQcChecklistRows");
+} catch (e) {}
+
 
 const checklistStatuses = ["진행전", "진행중", "확인완료", "PM 검토", "수정요청", "최종완료"];
 const checklistOwners = ["QC TEAM", "PM", "산출 담당자", "실장", "경영지원"];
