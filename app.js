@@ -1417,6 +1417,18 @@ let checklistRows = [
 const checklistStatuses = ["진행전", "진행중", "확인완료", "PM 검토", "수정요청", "최종완료"];
 const checklistOwners = ["QC TEAM", "PM", "산출 담당자", "실장", "경영지원"];
 
+const checklistGroupRoleRules = {
+  "프로젝트 수주 시점(PM,작업자,발주처 송부용)": { creator: "QC TEAM", targets: ["PM"], objection: false },
+  "작업 착수 전 확인 필요사항(PM)": { creator: "PM", targets: ["산출 담당자"], objection: false },
+  "자가검토 체크리스트(QC)": { creator: "QC TEAM", targets: ["산출 담당자"], objection: false },
+  "제출자료 검토사항(PM)": { creator: "PM", targets: ["산출 담당자"], objection: true }
+};
+
+function getChecklistRoleRule(group) {
+  return checklistGroupRoleRules[normalizeChecklistGroupName(group)] || null;
+}
+
+
 function switchTopModule(moduleName) {
   document.querySelectorAll(".module-view").forEach(view => view.classList.remove("active"));
   document.querySelectorAll("[data-module-tab]").forEach(tab => tab.classList.remove("active"));
@@ -1446,23 +1458,38 @@ function switchWorkPanel(panelId) {
 function normalizeChecklistRow(row) {
   if (!row) return row;
   row.group = normalizeChecklistGroupName(row.group);
-  if (!row.creator) row.creator = "경영지원";
+
+  const roleRule = getChecklistRoleRule(row.group);
+  if (roleRule) {
+    row.creator = roleRule.creator;
+    row.targets = [...roleRule.targets];
+    row.owner = row.targets.join(", ");
+  } else {
+    if (!row.creator) row.creator = "경영지원";
+    if (!Array.isArray(row.targets) || !row.targets.length) {
+      row.targets = String(row.owner || "QC TEAM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
+    }
+    row.owner = row.targets.join(", ");
+  }
+
   if (!row.createdAt) row.createdAt = "2026-04-29 09:00";
   row.history = Array.isArray(row.history) ? row.history : [];
-  if (!row.history.some(h => h.action === "최초작성")) {
-    row.history.unshift({ action: "최초작성", worker: row.creator, time: row.createdAt });
-  }
-  if (!Array.isArray(row.targets) || !row.targets.length) {
-    row.targets = String(row.owner || "QC TEAM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
-  }
+  row.history = row.history.filter(h => h.action !== "최초작성");
+  row.history.unshift({ action: "최초작성", worker: row.creator, time: row.createdAt });
+
+  if (!Array.isArray(row.attachments)) row.attachments = [];
+  if (!row.objection) row.objection = null;
+  if (typeof row.objectionOpen !== "boolean") row.objectionOpen = false;
+  if (typeof row.eliminated !== "boolean") row.eliminated = false;
+
   if (!Array.isArray(row.checks)) row.checks = [];
   row.targets.forEach(target => {
     if (!row.checks.some(c => c.target === target)) row.checks.push({ target, done: false, checkedBy: "", checkedAt: "" });
   });
   row.checks = row.checks.filter(c => row.targets.includes(c.target));
-  row.owner = row.targets.join(", ");
+
   row.done = isChecklistRowDone(row);
-  row.status = row.done ? "확인완료" : getChecklistDoneState(row);
+  row.status = row.eliminated ? "소거" : (row.done ? "확인완료" : getChecklistDoneState(row));
   return row;
 }
 
@@ -1516,7 +1543,7 @@ function renderChecklistGrid() {
     const groupBand = row.group !== lastGroup ? renderChecklistGroupBand(row.group) : "";
     lastGroup = row.group;
     return `${groupBand}
-      <tr class="${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""}">
+      <tr class="${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "row-eliminated" : ""}" data-checklist-row="${realIndex}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)">${escapeHtml(row.trade)}</div></td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)">${escapeHtml(row.no)}</div></td>
@@ -1526,6 +1553,7 @@ function renderChecklistGrid() {
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
         <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
+        <td>${renderChecklistAttachments(row)}</td>
         <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`;
   }).join("");
@@ -1543,18 +1571,49 @@ function renderChecklistGroupBand(group) {
     const next = getNextQuestionCategory(group);
     if (locked && next) controls.push(`<span class="next-round-guide">다음 작성 가능: ${escapeHtml(next)}</span>`);
   }
-  return `<tr class="group-separator-row ${locked ? "group-locked" : ""}"><td colspan="10"><div class="group-band-inner"><div><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}</div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
+  return `<tr class="group-separator-row ${locked ? "group-locked" : ""}"><td colspan="11"><div class="group-band-inner"><div><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}</div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
 }
 
 function renderChecklistTargetChecks(row, realIndex) {
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  return row.checks.map((check, checkIndex) => `
+  const checksHtml = row.checks.map((check, checkIndex) => `
     <label class="done-check-wrap target-done-wrap" title="${escapeHtml(check.target)} 확인 체크">
-      <input type="checkbox" ${check.done ? "checked" : ""} ${locked ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
+      <input type="checkbox" ${check.done ? "checked" : ""} ${locked || row.eliminated ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
       <span>${escapeHtml(check.target)} · ${check.done ? "확인완료" : "미확인"}</span>
     </label>
   `).join("");
+
+  const roleRule = getChecklistRoleRule(row.group);
+  const objectionHtml = roleRule?.objection ? `
+    <div class="objection-action-wrap">
+      <button class="btn-objection" ${locked || row.eliminated ? "disabled" : ""} onclick="openChecklistObjectionModal(${realIndex})">이의제기</button>
+      ${row.objection ? `<button class="btn-objection-view" onclick="toggleChecklistObjectionDetail(${realIndex})">이의내용 ${row.objectionOpen ? "접기" : "보기"}</button>` : ""}
+      ${row.objection ? renderChecklistObjectionDetail(row, realIndex) : ""}
+    </div>
+  ` : "";
+
+  return checksHtml + objectionHtml;
+}
+
+function renderChecklistAttachments(row) {
+  normalizeChecklistRow(row);
+  if (!row.attachments.length) return `<span class="history-empty">첨부 없음</span>`;
+  return `<div class="attachment-grid">${row.attachments.map(src => `<img src="${src}" class="attachment-thumb" alt="첨부사진">`).join("")}</div>`;
+}
+
+function renderChecklistObjectionDetail(row, realIndex) {
+  const objection = row.objection;
+  if (!objection) return "";
+  return `
+    <div class="objection-detail-box ${row.objectionOpen ? "active" : ""}">
+      <strong>이의제기 내용</strong>
+      <p>${escapeHtml(objection.text || "")}</p>
+      ${objection.images?.length ? `<div class="attachment-grid objection-images">${objection.images.map(src => `<img src="${src}" class="attachment-thumb" alt="이의제기 첨부사진">`).join("")}</div>` : ""}
+      <div class="objection-meta">${escapeHtml(objection.worker || "산출 담당자")} · ${escapeHtml(objection.time || "")}</div>
+      <button class="btn btn-line objection-accept-btn" onclick="acceptChecklistObjection(${realIndex})">이의 인정 · 소거</button>
+    </div>
+  `;
 }
 
 function escapeHtml(value) {
@@ -1686,7 +1745,9 @@ function openChecklistModal(index = null) {
     }
   });
   renderChecklistCategoryOptions(row?.group || firstCategoryName);
-  renderChecklistTargetOptions(row ? getChecklistTargets(row) : ["QC TEAM"]);
+  renderChecklistTargetOptions(row ? getChecklistTargets(row) : (getChecklistRoleRule(values.checklistModalGroup)?.targets || ["QC TEAM"]));
+  checklistModalImageData = row?.attachments ? [...row.attachments] : [];
+  renderImagePreview("checklistModalImagePreview", checklistModalImageData);
   document.getElementById("checklistTargetError")?.classList.remove("show");
   document.getElementById("checklistItemModal")?.classList.add("active");
 }
@@ -1704,7 +1765,10 @@ function saveChecklistModal() {
     el?.classList.toggle("invalid", !valid);
     if (!valid) ok = false;
   });
-  const targets = getSelectedChecklistTargets();
+  let targets = getSelectedChecklistTargets();
+  const selectedGroupForTarget = normalizeChecklistGroupName(document.getElementById("checklistModalGroup")?.value || "");
+  const forcedRuleForTarget = getChecklistRoleRule(selectedGroupForTarget);
+  if (forcedRuleForTarget) targets = [...forcedRuleForTarget.targets];
   const targetError = document.getElementById("checklistTargetError");
   if (!targets.length) {
     targetError?.classList.add("show");
@@ -1744,6 +1808,10 @@ function saveChecklistModal() {
     }),
     status: "미확인",
     comment: document.getElementById("checklistModalComment").value.trim(),
+    attachments: checklistModalImageData.length ? [...checklistModalImageData] : (previous?.attachments || []),
+    objection: previous?.objection || null,
+    objectionOpen: previous?.objectionOpen || false,
+    eliminated: previous?.eliminated || false,
     creator,
     createdAt
   };
@@ -1799,7 +1867,7 @@ function duplicateCheckedRows() {
 }
 function buildChecklistCsv(rows, fileName) {
   rows.forEach(normalizeChecklistRow);
-  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "요청 대상", "체크 상태", "코멘트", "최초 작성자", "최초 작성일시", "확인완료 이력", "송부완료여부"];
+  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "요청 대상", "체크 상태", "코멘트", "최초 작성자", "최초 작성일시", "확인완료 이력", "첨부사진수", "이의제기", "소거여부", "송부완료여부"];
   const bodyRows = rows.map(r => [
     r.group,
     r.trade,
@@ -1812,6 +1880,9 @@ function buildChecklistCsv(rows, fileName) {
     r.creator || "",
     r.createdAt || "",
     (r.history || []).filter(h => h.action === "확인완료").map(h => `${h.target}/${h.worker}/${h.time}`).join(" | "),
+    (r.attachments || []).length,
+    r.objection?.text || "",
+    r.eliminated ? "소거" : "",
     isChecklistCategoryLocked(r.group) ? "송부완료" : ""
   ]);
   const csv = [headers, ...bodyRows].map(row => row.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -1870,93 +1941,124 @@ function markQuestionCategorySent(category) {
 
 
 
+
+function onChecklistModalGroupChange(group) {
+  const rule = getChecklistRoleRule(group);
+  renderChecklistTargetOptions(rule?.targets || []);
+}
+
+let checklistModalImageData = [];
+let checklistObjectionImageData = [];
+
+function readFilesAsDataUrls(files, callback) {
+  const list = Array.from(files || []);
+  if (!list.length) {
+    callback([]);
+    return;
+  }
+  Promise.all(list.map(file => new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  }))).then(callback);
+}
+
+function renderImagePreview(targetId, images) {
+  const wrap = document.getElementById(targetId);
+  if (!wrap) return;
+  wrap.innerHTML = (images || []).map((src, i) => `<div class="image-preview-item"><img src="${src}" alt="첨부사진 ${i + 1}"><span>${i + 1}</span></div>`).join("") || `<span class="history-empty">첨부된 사진이 없습니다.</span>`;
+}
+
+function handleChecklistModalImages(input) {
+  readFilesAsDataUrls(input.files, images => {
+    checklistModalImageData = images;
+    renderImagePreview("checklistModalImagePreview", checklistModalImageData);
+  });
+}
+
+function handleChecklistObjectionImages(input) {
+  readFilesAsDataUrls(input.files, images => {
+    checklistObjectionImageData = images;
+    renderImagePreview("checklistObjectionImagePreview", checklistObjectionImageData);
+  });
+}
+
+function openChecklistObjectionModal(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (row.group !== "제출자료 검토사항(PM)") {
+    showToast("이의제기는 제출자료 검토사항(PM) 항목에서만 사용할 수 있습니다.");
+    return;
+  }
+  if (row.eliminated) {
+    showToast("이미 소거 처리된 항목입니다.");
+    return;
+  }
+  const indexInput = document.getElementById("checklistObjectionIndex");
+  const textInput = document.getElementById("checklistObjectionText");
+  if (indexInput) indexInput.value = String(index);
+  if (textInput) {
+    textInput.value = row.objection?.text || "";
+    textInput.classList.remove("invalid");
+  }
+  checklistObjectionImageData = row.objection?.images ? [...row.objection.images] : [];
+  renderImagePreview("checklistObjectionImagePreview", checklistObjectionImageData);
+  document.getElementById("checklistObjectionModal")?.classList.add("active");
+}
+
+function closeChecklistObjectionModal() {
+  document.getElementById("checklistObjectionModal")?.classList.remove("active");
+}
+
+function saveChecklistObjection() {
+  const index = Number(document.getElementById("checklistObjectionIndex")?.value || "");
+  const row = checklistRows[index];
+  const textInput = document.getElementById("checklistObjectionText");
+  const text = (textInput?.value || "").trim();
+  if (!row || !text) {
+    textInput?.classList.add("invalid");
+    return;
+  }
+  normalizeChecklistRow(row);
+  const worker = getCurrentWorkerName();
+  const time = getChecklistTimeText();
+  row.objection = { text, images: [...checklistObjectionImageData], worker, time };
+  row.objectionOpen = true;
+  row.history.push({ action: "이의제기", target: "산출 담당자", worker, time });
+  closeChecklistObjectionModal();
+  renderChecklistGrid();
+  showToast(`${row.no}번 항목에 이의제기가 등록되었습니다.`);
+}
+
+function toggleChecklistObjectionDetail(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  row.objectionOpen = !row.objectionOpen;
+  renderChecklistGrid();
+}
+
+function acceptChecklistObjection(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (!row.objection) {
+    showToast("등록된 이의제기 내용이 없습니다.");
+    return;
+  }
+  const worker = getCurrentWorkerName();
+  const time = getChecklistTimeText();
+  row.eliminated = true;
+  row.done = true;
+  row.status = "소거";
+  row.history.push({ action: "이의인정·소거", target: "PM", worker, time });
+  renderChecklistGrid();
+  showToast(`${row.no}번 항목이 소거 처리되었습니다.`);
+}
+
+
 document.querySelectorAll("[data-work-main]").forEach(btn => {
   btn.addEventListener("click", () => switchWorkPanel(btn.dataset.workMain));
 });
 renderChecklistGrid();
-
-
-let activeObjectionRow = null;
-
-function getWriterByGroup(groupName){
-  const writerMap = {
-    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "QC TEAM 최초작성",
-    "작업 착수 전 확인 필요사항(PM)": "PM 최초작성",
-    "자가검토 체크리스트(QC)": "QC TEAM 최초작성",
-    "제출자료 검토사항(PM)": "PM 최초작성"
-  };
-  return writerMap[groupName] || "경영지원 최초작성";
-}
-
-function getCheckerByGroup(groupName){
-  const checkerMap = {
-    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "PM",
-    "작업 착수 전 확인 필요사항(PM)": "산출 담당자",
-    "자가검토 체크리스트(QC)": "산출 담당자",
-    "제출자료 검토사항(PM)": "산출 담당자"
-  };
-  return checkerMap[groupName] || "산출 담당자";
-}
-
-function renderAttachmentCell(images = []){
-  const items = images.map(src => `<img src="${src}" class="mini-attach-image">`).join("");
-  return `<div class="attach-grid">${items || '<span class="empty-upload">첨부 없음</span>'}</div>`;
-}
-
-function openObjectionModal(rowId){
-  activeObjectionRow = rowId;
-  const modal = document.getElementById("objectionModal");
-  if(modal) modal.classList.add("active");
-}
-
-function closeObjectionModal(){
-  const modal = document.getElementById("objectionModal");
-  if(modal) modal.classList.remove("active");
-  const txt = document.getElementById("objectionText");
-  const img = document.getElementById("objectionImages");
-  const preview = document.getElementById("objectionPreview");
-  if(txt) txt.value = "";
-  if(img) img.value = "";
-  if(preview) preview.innerHTML = "";
-}
-
-document.addEventListener("change", function(e){
-  if(e.target && e.target.id === "objectionImages"){
-    const preview = document.getElementById("objectionPreview");
-    if(!preview) return;
-    preview.innerHTML = "";
-
-    [...e.target.files].forEach(file=>{
-      const reader = new FileReader();
-      reader.onload = ev=>{
-        const div = document.createElement("div");
-        div.className = "preview-box";
-        div.innerHTML = `<img src="${ev.target.result}" class="preview-image">`;
-        preview.appendChild(div);
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-});
-
-function saveObjection(){
-  const txt = document.getElementById("objectionText");
-  const preview = document.getElementById("objectionPreview");
-  const row = document.querySelector(`[data-objection-row="${activeObjectionRow}"]`);
-  if(!row) return closeObjectionModal();
-
-  const objectionBox = row.querySelector(".objection-content");
-  if(objectionBox){
-    objectionBox.innerHTML = `
-      <div class="objection-detail">
-        <strong>이의제기 내용</strong>
-        <p>${txt.value || "내용 없음"}</p>
-        <div class="objection-preview-grid">${preview.innerHTML}</div>
-      </div>
-    `;
-    objectionBox.classList.add("active");
-  }
-
-  row.classList.add("eliminated-row");
-  closeObjectionModal();
-}
