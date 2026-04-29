@@ -2583,3 +2583,47 @@ table td:last-child{
   display:block !important;
   text-align:center !important;
 }
+
+
+/* === 업무관리 상단 헤더 축소 및 불필요 버튼 제거 후 여백 보정 === */
+#workModule .page-head,
+.module-view#workModule .page-head,
+.work-page-head{
+  padding:18px 0 14px !important;
+  margin-bottom:12px !important;
+  align-items:center !important;
+}
+
+#workModule .page-head h1,
+.module-view#workModule .page-head h1,
+.work-page-head h1{
+  font-size:28px !important;
+  line-height:1.18 !important;
+  margin-bottom:6px !important;
+}
+
+#workModule .page-head p,
+.module-view#workModule .page-head p,
+.work-page-head p{
+  line-height:1.35 !important;
+  margin:0 !important;
+}
+
+#workModule .page-head .breadcrumb,
+.module-view#workModule .page-head .breadcrumb,
+.work-page-head .breadcrumb{
+  margin-bottom:6px !important;
+}
+
+/* 혹시 상단 QC 버튼 영역이 남아 있으면 화면에서 숨김 */
+#workModule .page-head > .actions,
+.module-view#workModule .page-head > .actions,
+.work-page-head > .actions{
+  display:none !important;
+}
+
+/* 전체 page-head도 과도한 세로 여백 방지 */
+.page-head{
+  padding-top:14px;
+  padding-bottom:12px;
+}
