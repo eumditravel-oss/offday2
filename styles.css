@@ -2065,3 +2065,31 @@ table td:last-child{
   text-align:left !important;
   white-space:nowrap !important;
 }
+
+
+/* 처리이력 형식 수정 */
+.history-row{
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  align-items:center !important;
+  text-align:center !important;
+  line-height:1.35 !important;
+  gap:2px !important;
+}
+
+.history-row strong{
+  display:block !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  color:#0f766e !important;
+  white-space:nowrap !important;
+}
+
+.history-row span{
+  display:block !important;
+  font-size:12px !important;
+  color:#0f766e !important;
+  font-weight:800 !important;
+  white-space:nowrap !important;
+}
