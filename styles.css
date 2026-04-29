@@ -1634,3 +1634,135 @@ tr:hover td{background:#fbfdff}
 .qc-review-intro{
   display:none !important;
 }
+
+/* 체크리스트 작성자/확인자/이의제기/첨부 반영 */
+.attach-upload-btn{
+  position:relative;
+  overflow:hidden;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:6px;
+  padding:7px 10px;
+  font-size:12px;
+}
+
+.attach-upload-btn input{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.attach-thumb-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:4px;
+}
+
+.attach-thumb{
+  width:38px;
+  height:38px;
+  padding:0;
+  border:1px solid var(--line2);
+  border-radius:9px;
+  overflow:hidden;
+  background:#fff;
+  cursor:pointer;
+}
+
+.attach-thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.btn-objection{
+  margin-top:6px;
+  border:1px solid #fdba74;
+  background:#fff7ed;
+  color:#c2410c;
+  border-radius:10px;
+  padding:6px 9px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.btn-mini{
+  margin-top:6px;
+  padding:6px 9px;
+  font-size:12px;
+}
+
+.objection-area{
+  margin-top:6px;
+}
+
+.objection-detail-box{
+  margin-top:8px;
+  padding:10px;
+  border:1px solid #fed7aa;
+  border-radius:12px;
+  background:#fff7ed;
+  color:#7c2d12;
+  text-align:left;
+  text-decoration:none !important;
+}
+
+.objection-detail-box p{
+  margin:6px 0;
+  line-height:1.55;
+  text-decoration:none !important;
+}
+
+.attachment-preview-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:10px;
+  margin-top:10px;
+}
+
+.attach-preview{
+  border:1px solid var(--line2);
+  border-radius:14px;
+  background:#fff;
+  padding:8px;
+}
+
+.attach-preview img{
+  width:100%;
+  height:90px;
+  object-fit:cover;
+  border-radius:10px;
+  display:block;
+}
+
+.attach-preview span{
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+  color:var(--muted);
+  word-break:break-all;
+}
+
+.eliminated-row td{
+  background:#f3f4f6 !important;
+  color:#94a3b8 !important;
+  text-decoration:line-through;
+}
+
+.eliminated-row .objection-detail-box,
+.eliminated-row .objection-detail-box *,
+.eliminated-row .row-actions,
+.eliminated-row .row-actions *,
+.eliminated-row .attachment-cell,
+.eliminated-row .attachment-cell *{
+  text-decoration:none !important;
+}
+
+.eliminated-row::after{
+  content:"소거";
+}
