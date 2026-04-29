@@ -708,7 +708,7 @@
                     <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="renderChecklistGrid()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
-                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th class="comment-col">코멘트</th><th class="history-col">처리 이력</th><th class="manage-col">관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
+                  <div class="excel-grid-wrap"><table class="excel-grid"><thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th class="comment-col">코멘트</th><th class="attach-col">첨부</th><th class="history-col">처리 이력</th><th class="manage-col">관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
                 </div>
               </article>
             </section>
@@ -749,6 +749,12 @@
           <div class="field full"><label class="required">검토방법</label><textarea id="checklistModalMethod" rows="3" placeholder="검토 기준과 확인 방법을 입력합니다." required></textarea><div class="error-text">필수 입력 항목입니다.</div></div>
           <div class="field full"><label class="required">체크 요청 대상</label><div class="target-check-grid" id="checklistTargetChecks"></div><div class="error-text" id="checklistTargetError">대상을 1개 이상 선택해야 합니다.</div></div>
           <div class="field full"><label>코멘트</label><textarea id="checklistModalComment" rows="3" placeholder="요청사항 또는 참고사항을 입력합니다."></textarea></div>
+          <div class="field full">
+            <label>첨부자료 / 사진</label>
+            <input id="checklistModalFiles" type="file" accept="image/*" multiple onchange="previewChecklistModalFiles(this)">
+            <div class="field-help">추가하기 또는 수정 창에서 사진을 여러 장 첨부하거나 제거할 수 있습니다.</div>
+            <div id="checklistModalPreview" class="attachment-preview-list"></div>
+          </div>
         </div>
       </div>
       <div class="modal-foot">
@@ -784,11 +790,6 @@
               <input class="modal-phone-input" required inputmode="numeric" placeholder="010-1234-5678">
             </div>
             <div class="error-text">필수 입력 항목입니다.
-          <div class="field full">
-            <label>사진 첨부</label>
-            <input id="checklistModalFiles" type="file" accept="image/*" multiple onchange="previewChecklistModalFiles(this)">
-            <div id="checklistModalPreview" class="attachment-preview-list"></div>
-          </div>
 </div>
           </div>
         </div>
