@@ -2138,3 +2138,30 @@ document.querySelectorAll("[data-work-main]").forEach(btn => {
   btn.addEventListener("click", () => switchWorkPanel(btn.dataset.workMain));
 });
 renderChecklistGrid();
+
+
+// QC 체크리스트 내부 스크롤 제거 보정
+function removeInternalChecklistScroll() {
+  const selectors = [
+    ".work-qc-table-wrap",
+    ".qc-review-table-wrap",
+    "#qcReviewTableWrap",
+    "#workQcPanel .table-wrap",
+    "#workQcApproval .table-wrap",
+    ".excel-grid-wrap",
+    ".checklist-grid-wrap",
+    ".grid-scroll",
+    ".table-scroll"
+  ];
+
+  selectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      el.style.maxHeight = "none";
+      el.style.height = "auto";
+      el.style.overflowY = "visible";
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", removeInternalChecklistScroll);
+window.addEventListener("resize", removeInternalChecklistScroll);
