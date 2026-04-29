@@ -1764,6 +1764,19 @@ function getChecklistTimeText() {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
 }
 
+
+function formatHistoryBlock(worker, action, time) {
+  const safeWorker = worker || "";
+  const safeAction = action || "";
+  const safeTime = time || "";
+
+  const parts = String(safeTime).split(" ");
+  const datePart = parts[0] || "";
+  const timePart = parts.slice(1).join(" ") || "";
+
+  return formatHistoryBlock(created.worker, created.action, created.time);
+}
+
 function renderChecklistHistory(row) {
   normalizeChecklistRow(row);
   const history = Array.isArray(row.history) ? row.history : [];
