@@ -1443,18 +1443,206 @@ function switchWorkPanel(panelId) {
   if (panelId === "qcReview" || panelId === "quantityChecklist") renderChecklistGrid();
 }
 
+
+function getChecklistCreatorByGroup(group) {
+  const normalized = normalizeChecklistGroupName(group);
+  const creatorMap = {
+    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "QC TEAM",
+    "작업 착수 전 확인 필요사항(PM)": "PM",
+    "자가검토 체크리스트(QC)": "QC TEAM",
+    "제출자료 검토사항(PM)": "PM"
+  };
+  return creatorMap[normalized] || "경영지원";
+}
+
+function getChecklistTargetsByGroup(group) {
+  const normalized = normalizeChecklistGroupName(group);
+  const targetMap = {
+    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": ["PM"],
+    "작업 착수 전 확인 필요사항(PM)": ["산출 담당자"],
+    "자가검토 체크리스트(QC)": ["산출 담당자"],
+    "제출자료 검토사항(PM)": ["산출 담당자"]
+  };
+  return targetMap[normalized] || null;
+}
+
+function isObjectionAllowedRow(row) {
+  return normalizeChecklistGroupName(row?.group) === "제출자료 검토사항(PM)";
+}
+
+function ensureChecklistAttachments(row) {
+  if (!Array.isArray(row.attachments)) row.attachments = [];
+  if (!Array.isArray(row.objectionFiles)) row.objectionFiles = [];
+}
+
+function renderChecklistAttachmentCell(row, realIndex) {
+  ensureChecklistAttachments(row);
+  const thumbs = row.attachments.map((file, idx) => `
+    <button class="attach-thumb" type="button" onclick="openImagePreview('${escapeJs(file.dataUrl)}')" title="${escapeHtml(file.name)}">
+      <img src="${file.dataUrl}" alt="${escapeHtml(file.name)}">
+    </button>
+  `).join("");
+  return `
+    <div class="attachment-cell">
+      <label class="btn btn-line attach-upload-btn">
+        사진첨부
+        <input type="file" accept="image/*" multiple onchange="addChecklistAttachments(${realIndex}, this.files)">
+      </label>
+      <div class="attach-thumb-list">${thumbs || '<span class="history-empty">첨부 없음</span>'}</div>
+    </div>
+  `;
+}
+
+function addChecklistAttachments(index, files) {
+  const row = checklistRows[index];
+  if (!row || !files || !files.length) return;
+  normalizeChecklistRow(row);
+  ensureChecklistAttachments(row);
+  const fileList = Array.from(files).filter(file => file.type.startsWith("image/"));
+  if (!fileList.length) {
+    showToast("이미지 파일만 첨부할 수 있습니다.");
+    return;
+  }
+  let loaded = 0;
+  fileList.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = event => {
+      row.attachments.push({ name: file.name, dataUrl: event.target.result, addedAt: getChecklistTimeText(), addedBy: getCurrentWorkerName() });
+      loaded += 1;
+      if (loaded === fileList.length) {
+        row.history.push({ action: "사진첨부", worker: getCurrentWorkerName(), time: getChecklistTimeText() });
+        renderChecklistGrid();
+        showToast(`${fileList.length}개 사진을 첨부했습니다.`);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function openImagePreview(src) {
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.write(`<img src="${src}" style="max-width:100%;height:auto;">`);
+}
+
+let pendingObjectionFiles = [];
+
+function openObjectionModal(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (!isObjectionAllowedRow(row)) return;
+  document.getElementById("objectionRowIndex").value = String(index);
+  document.getElementById("objectionText").value = row.objection?.text || "";
+  document.getElementById("objectionPreview").innerHTML = (row.objectionFiles || []).map(file => `<div class="attach-preview"><img src="${file.dataUrl}" alt="${escapeHtml(file.name)}"><span>${escapeHtml(file.name)}</span></div>`).join("");
+  pendingObjectionFiles = [];
+  document.getElementById("objectionModal")?.classList.add("active");
+}
+
+function closeObjectionModal() {
+  document.getElementById("objectionModal")?.classList.remove("active");
+  const files = document.getElementById("objectionFiles");
+  if (files) files.value = "";
+  pendingObjectionFiles = [];
+}
+
+function previewObjectionFiles(input) {
+  pendingObjectionFiles = [];
+  const preview = document.getElementById("objectionPreview");
+  if (preview) preview.innerHTML = "";
+  const files = Array.from(input.files || []).filter(file => file.type.startsWith("image/"));
+  if (!files.length) return;
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = event => {
+      pendingObjectionFiles.push({ name: file.name, dataUrl: event.target.result, addedAt: getChecklistTimeText(), addedBy: getCurrentWorkerName() });
+      if (preview) {
+        preview.insertAdjacentHTML("beforeend", `<div class="attach-preview"><img src="${event.target.result}" alt="${escapeHtml(file.name)}"><span>${escapeHtml(file.name)}</span></div>`);
+      }
+      loaded += 1;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function saveObjectionModal() {
+  const index = Number(document.getElementById("objectionRowIndex")?.value);
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  const text = document.getElementById("objectionText")?.value.trim() || "";
+  row.objection = {
+    text,
+    by: getCurrentWorkerName(),
+    at: getChecklistTimeText(),
+    accepted: false
+  };
+  row.objectionFiles = [...(row.objectionFiles || []), ...pendingObjectionFiles];
+  row.history.push({ action: "이의제기", worker: row.objection.by, time: row.objection.at });
+  closeObjectionModal();
+  renderChecklistGrid();
+  showToast("이의제기가 저장되었습니다.");
+}
+
+function toggleObjectionDetail(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  row.showObjection = !row.showObjection;
+  renderChecklistGrid();
+}
+
+function acceptObjectionAndEliminate(index) {
+  const row = checklistRows[index];
+  if (!row || !row.objection) return;
+  normalizeChecklistRow(row);
+  row.objection.accepted = true;
+  row.eliminated = true;
+  row.history.push({ action: "이의제기 인정·소거", worker: getCurrentWorkerName(), time: getChecklistTimeText() });
+  renderChecklistGrid();
+  showToast("이의제기 인정으로 해당 검토사항을 소거 처리했습니다.");
+}
+
+function renderObjectionArea(row, realIndex) {
+  if (!isObjectionAllowedRow(row)) return "";
+  const hasObjection = !!row.objection;
+  const detail = hasObjection && row.showObjection ? `
+    <div class="objection-detail-box">
+      <strong>이의제기 내용</strong>
+      <p>${escapeHtml(row.objection.text || "내용 없음")}</p>
+      <small>${escapeHtml(row.objection.by)} · ${escapeHtml(row.objection.at)}</small>
+      <div class="attach-thumb-list objection-thumbs">
+        ${(row.objectionFiles || []).map(file => `<button class="attach-thumb" type="button" onclick="openImagePreview('${escapeJs(file.dataUrl)}')"><img src="${file.dataUrl}" alt="${escapeHtml(file.name)}"></button>`).join("")}
+      </div>
+      <button class="btn btn-line" onclick="acceptObjectionAndEliminate(${realIndex})">이의 인정 · 소거</button>
+    </div>
+  ` : "";
+  return `
+    <div class="objection-area">
+      <button class="btn-objection" onclick="openObjectionModal(${realIndex})">이의제기</button>
+      ${hasObjection ? `<button class="btn btn-line btn-mini" onclick="toggleObjectionDetail(${realIndex})">${row.showObjection ? "접기" : "내용보기"}</button>` : ""}
+      ${detail}
+    </div>
+  `;
+}
+
 function normalizeChecklistRow(row) {
   if (!row) return row;
   row.group = normalizeChecklistGroupName(row.group);
-  if (!row.creator) row.creator = "경영지원";
+  row.creator = getChecklistCreatorByGroup(row.group);
   if (!row.createdAt) row.createdAt = "2026-04-29 09:00";
+  ensureChecklistAttachments(row);
   row.history = Array.isArray(row.history) ? row.history : [];
-  if (!row.history.some(h => h.action === "최초작성")) {
-    row.history.unshift({ action: "최초작성", worker: row.creator, time: row.createdAt });
-  }
-  if (!Array.isArray(row.targets) || !row.targets.length) {
+  row.history = row.history.filter(h => h.action !== "최초작성");
+  row.history.unshift({ action: "최초작성", worker: row.creator, time: row.createdAt });
+
+  const groupTargets = getChecklistTargetsByGroup(row.group);
+  if (groupTargets) {
+    row.targets = [...groupTargets];
+  } else if (!Array.isArray(row.targets) || !row.targets.length) {
     row.targets = String(row.owner || "QC TEAM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
   }
+
   if (!Array.isArray(row.checks)) row.checks = [];
   row.targets.forEach(target => {
     if (!row.checks.some(c => c.target === target)) row.checks.push({ target, done: false, checkedBy: "", checkedAt: "" });
@@ -1516,7 +1704,7 @@ function renderChecklistGrid() {
     const groupBand = row.group !== lastGroup ? renderChecklistGroupBand(row.group) : "";
     lastGroup = row.group;
     return `${groupBand}
-      <tr class="${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""}">
+      <tr class="${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)">${escapeHtml(row.trade)}</div></td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)">${escapeHtml(row.no)}</div></td>
@@ -1525,6 +1713,7 @@ function renderChecklistGrid() {
         <td><div class="target-chip-list">${getChecklistTargets(row).map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div></td>
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
+        <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
         <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
         <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`;
@@ -1543,18 +1732,19 @@ function renderChecklistGroupBand(group) {
     const next = getNextQuestionCategory(group);
     if (locked && next) controls.push(`<span class="next-round-guide">다음 작성 가능: ${escapeHtml(next)}</span>`);
   }
-  return `<tr class="group-separator-row ${locked ? "group-locked" : ""}"><td colspan="10"><div class="group-band-inner"><div><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}</div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
+  return `<tr class="group-separator-row ${locked ? "group-locked" : ""}"><td colspan="11"><div class="group-band-inner"><div><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}</div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
 }
 
 function renderChecklistTargetChecks(row, realIndex) {
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  return row.checks.map((check, checkIndex) => `
+  const checks = row.checks.map((check, checkIndex) => `
     <label class="done-check-wrap target-done-wrap" title="${escapeHtml(check.target)} 확인 체크">
       <input type="checkbox" ${check.done ? "checked" : ""} ${locked ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
       <span>${escapeHtml(check.target)} · ${check.done ? "확인완료" : "미확인"}</span>
     </label>
   `).join("");
+  return `${checks}${renderObjectionArea(row, realIndex)}`;
 }
 
 function escapeHtml(value) {
@@ -1686,7 +1876,7 @@ function openChecklistModal(index = null) {
     }
   });
   renderChecklistCategoryOptions(row?.group || firstCategoryName);
-  renderChecklistTargetOptions(row ? getChecklistTargets(row) : ["QC TEAM"]);
+  renderChecklistTargetOptions(row ? getChecklistTargets(row) : (getChecklistTargetsByGroup(firstCategoryName) || ["QC TEAM"]));
   document.getElementById("checklistTargetError")?.classList.remove("show");
   document.getElementById("checklistItemModal")?.classList.add("active");
 }
@@ -1744,8 +1934,13 @@ function saveChecklistModal() {
     }),
     status: "미확인",
     comment: document.getElementById("checklistModalComment").value.trim(),
-    creator,
-    createdAt
+    creator: getChecklistCreatorByGroup(selectedGroup),
+    createdAt,
+    attachments: Array.isArray(previous?.attachments) ? previous.attachments : [],
+    objection: previous?.objection || null,
+    objectionFiles: Array.isArray(previous?.objectionFiles) ? previous.objectionFiles : [],
+    eliminated: previous?.eliminated || false,
+    showObjection: previous?.showObjection || false
   };
   normalizeChecklistRow(row);
   if (Number.isInteger(editIndex) && checklistRows[editIndex]) {
@@ -1799,7 +1994,7 @@ function duplicateCheckedRows() {
 }
 function buildChecklistCsv(rows, fileName) {
   rows.forEach(normalizeChecklistRow);
-  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "요청 대상", "체크 상태", "코멘트", "최초 작성자", "최초 작성일시", "확인완료 이력", "송부완료여부"];
+  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "요청 대상", "체크 상태", "코멘트", "첨부사진수", "이의제기", "소거여부", "최초 작성자", "최초 작성일시", "확인완료 이력", "송부완료여부"];
   const bodyRows = rows.map(r => [
     r.group,
     r.trade,
@@ -1809,6 +2004,9 @@ function buildChecklistCsv(rows, fileName) {
     getChecklistTargets(r).join(" / "),
     getChecklistDoneState(r),
     r.comment,
+    (r.attachments || []).length,
+    r.objection?.text || "",
+    r.eliminated ? "소거" : "",
     r.creator || "",
     r.createdAt || "",
     (r.history || []).filter(h => h.action === "확인완료").map(h => `${h.target}/${h.worker}/${h.time}`).join(" | "),
