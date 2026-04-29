@@ -1713,7 +1713,6 @@ function renderChecklistGrid() {
         <td><div class="target-chip-list">${getChecklistTargets(row).map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div></td>
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
-        <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
         <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
         <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`;
@@ -1849,6 +1848,35 @@ function getSelectedChecklistTargets() {
   return Array.from(document.querySelectorAll('#checklistTargetChecks input[type="checkbox"]:checked')).map(input => input.value);
 }
 
+
+let pendingChecklistModalFiles = [];
+
+function previewChecklistModalFiles(input) {
+  pendingChecklistModalFiles = [];
+  const preview = document.getElementById("checklistModalPreview");
+  if (preview) preview.innerHTML = "";
+  const files = Array.from(input.files || []).filter(file => file.type.startsWith("image/"));
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingChecklistModalFiles.push({
+        name: file.name,
+        dataUrl: e.target.result,
+        addedBy: getCurrentWorkerName(),
+        addedAt: getChecklistTimeText()
+      });
+      if (preview) {
+        preview.insertAdjacentHTML("beforeend", `
+          <div class="attach-preview">
+            <img src="${e.target.result}" alt="${escapeHtml(file.name)}">
+            <span>${escapeHtml(file.name)}</span>
+          </div>
+        `);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
 function openChecklistModal(index = null) {
   renderChecklistTargetOptions();
   const isEdit = Number.isInteger(index) && checklistRows[index];
@@ -1936,7 +1964,7 @@ function saveChecklistModal() {
     comment: document.getElementById("checklistModalComment").value.trim(),
     creator: getChecklistCreatorByGroup(selectedGroup),
     createdAt,
-    attachments: Array.isArray(previous?.attachments) ? previous.attachments : [],
+    attachments: previous?.attachments ? [...previous.attachments] : [...pendingChecklistModalFiles],
     objection: previous?.objection || null,
     objectionFiles: Array.isArray(previous?.objectionFiles) ? previous.objectionFiles : [],
     eliminated: previous?.eliminated || false,
