@@ -1374,15 +1374,57 @@ function switchWorkPanel(panelId) {
   if (panelId === "qcReview" || panelId === "quantityChecklist") renderChecklistGrid();
 }
 
+function normalizeChecklistRow(row) {
+  if (!row) return row;
+  if (!row.creator) row.creator = "경영지원";
+  if (!row.createdAt) row.createdAt = "2026-04-29 09:00";
+  row.history = Array.isArray(row.history) ? row.history : [];
+  if (!row.history.some(h => h.action === "최초작성")) {
+    row.history.unshift({ action: "최초작성", worker: row.creator, time: row.createdAt });
+  }
+  if (!Array.isArray(row.targets) || !row.targets.length) {
+    row.targets = String(row.owner || "QC TEAM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
+  }
+  if (!Array.isArray(row.checks)) row.checks = [];
+  row.targets.forEach(target => {
+    if (!row.checks.some(c => c.target === target)) row.checks.push({ target, done: false, checkedBy: "", checkedAt: "" });
+  });
+  row.checks = row.checks.filter(c => row.targets.includes(c.target));
+  row.owner = row.targets.join(", ");
+  row.done = isChecklistRowDone(row);
+  row.status = row.done ? "확인완료" : getChecklistDoneState(row);
+  return row;
+}
+
+function getChecklistDoneState(row) {
+  const checks = Array.isArray(row?.checks) ? row.checks : [];
+  if (!checks.length || checks.every(c => !c.done)) return "미확인";
+  if (checks.every(c => c.done)) return "확인완료";
+  return "부분완료";
+}
+
+function isChecklistRowDone(row) {
+  const checks = Array.isArray(row?.checks) ? row.checks : [];
+  return checks.length > 0 && checks.every(c => c.done);
+}
+
+function getChecklistTargets(row) {
+  normalizeChecklistRow(row);
+  return Array.isArray(row.targets) ? row.targets : [];
+}
+
 function getChecklistFilteredRows() {
+  checklistRows.forEach(normalizeChecklistRow);
   const owner = document.getElementById("checklistOwnerFilter")?.value || "전체";
-  const status = document.getElementById("checklistStatusFilter")?.value || "전체";
+  const doneFilter = document.getElementById("checklistDoneFilter")?.value || "전체";
   const search = (document.getElementById("checklistSearch")?.value || "").trim().toLowerCase();
   return checklistRows.map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => {
-    const ownerOk = owner === "전체" || row.owner === owner;
-    const statusOk = status === "전체" || row.status === status;
-    const text = `${row.group} ${row.trade} ${row.no} ${row.item} ${row.method} ${row.owner} ${row.status} ${row.comment}`.toLowerCase();
-    return ownerOk && statusOk && (!search || text.includes(search));
+    const targets = getChecklistTargets(row);
+    const ownerOk = owner === "전체" || targets.includes(owner);
+    const state = getChecklistDoneState(row);
+    const doneOk = doneFilter === "전체" || state === doneFilter;
+    const text = `${row.group} ${row.trade} ${row.no} ${row.item} ${row.method} ${targets.join(" ")} ${state} ${row.comment}`.toLowerCase();
+    return ownerOk && doneOk && (!search || text.includes(search));
   });
 }
 
@@ -1390,24 +1432,36 @@ function renderChecklistGrid() {
   const body = document.getElementById("checklistGridBody");
   if (!body) return;
   const rows = getChecklistFilteredRows();
-  body.innerHTML = rows.map(({ row, realIndex }) => `
-    <tr class="${row.done ? "row-done" : ""}">
-      <td><input type="checkbox" ${row.checked ? "checked" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
-      <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'group', this.innerText)">${escapeHtml(row.group)}</div></td>
-      <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)">${escapeHtml(row.trade)}</div></td>
-      <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)">${escapeHtml(row.no)}</div></td>
-      <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)">${escapeHtml(row.item)}</div></td>
-      <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)">${escapeHtml(row.method)}</div></td>
-      <td><select class="excel-select" onchange="updateChecklistCell(${realIndex}, 'owner', this.value)">${checklistOwners.map(o => `<option ${o === row.owner ? "selected" : ""}>${o}</option>`).join("")}</select></td>
-      <td><select class="excel-select" onchange="updateChecklistCell(${realIndex}, 'status', this.value)">${checklistStatuses.map(s => `<option ${s === row.status ? "selected" : ""}>${s}</option>`).join("")}</select></td>
-      <td class="done-cell"><label class="done-check-wrap" title="체크 시 상태가 확인완료로 자동 변경됩니다."><input type="checkbox" ${row.done ? "checked" : ""} onchange="toggleChecklistDone(${realIndex}, this.checked)"><span>${row.done ? "확인완료" : "미확인"}</span></label></td>
-      <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
-      <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
-      <td><div class="row-actions"><button class="btn btn-line" onclick="insertChecklistRowAfter(${realIndex})">삽입</button><button class="btn btn-danger" onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
-    </tr>
-  `).join("");
+  let lastGroup = "";
+  body.innerHTML = rows.map(({ row, realIndex }) => {
+    normalizeChecklistRow(row);
+    const groupBand = row.group !== lastGroup ? `<tr class="group-separator-row"><td colspan="10"><span>구분</span><strong>${escapeHtml(row.group)}</strong></td></tr>` : "";
+    lastGroup = row.group;
+    return `${groupBand}
+      <tr class="${row.done ? "row-done" : ""}">
+        <td><input type="checkbox" ${row.checked ? "checked" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
+        <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)">${escapeHtml(row.trade)}</div></td>
+        <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)">${escapeHtml(row.no)}</div></td>
+        <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)">${escapeHtml(row.item)}</div></td>
+        <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)">${escapeHtml(row.method)}</div></td>
+        <td><div class="target-chip-list">${getChecklistTargets(row).map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div></td>
+        <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
+        <td><div class="cell" contenteditable="true" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
+        <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
+        <td><div class="row-actions"><button class="btn btn-line" onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
+      </tr>`;
+  }).join("");
 }
 
+function renderChecklistTargetChecks(row, realIndex) {
+  normalizeChecklistRow(row);
+  return row.checks.map((check, checkIndex) => `
+    <label class="done-check-wrap target-done-wrap" title="${escapeHtml(check.target)} 확인 체크">
+      <input type="checkbox" ${check.done ? "checked" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
+      <span>${escapeHtml(check.target)} · ${check.done ? "확인완료" : "미확인"}</span>
+    </label>
+  `).join("");
+}
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
@@ -1427,63 +1481,190 @@ function getChecklistTimeText() {
 }
 
 function renderChecklistHistory(row) {
+  normalizeChecklistRow(row);
   const history = Array.isArray(row.history) ? row.history : [];
-  if (history.length) {
-    return history.slice(-2).reverse().map(item => `
-      <div class="history-line"><strong>${escapeHtml(item.worker)}</strong><span>${escapeHtml(item.action)} · ${escapeHtml(item.time)}</span></div>
-    `).join("");
-  }
-  if (row.done && row.checkedBy) {
-    return `<div class="history-line"><strong>${escapeHtml(row.checkedBy)}</strong><span>확인완료 · ${escapeHtml(row.checkedAt)}</span></div>`;
-  }
-  return `<span class="history-empty">이력 없음</span>`;
+  if (!history.length) return `<span class="history-empty">이력 없음</span>`;
+  return history.slice(-4).reverse().map(item => `
+    <div class="history-line ${item.action === "최초작성" ? "created" : ""}"><strong>${escapeHtml(item.worker)}</strong><span>${escapeHtml(item.target ? item.action + "(" + item.target + ")" : item.action)} · ${escapeHtml(item.time)}</span></div>
+  `).join("");
 }
 
-function toggleChecklistDone(index, checked) {
+function toggleChecklistDone(index, checkIndex, checked) {
   const row = checklistRows[index];
   if (!row) return;
+  normalizeChecklistRow(row);
+  const check = row.checks[checkIndex];
+  if (!check) return;
   const worker = getCurrentWorkerName();
   const time = getChecklistTimeText();
-  row.done = checked;
-  row.checkedBy = worker;
-  row.checkedAt = time;
+  check.done = checked;
+  check.checkedBy = checked ? worker : "";
+  check.checkedAt = checked ? time : "";
   row.history = Array.isArray(row.history) ? row.history : [];
+  row.history = row.history.filter(h => !(h.action === "확인완료" && h.target === check.target));
   if (checked) {
-    row.status = "확인완료";
-    row.history.push({ action: "확인완료", worker, time });
-    showToast(`${row.no}번 항목이 확인완료 처리되었습니다.`);
+    row.history.push({ action: "확인완료", target: check.target, worker, time });
+    showToast(`${row.no}번 항목의 ${check.target} 확인완료가 기록되었습니다.`);
   } else {
-    row.status = row.status === "확인완료" ? "진행중" : row.status;
-    row.history.push({ action: "체크 해제", worker, time });
-    showToast(`${row.no}번 항목의 확인 체크가 해제되었습니다.`);
+    showToast(`${row.no}번 항목의 ${check.target} 확인완료 로그를 제거했습니다.`);
   }
+  row.done = isChecklistRowDone(row);
+  row.status = getChecklistDoneState(row);
   renderChecklistGrid();
 }
+
 function updateChecklistCell(index, key, value) {
   if (!checklistRows[index]) return;
   checklistRows[index][key] = String(value).trim();
-  if (key === "status") {
-    checklistRows[index].done = checklistRows[index].status === "확인완료";
-    if (checklistRows[index].done && !checklistRows[index].checkedBy) {
-      checklistRows[index].checkedBy = getCurrentWorkerName();
-      checklistRows[index].checkedAt = getChecklistTimeText();
-      checklistRows[index].history = Array.isArray(checklistRows[index].history) ? checklistRows[index].history : [];
-      checklistRows[index].history.push({ action: "확인완료", worker: checklistRows[index].checkedBy, time: checklistRows[index].checkedAt });
-    }
+  if (key === "owner") {
+    checklistRows[index].targets = String(value).split(/[,/]/).map(v => v.trim()).filter(Boolean);
+    checklistRows[index].checks = [];
+    normalizeChecklistRow(checklistRows[index]);
   }
 }
 
 function updateChecklistCheck(index, checked) { if (checklistRows[index]) checklistRows[index].checked = checked; }
 function toggleAllChecklistRows(box) { getChecklistFilteredRows().forEach(({ realIndex }) => checklistRows[realIndex].checked = box.checked); renderChecklistGrid(); }
 function nextChecklistNo() { const nums = checklistRows.map(r => Number(String(r.no).replace(/\D/g, ""))).filter(Boolean); return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0"); }
-function addChecklistRow() { checklistRows.push({ checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:"프로젝트 초기", trade:"신규", no:nextChecklistNo(), item:"새 검토항목", method:"검토방법 입력", owner:"QC TEAM", status:"진행전", comment:"" }); renderChecklistGrid(); showToast("체크리스트 행이 추가되었습니다."); }
-function insertChecklistRowAfter(index) { checklistRows.splice(index + 1, 0, { checked:false, done:false, checkedBy:"", checkedAt:"", history:[], group:checklistRows[index]?.group || "프로젝트 초기", trade:"신규", no:nextChecklistNo(), item:"새 검토항목", method:"검토방법 입력", owner:"QC TEAM", status:"진행전", comment:"" }); renderChecklistGrid(); }
+
+function renderChecklistTargetOptions(selectedTargets = []) {
+  const wrap = document.getElementById("checklistTargetChecks");
+  if (!wrap) return;
+  wrap.innerHTML = checklistOwners.map(owner => `
+    <label class="target-option"><input type="checkbox" value="${escapeHtml(owner)}" ${selectedTargets.includes(owner) ? "checked" : ""}> <span>${escapeHtml(owner)}</span></label>
+  `).join("");
+}
+
+function getSelectedChecklistTargets() {
+  return Array.from(document.querySelectorAll('#checklistTargetChecks input[type="checkbox"]:checked')).map(input => input.value);
+}
+
+function openChecklistModal(index = null) {
+  renderChecklistTargetOptions();
+  const isEdit = Number.isInteger(index) && checklistRows[index];
+  const row = isEdit ? normalizeChecklistRow(checklistRows[index]) : null;
+  setText("checklistModalTitle", isEdit ? "수량산출 체크리스트 수정" : "수량산출 체크리스트 추가");
+  const editIndex = document.getElementById("checklistEditIndex");
+  if (editIndex) editIndex.value = isEdit ? String(index) : "";
+  const values = {
+    checklistModalGroup: row?.group || "",
+    checklistModalTrade: row?.trade || "",
+    checklistModalNo: row?.no || nextChecklistNo(),
+    checklistModalItem: row?.item || "",
+    checklistModalMethod: row?.method || "",
+    checklistModalComment: row?.comment || ""
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.value = value;
+      el.classList.remove("invalid");
+    }
+  });
+  renderChecklistTargetOptions(row ? getChecklistTargets(row) : ["QC TEAM"]);
+  document.getElementById("checklistTargetError")?.classList.remove("show");
+  document.getElementById("checklistItemModal")?.classList.add("active");
+}
+
+function closeChecklistModal() {
+  document.getElementById("checklistItemModal")?.classList.remove("active");
+}
+
+function saveChecklistModal() {
+  const requiredIds = ["checklistModalGroup", "checklistModalTrade", "checklistModalItem", "checklistModalMethod"];
+  let ok = true;
+  requiredIds.forEach(id => {
+    const el = document.getElementById(id);
+    const valid = !!el?.value.trim();
+    el?.classList.toggle("invalid", !valid);
+    if (!valid) ok = false;
+  });
+  const targets = getSelectedChecklistTargets();
+  const targetError = document.getElementById("checklistTargetError");
+  if (!targets.length) {
+    targetError?.classList.add("show");
+    ok = false;
+  } else {
+    targetError?.classList.remove("show");
+  }
+  if (!ok) return;
+
+  const editIndexRaw = document.getElementById("checklistEditIndex")?.value || "";
+  const editIndex = editIndexRaw === "" ? null : Number(editIndexRaw);
+  const previous = Number.isInteger(editIndex) ? checklistRows[editIndex] : null;
+  const creator = previous?.creator || getCurrentWorkerName();
+  const createdAt = previous?.createdAt || getChecklistTimeText();
+  const row = {
+    checked: previous?.checked || false,
+    done: false,
+    checkedBy: "",
+    checkedAt: "",
+    history: Array.isArray(previous?.history) ? previous.history.filter(h => h.action === "최초작성" || (h.action === "확인완료" && targets.includes(h.target))) : [],
+    group: document.getElementById("checklistModalGroup").value.trim(),
+    trade: document.getElementById("checklistModalTrade").value.trim(),
+    no: document.getElementById("checklistModalNo").value.trim() || nextChecklistNo(),
+    item: document.getElementById("checklistModalItem").value.trim(),
+    method: document.getElementById("checklistModalMethod").value.trim(),
+    owner: targets.join(", "),
+    targets,
+    checks: targets.map(target => {
+      const old = previous?.checks?.find(c => c.target === target);
+      return old ? { ...old } : { target, done: false, checkedBy: "", checkedAt: "" };
+    }),
+    status: "미확인",
+    comment: document.getElementById("checklistModalComment").value.trim(),
+    creator,
+    createdAt
+  };
+  normalizeChecklistRow(row);
+  if (Number.isInteger(editIndex) && checklistRows[editIndex]) {
+    checklistRows[editIndex] = row;
+    showToast("체크리스트 항목이 수정되었습니다.");
+  } else {
+    checklistRows.push(row);
+    showToast("체크리스트 항목이 추가되었습니다.");
+  }
+  closeChecklistModal();
+  renderChecklistGrid();
+}
+
+function addChecklistRow() { openChecklistModal(); }
+function insertChecklistRowAfter(index) { openChecklistModal(index); }
 function deleteChecklistRow(index) { checklistRows.splice(index, 1); renderChecklistGrid(); }
 function deleteCheckedRows() { const before = checklistRows.length; checklistRows = checklistRows.filter(row => !row.checked); renderChecklistGrid(); showToast(`${before - checklistRows.length}개 행을 삭제했습니다.`); }
-function duplicateCheckedRows() { const selected = checklistRows.filter(row => row.checked).map(row => ({ ...row, checked:false, done:false, checkedBy:"", checkedAt:"", history:[], status:"진행전", no:nextChecklistNo() })); checklistRows.push(...selected); renderChecklistGrid(); showToast(`${selected.length}개 행을 복제했습니다.`); }
+function duplicateCheckedRows() {
+  const duplicated = checklistRows.filter(row => row.checked).map(row => {
+    const copy = JSON.parse(JSON.stringify(row));
+    copy.checked = false;
+    copy.no = nextChecklistNo();
+    copy.creator = getCurrentWorkerName();
+    copy.createdAt = getChecklistTimeText();
+    copy.history = [{ action: "최초작성", worker: copy.creator, time: copy.createdAt }];
+    copy.checks = (copy.targets || [copy.owner || "QC TEAM"]).map(target => ({ target, done: false, checkedBy: "", checkedAt: "" }));
+    copy.done = false;
+    copy.status = "미확인";
+    return copy;
+  });
+  checklistRows.push(...duplicated);
+  renderChecklistGrid();
+  showToast(`${duplicated.length}개 행을 복제했습니다.`);
+}
 function downloadChecklistCsv() {
-  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "담당자", "상태", "체크 여부", "코멘트", "처리자", "처리일시", "처리 이력"];
-  const rows = checklistRows.map(r => [r.group, r.trade, r.no, r.item, r.method, r.owner, r.status, r.done ? "확인완료" : "미확인", r.comment, r.checkedBy || "", r.checkedAt || "", (r.history || []).map(h => `${h.action}/${h.worker}/${h.time}`).join(" | ")]);
+  checklistRows.forEach(normalizeChecklistRow);
+  const headers = ["구분", "공종", "일련번호", "검토항목", "검토방법", "요청 대상", "체크 상태", "코멘트", "최초 작성자", "최초 작성일시", "확인완료 이력"];
+  const rows = checklistRows.map(r => [
+    r.group,
+    r.trade,
+    r.no,
+    r.item,
+    r.method,
+    getChecklistTargets(r).join(" / "),
+    getChecklistDoneState(r),
+    r.comment,
+    r.creator || "",
+    r.createdAt || "",
+    (r.history || []).filter(h => h.action === "확인완료").map(h => `${h.target}/${h.worker}/${h.time}`).join(" | ")
+  ]);
   const csv = [headers, ...rows].map(row => row.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -1493,6 +1674,7 @@ function downloadChecklistCsv() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 document.querySelectorAll("[data-work-main]").forEach(btn => {
   btn.addEventListener("click", () => switchWorkPanel(btn.dataset.workMain));
