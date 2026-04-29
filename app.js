@@ -1483,12 +1483,9 @@ function renderChecklistAttachmentCell(row, realIndex) {
     </button>
   `).join("");
   return `
-    <div class="attachment-cell">
-      <label class="btn btn-line attach-upload-btn">
-        사진첨부
-        <input type="file" accept="image/*" multiple onchange="addChecklistAttachments(${realIndex}, this.files)">
-      </label>
-      <div class="attach-thumb-list">${thumbs || '<span class="history-empty">첨부 없음</span>'}</div>
+    <div class="attachment-cell readonly-attachment-cell">
+      <div class="attach-count">${row.attachments.length ? row.attachments.length + "개 첨부" : "첨부 없음"}</div>
+      <div class="attach-thumb-list">${thumbs}</div>
     </div>
   `;
 }
@@ -1713,6 +1710,7 @@ function renderChecklistGrid() {
         <td><div class="target-chip-list">${getChecklistTargets(row).map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div></td>
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)">${escapeHtml(row.comment)}</div></td>
+        <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
         <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
         <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`;
@@ -1849,34 +1847,52 @@ function getSelectedChecklistTargets() {
 }
 
 
-let pendingChecklistModalFiles = [];
+let checklistModalAttachments = [];
+
+function renderChecklistModalAttachmentPreview() {
+  const preview = document.getElementById("checklistModalPreview");
+  if (!preview) return;
+  if (!checklistModalAttachments.length) {
+    preview.innerHTML = `<div class="empty-attach-box">첨부된 사진이 없습니다.</div>`;
+    return;
+  }
+  preview.innerHTML = checklistModalAttachments.map((file, idx) => `
+    <div class="attach-preview">
+      <img src="${file.dataUrl}" alt="${escapeHtml(file.name)}" onclick="openImagePreview('${escapeJs(file.dataUrl)}')">
+      <span>${escapeHtml(file.name)}</span>
+      <button type="button" class="attach-remove-btn" onclick="removeChecklistModalAttachment(${idx})">제거</button>
+    </div>
+  `).join("");
+}
 
 function previewChecklistModalFiles(input) {
-  pendingChecklistModalFiles = [];
-  const preview = document.getElementById("checklistModalPreview");
-  if (preview) preview.innerHTML = "";
   const files = Array.from(input.files || []).filter(file => file.type.startsWith("image/"));
+  if (!files.length) return;
+  let loaded = 0;
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
-      pendingChecklistModalFiles.push({
+      checklistModalAttachments.push({
         name: file.name,
         dataUrl: e.target.result,
         addedBy: getCurrentWorkerName(),
         addedAt: getChecklistTimeText()
       });
-      if (preview) {
-        preview.insertAdjacentHTML("beforeend", `
-          <div class="attach-preview">
-            <img src="${e.target.result}" alt="${escapeHtml(file.name)}">
-            <span>${escapeHtml(file.name)}</span>
-          </div>
-        `);
+      loaded += 1;
+      if (loaded === files.length) {
+        renderChecklistModalAttachmentPreview();
+        input.value = "";
       }
     };
     reader.readAsDataURL(file);
   });
 }
+
+function removeChecklistModalAttachment(index) {
+  checklistModalAttachments.splice(index, 1);
+  renderChecklistModalAttachmentPreview();
+}
+
 function openChecklistModal(index = null) {
   renderChecklistTargetOptions();
   const isEdit = Number.isInteger(index) && checklistRows[index];
@@ -1906,11 +1922,20 @@ function openChecklistModal(index = null) {
   renderChecklistCategoryOptions(row?.group || firstCategoryName);
   renderChecklistTargetOptions(row ? getChecklistTargets(row) : (getChecklistTargetsByGroup(firstCategoryName) || ["QC TEAM"]));
   document.getElementById("checklistTargetError")?.classList.remove("show");
+  checklistModalAttachments = row?.attachments ? [...row.attachments] : [];
+  renderChecklistModalAttachmentPreview();
+  const fileInput = document.getElementById("checklistModalFiles");
+  if (fileInput) fileInput.value = "";
   document.getElementById("checklistItemModal")?.classList.add("active");
 }
 
 function closeChecklistModal() {
   document.getElementById("checklistItemModal")?.classList.remove("active");
+  checklistModalAttachments = [];
+  const preview = document.getElementById("checklistModalPreview");
+  if (preview) preview.innerHTML = "";
+  const fileInput = document.getElementById("checklistModalFiles");
+  if (fileInput) fileInput.value = "";
 }
 
 function saveChecklistModal() {
@@ -1964,7 +1989,7 @@ function saveChecklistModal() {
     comment: document.getElementById("checklistModalComment").value.trim(),
     creator: getChecklistCreatorByGroup(selectedGroup),
     createdAt,
-    attachments: previous?.attachments ? [...previous.attachments] : [...pendingChecklistModalFiles],
+    attachments: [...checklistModalAttachments],
     objection: previous?.objection || null,
     objectionFiles: Array.isArray(previous?.objectionFiles) ? previous.objectionFiles : [],
     eliminated: previous?.eliminated || false,
