@@ -2910,14 +2910,66 @@ body{
 }
 
 
-/* 이미지 첨부 썸네일 클릭 시 새 창 전용 */
-.attach-thumb{
+
+/* === 첨부 이미지 새 창 보기 UI === */
+.attachment-cell{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  text-align:center !important;
+}
+
+.attachment-cell.empty{
+  color:#111827;
+  font-weight:900;
+}
+
+.attach-count-btn{
+  border:0;
+  background:transparent;
+  color:#0f172a;
+  font-weight:900;
   cursor:pointer;
+  padding:0;
+}
+
+.attach-count-btn:hover{
+  color:#2563eb;
+  text-decoration:underline;
+}
+
+.attach-thumb-list{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-wrap:wrap !important;
+  gap:5px !important;
+}
+
+.attach-thumb{
+  width:26px;
+  height:26px;
+  border:1px solid #dbe3ef;
+  border-radius:999px;
+  padding:0;
+  background:#fff;
+  overflow:hidden;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.attach-thumb:hover{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
 .attach-thumb img{
   width:100%;
   height:100%;
+  display:block;
   object-fit:cover;
-  border-radius:12px;
 }
