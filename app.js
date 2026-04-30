@@ -317,17 +317,25 @@ const orgStructures = {
     date: "2026. 4. 9.",
     root: { title: "대표이사", className: "primary", children: [
       { title: "부사장", className: "secondary", children: [
-        { title: "경영지원본부", employeeId: "CC-001", children: [{ employeeId: "CC-002" }, { employeeId: "CC-003" }, { employeeId: "CC-004" }, { employeeId: "CC-005" }] },
-        { title: "개발 T/F", children: [{ employeeId: "EMP-2018-001" }, { employeeId: "CC-006" }, { employeeId: "CC-007" }] },
-        { title: "QC", children: [{ employeeId: "CC-008" }, { employeeId: "CC-009" }] },
+        { title: "경영지원본부", employeeId: "CC-001", children: [
+          { employeeId: "CC-002" },
+          { employeeId: "CC-003" },
+          { employeeId: "CC-004" },
+          { employeeId: "CC-005" },
+          { title: "개발 T/F", children: [{ employeeId: "EMP-2018-001" }, { employeeId: "CC-006" }, { employeeId: "CC-007" }] },
+          { title: "QC", children: [{ employeeId: "CC-008" }, { employeeId: "CC-009" }] }
+        ] },
         { title: "기술본부", employeeId: "CC-010", children: [
           { title: "마감", employeeId: "CC-009", children: [{ employeeId: "CC-011" }, { employeeId: "CC-012" }, { employeeId: "CC-013" }, { employeeId: "CC-014" }, { employeeId: "CC-015" }, { employeeId: "CC-016" }, { employeeId: "CC-017" }, { employeeId: "CC-018" }, { employeeId: "CC-019" }, { employeeId: "CC-020" }, { employeeId: "CC-021" }, { employeeId: "CC-022" }] },
-          { title: "BIM 파트", employeeId: "CC-029", children: [{ employeeId: "EMP-2018-001" }] },
-          { title: "구조/토목 조경", employeeId: "CC-008", children: [{ employeeId: "CC-023" }, { employeeId: "CC-024" }, { employeeId: "CC-025" }, { employeeId: "CC-026" }, { employeeId: "CC-027" }, { employeeId: "CC-028" }, { title: "토목·조경파트", employeeId: "CC-030" }] }
+          { title: "구조/토목 조경", employeeId: "CC-008", children: [
+            { title: "구조팀", children: [{ employeeId: "CC-023" }, { employeeId: "CC-024" }, { employeeId: "CC-025" }, { employeeId: "CC-026" }, { employeeId: "CC-027" }, { employeeId: "CC-028" }] },
+            { title: "BIM 파트", employeeId: "CC-029", children: [{ employeeId: "EMP-2018-001" }] },
+            { title: "토목·조경파트", employeeId: "CC-030" }
+          ] }
         ] },
-        { title: "클레임센터", employeeId: "CC-031", children: [{ employeeId: "CC-010" }, { employeeId: "CC-008" }, { employeeId: "CC-032" }, { employeeId: "CC-033" }] }
-      ] },
-      { title: "공사비닷컴", className: "dotted" }
+        { title: "클레임센터", employeeId: "CC-031", children: [{ employeeId: "CC-010" }, { employeeId: "CC-008" }, { employeeId: "CC-032" }, { employeeId: "CC-033" }] },
+        { title: "공사비닷컴", className: "dotted" }
+      ] }
     ] }
   },
   "Viet QS": {
@@ -1000,83 +1008,74 @@ function renderOrgBranchCard(node) {
   `;
 }
 
-function renderConcostOrgChart(root) {
-  const execNodes = [root, ...(root.children || [])].slice(0, 3);
-  const branchParent = (root.children || [])[0] || root;
-  const branches = branchParent.children || [];
-  const findBranch = title => branches.find(node => node.title === title) || { title, children: [] };
+function splitOrgColumns(nodes, maxColumns = 3) {
+  const list = (nodes || []).filter(Boolean);
+  const columns = Math.min(maxColumns, Math.max(1, Math.ceil(list.length / 4)));
+  const buckets = Array.from({ length: columns }, () => []);
+  list.forEach((node, index) => buckets[index % columns].push(node));
+  return buckets;
+}
 
-  const management = findBranch("경영지원본부");
-  const tech = findBranch("기술본부");
-  const finish = (tech.children || []).find(node => node.title === "마감") || { title: "마감", children: [] };
-  const bim = (tech.children || []).find(node => node.title === "BIM 파트") || { title: "BIM 파트", children: [] };
-  const structure = (tech.children || []).find(node => node.title === "구조/토목 조경") || { title: "구조/토목 조경", children: [] };
-  const sideBranches = [findBranch("개발 T/F"), findBranch("QC"), findBranch("클레임센터")];
-  const structureChildren = (structure.children || []).filter(child => child.employeeId !== structure.employeeId);
-  const civilPartNodes = structureChildren.filter(child => child.title === "토목·조경파트" || child.employeeId === "CC-030");
-  const structureTeamNodes = structureChildren.filter(child => child.employeeId !== "CC-030" && child.title !== "토목·조경파트");
+function renderOrgMemberColumns(nodes, maxColumns = 3) {
+  const list = (nodes || []).filter(Boolean);
+  if (!list.length) return `<div class="org-empty">하위 인원 없음</div>`;
+  return `
+    <div class="org-member-column-wrap cols-${Math.min(maxColumns, Math.max(1, Math.ceil(list.length / 4)))}">
+      ${splitOrgColumns(list, maxColumns).map(col => `
+        <div class="org-member-column">
+          ${col.map(child => renderOrgPersonButton(child)).join("")}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderOrgDepartmentBlock(node, options = {}) {
+  if (!node) return "";
+  const { emp, title, name } = orgNodeLabel(node);
+  const children = (node.children || []).filter(child => child.employeeId !== node.employeeId);
+  const subGroups = children.filter(child => (child.children || []).length);
+  const directMembers = children.filter(child => !(child.children || []).length);
+  const colCount = options.columns || 3;
 
   return `
-    <div class="org-overview-fit concost-fit">
-      <div class="org-overview-exec concost-exec">
-        ${execNodes.map((node, index) => renderOrgPersonButton(node, index === 0 ? "primary" : "secondary")).join("")}
+    <section class="org-chart-block ${options.className || ""}">
+      <div class="org-block-title">${title}</div>
+      ${emp ? renderOrgPersonButton(node, "lead") : (name ? `<div class="org-overview-lead">${name}</div>` : "")}
+      ${directMembers.length ? `<div class="org-block-members">${renderOrgMemberColumns(directMembers, colCount)}</div>` : ""}
+      ${subGroups.length ? `
+        <div class="org-subpart-grid ${subGroups.length > 2 ? "wide" : ""}">
+          ${subGroups.map(group => renderOrgDepartmentBlock(group, { className: "subpart", columns: 2 })).join("")}
+        </div>
+      ` : ""}
+      ${!directMembers.length && !subGroups.length ? `<div class="org-empty">하위 인원 없음</div>` : ""}
+    </section>
+  `;
+}
+
+function renderConcostOrgChart(root) {
+  const ceo = root;
+  const vice = (root.children || [])[0] || { title: "부사장", children: [] };
+  const branches = vice.children || [];
+  const findBranch = title => branches.find(node => node.title === title) || { title, children: [] };
+  const management = findBranch("경영지원본부");
+  const tech = findBranch("기술본부");
+  const claim = findBranch("클레임센터");
+  const dotted = findBranch("공사비닷컴");
+
+  return `
+    <div class="org-overview-fit concost-fit reference-layout">
+      <div class="org-chart-title-box">㈜컨코스트 조직도</div>
+      <div class="org-ref-date">2026. 4. 9.</div>
+      <div class="org-ref-exec-stack">
+        ${renderOrgPersonButton(ceo, "primary")}
+        ${renderOrgPersonButton(vice, "secondary")}
       </div>
-      <div class="org-overview-line"></div>
-
-      <div class="concost-org-layout">
-        <div class="concost-left vertical-org-section">
-          ${renderOrgBranchCard(management, "세로배치")}
-        </div>
-
-        <div class="concost-center">
-          <section class="org-overview-card tech-main-card">
-            <div class="org-overview-card-title">기술본부</div>
-            ${renderOrgPersonButton(tech, "lead")}
-            <div class="team-major-grid">
-              <section class="team-major-card finish-card">
-                <div class="team-major-title">마감</div>
-                ${renderOrgPersonButton(finish, "lead")}
-                <div class="team-mid-grid">
-                  <section class="team-mid-card">
-                    <div class="team-mid-title">마감팀</div>
-                    <div class="org-overview-members compact-members vertical-members">
-                      ${(finish.children || []).filter(child => child.employeeId !== finish.employeeId).map(child => renderOrgPersonButton(child)).join("") || `<div class="org-empty">하위 인원 없음</div>`}
-                    </div>
-                  </section>
-                </div>
-              </section>
-
-              <section class="team-major-card structure-card">
-                <div class="team-major-title">구조/토목·조경</div>
-                ${renderOrgPersonButton(structure, "lead")}
-                <div class="team-mid-grid three-col">
-                  <section class="team-mid-card">
-                    <div class="team-mid-title">구조/BIM 파트</div>
-                    <div class="org-overview-members compact-members vertical-members">
-                      ${[bim, ...(bim.children || [])].filter(Boolean).map(child => renderOrgPersonButton(child, child.employeeId === bim.employeeId ? "lead" : "")).join("") || `<div class="org-empty">하위 인원 없음</div>`}
-                    </div>
-                  </section>
-                  <section class="team-mid-card">
-                    <div class="team-mid-title">구조팀</div>
-                    <div class="org-overview-members compact-members vertical-members">
-                      ${structureTeamNodes.map(child => renderOrgPersonButton(child)).join("") || `<div class="org-empty">하위 인원 없음</div>`}
-                    </div>
-                  </section>
-                  <section class="team-mid-card civil-only-card">
-                    <div class="team-mid-title">토목·조경파트</div>
-                    <div class="org-overview-members compact-members vertical-members">
-                      ${civilPartNodes.map(child => renderOrgPersonButton(child)).join("") || `<div class="org-empty">하위 인원 없음</div>`}
-                    </div>
-                  </section>
-                </div>
-              </section>
-            </div>
-          </section>
-        </div>
-
-        <div class="concost-right vertical-org-section">
-          ${sideBranches.map(branch => renderOrgBranchCard(branch, "세로배치")).join("")}
-        </div>
+      <div class="org-ref-branch-row">
+        ${renderOrgDepartmentBlock(management, { className: "management-block", columns: 1 })}
+        ${renderOrgDepartmentBlock(tech, { className: "tech-block", columns: 3 })}
+        ${renderOrgDepartmentBlock(claim, { className: "claim-block", columns: 1 })}
+        ${dotted ? `<aside class="org-side-dotted">${renderOrgDepartmentBlock(dotted, { className: "dotted-block", columns: 1 })}</aside>` : ""}
       </div>
     </div>
   `;
@@ -1479,7 +1478,7 @@ function renderOrgPopupParentOptions(selectedPath = "0") {
     `).join("");
 }
 
-function renderOrgPopupNode(node, path = "0") {
+function renderOrgPopupNode(node, path = "0", depth = 0) {
   const { emp, title, name } = orgNodeLabel(node);
   const children = node.children || [];
   const selected = path === selectedOrgNodePath ? "selected" : "";
@@ -1489,8 +1488,8 @@ function renderOrgPopupNode(node, path = "0") {
   const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
 
   return `
-    <div class="popup-node-wrap">
-      <div class="popup-node ${selected} ${typeClass}"
+    <div class="popup-node-wrap depth-${depth}">
+      <div class="popup-node ${selected} ${typeClass} depth-${depth}"
         draggable="true"
         ondragstart="if(event.ctrlKey){event.preventDefault();return false;} opener.startOrgPopupDrag('${path}')"
         ondragover="event.preventDefault(); this.classList.add('drop-ready')"
@@ -1504,7 +1503,7 @@ function renderOrgPopupNode(node, path = "0") {
           ${emp ? `<button onclick="event.stopPropagation(); opener.openMiniCardPopup('${emp.empNo}')">인사카드</button>` : `<button onclick="event.stopPropagation(); opener.selectOrgPopupNode('${path}')">속성편집</button>`}
         </div>
       </div>
-      ${children.length ? `<div class="popup-node-children">${children.map((child, index) => renderOrgPopupNode(child, `${path}-${index}`)).join("")}</div>` : ""}
+      ${children.length ? `<div class="popup-node-children depth-${depth}">${children.map((child, index) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}</div>` : ""}
     </div>
   `;
 }
@@ -1524,6 +1523,21 @@ function buildOrgPopupHtml() {
   .popup-title strong{display:block;font-size:18px}.popup-title span{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:800}.popup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{border:0;border-radius:13px;padding:10px 14px;font-weight:900;cursor:pointer;background:#fff;color:#334155;border:1px solid var(--line)}.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-danger{background:#fee2e2;color:var(--red);border-color:#fecaca}.btn-dark{background:#0f172a;color:#fff;border-color:#0f172a}.btn:disabled{opacity:.45;cursor:not-allowed}
   .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px;cursor:default}.popup-canvas.ctrl-pan{cursor:grabbing;user-select:none}.popup-tree{display:block;min-width:0;min-height:0;padding:46px 56px;transform-origin:top left}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start;transform-origin:top left}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,max-content));align-items:start;justify-content:center;gap:38px 20px;width:min(100%,1380px);padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:40px;right:40px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:176px;min-height:116px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:12px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
+
+  .popup-tree-inner.concost-tree{min-width:1550px;justify-content:center;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-node-children.depth-0{display:flex;justify-content:center;width:100%;}
+  .popup-tree-inner.concost-tree .popup-node-children.depth-1{display:grid;grid-template-columns:260px minmax(620px,1fr) 260px 170px;gap:34px;align-items:start;max-width:1480px;width:1480px;}
+  .popup-tree-inner.concost-tree .popup-node-children.depth-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,max-content));gap:28px 16px;align-items:start;justify-content:center;}
+  .popup-tree-inner.concost-tree .popup-node-children.depth-3,
+  .popup-tree-inner.concost-tree .popup-node-children.depth-4{display:grid;grid-template-columns:repeat(3,174px);gap:12px 10px;align-items:start;justify-content:center;}
+  .popup-tree-inner.concost-tree .depth-2>.popup-node:not(.primary):not(.secondary){background:#eff6ff;}
+  .popup-tree-inner.concost-tree .depth-3>.popup-node,
+  .popup-tree-inner.concost-tree .depth-4>.popup-node{width:160px;min-height:88px;padding:10px;border-radius:13px;}
+  .popup-tree-inner.concost-tree .depth-3>.popup-node strong,
+  .popup-tree-inner.concost-tree .depth-4>.popup-node strong{font-size:13px;}
+  .popup-tree-inner.concost-tree .depth-3>.popup-node em,
+  .popup-tree-inner.concost-tree .depth-4>.popup-node em{font-size:11px;}
+
 </style>
 </head>
 <body>
@@ -1624,7 +1638,7 @@ function renderOrgVisualEditorPopup() {
 
   const tree = doc.getElementById("popupTree");
   if (tree) {
-    tree.innerHTML = `<div class="popup-tree-inner">${renderOrgPopupNode(data.root, "0")}</div>`;
+    tree.innerHTML = `<div class="popup-tree-inner ${currentOrgEditorCompany === "CON-COST" ? "concost-tree" : "vietqs-tree"}">${renderOrgPopupNode(data.root, "0", 0)}</div>`;
     applyOrgPopupScale();
     if (orgEditorPopupAutoFit) {
       win.requestAnimationFrame(() => fitOrgPopupToView(false));
@@ -1671,9 +1685,10 @@ function fitOrgPopupToView(force = false) {
   const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 1, 1);
   const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 1, 1);
   const availableWidth = Math.max(canvas.clientWidth - 112, 360);
-  const nextScale = Math.min(1, availableWidth / baseWidth);
+  const availableHeight = Math.max(canvas.clientHeight - 112, 360);
+  const nextScale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
 
-  orgEditorPopupZoom = Math.max(0.38, Math.min(1, Number(nextScale.toFixed(3))));
+  orgEditorPopupZoom = Math.max(0.32, Math.min(1, Number(nextScale.toFixed(3))));
   applyOrgPopupScale();
   canvas.scrollLeft = Math.max(0, (tree.scrollWidth - canvas.clientWidth) / 2);
   canvas.scrollTop = 0;
