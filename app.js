@@ -1808,23 +1808,7 @@ let checklistRows = [
     "group": "Z1. 질의사항(1차)",
     "trade": "동구분",
     "no": "026",
-    "item": "구조 작업 상 실 구분으로 이뤄진 경우 하나의 동으로 포함 산출
-※ APT
-- 주동부 지상(6401~6405 각 동별 산출)
-- 주동부 PIT(6401~6405 각 동별 산출)
-※ 주차장
-- 주차장+기계실
-※ 부대시설
-- 경로당
-- 어린이집
-- 다함께돌봄센터+작은도서관
-- 지역편의시설1+2+피트니스
-- 지역편의시설3
-- 자원봉사관+관리사무소
-- 게스트하우스+파티룸
-- 경비실1+키즈스테이션+문주
-- 경비실2
-- 근린생활시설",
+    "item": "구조 작업 상 실 구분으로 이뤄진\n경우 하나의 동으로 포함 산출\n※ APT\n- 주동부 지상(6401~6405 각\n동별 산출)\n- 주동부 PIT(6401~6405 각\n동별 산출)\n※ 주차장\n- 주차장+기계실\n※ 부대시설\n- 경로당\n- 어린이집\n- 다함께돌봄센터+작은도서관\n- 지역편의시설1+2+피트니스\n- 지역편의시설3\n- 자원봉사관+관리사무소\n- 게스트하우스+파티룸\n- 경비실1+키즈스테이션+문주\n- 경비실2\n- 근린생활시설",
     "method": "동 구분 확인 후 반영 예정",
     "owner": "PM",
     "targets": [
@@ -1839,10 +1823,7 @@ let checklistRows = [
     "group": "Z1. 질의사항(1차)",
     "trade": "동바리",
     "no": "027",
-    "item": "기준서 기준에 따르면 전이보를 포함한 높이를 시스템으로 작업하는 것으로 보이는데, 아래와 같은 경우 산출기준 확인 바랍니다.
-① 발각색 영역 전체(전이보 밑면 중복 계산)를 시스템(5.85m)산출
-② 보밑면 면적(초록색)무시하고 발각색 영역 전체 시스템(5.85m) 산출
-③ 초록색 영역을 제외한 나머지 영역 5.85m, 초록색 하부 5.15m 상부 공간(발각색 걸침영역) 강관 산출",
+    "item": "기준서 기준에 따르면 전이보를\n포함한 높이를 시스템으로\n작업하는 것으로 보이는데, 아래와\n같은 경우 산출기준 확인\n바랍니다.\n① 빨간색 영역 전체(전이보 밑면\n중복 계산)를 시스템(5.85m)산출\n② 보밑면 면적(초록색)무시하고\n빨간색 영역 전체 시스템(5.85m)\n산출\n③ 초록색 영역을 제외한 나머지\n영역 5.85m, 초록색 하부 5.15m\n상부 공간(빨간색 걸침영역)\n강관 산출",
     "method": "답변 후 적용",
     "owner": "PM",
     "targets": [
@@ -1854,7 +1835,7 @@ let checklistRows = [
     "attachments": [
       {
         "name": "동바리_질의첨부.png",
-        "dataUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22220%22%20height%3D%22160%22%20viewBox%3D%220%200%20220%20160%22%3E%0A%20%20%3Crect%20width%3D%22220%22%20height%3D%22160%22%20rx%3D%2218%22%20fill%3D%22%230f172a%22/%3E%0A%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22184%22%20height%3D%22124%22%20rx%3D%2212%22%20fill%3D%22%231e293b%22%20stroke%3D%22%2338bdf8%22%20stroke-width%3D%223%22/%3E%0A%20%20%3Ctext%20x%3D%22110%22%20y%3D%2278%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2220%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3E%EB%8F%99%EB%B0%94%EB%A6%AC%3C/text%3E%0A%20%20%3Ctext%20x%3D%22110%22%20y%3D%22104%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2213%22%20fill%3D%22%2393c5fd%22%3E%EC%B2%A8%EB%B6%80%20%EC%9D%B4%EB%AF%B8%EC%A7%80%3C/text%3E%0A%3C/svg%3E",
+        "dataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMjQwIDE4MCI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxODAiIHJ4PSIxOCIgZmlsbD0iIzBmMTcyYSIvPgogIDxyZWN0IHg9IjE4IiB5PSIxOCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSIxNDQiIHJ4PSIxMiIgZmlsbD0iIzExMTgyNyIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIxMjAiIHk9IjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiPuuPmeuwlOumrDwvdGV4dD4KICA8dGV4dCB4PSIxMjAiIHk9IjExMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOTNjNWZkIj7sp4jsnZgg7LKo67aAPC90ZXh0Pgo8L3N2Zz4=",
         "addedBy": "경영지원",
         "addedAt": "2026-04-30 09:53"
       }
@@ -1864,8 +1845,7 @@ let checklistRows = [
     "group": "Z7. 견적조건(최종)",
     "trade": "옥탑장식물",
     "no": "028",
-    "item": "옥탑장식물 표기가 건축입면도 외 확인이 되지 않습니다.
-옥탑장식물에 대한 도면 제공이 가능한지 확인 바랍니다.",
+    "item": "옥탑장식물 표기가 건축입면도 외\n확인이 되지 않습니다.\n옥탑장식물에 대한 도면 제공이\n가능한지 확인 바랍니다.",
     "method": "우선 임의 반영.",
     "owner": "PM",
     "targets": [
@@ -1877,7 +1857,7 @@ let checklistRows = [
     "attachments": [
       {
         "name": "옥탑장식물_견적조건첨부.png",
-        "dataUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22220%22%20height%3D%22160%22%20viewBox%3D%220%200%20220%20160%22%3E%0A%20%20%3Crect%20width%3D%22220%22%20height%3D%22160%22%20rx%3D%2218%22%20fill%3D%22%230f172a%22/%3E%0A%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22184%22%20height%3D%22124%22%20rx%3D%2212%22%20fill%3D%22%231e293b%22%20stroke%3D%22%2338bdf8%22%20stroke-width%3D%223%22/%3E%0A%20%20%3Ctext%20x%3D%22110%22%20y%3D%2278%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2220%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3E%EC%98%A5%ED%83%91%EC%9E%A5%EC%8B%9D%EB%AC%BC%3C/text%3E%0A%20%20%3Ctext%20x%3D%22110%22%20y%3D%22104%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2213%22%20fill%3D%22%2393c5fd%22%3E%EC%B2%A8%EB%B6%80%20%EC%9D%B4%EB%AF%B8%EC%A7%80%3C/text%3E%0A%3C/svg%3E",
+        "dataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMjQwIDE4MCI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxODAiIHJ4PSIxOCIgZmlsbD0iIzBmMTcyYSIvPgogIDxyZWN0IHg9IjE4IiB5PSIxOCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSIxNDQiIHJ4PSIxMiIgZmlsbD0iIzExMTgyNyIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIxMjAiIHk9IjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiPuyYpe2DkeyepeyLneusvDwvdGV4dD4KICA8dGV4dCB4PSIxMjAiIHk9IjExMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOTNjNWZkIj7qsqzsoIHsobDqsbQg7LKo67aAPC90ZXh0Pgo8L3N2Zz4=",
         "addedBy": "경영지원",
         "addedAt": "2026-04-30 10:01"
       }
