@@ -1633,6 +1633,23 @@ function buildOrgPopupHtml() {
   .popup-member-children.cols-2{grid-template-columns:repeat(2,176px)!important;}
   .popup-member-children.cols-3{grid-template-columns:repeat(3,176px)!important;}
 
+
+  /* 좌우로 넓어지는 조직도 전체가 스크롤 범위 안에 들어오도록 여백과 캔버스 폭을 보정 */
+  .popup-canvas{scrollbar-gutter:stable both-edges;}
+  .popup-tree{padding:90px 260px 180px;min-width:max-content;min-height:max-content;}
+  .popup-tree-inner{justify-content:flex-start;width:max-content;max-width:none;}
+  .popup-tree-inner.concost-tree,.popup-tree-inner.vietqs-tree{justify-content:flex-start;}
+  .popup-tree-inner.concost-tree{min-width:1880px;}
+  .popup-tree-inner.vietqs-tree{min-width:2100px;}
+  .popup-node-wrap{flex:0 0 auto;}
+  .popup-branch-children,.popup-member-children{max-width:none;}
+  .popup-tree-inner.concost-tree .org-popup-부사장>.popup-branch-children.depth-1{grid-template-columns:repeat(auto-fit,minmax(220px,max-content));gap:44px;align-items:start;}
+  .popup-tree-inner.concost-tree .popup-branch-children.depth-2{grid-auto-flow:column;grid-auto-columns:max-content;gap:34px;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-1{grid-template-columns:repeat(1,176px)!important;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-2{grid-template-columns:repeat(2,176px)!important;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-3{grid-template-columns:repeat(3,176px)!important;}
+  .popup-node.selected{position:relative;z-index:3;}
+
 </style>
 </head>
 <body>
@@ -1646,6 +1663,11 @@ function buildOrgPopupHtml() {
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(-1)">← 순서</button>
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(1)">순서 →</button>
         <button class="btn" onclick="opener.fitOrgPopupToView(true)">화면맞춤</button>
+        <button class="btn" onclick="opener.scrollOrgPopupCanvas('left')">← 전체좌측</button>
+        <button class="btn" onclick="opener.scrollOrgPopupCanvas('selected')">선택위치</button>
+        <button class="btn" onclick="opener.scrollOrgPopupCanvas('right')">전체우측 →</button>
+        <button class="btn" onclick="opener.exportOrgStructureForAI('json')">AI용 JSON</button>
+        <button class="btn" onclick="opener.exportOrgStructureForAI('md')">AI용 MD</button>
         <button class="btn" onclick="opener.zoomOrgPopup(-0.1)">-</button>
         <button class="btn" onclick="opener.zoomOrgPopup(0.1)">+</button>
         <button class="btn btn-danger" onclick="opener.deleteOrgNodeFromPopup()">삭제</button>
@@ -1759,8 +1781,10 @@ function applyOrgPopupScale() {
   inner.style.transform = `scale(${scale})`;
   const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 0, 1);
   const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 0, 1);
-  tree.style.width = `${Math.ceil(baseWidth * scale + 96)}px`;
-  tree.style.height = `${Math.ceil(baseHeight * scale + 96)}px`;
+  const horizontalSafeArea = 560;
+  const verticalSafeArea = 320;
+  tree.style.width = `${Math.ceil(baseWidth * scale + horizontalSafeArea)}px`;
+  tree.style.height = `${Math.ceil(baseHeight * scale + verticalSafeArea)}px`;
   tree.style.transform = "none";
 }
 
@@ -1781,15 +1805,155 @@ function fitOrgPopupToView(force = false) {
 
   const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 1, 1);
   const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 1, 1);
-  const availableWidth = Math.max(canvas.clientWidth - 112, 360);
-  const availableHeight = Math.max(canvas.clientHeight - 112, 360);
+  const availableWidth = Math.max(canvas.clientWidth - 220, 360);
+  const availableHeight = Math.max(canvas.clientHeight - 180, 360);
   const nextScale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
 
-  orgEditorPopupZoom = Math.max(0.32, Math.min(1, Number(nextScale.toFixed(3))));
+  orgEditorPopupZoom = Math.max(0.26, Math.min(1, Number(nextScale.toFixed(3))));
   applyOrgPopupScale();
-  canvas.scrollLeft = Math.max(0, (tree.scrollWidth - canvas.clientWidth) / 2);
-  canvas.scrollTop = 0;
+  scrollOrgPopupCanvas(force ? "selected" : "center");
 }
+function scrollOrgPopupCanvas(mode = "center") {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const doc = win.document;
+  const canvas = doc.getElementById("popupCanvas");
+  const tree = doc.getElementById("popupTree");
+  if (!canvas || !tree) return;
+
+  if (mode === "left") {
+    canvas.scrollLeft = 0;
+    return;
+  }
+  if (mode === "right") {
+    canvas.scrollLeft = Math.max(0, tree.scrollWidth - canvas.clientWidth);
+    return;
+  }
+  if (mode === "center") {
+    canvas.scrollLeft = Math.max(0, (tree.scrollWidth - canvas.clientWidth) / 2);
+    canvas.scrollTop = 0;
+    return;
+  }
+
+  const selected = doc.querySelector(".popup-node.selected");
+  if (!selected) {
+    canvas.scrollLeft = Math.max(0, (tree.scrollWidth - canvas.clientWidth) / 2);
+    canvas.scrollTop = 0;
+    return;
+  }
+  const canvasRect = canvas.getBoundingClientRect();
+  const nodeRect = selected.getBoundingClientRect();
+  canvas.scrollLeft += (nodeRect.left + nodeRect.width / 2) - (canvasRect.left + canvas.clientWidth / 2);
+  canvas.scrollTop += (nodeRect.top + nodeRect.height / 2) - (canvasRect.top + canvas.clientHeight / 2);
+}
+
+function cloneOrgNodeForExport(node, path = "0", depth = 0, parentPath = "") {
+  const { emp, title, name } = orgNodeLabel(node);
+  const children = node.children || [];
+  return {
+    path,
+    parentPath,
+    depth,
+    title: title || "",
+    displayName: name || title || "",
+    className: node.className || "",
+    memberColumns: getOrgMemberColumnCount(node),
+    employee: emp ? {
+      empNo: emp.empNo,
+      name: displayName(emp),
+      company: emp.company,
+      dept: emp.dept,
+      grade: emp.grade,
+      position: emp.position || "",
+      status: emp.status || ""
+    } : null,
+    children: children.map((child, index) => cloneOrgNodeForExport(child, `${path}-${index}`, depth + 1, path))
+  };
+}
+
+function flattenOrgForExport(node, rows = [], path = "0", depth = 0, parentPath = "", parentTitle = "") {
+  const { emp, title, name } = orgNodeLabel(node);
+  rows.push({
+    path,
+    parentPath,
+    parentTitle,
+    depth,
+    title: title || "",
+    displayName: name || title || "",
+    employeeNo: emp?.empNo || "",
+    employeeName: emp ? displayName(emp) : "",
+    company: emp?.company || currentOrgEditorCompany,
+    dept: emp?.dept || "",
+    grade: emp?.grade || "",
+    memberColumns: getOrgMemberColumnCount(node),
+    childCount: (node.children || []).length
+  });
+  (node.children || []).forEach((child, index) => flattenOrgForExport(child, rows, `${path}-${index}`, depth + 1, path, title || name || ""));
+  return rows;
+}
+
+function orgExportToMarkdown(company, root) {
+  const rows = flattenOrgForExport(root, [], "0", 0, "", "");
+  const lines = [];
+  lines.push(`# ${company} 조직도 AI 판독용 자료`);
+  lines.push("");
+  lines.push(`- 생성일시: ${new Date().toLocaleString("ko-KR")}`);
+  lines.push(`- 기준 회사: ${company}`);
+  lines.push(`- 총 노드 수: ${rows.length}`);
+  lines.push("- path는 조직도 내 위치이며, parentPath가 같으면 같은 단계의 형제 노드입니다.");
+  lines.push("- memberColumns는 하위 인원을 1열/2열/3열 중 몇 열로 배치할지 나타냅니다.");
+  lines.push("");
+  lines.push("## 계층 구조");
+  rows.forEach(row => {
+    const indent = "  ".repeat(row.depth);
+    const emp = row.employeeName ? ` / 직원: ${row.employeeName}(${row.employeeNo})` : " / 직원 미연결";
+    lines.push(`${indent}- [${row.path}] ${row.title || row.displayName}${emp} / 상위: ${row.parentTitle || "-"} / 하위배치: ${row.memberColumns}열`);
+  });
+  lines.push("");
+  lines.push("## 표 형식");
+  lines.push("| path | parentPath | depth | 조직/직책 | 직원 | 회사 | 부서 | 직급 | 하위배치 | 하위수 |");
+  lines.push("|---|---|---:|---|---|---|---|---|---:|---:|");
+  rows.forEach(row => {
+    lines.push(`| ${row.path} | ${row.parentPath || "-"} | ${row.depth} | ${row.title || row.displayName || "-"} | ${row.employeeName || "-"} | ${row.company || "-"} | ${row.dept || "-"} | ${row.grade || "-"} | ${row.memberColumns} | ${row.childCount} |`);
+  });
+  return lines.join("\n");
+}
+
+function downloadTextFile(filename, content, mime = "text/plain") {
+  const blob = new Blob([content], { type: `${mime};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 300);
+}
+
+function exportOrgStructureForAI(format = "json") {
+  const company = currentOrgEditorCompany;
+  const root = orgStructures[company]?.root;
+  if (!root) return showToast("내보낼 조직도 자료가 없습니다.");
+  const stamp = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+  if (format === "md") {
+    downloadTextFile(`org-chart-${company.replaceAll(" ", "-")}-${stamp}-AI.md`, orgExportToMarkdown(company, root), "text/markdown");
+    showToast("AI 판독용 Markdown 조직도 자료를 내보냈습니다.");
+    return;
+  }
+  const payload = {
+    schema: "CON-COST_ORG_CHART_AI_EXPORT_V1",
+    exportedAt: new Date().toISOString(),
+    company,
+    description: "path와 parentPath 기준으로 조직 관계를 판독합니다. 같은 parentPath를 가진 노드는 같은 단계의 형제 조직입니다.",
+    root: cloneOrgNodeForExport(root),
+    flatRows: flattenOrgForExport(root)
+  };
+  downloadTextFile(`org-chart-${company.replaceAll(" ", "-")}-${stamp}-AI.json`, JSON.stringify(payload, null, 2), "application/json");
+  showToast("AI 판독용 JSON 조직도 자료를 내보냈습니다.");
+}
+
+
 function updateOrgPopupInspector() {
   const win = orgEditorPopupWindow;
   if (!win || win.closed) return;
@@ -1816,6 +1980,7 @@ function updateOrgPopupInspector() {
     parentSelect.disabled = selectedOrgNodePath === "0";
   }
   if (classSelect) classSelect.value = node.className || "";
+  if (memberColumnsSelect) memberColumnsSelect.value = String(getOrgMemberColumnCount(node));
   if (summary) {
     summary.innerHTML = `
       <strong>현재 선택 노드</strong>
