@@ -1464,7 +1464,7 @@ let checklistRows = [
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 09:00",
     "comment": "",
     "attachments": []
@@ -1474,12 +1474,12 @@ let checklistRows = [
     "trade": "토공사",
     "no": "008",
     "item": "토공사 산출유무 확인",
-    "method": "토목팀 투입 유무 확인 및 건축디따기 산출\n여부 협의",
+    "method": "토목팀 투입 유무 확인 및 건축터파기 산출\n여부 협의",
     "owner": "PM",
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 09:00",
     "comment": "",
     "attachments": []
@@ -1494,7 +1494,7 @@ let checklistRows = [
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 09:00",
     "comment": "",
     "attachments": []
@@ -1510,7 +1510,7 @@ let checklistRows = [
       "PM",
       "산출 담당자"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 18:25",
     "comment": "누락본이 있을 시 질의사항 작성 바랍니다.",
     "attachments": [],
@@ -1601,9 +1601,9 @@ let checklistRows = [
     "targets": [
       "산출 담당자"
     ],
-    "creator": "경영지원",
+    "creator": "PM",
     "createdAt": "2026-04-29 18:26",
-    "comment": "만약 이음 값이 없을 시 질의 바랍니다.",
+    "comment": "만약 이음 값이 데이터에 입력되지 않았다면 질의 바랍니다.",
     "attachments": []
   },
   {
@@ -1612,11 +1612,11 @@ let checklistRows = [
     "no": "021",
     "item": "띠장구간 이음1회 추가",
     "method": "띠장 도면 참조하여 띠장이 걸리는 구간은 1회\n이음을 추가 해 주세요",
-    "owner": "PM",
+    "owner": "산출 담당자",
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "PM",
     "createdAt": "2026-04-29 18:27",
     "comment": "",
     "attachments": []
