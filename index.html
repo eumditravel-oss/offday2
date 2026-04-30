@@ -643,7 +643,7 @@
             <div class="side-group"><button class="side-main" data-work-main="dailyReport">업무일지 / 진행률</button></div>
           </aside>
 
-          <section class="main-area">
+          <section class="main-area" id="workContentArea">
             <section id="projectReceive" class="work-panel active">
               <div class="kpi-grid work-kpi-grid">
                 <div class="kpi-card"><span>접수 프로젝트</span><strong>12</strong></div>
@@ -930,6 +930,108 @@
       </div>
     </div>
   </div>
+
+
+<template id="qcChecklistTemplate">
+            <section id="projectReceive" class="work-panel active">
+              <div class="kpi-grid work-kpi-grid">
+                <div class="kpi-card"><span>접수 프로젝트</span><strong>12</strong></div>
+                <div class="kpi-card"><span>PM 배정대기</span><strong>3</strong></div>
+                <div class="kpi-card"><span>도면 미접수</span><strong>2</strong></div>
+                <div class="kpi-card"><span>QC 검토중</span><strong>5</strong></div>
+                <div class="kpi-card"><span>납품대기</span><strong>4</strong></div>
+              </div>
+              <article class="card">
+                <div class="card-head"><h2>프로젝트 접수 · 기초자료 수집</h2><span class="badge blue">업무 프로세스 기준</span></div>
+                <div class="card-body">
+                  <div class="form-grid">
+                    <div class="field"><label>프로젝트명</label><input value="ㅇㅇ시설 신축공사"></div>
+                    <div class="field"><label>프로젝트 코드</label><input value="PRJ-2026-001"></div>
+                    <div class="field"><label>계약 방식</label><select><option>입찰</option><option>본실행</option><option>구조선수행</option><option>설계내역</option></select></div>
+                    <div class="field"><label>발주처 / 담당자</label><input placeholder="발주처 및 담당자"></div>
+                    <div class="field"><label>PM</label><select><option>미배정</option><option>박용진</option><option>조한빈</option><option>장범선</option></select></div>
+                    <div class="field"><label>납품 예정일</label><input type="date"></div>
+                    <div class="field full"><label>프로젝트 특이사항</label><textarea rows="4" placeholder="도면, 내역서, 산출서, 기준서 접수 상황 및 특이사항을 정리합니다."></textarea></div>
+                  </div>
+                </div>
+              </article>
+              <article class="card">
+                <div class="card-head"><h2>초기 접수 확인 흐름</h2></div>
+                <div class="card-body process-grid">
+                  <div class="process-card"><strong>1. 계약 및 기초자료 수집</strong><span>클라이언트 의뢰, 계약체결, 최초 도면/내역서 접수</span></div>
+                  <div class="process-card"><strong>2. 업무구분 최초 분배</strong><span>구조, 마감, 토목, 클레임, ES 분야 구분</span></div>
+                  <div class="process-card"><strong>3. PM 선정</strong><span>Manager급 이상 PM 지정 및 인력 배치</span></div>
+                  <div class="process-card"><strong>4. QC 초기 검토</strong><span>도면·내역서·기준서·특이사항 정리 후 PM/발주처 공유</span></div>
+                </div>
+              </article>
+            </section>
+
+            <section id="pmSchedule" class="work-panel">
+              <article class="card">
+                <div class="card-head"><h2>PM 배정 / 일정 승인</h2><span class="badge blue">PM → 실장 → 부사장</span></div>
+                <div class="card-body"><div class="approval-flow">
+                  <div class="flow-item"><div><strong>PM 지정 및 조직 구성</strong><br><span>PM과 실제 산출 담당 Staff 인원배치</span></div><button class="btn btn-line">작성</button></div>
+                  <div class="flow-item"><div><strong>스케줄 작성</strong><br><span>General Manager에게 Staff 1차 전체 스케줄 예상안 전달</span></div><button class="btn btn-line">검토</button></div>
+                  <div class="flow-item"><div><strong>결재 및 승인</strong><br><span>예상 스케줄 적정 시 승인, 조정 필요 시 반려</span></div><button class="btn btn-primary">승인</button></div>
+                  <div class="flow-item"><div><strong>지연사유 작성</strong><br><span>PM 배정 전 실장, PM 배정 후 PM이 부사장 결재 요청</span></div><button class="btn btn-line">작성</button></div>
+                </div></div>
+              </article>
+            </section>
+
+            <section id="qcReview" class="work-panel">
+              <article class="card checklist-card">
+                <div class="card-head">
+                  <div><h2>수량산출 체크리스트 · Excel Grid</h2><p class="subcopy">추가하기 버튼으로 구분, 공종, 검토항목, 검토방법, 요청 대상, 코멘트를 등록하고 리스트에서 확인합니다.</p></div>
+                  <div class="actions"><button class="btn btn-line" onclick="openChecklistModal()">+ 추가하기</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-line" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">전체 엑셀 내보내기</button></div>
+                </div>
+                <div class="card-body">
+                  <div class="checklist-toolbar">
+                    <div class="field project-search-field">
+                      <label>프로젝트</label>
+                      <input id="checklistProject" list="checklistProjectList" value="ㅇㅇ시설 신축공사" oninput="renderChecklistGrid()" onchange="renderChecklistGrid()" placeholder="프로젝트명 검색 또는 선택">
+                      <datalist id="checklistProjectList">
+                        <option value="ㅇㅇ시설 신축공사"></option>
+                        <option value="샘플 프로젝트 A"></option>
+                        <option value="샘플 프로젝트 B"></option>
+                        <option value="공동주택 신축공사"></option>
+                        <option value="업무시설 증축공사"></option>
+                      </datalist>
+                    </div>
+                    <div class="field"><label>담당자 필터</label><select id="checklistOwnerFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>QC TEAM</option><option>PM</option><option>산출 담당자</option><option>실장</option></select></div>
+                    <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
+                    <div class="field"><label>검색</label><input id="checklistSearch" oninput="renderChecklistGrid()" placeholder="공종, 검토항목, 방법 검색"></div>
+                  </div>
+                  <div class="checklist-category-filter" id="checklistCategoryFilter"></div>
+                  <div class="excel-grid-wrap"><table class="excel-grid"><colgroup>
+                    <col class="qc-col-select">
+                    <col class="qc-col-trade">
+                    <col class="qc-col-no">
+                    <col class="qc-col-item">
+                    <col class="qc-col-method">
+                    <col class="qc-col-target">
+                    <col class="qc-col-check">
+                    <col class="qc-col-comment">
+                    <col class="qc-col-attach">
+                    <col class="qc-col-history">
+                    <col class="qc-col-manage">
+                  </colgroup>
+                  <thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th class="comment-col">코멘트</th><th class="attach-col">첨부</th><th class="history-col">처리 이력</th><th class="manage-col">관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
+                </div>
+              </article>
+            </section>
+
+            <section id="estimateCondition" class="work-panel">
+              <article class="card"><div class="card-head"><h2>견적조건 작성</h2><span class="badge green">결합하기 / Excel 다운로드</span></div><div class="card-body"><div class="form-grid"><div class="field full"><label>작업자 작성 견적조건</label><textarea rows="5" placeholder="도면 특이사항, 클라이언트 확인 필요사항, 산출 기준 등을 작성합니다."></textarea></div><div class="field full"><label>PM 작성 견적조건</label><textarea rows="5" placeholder="PM 검토 의견과 제출용 조건을 작성합니다."></textarea></div></div><div class="admin-save-area"><button class="btn btn-line">결합하기</button><button class="btn btn-primary">엑셀 다운로드</button></div></div></article>
+            </section>
+
+            <section id="deliveryData" class="work-panel">
+              <article class="card"><div class="card-head"><h2>납품 및 데이터관리</h2><span class="badge gray">1차 / 2차 / 3차 납품자료</span></div><div class="card-body table-wrap"><table><thead><tr><th>차수</th><th>납품자료</th><th>업로드일</th><th>다운로드 권한</th><th>승인자</th><th>상태</th></tr></thead><tbody><tr><td>1차</td><td>산출서_1차.xlsx</td><td>2026-04-20</td><td>PM 요청 시 실장 승인</td><td>실장</td><td><span class="badge green">관리중</span></td></tr><tr><td>2차</td><td>납품자료_2차.zip</td><td>2026-04-24</td><td>진행중 권한 설정 불필요</td><td>PM</td><td><span class="badge blue">진행중</span></td></tr><tr><td>3차</td><td>-</td><td>-</td><td>승인 후 다운로드</td><td>-</td><td><span class="badge gray">대기</span></td></tr></tbody></table></div></article>
+            </section>
+
+            <section id="dailyReport" class="work-panel">
+              <article class="card"><div class="card-head"><h2>업무일지 / 진행률</h2><span class="badge blue">아침 계획 · 저녁 결과</span></div><div class="card-body"><div class="form-grid"><div class="field"><label>오늘 예상 업무</label><textarea rows="5" placeholder="아침 업무 시작 시 작성"></textarea></div><div class="field"><label>최종 업무 결과</label><textarea rows="5" placeholder="업무 종료 후 수정하여 최종 업무일지 작성"></textarea></div><div class="field"><label>지연사유</label><textarea rows="5" placeholder="예상 공정률과 실제 공정률이 다를 경우 작성"></textarea></div></div></div></article>
+            </section>
+          </template>
 
 </body>
 </html>
