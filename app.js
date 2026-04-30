@@ -2626,3 +2626,64 @@ function removeInternalChecklistScroll() {
 
 document.addEventListener("DOMContentLoaded", removeInternalChecklistScroll);
 window.addEventListener("resize", removeInternalChecklistScroll);
+
+
+function openAttachmentPreview(imageUrl, title = "첨부이미지") {
+  if (!imageUrl) {
+    showToast("이미지가 없습니다.");
+    return;
+  }
+
+  const popup = window.open("", "_blank", "width=1400,height=900,resizable=yes,scrollbars=yes");
+
+  if (!popup) {
+    showToast("팝업 차단을 해제해주세요.");
+    return;
+  }
+
+  popup.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${title}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+          background:#0f172a;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          min-height:100vh;
+          overflow:auto;
+          padding:24px;
+        }
+        .viewer{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          width:100%;
+          height:100%;
+        }
+        img{
+          max-width:100%;
+          max-height:calc(100vh - 48px);
+          width:auto;
+          height:auto;
+          object-fit:contain;
+          border-radius:14px;
+          box-shadow:0 18px 50px rgba(0,0,0,.45);
+          background:#fff;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="viewer">
+        <img src="${imageUrl}" alt="${title}">
+      </div>
+    </body>
+    </html>
+  `);
+
+  popup.document.close();
+}
