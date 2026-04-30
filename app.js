@@ -3035,3 +3035,79 @@ function openAttachmentGallery(rowIndex) {
 function applyChecklistDisplayOverrides() {
   checklistRows.forEach(row => normalizeSpecialChecklistCreator(row));
 }
+
+
+function getWorkPlaceholderTitle(menuName) {
+  return menuName || "업무관리";
+}
+
+function getWorkPlaceholderDesc(menuName) {
+  return `현재 ${menuName || "해당"} 세부 기능은 미구현 상태입니다. 향후 업무관리 기능 확장 시 화면 구성 및 데이터 연동 영역으로 사용됩니다.`;
+}
+
+function renderWorkReadyArea(menuName) {
+  const title = getWorkPlaceholderTitle(menuName);
+  const desc = getWorkPlaceholderDesc(menuName);
+  return `
+    <article class="card work-ready-card">
+      <div class="card-head">
+        <h2>${escapeHtml(title)}</h2>
+      </div>
+      <div class="card-body">
+        <div class="placeholder-box work-placeholder-box">
+          <h3>${escapeHtml(title)} 화면 준비 영역</h3>
+          <p>${escapeHtml(desc)}</p>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function isProjectQnaMenu(menuName) {
+  return menuName === "프로젝트 질의응답 관리" || menuName === "QC 검토 / 승인";
+}
+
+function switchWorkMenu(menuName) {
+  const normalizedMenu = menuName || "프로젝트 질의응답 관리";
+
+  document.querySelectorAll("[data-work-menu]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.workMenu === normalizedMenu);
+  });
+
+  const titleEl = document.getElementById("workPageTitle");
+  const descEl = document.getElementById("workPageDesc");
+  const area = document.getElementById("workContentArea");
+
+  if (titleEl) titleEl.textContent = isProjectQnaMenu(normalizedMenu) ? "QC 검토 / 승인" : normalizedMenu;
+  if (descEl) {
+    descEl.textContent = isProjectQnaMenu(normalizedMenu)
+      ? "수량산출 체크리스트, 체크리스트 검토, 이의제기, 오류 소거, 최종 수량 검토를 한 화면에서 관리합니다."
+      : "해당 업무관리 카테고리는 화면 준비 영역입니다.";
+  }
+
+  if (!area) return;
+
+  if (isProjectQnaMenu(normalizedMenu)) {
+    area.innerHTML = document.getElementById("qcChecklistTemplate")?.innerHTML || "";
+    if (typeof renderChecklistCategoryButtons === "function") renderChecklistCategoryButtons();
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+    return;
+  }
+
+  area.innerHTML = renderWorkReadyArea(normalizedMenu);
+}
+
+
+document.addEventListener("click", function(event) {
+  const workBtn = event.target.closest("[data-work-menu]");
+  if (!workBtn) return;
+  event.preventDefault();
+  switchWorkMenu(workBtn.dataset.workMenu || workBtn.textContent.trim());
+});
+
+
+document.addEventListener("DOMContentLoaded", function() {
+  if (document.getElementById("workContentArea") && typeof switchWorkMenu === "function") {
+    switchWorkMenu("프로젝트 질의응답 관리");
+  }
+});
