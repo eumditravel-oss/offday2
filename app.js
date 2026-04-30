@@ -2697,12 +2697,26 @@ function markQuestionCategorySent(category) {
   checklistSentCategories.add(category);
   rows.forEach(row => {
     normalizeChecklistRow(row);
+
+    // 송부완료로 질의차수가 잠금 처리되면, 해당 차수의 PM 확인 상태를 일괄 완료 처리한다.
+    // 화면상 "PM · 미확인"으로 남지 않고 "PM · 확인완료"로 표시되도록 checks/history/status를 함께 동기화한다.
+    const pmCheck = Array.isArray(row.checks) ? row.checks.find(check => check.target === "PM") : null;
+    if (pmCheck) {
+      pmCheck.done = true;
+      pmCheck.checkedBy = worker;
+      pmCheck.checkedAt = time;
+      row.history = row.history.filter(h => !(h.action === "확인완료" && h.target === "PM"));
+      row.history.push({ action: "확인완료", target: "PM", worker, time });
+    }
+
+    row.done = isChecklistRowDone(row);
+    row.status = getChecklistDoneState(row);
     row.history = row.history.filter(h => h.action !== "송부완료");
     row.history.push({ action: "송부완료", worker, time });
   });
   const next = getNextQuestionCategory(category);
   renderChecklistGrid();
-  showToast(next ? `${category} 송부 완료. 이제 ${next} 작성이 가능합니다.` : `${category} 송부 완료 처리되었습니다.`);
+  showToast(next ? `${category} 송부 완료. PM 확인완료 처리 후 ${next} 작성이 가능합니다.` : `${category} 송부 완료 및 PM 확인완료 처리되었습니다.`);
 }
 
 
