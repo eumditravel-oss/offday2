@@ -1342,6 +1342,8 @@ const checklistCategoryOptions = [
   "Z7. 견적조건(최종)"
 ];
 
+
+let selectedChecklistCategoryFilter = "전체";
 const checklistCategoryAliases = {
   "프로젝트 수주시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
   "프로젝트 수주 시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
@@ -1883,7 +1885,8 @@ function switchTopModule(moduleName) {
   if (moduleName === "work") {
     work?.classList.add("active");
     document.querySelector('[data-module-tab="work"]')?.classList.add("active");
-    renderChecklistGrid();
+    renderChecklistCategoryButtons();
+renderChecklistGrid();
   } else {
     support?.classList.add("active");
     document.querySelector('[data-module-tab="support"]')?.classList.add("active");
@@ -2129,6 +2132,7 @@ function normalizeSpecialChecklistCreator(row) {
 function normalizeChecklistRow(row) {
   if (!row) return row;
   row.group = normalizeChecklistGroupName(row.group);
+  row.project = row.project || "ㅇㅇ시설 신축공사";
   normalizeSpecialChecklistCreator(row);
   row.creator = getChecklistCreatorByGroup(row.group);
   if (!row.createdAt) row.createdAt = "2026-04-29 09:00";
@@ -2171,22 +2175,58 @@ function getChecklistTargets(row) {
   return Array.isArray(row.targets) ? row.targets : [];
 }
 
+
+function getChecklistCategoryLabel(category) {
+  if (category === "전체") return "전체보기";
+  return category;
+}
+
+function setChecklistCategoryFilter(category) {
+  selectedChecklistCategoryFilter = category || "전체";
+  renderChecklistCategoryButtons();
+  renderChecklistGrid();
+}
+
+function renderChecklistCategoryButtons() {
+  const wrap = document.getElementById("checklistCategoryFilter");
+  if (!wrap) return;
+
+  const categories = ["전체", ...checklistCategoryOptions];
+  wrap.innerHTML = categories.map(category => {
+    const active = selectedChecklistCategoryFilter === category ? "active" : "";
+    const count = category === "전체"
+      ? checklistRows.length
+      : checklistRows.filter(row => normalizeChecklistGroupName(row.group) === category).length;
+    return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')">${escapeHtml(getChecklistCategoryLabel(category))}<span>${count}</span></button>`;
+  }).join("");
+}
+
 function getChecklistFilteredRows() {
   checklistRows.forEach(normalizeChecklistRow);
+
+  const project = (document.getElementById("checklistProject")?.value || "").trim();
   const owner = document.getElementById("checklistOwnerFilter")?.value || "전체";
   const doneFilter = document.getElementById("checklistDoneFilter")?.value || "전체";
   const search = (document.getElementById("checklistSearch")?.value || "").trim().toLowerCase();
+  const categoryFilter = selectedChecklistCategoryFilter || "전체";
+
   return checklistRows.map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => {
     const targets = getChecklistTargets(row);
+    const rowProject = row.project || "ㅇㅇ시설 신축공사";
+    const projectOk = !project || rowProject.includes(project) || project.includes(rowProject);
+    const group = normalizeChecklistGroupName(row.group);
+    const categoryOk = categoryFilter === "전체" || group === categoryFilter;
     const ownerOk = owner === "전체" || targets.includes(owner);
     const state = getChecklistDoneState(row);
     const doneOk = doneFilter === "전체" || state === doneFilter;
-    const text = `${row.group} ${row.trade} ${row.no} ${row.item} ${row.method} ${targets.join(" ")} ${state} ${row.comment}`.toLowerCase();
-    return ownerOk && doneOk && (!search || text.includes(search));
+    const text = `${rowProject} ${row.group} ${row.trade} ${row.no} ${row.item} ${row.method} ${targets.join(" ")} ${state} ${row.comment}`.toLowerCase();
+
+    return projectOk && categoryOk && ownerOk && doneOk && (!search || text.includes(search));
   });
 }
 
 function renderChecklistGrid() {
+  renderChecklistCategoryButtons();
   const body = document.getElementById("checklistGridBody");
   if (!body) return;
   const rows = getChecklistFilteredRows().sort((a, b) => {
