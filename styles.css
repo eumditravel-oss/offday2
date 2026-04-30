@@ -2973,3 +2973,63 @@ body{
   display:block;
   object-fit:cover;
 }
+
+
+
+/* === 첨부 이미지 클릭/새 창 보기 보정 === */
+.attachment-cell{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  text-align:center !important;
+}
+
+.attach-count-btn{
+  border:0 !important;
+  background:transparent !important;
+  color:#0f172a !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+  padding:0 !important;
+}
+
+.attach-count-btn:hover{
+  color:#2563eb !important;
+  text-decoration:underline !important;
+}
+
+.attach-thumb-list{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-wrap:wrap !important;
+  gap:5px !important;
+}
+
+.attach-thumb{
+  width:26px !important;
+  height:26px !important;
+  border:1px solid #dbe3ef !important;
+  border-radius:999px !important;
+  padding:0 !important;
+  background:#fff !important;
+  overflow:hidden !important;
+  cursor:pointer !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.attach-thumb:hover{
+  border-color:#2563eb !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12) !important;
+}
+
+.attach-thumb img{
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+  object-fit:cover !important;
+}
