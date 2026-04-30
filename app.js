@@ -1349,7 +1349,8 @@ function addOrgSiblingNode(direction = "right") {
   const insertIndex = direction === "left" ? index : index + 1;
 
   parent.children.splice(insertIndex, 0, { title: "신규 조직", children: [] });
-  selectedOrgNodePath = `-`;
+  const parentPath = parts.join("-");
+  selectedOrgNodePath = parentPath ? `${parentPath}-${insertIndex}` : `${insertIndex}`;
 
   renderOrgVisualEditor();
   renderOrgChart(currentOrgEditorCompany);
@@ -1498,6 +1499,11 @@ function getOrgPopupNodeClass(node, depth) {
 }
 
 function isOrgBranchNode(node) {
+  // 직원이 연결되지 않은 조직 노드는 하위가 아직 없어도 부서/조직 박스로 취급합니다.
+  // 그래야 "왼쪽으로 추가" / "오른쪽으로 추가" 시 선택 노드의 하위가 아니라
+  // 동일 상위조직 아래의 좌우 형제 노드로 배치됩니다.
+  if (!node) return false;
+  if (!node.employeeId) return true;
   return Array.isArray(node.children) && node.children.length > 0;
 }
 
