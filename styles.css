@@ -2791,3 +2791,72 @@ body{
 .checklist-table td:nth-child(8) {
   padding-left: 14px !important;
 }
+
+
+
+/* === QC 검토/승인 그리드 본문 좌측 정렬 최종 보정 ===
+   - 헤더(th)는 기존 중앙정렬 유지
+   - 본문(td) 중 검토항목(4), 검토방법(5), 코멘트(8) 내용만 왼쪽 정렬
+   - 기존 중앙정렬/inline style/flex 정렬보다 우선 적용 */
+.excel-grid tbody tr:not(.group-row) td:nth-child(4),
+.excel-grid tbody tr:not(.group-row) td:nth-child(5),
+.excel-grid tbody tr:not(.group-row) td:nth-child(8),
+.checklist-table tbody tr:not(.group-row) td:nth-child(4),
+.checklist-table tbody tr:not(.group-row) td:nth-child(5),
+.checklist-table tbody tr:not(.group-row) td:nth-child(8){
+  text-align:left !important;
+  vertical-align:middle !important;
+  justify-content:flex-start !important;
+  align-items:center !important;
+  padding-left:18px !important;
+  padding-right:14px !important;
+}
+
+/* 헤더는 중앙정렬 유지 */
+.excel-grid thead th:nth-child(4),
+.excel-grid thead th:nth-child(5),
+.excel-grid thead th:nth-child(8),
+.checklist-table thead th:nth-child(4),
+.checklist-table thead th:nth-child(5),
+.checklist-table thead th:nth-child(8){
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+/* JS에서 생성되는 내부 cell/div/span까지 왼쪽 정렬 */
+.excel-grid tbody tr:not(.group-row) td:nth-child(4) .cell,
+.excel-grid tbody tr:not(.group-row) td:nth-child(5) .cell,
+.excel-grid tbody tr:not(.group-row) td:nth-child(8) .cell,
+.excel-grid tbody tr:not(.group-row) td:nth-child(4) div,
+.excel-grid tbody tr:not(.group-row) td:nth-child(5) div,
+.excel-grid tbody tr:not(.group-row) td:nth-child(8) div,
+.excel-grid tbody tr:not(.group-row) td:nth-child(4) span,
+.excel-grid tbody tr:not(.group-row) td:nth-child(5) span,
+.excel-grid tbody tr:not(.group-row) td:nth-child(8) span,
+.checklist-table tbody tr:not(.group-row) td:nth-child(4) .cell,
+.checklist-table tbody tr:not(.group-row) td:nth-child(5) .cell,
+.checklist-table tbody tr:not(.group-row) td:nth-child(8) .cell,
+.checklist-table tbody tr:not(.group-row) td:nth-child(4) div,
+.checklist-table tbody tr:not(.group-row) td:nth-child(5) div,
+.checklist-table tbody tr:not(.group-row) td:nth-child(8) div,
+.checklist-table tbody tr:not(.group-row) td:nth-child(4) span,
+.checklist-table tbody tr:not(.group-row) td:nth-child(5) span,
+.checklist-table tbody tr:not(.group-row) td:nth-child(8) span{
+  display:block !important;
+  width:100% !important;
+  text-align:left !important;
+  justify-content:flex-start !important;
+  align-items:center !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+
+/* 줄바꿈 텍스트도 왼쪽 기준으로 읽히게 보정 */
+.excel-grid tbody tr:not(.group-row) td:nth-child(4),
+.excel-grid tbody tr:not(.group-row) td:nth-child(5),
+.excel-grid tbody tr:not(.group-row) td:nth-child(8){
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:anywhere !important;
+  line-height:1.5 !important;
+}
