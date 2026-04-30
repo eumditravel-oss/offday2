@@ -3573,3 +3573,29 @@ body{
 @media(max-width:1280px){
   .org-launch-grid{grid-template-columns:1fr}
 }
+
+
+/* 조직도 참고 이미지형 레이아웃 보정 */
+.org-chart-canvas{overflow:auto;}
+.org-overview-fit.reference-layout{position:relative;min-width:1480px;width:100%;padding:18px 28px 42px;background:#fff;transform-origin:top center;}
+.org-chart-title-box{width:620px;margin:0 auto 14px;border:3px solid #111827;border-radius:12px;padding:12px 20px;text-align:center;font-size:32px;font-weight:900;letter-spacing:-1.2px;}
+.org-ref-date{position:absolute;right:28px;top:22px;font-size:22px;font-weight:800;color:#111827;}
+.org-ref-exec-stack{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:26px;position:relative;}
+.org-ref-exec-stack::after{content:"";position:absolute;bottom:-26px;left:50%;width:4px;height:26px;background:#9ca3af;}
+.org-ref-exec-stack .org-mini-person{width:230px;min-height:70px;}
+.org-ref-branch-row{display:grid;grid-template-columns:250px minmax(680px,1fr) 240px 150px;gap:28px;align-items:start;position:relative;}
+.org-ref-branch-row::before{content:"";position:absolute;top:-2px;left:105px;right:210px;height:4px;background:#9ca3af;z-index:0;}
+.org-chart-block{position:relative;z-index:1;text-align:center;}
+.org-block-title{display:inline-flex;align-items:center;justify-content:center;min-width:126px;min-height:48px;background:#88a5dc;color:#fff;border-radius:10px;padding:10px 16px;font-weight:900;font-size:17px;}
+.org-chart-block .lead{margin:10px auto 10px;}
+.org-block-members{margin-top:10px;}
+.org-member-column-wrap{display:grid;gap:8px 10px;justify-content:center;align-items:start;}
+.org-member-column-wrap.cols-1{grid-template-columns:1fr;}.org-member-column-wrap.cols-2{grid-template-columns:repeat(2,minmax(105px,1fr));}.org-member-column-wrap.cols-3{grid-template-columns:repeat(3,minmax(105px,1fr));}
+.org-member-column{display:flex;flex-direction:column;gap:8px;align-items:center;}
+.reference-layout .org-mini-person{width:126px;min-height:42px;border-radius:8px;padding:7px 8px;background:#fff;border:1px solid #cbd5e1;box-shadow:none;}
+.reference-layout .org-mini-person span{font-size:11px;}.reference-layout .org-mini-person strong{font-size:13px;line-height:1.25;}.reference-layout .org-mini-person small{display:none;}
+.reference-layout .org-mini-person.primary,.reference-layout .org-mini-person.secondary{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}.reference-layout .org-mini-person.secondary{background:#3b82f6;}.reference-layout .org-mini-person.lead{background:#f8fafc;border-color:#cbd5e1;}
+.org-subpart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;align-items:start;margin-top:16px;}.org-subpart-grid.wide{grid-template-columns:repeat(2,minmax(240px,1fr));}
+.org-chart-block.subpart{padding-top:0;}.org-chart-block.subpart>.org-block-title{background:#fef3c7;color:#111827;min-width:120px;min-height:38px;font-size:15px;}
+.management-block .org-subpart-grid{grid-template-columns:repeat(2,1fr);gap:12px;}.management-block .org-block-title,.claim-block .org-block-title{background:#88a5dc;}.tech-block>.org-block-title{background:#88a5dc;}.claim-block .org-member-column-wrap{grid-template-columns:1fr;}.org-side-dotted .org-block-title{background:#9ca3af;}.org-side-dotted .org-mini-person{background:#e5e7eb;}
+@media(max-width:1280px){.org-overview-fit.reference-layout{min-width:1360px}.org-ref-branch-row{grid-template-columns:230px minmax(620px,1fr) 220px 140px}.org-chart-title-box{width:560px;font-size:28px}}
