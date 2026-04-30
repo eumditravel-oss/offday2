@@ -3185,3 +3185,26 @@ body{
 .checklist-category-filter:empty{
   display:none;
 }
+
+
+
+/* === 업무관리 미구현 카테고리 화면 준비 영역 === */
+.work-ready-card{
+  min-height:220px;
+}
+
+.work-placeholder-box{
+  min-height:120px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.work-placeholder-box h3{
+  font-size:22px;
+  letter-spacing:-.5px;
+}
+
+.work-placeholder-box p{
+  margin-top:8px;
+}
