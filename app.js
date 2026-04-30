@@ -1541,7 +1541,7 @@ let checklistRows = [
       },
       {
         "action": "최초작성",
-        "worker": "경영지원",
+        "worker": "QC TEAM",
         "time": "2026-04-29 18:25"
       }
     ]
@@ -1767,7 +1767,7 @@ let checklistRows = [
       "PM",
       "산출 담당자"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 18:32",
     "comment": "",
     "attachments": []
@@ -1783,7 +1783,7 @@ let checklistRows = [
       "PM",
       "산출 담당자"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 18:32",
     "comment": "",
     "attachments": []
@@ -1799,7 +1799,7 @@ let checklistRows = [
       "PM",
       "산출 담당자"
     ],
-    "creator": "경영지원",
+    "creator": "QC TEAM",
     "createdAt": "2026-04-29 18:33",
     "comment": "",
     "attachments": []
