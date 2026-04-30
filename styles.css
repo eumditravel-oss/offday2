@@ -3178,3 +3178,10 @@ body{
     grid-template-columns:1fr;
   }
 }
+
+
+
+/* === 구분 필터 버튼: 데이터 없는 구분 숨김 기준 보정 === */
+.checklist-category-filter:empty{
+  display:none;
+}
