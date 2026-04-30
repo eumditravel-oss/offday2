@@ -2860,3 +2860,42 @@ body{
   overflow-wrap:anywhere !important;
   line-height:1.5 !important;
 }
+
+
+
+/* === 질의사항/견적조건 더미데이터 표시 보정 === */
+.excel-grid tbody tr:not(.group-row) td:nth-child(4),
+.excel-grid tbody tr:not(.group-row) td:nth-child(5),
+.excel-grid tbody tr:not(.group-row) td:nth-child(8){
+  text-align:left !important;
+  vertical-align:middle !important;
+  padding-left:18px !important;
+  padding-right:14px !important;
+  white-space:pre-line !important;
+  line-height:1.5 !important;
+}
+
+.excel-grid thead th:nth-child(4),
+.excel-grid thead th:nth-child(5),
+.excel-grid thead th:nth-child(8){
+  text-align:center !important;
+}
+
+.excel-grid tbody tr:not(.group-row) td:nth-child(4) .cell,
+.excel-grid tbody tr:not(.group-row) td:nth-child(5) .cell,
+.excel-grid tbody tr:not(.group-row) td:nth-child(8) .cell{
+  display:block !important;
+  width:100% !important;
+  text-align:left !important;
+  white-space:pre-line !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+
+.excel-grid .group-row td{
+  text-align:left !important;
+}
+
+.attach-thumb img{
+  object-fit:cover;
+}
