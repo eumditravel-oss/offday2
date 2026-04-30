@@ -1847,9 +1847,12 @@ function getChecklistCreatorByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const creatorMap = {
     "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "QC TEAM",
+    "QC팀 전달사항(유형 및 특이사항 관리)": "QC TEAM",
     "작업 착수 전 확인 필요사항(PM)": "PM",
+    "작업 진행 중 추가 전달사항(PM)": "PM",
     "자가검토 체크리스트(QC)": "QC TEAM",
-    "제출자료 검토사항(PM)": "PM"
+    "제출자료 검토사항(PM)": "PM",
+    "최종자료 검토사항(QC)": "QC TEAM"
   };
   return creatorMap[normalized] || "경영지원";
 }
@@ -2030,7 +2033,7 @@ function normalizeChecklistRow(row) {
   ensureChecklistAttachments(row);
   row.history = Array.isArray(row.history) ? row.history : [];
   row.history = row.history.filter(h => h.action !== "최초작성");
-  row.history.unshift({ action: "최초작성", worker: row.creator, time: row.createdAt });
+  row.history.push({ action: "최초작성", worker: row.creator, time: row.createdAt });
 
   const groupTargets = getChecklistTargetsByGroup(row.group);
   if (groupTargets) {
