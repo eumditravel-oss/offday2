@@ -2191,12 +2191,21 @@ function renderChecklistCategoryButtons() {
   const wrap = document.getElementById("checklistCategoryFilter");
   if (!wrap) return;
 
-  const categories = ["전체", ...checklistCategoryOptions];
+  const categoryCounts = checklistCategoryOptions.reduce((acc, category) => {
+    acc[category] = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === category).length;
+    return acc;
+  }, {});
+
+  const visibleCategories = checklistCategoryOptions.filter(category => categoryCounts[category] > 0);
+  const categories = ["전체", ...visibleCategories];
+
+  if (selectedChecklistCategoryFilter !== "전체" && !visibleCategories.includes(selectedChecklistCategoryFilter)) {
+    selectedChecklistCategoryFilter = "전체";
+  }
+
   wrap.innerHTML = categories.map(category => {
     const active = selectedChecklistCategoryFilter === category ? "active" : "";
-    const count = category === "전체"
-      ? checklistRows.length
-      : checklistRows.filter(row => normalizeChecklistGroupName(row.group) === category).length;
+    const count = category === "전체" ? checklistRows.length : categoryCounts[category];
     return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')">${escapeHtml(getChecklistCategoryLabel(category))}<span>${count}</span></button>`;
   }).join("");
 }
