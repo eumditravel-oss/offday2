@@ -1411,6 +1411,7 @@ function renderOrgEditor() {
 let orgEditorPopupWindow = null;
 let orgEditorDragSourcePath = null;
 let orgEditorPopupZoom = 1;
+let orgEditorPopupAutoFit = true;
 
 function findOrgNodePathByReference(targetNode, company = currentOrgEditorCompany) {
   const root = orgStructures[company]?.root;
@@ -1522,7 +1523,7 @@ function buildOrgPopupHtml() {
   .popup-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 20px;background:#fff;border-bottom:1px solid var(--line)}
   .popup-title strong{display:block;font-size:18px}.popup-title span{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:800}.popup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{border:0;border-radius:13px;padding:10px 14px;font-weight:900;cursor:pointer;background:#fff;color:#334155;border:1px solid var(--line)}.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-danger{background:#fee2e2;color:var(--red);border-color:#fecaca}.btn-dark{background:#0f172a;color:#fff;border-color:#0f172a}.btn:disabled{opacity:.45;cursor:not-allowed}
-  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px}.popup-tree{display:flex;justify-content:center;align-items:flex-start;min-width:1800px;min-height:1200px;padding:62px;transform-origin:top center}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:flex;align-items:flex-start;justify-content:center;gap:22px;padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:35px;right:35px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:190px;min-height:128px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:14px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
+  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px}.popup-tree{display:block;min-width:0;min-height:0;padding:40px;transform-origin:top left}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start;transform-origin:top left}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:flex;align-items:flex-start;justify-content:center;gap:22px;padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:35px;right:35px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:190px;min-height:128px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:14px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
 </style>
 </head>
 <body>
@@ -1534,6 +1535,7 @@ function buildOrgPopupHtml() {
         <button class="btn" onclick="opener.addOrgSiblingNodeFromPopup()">+ 같은 단계</button>
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(-1)">← 순서</button>
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(1)">순서 →</button>
+        <button class="btn" onclick="opener.fitOrgPopupToView(true)">화면맞춤</button>
         <button class="btn" onclick="opener.zoomOrgPopup(-0.1)">-</button>
         <button class="btn" onclick="opener.zoomOrgPopup(0.1)">+</button>
         <button class="btn btn-danger" onclick="opener.deleteOrgNodeFromPopup()">삭제</button>
@@ -1569,6 +1571,7 @@ function buildOrgPopupHtml() {
 }
 
 function openOrgVisualEditorWindow() {
+  orgEditorPopupAutoFit = true;
   orgEditorPopupWindow = window.open("", "CONCOST_ORG_VISUAL_EDITOR", "width=1900,height=1050,left=40,top=20,resizable=yes,scrollbars=yes");
   if (!orgEditorPopupWindow) return showToast("팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 실행해 주세요.");
   orgEditorPopupWindow.document.open();
@@ -1588,8 +1591,11 @@ function renderOrgVisualEditorPopup() {
 
   const tree = doc.getElementById("popupTree");
   if (tree) {
-    tree.style.transform = `scale(${orgEditorPopupZoom})`;
     tree.innerHTML = `<div class="popup-tree-inner">${renderOrgPopupNode(data.root, "0")}</div>`;
+    applyOrgPopupScale();
+    if (orgEditorPopupAutoFit) {
+      win.requestAnimationFrame(() => fitOrgPopupToView(false));
+    }
   }
 
   doc.getElementById("popupTabConcost")?.classList.toggle("active", currentOrgEditorCompany === "CON-COST");
@@ -1597,6 +1603,49 @@ function renderOrgVisualEditorPopup() {
   updateOrgPopupInspector();
 }
 
+function applyOrgPopupScale() {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const doc = win.document;
+  const tree = doc.getElementById("popupTree");
+  const inner = tree?.querySelector(".popup-tree-inner");
+  if (!tree || !inner) return;
+
+  const scale = Number(orgEditorPopupZoom.toFixed(3));
+  inner.style.transform = `scale(${scale})`;
+  const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 0, 1);
+  const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 0, 1);
+  tree.style.width = `${Math.ceil(baseWidth * scale + 96)}px`;
+  tree.style.height = `${Math.ceil(baseHeight * scale + 96)}px`;
+  tree.style.transform = "none";
+}
+
+function fitOrgPopupToView(force = false) {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const doc = win.document;
+  const canvas = doc.getElementById("popupCanvas");
+  const tree = doc.getElementById("popupTree");
+  const inner = tree?.querySelector(".popup-tree-inner");
+  if (!canvas || !tree || !inner) return;
+
+  if (force) orgEditorPopupAutoFit = true;
+
+  inner.style.transform = "scale(1)";
+  tree.style.width = "auto";
+  tree.style.height = "auto";
+
+  const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 1, 1);
+  const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 1, 1);
+  const availableWidth = Math.max(canvas.clientWidth - 96, 320);
+  const availableHeight = Math.max(canvas.clientHeight - 96, 260);
+  const nextScale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
+
+  orgEditorPopupZoom = Math.max(0.22, Math.min(1, Number(nextScale.toFixed(3))));
+  applyOrgPopupScale();
+  canvas.scrollLeft = 0;
+  canvas.scrollTop = 0;
+}
 function updateOrgPopupInspector() {
   const win = orgEditorPopupWindow;
   if (!win || win.closed) return;
@@ -1653,6 +1702,7 @@ function switchOrgPopupCompany(company) {
   currentOrgEditorCompany = company;
   currentOrgCompany = company;
   selectedOrgNodePath = "0";
+  orgEditorPopupAutoFit = true;
   renderOrgVisualEditor();
   renderOrgVisualEditorPopup();
 }
@@ -1688,7 +1738,8 @@ function deleteOrgNodeFromPopup() {
 }
 
 function zoomOrgPopup(delta) {
-  orgEditorPopupZoom = Math.max(0.45, Math.min(1.6, Number((orgEditorPopupZoom + delta).toFixed(2))));
+  orgEditorPopupAutoFit = false;
+  orgEditorPopupZoom = Math.max(0.22, Math.min(1.6, Number((orgEditorPopupZoom + delta).toFixed(2))));
   renderOrgVisualEditorPopup();
 }
 
