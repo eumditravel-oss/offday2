@@ -525,84 +525,42 @@
 
 
           <section id="orgEdit" class="panel">
-            <article class="card org-tool-card">
+            <article class="card org-tool-card org-tool-launch-card">
               <div class="card-head">
                 <div>
                   <h2>조직도 시각 편집 툴</h2>
-                  <p class="head-sub">조직 노드를 직접 선택해 하위 조직 추가, 직원 연결, 상위조직 변경, 표시순서 이동을 한 화면에서 처리합니다.</p>
+                  <p class="head-sub">조직도 관리는 별도 대형 편집 창에서 처리합니다. 노드 드래그, 하위/동일 단계 추가, 직원 연결, 인사카드 연동을 한 화면에서 사용할 수 있습니다.</p>
                 </div>
                 <div class="actions">
                   <button class="btn btn-line" onclick="openOrgChart()">조직도 미리보기</button>
-                  <button class="btn btn-primary" onclick="saveOrgVisualEditor()">변경사항 저장</button>
+                  <button class="btn btn-primary" onclick="openOrgVisualEditorWindow()">대형 조직도 편집창 열기</button>
                 </div>
               </div>
               <div class="card-body">
-                <div class="notice">조직도 이미지를 보면서 노드를 선택하고 수정하는 방식입니다. 조직도 내 직원 이름은 인사카드와 연결되어 있으며, 선택한 노드의 ‘인사카드 열기’ 버튼을 통해 기존 인사카드 팝업 기능을 그대로 사용할 수 있습니다.</div>
+                <div class="notice">기존처럼 표 형태로 하나씩 수정하는 방식이 아니라, 새 창에서 전체 조직도를 넓게 펼쳐 보고 노드를 직접 선택·드래그해서 관계를 조정하는 방식으로 변경했습니다. 조직도 내 직원 노드는 기존 인사카드 데이터와 계속 연결됩니다.</div>
 
-                <div class="org-visual-toolbar">
-                  <div class="org-company-tabs">
-                    <button class="org-tab active" data-org-editor-company="CON-COST" onclick="switchOrgEditorCompany('CON-COST', this)">CON-COST</button>
-                    <button class="org-tab" data-org-editor-company="Viet QS" onclick="switchOrgEditorCompany('Viet QS', this)">Viet QS</button>
+                <div class="org-launch-grid">
+                  <div class="org-launch-card-box">
+                    <span>편집 방식</span>
+                    <strong>새 창 대형 캔버스</strong>
+                    <p>좌측 조직도는 넓은 전용 화면에서 표시되며, 확대/축소와 드래그 이동을 기준으로 관리합니다.</p>
                   </div>
-                  <div class="org-tool-actions">
-                    <button class="btn btn-line" onclick="addOrgChildNode()">+ 하위 노드</button>
-                    <button class="btn btn-line" onclick="addOrgSiblingNode()">+ 같은 단계</button>
-                    <button class="btn btn-line" onclick="moveOrgNode(-1)">← 순서 앞으로</button>
-                    <button class="btn btn-line" onclick="moveOrgNode(1)">순서 뒤로 →</button>
-                    <button class="btn btn-danger" onclick="deleteOrgNode()">선택 노드 삭제</button>
+                  <div class="org-launch-card-box">
+                    <span>노드 이동</span>
+                    <strong>드래그 & 드롭</strong>
+                    <p>조직 노드를 다른 조직 노드 위로 드래그하면 해당 조직의 하위 노드로 이동합니다.</p>
+                  </div>
+                  <div class="org-launch-card-box">
+                    <span>인사카드 연동</span>
+                    <strong>기존 기능 유지</strong>
+                    <p>직원이 연결된 노드의 인사카드 버튼을 누르면 기존 인사카드 팝업이 그대로 열립니다.</p>
                   </div>
                 </div>
 
-                <div class="org-visual-layout">
-                  <section class="org-visual-canvas-wrap">
-                    <div class="org-canvas-head">
-                      <div>
-                        <span id="orgEditorCompanyLabel">CON-COST</span>
-                        <strong id="orgEditorTitle">조직도 편집 캔버스</strong>
-                      </div>
-                      <div class="org-canvas-guide">노드 클릭 → 우측 속성 편집 / 인사카드 연결 유지</div>
-                    </div>
-                    <div class="org-visual-canvas" id="orgVisualCanvas"></div>
-                  </section>
-
-                  <aside class="org-inspector">
-                    <div class="org-inspector-head">
-                      <span>NODE INSPECTOR</span>
-                      <strong id="orgInspectorTitle">선택 노드 없음</strong>
-                    </div>
-
-                    <div class="field">
-                      <label>조직/직책명</label>
-                      <input id="orgNodeTitleInput" placeholder="예: 기술본부, 마감팀, PM" oninput="updateSelectedOrgNodeField('title', this.value)" />
-                    </div>
-
-                    <div class="field">
-                      <label>연결 직원</label>
-                      <select id="orgNodeEmployeeSelect" onchange="updateSelectedOrgNodeField('employeeId', this.value)"></select>
-                    </div>
-
-                    <div class="field">
-                      <label>상위 조직 변경</label>
-                      <select id="orgNodeParentSelect" onchange="changeSelectedOrgParent(this.value)"></select>
-                    </div>
-
-                    <div class="field">
-                      <label>표시 타입</label>
-                      <select id="orgNodeClassSelect" onchange="updateSelectedOrgNodeField('className', this.value)">
-                        <option value="">일반</option>
-                        <option value="primary">대표/최상위</option>
-                        <option value="secondary">임원/상위</option>
-                        <option value="dotted">외부/참조</option>
-                      </select>
-                    </div>
-
-                    <div class="org-inspector-actions">
-                      <button class="btn btn-line" onclick="openSelectedOrgEmployeeCard()">인사카드 열기</button>
-                      <button class="btn btn-line" onclick="renderOrgVisualEditor()">변경 반영</button>
-                    </div>
-
-                    <div class="org-node-summary" id="orgNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
-                  </aside>
+                <div class="org-launch-actions">
+                  <button class="btn btn-primary btn-big" onclick="openOrgVisualEditorWindow()">조직도 편집창 열기</button>
+                  <button class="btn btn-line" onclick="switchOrgEditorCompany('CON-COST'); openOrgVisualEditorWindow()">CON-COST 편집</button>
+                  <button class="btn btn-line" onclick="switchOrgEditorCompany('Viet QS'); openOrgVisualEditorWindow()">Viet QS 편집</button>
                 </div>
               </div>
             </article>
