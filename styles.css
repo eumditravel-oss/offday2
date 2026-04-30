@@ -2863,10 +2863,24 @@ body{
 
 
 
-/* === 질의사항/견적조건 더미데이터 표시 보정 === */
+/* === Z1 질의사항 / Z7 견적조건 추가 더미데이터 표시 보정 === */
+/* 헤더는 중앙정렬 유지 */
+.excel-grid thead th:nth-child(4),
+.excel-grid thead th:nth-child(5),
+.excel-grid thead th:nth-child(8),
+.checklist-table thead th:nth-child(4),
+.checklist-table thead th:nth-child(5),
+.checklist-table thead th:nth-child(8){
+  text-align:center !important;
+}
+
+/* 본문 검토항목, 검토방법, 코멘트는 왼쪽 기준 */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4),
 .excel-grid tbody tr:not(.group-row) td:nth-child(5),
-.excel-grid tbody tr:not(.group-row) td:nth-child(8){
+.excel-grid tbody tr:not(.group-row) td:nth-child(8),
+.checklist-table tbody tr:not(.group-row) td:nth-child(4),
+.checklist-table tbody tr:not(.group-row) td:nth-child(5),
+.checklist-table tbody tr:not(.group-row) td:nth-child(8){
   text-align:left !important;
   vertical-align:middle !important;
   padding-left:18px !important;
@@ -2875,27 +2889,22 @@ body{
   line-height:1.5 !important;
 }
 
-.excel-grid thead th:nth-child(4),
-.excel-grid thead th:nth-child(5),
-.excel-grid thead th:nth-child(8){
-  text-align:center !important;
-}
-
-.excel-grid tbody tr:not(.group-row) td:nth-child(4) .cell,
-.excel-grid tbody tr:not(.group-row) td:nth-child(5) .cell,
-.excel-grid tbody tr:not(.group-row) td:nth-child(8) .cell{
-  display:block !important;
-  width:100% !important;
+/* 내부 래퍼가 있는 경우도 왼쪽 정렬 */
+.excel-grid tbody tr:not(.group-row) td:nth-child(4) *,
+.excel-grid tbody tr:not(.group-row) td:nth-child(5) *,
+.excel-grid tbody tr:not(.group-row) td:nth-child(8) *,
+.checklist-table tbody tr:not(.group-row) td:nth-child(4) *,
+.checklist-table tbody tr:not(.group-row) td:nth-child(5) *,
+.checklist-table tbody tr:not(.group-row) td:nth-child(8) *{
   text-align:left !important;
   white-space:pre-line !important;
-  margin-left:0 !important;
-  margin-right:0 !important;
 }
 
-.excel-grid .group-row td{
-  text-align:left !important;
+/* 질의사항처럼 내용이 긴 행은 이미지 예시처럼 충분한 높이 확보 */
+.excel-grid tbody tr:not(.group-row) td:nth-child(4){
+  word-break:keep-all !important;
 }
 
 .attach-thumb img{
-  object-fit:cover;
+  object-fit:cover !important;
 }
