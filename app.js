@@ -1978,7 +1978,7 @@ function addChecklistAttachments(index, files) {
 }
 
 function openImagePreview(src) {
-  const w = window.open("", "_blank");
+  const w = openAttachmentImageWindow("", "첨부 이미지");
   if (!w) return;
   w.document.write(`<img src="${src}" style="max-width:100%;height:auto;">`);
 }
@@ -2628,62 +2628,202 @@ document.addEventListener("DOMContentLoaded", removeInternalChecklistScroll);
 window.addEventListener("resize", removeInternalChecklistScroll);
 
 
-function openAttachmentPreview(imageUrl, title = "첨부이미지") {
+function renderAttachmentCell(row, rowIndex) {
+  const attachments = Array.isArray(row.attachments) ? row.attachments : [];
+  if (!attachments.length) {
+    return `<div class="attachment-cell empty">첨부 없음</div>`;
+  }
+
+  return `
+    <div class="attachment-cell has-attachment">
+      <button type="button" class="attach-count-btn" onclick="openAttachmentGallery(${rowIndex})">${attachments.length}개 첨부</button>
+      <div class="attach-thumb-list">
+        ${attachments.map((file, fileIndex) => `
+          <button type="button" class="attach-thumb" title="${escapeHtml(file.name || "첨부 이미지")}" onclick="openAttachmentImage(${rowIndex}, ${fileIndex})">
+            <img src="${escapeHtml(file.dataUrl || file.url || "")}" alt="${escapeHtml(file.name || "첨부 이미지")}">
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+
+
+function openAttachmentImage(rowIndex, fileIndex = 0) {
+  const row = checklistRows[rowIndex];
+  if (!row || !Array.isArray(row.attachments) || !row.attachments[fileIndex]) {
+    showToast("첨부 이미지를 찾을 수 없습니다.");
+    return;
+  }
+
+  const file = row.attachments[fileIndex];
+  const imageUrl = file.dataUrl || file.url || "";
+  const title = file.name || `${row.trade || "첨부"} 이미지`;
+
+  openAttachmentImageWindow(imageUrl, title);
+}
+
+function openAttachmentGallery(rowIndex) {
+  const row = checklistRows[rowIndex];
+  if (!row || !Array.isArray(row.attachments) || !row.attachments.length) {
+    showToast("첨부 이미지가 없습니다.");
+    return;
+  }
+
+  if (row.attachments.length === 1) {
+    openAttachmentImage(rowIndex, 0);
+    return;
+  }
+
+  const gallery = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
+  if (!gallery) {
+    showToast("팝업 차단을 해제해주세요.");
+    return;
+  }
+
+  const title = `${row.trade || "첨부"} 첨부 이미지`;
+  const items = row.attachments.map((file, idx) => {
+    const src = file.dataUrl || file.url || "";
+    const name = escapeHtml(file.name || `첨부 이미지 ${idx + 1}`);
+    return `
+      <figure class="image-card">
+        <img src="${src}" alt="${name}">
+        <figcaption>${name}</figcaption>
+      </figure>
+    `;
+  }).join("");
+
+  gallery.document.open();
+  gallery.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(title)}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+          min-height:100vh;
+          background:#0f172a;
+          color:#fff;
+          font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
+          padding:28px;
+        }
+        h1{
+          font-size:22px;
+          margin-bottom:18px;
+          letter-spacing:-.4px;
+        }
+        .gallery{
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+          gap:20px;
+        }
+        .image-card{
+          background:#111827;
+          border:1px solid rgba(148,163,184,.35);
+          border-radius:18px;
+          padding:14px;
+          box-shadow:0 20px 60px rgba(0,0,0,.35);
+        }
+        .image-card img{
+          display:block;
+          width:100%;
+          max-height:78vh;
+          object-fit:contain;
+          background:#fff;
+          border-radius:14px;
+        }
+        figcaption{
+          margin-top:10px;
+          color:#cbd5e1;
+          font-size:13px;
+          font-weight:800;
+          text-align:center;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(title)}</h1>
+      <section class="gallery">${items}</section>
+    </body>
+    </html>
+  `);
+  gallery.document.close();
+}
+
+function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
   if (!imageUrl) {
     showToast("이미지가 없습니다.");
     return;
   }
 
-  const popup = window.open("", "_blank", "width=1400,height=900,resizable=yes,scrollbars=yes");
-
+  const popup = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
   if (!popup) {
     showToast("팝업 차단을 해제해주세요.");
     return;
   }
 
+  popup.document.open();
   popup.document.write(`
     <!DOCTYPE html>
     <html lang="ko">
     <head>
       <meta charset="UTF-8">
-      <title>${title}</title>
+      <title>${escapeHtml(title)}</title>
       <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{
+        html,body{
+          min-height:100%;
           background:#0f172a;
+          font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
+        }
+        body{
           display:flex;
           align-items:center;
           justify-content:center;
-          min-height:100vh;
-          overflow:auto;
           padding:24px;
+          overflow:auto;
         }
         .viewer{
+          width:100%;
+          min-height:calc(100vh - 48px);
           display:flex;
           align-items:center;
           justify-content:center;
-          width:100%;
-          height:100%;
         }
         img{
+          display:block;
           max-width:100%;
           max-height:calc(100vh - 48px);
           width:auto;
           height:auto;
           object-fit:contain;
-          border-radius:14px;
-          box-shadow:0 18px 50px rgba(0,0,0,.45);
           background:#fff;
+          border-radius:14px;
+          box-shadow:0 18px 60px rgba(0,0,0,.45);
+        }
+        .title{
+          position:fixed;
+          top:16px;
+          left:20px;
+          right:20px;
+          color:#e5e7eb;
+          font-size:13px;
+          font-weight:800;
+          text-align:center;
+          pointer-events:none;
         }
       </style>
     </head>
     <body>
+      <div class="title">${escapeHtml(title)}</div>
       <div class="viewer">
-        <img src="${imageUrl}" alt="${title}">
+        <img src="${imageUrl}" alt="${escapeHtml(title)}">
       </div>
     </body>
     </html>
   `);
-
   popup.document.close();
 }
