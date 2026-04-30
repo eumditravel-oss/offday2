@@ -1938,11 +1938,17 @@ function ensureChecklistAttachments(row) {
 
 function renderChecklistAttachmentCell(row, realIndex) {
   ensureChecklistAttachments(row);
-  const thumbs = row.attachments.map((file, idx) => {
-    const src = file.dataUrl || file.url || file.src || "";
+  const attachments = Array.isArray(row.attachments) ? row.attachments : [];
+
+  if (!attachments.length) {
+    return `<div class="attachment-cell readonly-attachment-cell"><div class="attach-count">첨부 없음</div></div>`;
+  }
+
+  const thumbs = attachments.map((file, idx) => {
+    const src = getAttachmentImageSource(file);
     const name = file.name || `첨부 이미지 ${idx + 1}`;
     return `
-      <button class="attach-thumb" type="button" onclick="openImagePreview('${escapeJs(src)}', '${escapeJs(name)}')" title="${escapeHtml(name)}">
+      <button class="attach-thumb" type="button" onclick="openChecklistAttachmentImage(${realIndex}, ${idx})" title="${escapeHtml(name)}">
         <img src="${escapeHtml(src)}" alt="${escapeHtml(name)}">
       </button>
     `;
@@ -1950,9 +1956,7 @@ function renderChecklistAttachmentCell(row, realIndex) {
 
   return `
     <div class="attachment-cell readonly-attachment-cell">
-      ${row.attachments.length
-        ? `<button type="button" class="attach-count-btn" onclick="openAttachmentGalleryByData(${realIndex})">${row.attachments.length}개 첨부</button>`
-        : `<div class="attach-count">첨부 없음</div>`}
+      <button type="button" class="attach-count-btn" onclick="openChecklistAttachmentGallery(${realIndex})">${attachments.length}개 첨부</button>
       <div class="attach-thumb-list">${thumbs}</div>
     </div>
   `;
@@ -1985,11 +1989,7 @@ function addChecklistAttachments(index, files) {
 }
 
 function openImagePreview(src, title = "첨부 이미지") {
-  if (!src) {
-    showToast("이미지가 없습니다.");
-    return;
-  }
-  openAttachmentImageWindow(src, title);
+  openAttachmentImageWindow(src || makeAttachmentFallbackImage(title), title);
 }
 
 let pendingObjectionFiles = [];
@@ -2188,17 +2188,27 @@ function renderChecklistGrid() {
 }
 
 function renderChecklistGroupBand(group) {
+  group = normalizeChecklistGroupName(group);
   const isQuestion = isQuestionCategory(group);
+  const isFinalEstimateCondition = group === "Z7. 견적조건(최종)";
   const locked = isChecklistCategoryLocked(group);
   const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === group).length;
   const controls = [];
-  if (group === firstCategoryName) controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button>`);
-  if (isQuestion) {
+
+  if (group === firstCategoryName) {
+    controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button>`);
+  }
+
+  if (isQuestion || isFinalEstimateCondition) {
     controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadQuestionCategoryCsv('${escapeJs(group)}')">질의 엑셀</button>`);
+  }
+
+  if (isQuestion) {
     controls.push(`<button class="btn ${locked ? "btn-line" : "btn-primary"} group-mini-btn" ${locked ? "disabled" : ""} onclick="markQuestionCategorySent('${escapeJs(group)}')">${locked ? "송부완료" : "송부 완료 체크"}</button>`);
     const next = getNextQuestionCategory(group);
     if (locked && next) controls.push(`<span class="next-round-guide">다음 작성 가능: ${escapeHtml(next)}</span>`);
   }
+
   return `<tr class="group-separator-row ${locked ? "group-locked" : ""}"><td colspan="11"><div class="group-band-inner"><div><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}</div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
 }
 
@@ -2660,115 +2670,17 @@ function renderAttachmentCell(row, rowIndex) {
 
 
 function openAttachmentImage(rowIndex, fileIndex = 0) {
-  const row = checklistRows[rowIndex];
-  if (!row || !Array.isArray(row.attachments) || !row.attachments[fileIndex]) {
-    showToast("첨부 이미지를 찾을 수 없습니다.");
-    return;
-  }
-
-  const file = row.attachments[fileIndex];
-  const imageUrl = file.dataUrl || file.url || "";
-  const title = file.name || `${row.trade || "첨부"} 이미지`;
-
-  openAttachmentImageWindow(imageUrl, title);
+  openChecklistAttachmentImage(rowIndex, fileIndex);
 }
 
 function openAttachmentGallery(rowIndex) {
-  const row = checklistRows[rowIndex];
-  if (!row || !Array.isArray(row.attachments) || !row.attachments.length) {
-    showToast("첨부 이미지가 없습니다.");
-    return;
-  }
-
-  if (row.attachments.length === 1) {
-    openAttachmentImage(rowIndex, 0);
-    return;
-  }
-
-  const gallery = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
-  if (!gallery) {
-    showToast("팝업 차단을 해제해주세요.");
-    return;
-  }
-
-  const title = `${row.trade || "첨부"} 첨부 이미지`;
-  const items = row.attachments.map((file, idx) => {
-    const src = file.dataUrl || file.url || "";
-    const name = escapeHtml(file.name || `첨부 이미지 ${idx + 1}`);
-    return `
-      <figure class="image-card">
-        <img src="${src}" alt="${name}">
-        <figcaption>${name}</figcaption>
-      </figure>
-    `;
-  }).join("");
-
-  gallery.document.open();
-  gallery.document.write(`
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-      <meta charset="UTF-8">
-      <title>${escapeHtml(title)}</title>
-      <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{
-          min-height:100vh;
-          background:#0f172a;
-          color:#fff;
-          font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
-          padding:28px;
-        }
-        h1{
-          font-size:22px;
-          margin-bottom:18px;
-          letter-spacing:-.4px;
-        }
-        .gallery{
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-          gap:20px;
-        }
-        .image-card{
-          background:#111827;
-          border:1px solid rgba(148,163,184,.35);
-          border-radius:18px;
-          padding:14px;
-          box-shadow:0 20px 60px rgba(0,0,0,.35);
-        }
-        .image-card img{
-          display:block;
-          width:100%;
-          max-height:78vh;
-          object-fit:contain;
-          background:#fff;
-          border-radius:14px;
-        }
-        figcaption{
-          margin-top:10px;
-          color:#cbd5e1;
-          font-size:13px;
-          font-weight:800;
-          text-align:center;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>${escapeHtml(title)}</h1>
-      <section class="gallery">${items}</section>
-    </body>
-    </html>
-  `);
-  gallery.document.close();
+  openChecklistAttachmentGallery(rowIndex);
 }
 
 function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
-  if (!imageUrl) {
-    showToast("이미지가 없습니다.");
-    return null;
-  }
-
+  const src = imageUrl || makeAttachmentFallbackImage(title);
   const popup = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
+
   if (!popup) {
     showToast("팝업 차단을 해제해주세요.");
     return null;
@@ -2783,54 +2695,16 @@ function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
       <title>${escapeHtml(title)}</title>
       <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        html,body{
-          min-height:100%;
-          background:#0f172a;
-          font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
-        }
-        body{
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          padding:24px;
-          overflow:auto;
-        }
-        .viewer{
-          width:100%;
-          min-height:calc(100vh - 48px);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        }
-        img{
-          display:block;
-          max-width:100%;
-          max-height:calc(100vh - 48px);
-          width:auto;
-          height:auto;
-          object-fit:contain;
-          background:#fff;
-          border-radius:14px;
-          box-shadow:0 18px 60px rgba(0,0,0,.45);
-        }
-        .title{
-          position:fixed;
-          top:16px;
-          left:20px;
-          right:20px;
-          color:#e5e7eb;
-          font-size:13px;
-          font-weight:800;
-          text-align:center;
-          pointer-events:none;
-        }
+        html,body{min-height:100%;background:#0f172a;font-family:"Pretendard","Noto Sans KR",Arial,sans-serif}
+        body{display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+        .viewer{width:100%;min-height:calc(100vh - 48px);display:flex;align-items:center;justify-content:center}
+        img{display:block;max-width:100%;max-height:calc(100vh - 48px);width:auto;height:auto;object-fit:contain;background:#fff;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+        .title{position:fixed;top:16px;left:20px;right:20px;color:#e5e7eb;font-size:13px;font-weight:800;text-align:center;pointer-events:none}
       </style>
     </head>
     <body>
       <div class="title">${escapeHtml(title)}</div>
-      <div class="viewer">
-        <img src="${imageUrl}" alt="${escapeHtml(title)}">
-      </div>
+      <div class="viewer"><img src="${src}" alt="${escapeHtml(title)}"></div>
     </body>
     </html>
   `);
@@ -2840,6 +2714,45 @@ function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
 
 
 function openAttachmentGalleryByData(rowIndex) {
+  openChecklistAttachmentGallery(rowIndex);
+}
+
+
+function makeAttachmentFallbackImage(label = "첨부 이미지") {
+  const safeLabel = String(label || "첨부 이미지").replace(/[<>&"]/g, "");
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620">
+      <rect width="900" height="620" rx="34" fill="#0f172a"/>
+      <rect x="54" y="54" width="792" height="512" rx="28" fill="#111827" stroke="#2563eb" stroke-width="10"/>
+      <text x="450" y="288" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" font-weight="800" fill="#ffffff">${safeLabel}</text>
+      <text x="450" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#93c5fd">첨부 이미지 미리보기</text>
+    </svg>
+  `;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+
+function getAttachmentImageSource(file) {
+  if (!file) return "";
+  return file.dataUrl || file.url || file.src || file.preview || file.imageUrl || file.base64 || makeAttachmentFallbackImage(file.name || "첨부 이미지");
+}
+
+
+function openChecklistAttachmentImage(rowIndex, fileIndex = 0) {
+  const row = checklistRows[rowIndex];
+  if (!row || !Array.isArray(row.attachments) || !row.attachments[fileIndex]) {
+    showToast("첨부 이미지를 찾을 수 없습니다.");
+    return;
+  }
+
+  const file = row.attachments[fileIndex];
+  const src = getAttachmentImageSource(file);
+  const title = file.name || `${row.trade || "첨부"} 이미지`;
+  openAttachmentImageWindow(src, title);
+}
+
+
+function openChecklistAttachmentGallery(rowIndex) {
   const row = checklistRows[rowIndex];
   if (!row || !Array.isArray(row.attachments) || !row.attachments.length) {
     showToast("첨부 이미지가 없습니다.");
@@ -2847,8 +2760,7 @@ function openAttachmentGalleryByData(rowIndex) {
   }
 
   if (row.attachments.length === 1) {
-    const file = row.attachments[0];
-    openImagePreview(file.dataUrl || file.url || file.src || "", file.name || "첨부 이미지");
+    openChecklistAttachmentImage(rowIndex, 0);
     return;
   }
 
@@ -2859,8 +2771,8 @@ function openAttachmentGalleryByData(rowIndex) {
   }
 
   const title = `${row.trade || "첨부"} 첨부 이미지`;
-  const imageCards = row.attachments.map((file, index) => {
-    const src = file.dataUrl || file.url || file.src || "";
+  const cards = row.attachments.map((file, index) => {
+    const src = getAttachmentImageSource(file);
     const name = escapeHtml(file.name || `첨부 이미지 ${index + 1}`);
     return `
       <figure class="image-card">
@@ -2879,48 +2791,160 @@ function openAttachmentGalleryByData(rowIndex) {
       <title>${escapeHtml(title)}</title>
       <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{
-          min-height:100vh;
-          background:#0f172a;
-          color:#fff;
-          font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
-          padding:28px;
-        }
+        body{min-height:100vh;background:#0f172a;color:#fff;font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;padding:28px}
         h1{font-size:22px;margin-bottom:18px;letter-spacing:-.4px}
-        .gallery{
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-          gap:20px;
-        }
-        .image-card{
-          background:#111827;
-          border:1px solid rgba(148,163,184,.35);
-          border-radius:18px;
-          padding:14px;
-          box-shadow:0 20px 60px rgba(0,0,0,.35);
-        }
-        .image-card img{
-          display:block;
-          width:100%;
-          max-height:78vh;
-          object-fit:contain;
-          background:#fff;
-          border-radius:14px;
-        }
-        figcaption{
-          margin-top:10px;
-          color:#cbd5e1;
-          font-size:13px;
-          font-weight:800;
-          text-align:center;
-        }
+        .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:20px}
+        .image-card{background:#111827;border:1px solid rgba(148,163,184,.35);border-radius:18px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+        .image-card img{display:block;width:100%;max-height:78vh;object-fit:contain;background:#fff;border-radius:14px}
+        figcaption{margin-top:10px;color:#cbd5e1;font-size:13px;font-weight:800;text-align:center}
       </style>
     </head>
     <body>
       <h1>${escapeHtml(title)}</h1>
-      <section class="gallery">${imageCards}</section>
+      <section class="gallery">${cards}</section>
     </body>
     </html>
   `);
   popup.document.close();
+}
+
+
+/* FINAL_ATTACHMENT_IMAGE_OPEN_PATCH */
+
+function makeAttachmentFallbackImage(label = "첨부 이미지") {
+  const safeLabel = String(label || "첨부 이미지").replace(/[<>&"]/g, "");
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620">
+      <rect width="900" height="620" rx="34" fill="#0f172a"/>
+      <rect x="54" y="54" width="792" height="512" rx="28" fill="#111827" stroke="#2563eb" stroke-width="10"/>
+      <text x="450" y="288" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" font-weight="800" fill="#ffffff">${safeLabel}</text>
+      <text x="450" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#93c5fd">첨부 이미지 미리보기</text>
+    </svg>
+  `;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+function getAttachmentImageSource(file) {
+  if (!file) return "";
+  return file.dataUrl || file.url || file.src || file.preview || file.imageUrl || file.base64 || makeAttachmentFallbackImage(file.name || "첨부 이미지");
+}
+
+function openChecklistAttachmentImage(rowIndex, fileIndex = 0) {
+  const row = checklistRows[rowIndex];
+  if (!row || !Array.isArray(row.attachments) || !row.attachments[fileIndex]) {
+    showToast("첨부 이미지를 찾을 수 없습니다.");
+    return;
+  }
+
+  const file = row.attachments[fileIndex];
+  const src = getAttachmentImageSource(file);
+  const title = file.name || `${row.trade || "첨부"} 이미지`;
+  openAttachmentImageWindow(src, title);
+}
+
+function openChecklistAttachmentGallery(rowIndex) {
+  const row = checklistRows[rowIndex];
+  if (!row || !Array.isArray(row.attachments) || !row.attachments.length) {
+    showToast("첨부 이미지가 없습니다.");
+    return;
+  }
+
+  if (row.attachments.length === 1) {
+    openChecklistAttachmentImage(rowIndex, 0);
+    return;
+  }
+
+  const popup = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
+  if (!popup) {
+    showToast("팝업 차단을 해제해주세요.");
+    return;
+  }
+
+  const title = `${row.trade || "첨부"} 첨부 이미지`;
+  const cards = row.attachments.map((file, index) => {
+    const src = getAttachmentImageSource(file);
+    const name = escapeHtml(file.name || `첨부 이미지 ${index + 1}`);
+    return `
+      <figure class="image-card">
+        <img src="${src}" alt="${name}">
+        <figcaption>${name}</figcaption>
+      </figure>
+    `;
+  }).join("");
+
+  popup.document.open();
+  popup.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(title)}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{min-height:100vh;background:#0f172a;color:#fff;font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;padding:28px}
+        h1{font-size:22px;margin-bottom:18px;letter-spacing:-.4px}
+        .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:20px}
+        .image-card{background:#111827;border:1px solid rgba(148,163,184,.35);border-radius:18px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+        .image-card img{display:block;width:100%;max-height:78vh;object-fit:contain;background:#fff;border-radius:14px}
+        figcaption{margin-top:10px;color:#cbd5e1;font-size:13px;font-weight:800;text-align:center}
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(title)}</h1>
+      <section class="gallery">${cards}</section>
+    </body>
+    </html>
+  `);
+  popup.document.close();
+}
+
+function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
+  const src = imageUrl || makeAttachmentFallbackImage(title);
+  const popup = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
+
+  if (!popup) {
+    showToast("팝업 차단을 해제해주세요.");
+    return null;
+  }
+
+  popup.document.open();
+  popup.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(title)}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        html,body{min-height:100%;background:#0f172a;font-family:"Pretendard","Noto Sans KR",Arial,sans-serif}
+        body{display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+        .viewer{width:100%;min-height:calc(100vh - 48px);display:flex;align-items:center;justify-content:center}
+        img{display:block;max-width:100%;max-height:calc(100vh - 48px);width:auto;height:auto;object-fit:contain;background:#fff;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+        .title{position:fixed;top:16px;left:20px;right:20px;color:#e5e7eb;font-size:13px;font-weight:800;text-align:center;pointer-events:none}
+      </style>
+    </head>
+    <body>
+      <div class="title">${escapeHtml(title)}</div>
+      <div class="viewer"><img src="${src}" alt="${escapeHtml(title)}"></div>
+    </body>
+    </html>
+  `);
+  popup.document.close();
+  return popup;
+}
+
+function openImagePreview(src, title = "첨부 이미지") {
+  openAttachmentImageWindow(src || makeAttachmentFallbackImage(title), title);
+}
+
+function openAttachmentGalleryByData(rowIndex) {
+  openChecklistAttachmentGallery(rowIndex);
+}
+
+function openAttachmentImage(rowIndex, fileIndex = 0) {
+  openChecklistAttachmentImage(rowIndex, fileIndex);
+}
+
+function openAttachmentGallery(rowIndex) {
+  openChecklistAttachmentGallery(rowIndex);
 }
