@@ -355,6 +355,8 @@ const orgStructures = {
 };
 
 let currentOrgCompany = "CON-COST";
+let currentOrgEditorCompany = "CON-COST";
+let selectedOrgNodePath = "0";
 
 const permissionRows = [
   ["기본정보", "보기/수정", "보기/수정", "보기", "본인 수정", "일부 공개"],
@@ -1139,21 +1141,271 @@ function flattenOrgRows(node, company, parent = "최상위", rows = []) {
   return rows;
 }
 
-function renderOrgEditor() {
-  const target = document.getElementById("orgEditorGrid");
-  if (!target) return;
-  const rows = Object.entries(orgStructures).flatMap(([company, data]) => flattenOrgRows(data.root, company));
-  target.innerHTML = rows.map((row, idx) => `
-    <div class="org-edit-row">
-      <div><span>회사</span><strong>${row.company}</strong></div>
-      <div><span>상위조직</span><strong>${row.parent}</strong></div>
-      <div><span>조직/직책</span><strong>${row.title}</strong></div>
-      <div><span>연결 직원</span><strong>${row.name}</strong></div>
-      <div><span>사번</span><strong>${row.empNo}</strong></div>
-      <div class="org-edit-actions"><button class="btn btn-line" onclick="showToast('조직 행 ${idx + 1} 수정 기능 예시입니다.')">수정</button><button class="btn btn-line" onclick="showToast('표시순서 이동 기능 예시입니다.')">이동</button></div>
-    </div>
+
+function getOrgNodeByPath(path, company = currentOrgEditorCompany) {
+  const parts = String(path || "0").split("-").map(Number);
+  let node = orgStructures[company]?.root;
+  for (let i = 1; i < parts.length; i++) {
+    node = node?.children?.[parts[i]];
+  }
+  return node || null;
+}
+
+function getOrgParentByPath(path, company = currentOrgEditorCompany) {
+  const parts = String(path || "0").split("-").map(Number);
+  if (parts.length <= 1) return null;
+  return getOrgNodeByPath(parts.slice(0, -1).join("-"), company);
+}
+
+function getOrgEditorRows(node, company, path = "0", parent = "최상위", rows = []) {
+  const { emp, title, name } = orgNodeLabel(node);
+  rows.push({
+    company,
+    path,
+    parent,
+    title: title || "조직",
+    name: name || "-",
+    empNo: emp ? emp.empNo : "-"
+  });
+  (node.children || []).forEach((child, index) => {
+    getOrgEditorRows(child, company, `${path}-${index}`, title || "조직", rows);
+  });
+  return rows;
+}
+
+function renderOrgEmployeeOptions(selectedEmpNo = "") {
+  const currentCompany = currentOrgEditorCompany;
+  const ordered = [...employees].sort((a, b) => {
+    if (a.company !== b.company) return a.company === currentCompany ? -1 : 1;
+    return displayName(a).localeCompare(displayName(b), "ko");
+  });
+
+  return `<option value="">직원 미연결</option>` + ordered.map(emp => `
+    <option value="${emp.empNo}" ${emp.empNo === selectedEmpNo ? "selected" : ""}>
+      ${displayName(emp)} · ${emp.company} · ${emp.dept} · ${emp.empNo}
+    </option>
   `).join("");
 }
+
+function renderOrgParentOptions(selectedPath = "0") {
+  const rows = getOrgEditorRows(orgStructures[currentOrgEditorCompany].root, currentOrgEditorCompany);
+  const current = selectedPath;
+  const parentPath = current.includes("-") ? current.split("-").slice(0, -1).join("-") : "";
+
+  return rows
+    .filter(row => row.path !== current && !row.path.startsWith(`${current}-`))
+    .map(row => `
+      <option value="${row.path}" ${row.path === parentPath ? "selected" : ""}>
+        ${"— ".repeat(row.path.split("-").length - 1)}${row.title} ${row.name !== "-" ? `· ${row.name}` : ""}
+      </option>
+    `).join("");
+}
+
+function renderOrgVisualNode(node, path = "0") {
+  const { emp, title, name } = orgNodeLabel(node);
+  const children = node.children || [];
+  const selected = path === selectedOrgNodePath ? "selected" : "";
+  const typeClass = node.className || "";
+  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
+  const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
+  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
+
+  return `
+    <div class="org-v-node-wrap">
+      <div class="org-v-node ${selected} ${typeClass}" onclick="selectOrgVisualNode('${path}')">
+        <div class="org-v-node-top">
+          <span>${displayTitle}</span>
+          <small>${path}</small>
+        </div>
+        <strong>${displayPerson}</strong>
+        <em>${meta}</em>
+        ${emp ? `<button class="org-card-link" onclick="event.stopPropagation(); openMiniCardPopup('${emp.empNo}')">인사카드</button>` : ""}
+      </div>
+      ${children.length ? `
+        <div class="org-v-children">
+          ${children.map((child, index) => renderOrgVisualNode(child, `${path}-${index}`)).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderOrgVisualEditor() {
+  const target = document.getElementById("orgVisualCanvas");
+  if (!target) return;
+
+  const data = orgStructures[currentOrgEditorCompany];
+  if (!data) return;
+
+  if (!getOrgNodeByPath(selectedOrgNodePath, currentOrgEditorCompany)) {
+    selectedOrgNodePath = "0";
+  }
+
+  setText("orgEditorCompanyLabel", currentOrgEditorCompany);
+  setText("orgEditorTitle", data.title);
+
+  target.innerHTML = `
+    <div class="org-v-scroll">
+      <div class="org-v-tree">
+        ${renderOrgVisualNode(data.root, "0")}
+      </div>
+    </div>
+  `;
+
+  updateOrgInspector();
+}
+
+function updateOrgInspector() {
+  const node = getOrgNodeByPath(selectedOrgNodePath);
+  const inspectorTitle = document.getElementById("orgInspectorTitle");
+  const titleInput = document.getElementById("orgNodeTitleInput");
+  const employeeSelect = document.getElementById("orgNodeEmployeeSelect");
+  const parentSelect = document.getElementById("orgNodeParentSelect");
+  const classSelect = document.getElementById("orgNodeClassSelect");
+  const summary = document.getElementById("orgNodeSummary");
+
+  if (!node) {
+    if (inspectorTitle) inspectorTitle.textContent = "선택 노드 없음";
+    if (summary) summary.textContent = "좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.";
+    return;
+  }
+
+  const { emp, title, name } = orgNodeLabel(node);
+  if (inspectorTitle) inspectorTitle.textContent = name || title || "조직 노드";
+  if (titleInput) titleInput.value = node.title || "";
+  if (employeeSelect) employeeSelect.innerHTML = renderOrgEmployeeOptions(node.employeeId || "");
+  if (parentSelect) {
+    parentSelect.innerHTML = selectedOrgNodePath === "0"
+      ? `<option value="">최상위 노드는 상위조직 변경 불가</option>`
+      : renderOrgParentOptions(selectedOrgNodePath);
+    parentSelect.disabled = selectedOrgNodePath === "0";
+  }
+  if (classSelect) classSelect.value = node.className || "";
+  if (summary) {
+    summary.innerHTML = `
+      <strong>현재 선택 노드</strong>
+      <span>회사: ${currentOrgEditorCompany}</span>
+      <span>조직/직책: ${title || "-"}</span>
+      <span>연결 직원: ${emp ? `${displayName(emp)} (${emp.empNo})` : "미연결"}</span>
+      <span>하위 노드: ${(node.children || []).length}개</span>
+    `;
+  }
+}
+
+function selectOrgVisualNode(path) {
+  selectedOrgNodePath = path;
+  renderOrgVisualEditor();
+}
+
+function switchOrgEditorCompany(company, el) {
+  currentOrgEditorCompany = company;
+  currentOrgCompany = company;
+  selectedOrgNodePath = "0";
+  document.querySelectorAll("[data-org-editor-company]").forEach(tab => tab.classList.remove("active"));
+  if (el) el.classList.add("active");
+  renderOrgVisualEditor();
+}
+
+function updateSelectedOrgNodeField(field, value) {
+  const node = getOrgNodeByPath(selectedOrgNodePath);
+  if (!node) return;
+
+  if (field === "employeeId" && !value) {
+    delete node.employeeId;
+  } else if (field === "title" && !value.trim()) {
+    delete node.title;
+  } else if (field === "className" && !value) {
+    delete node.className;
+  } else {
+    node[field] = value;
+  }
+
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+}
+
+function addOrgChildNode() {
+  const node = getOrgNodeByPath(selectedOrgNodePath);
+  if (!node) return showToast("하위 노드를 추가할 조직을 선택해 주세요.");
+  if (!node.children) node.children = [];
+  node.children.push({ title: "신규 조직", children: [] });
+  selectedOrgNodePath = `${selectedOrgNodePath}-${node.children.length - 1}`;
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+  showToast("하위 노드를 추가했습니다.");
+}
+
+function addOrgSiblingNode() {
+  if (selectedOrgNodePath === "0") return addOrgChildNode();
+  const parent = getOrgParentByPath(selectedOrgNodePath);
+  if (!parent) return;
+  const index = Number(selectedOrgNodePath.split("-").pop());
+  parent.children.splice(index + 1, 0, { title: "신규 조직", children: [] });
+  selectedOrgNodePath = `${selectedOrgNodePath.split("-").slice(0, -1).join("-")}-${index + 1}`;
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+  showToast("같은 단계 노드를 추가했습니다.");
+}
+
+function moveOrgNode(direction) {
+  if (selectedOrgNodePath === "0") return showToast("최상위 노드는 이동할 수 없습니다.");
+  const parent = getOrgParentByPath(selectedOrgNodePath);
+  if (!parent?.children) return;
+  const parts = selectedOrgNodePath.split("-");
+  const index = Number(parts.pop());
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= parent.children.length) return showToast("더 이상 이동할 수 없습니다.");
+  [parent.children[index], parent.children[nextIndex]] = [parent.children[nextIndex], parent.children[index]];
+  selectedOrgNodePath = `${parts.join("-")}-${nextIndex}`;
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+}
+
+function deleteOrgNode() {
+  if (selectedOrgNodePath === "0") return showToast("최상위 노드는 삭제할 수 없습니다.");
+  const parent = getOrgParentByPath(selectedOrgNodePath);
+  if (!parent?.children) return;
+  const index = Number(selectedOrgNodePath.split("-").pop());
+  parent.children.splice(index, 1);
+  selectedOrgNodePath = selectedOrgNodePath.split("-").slice(0, -1).join("-") || "0";
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+  showToast("선택 노드를 삭제했습니다.");
+}
+
+function changeSelectedOrgParent(newParentPath) {
+  if (!newParentPath || selectedOrgNodePath === "0" || newParentPath === selectedOrgNodePath) return;
+  const oldParent = getOrgParentByPath(selectedOrgNodePath);
+  const movingNode = getOrgNodeByPath(selectedOrgNodePath);
+  const newParent = getOrgNodeByPath(newParentPath);
+  if (!oldParent?.children || !movingNode || !newParent) return;
+
+  const oldIndex = Number(selectedOrgNodePath.split("-").pop());
+  oldParent.children.splice(oldIndex, 1);
+  if (!newParent.children) newParent.children = [];
+  newParent.children.push(movingNode);
+  selectedOrgNodePath = `${newParentPath}-${newParent.children.length - 1}`;
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+  showToast("상위 조직을 변경했습니다.");
+}
+
+function openSelectedOrgEmployeeCard() {
+  const node = getOrgNodeByPath(selectedOrgNodePath);
+  if (!node?.employeeId) return showToast("연결된 직원이 없습니다.");
+  openMiniCardPopup(node.employeeId);
+}
+
+function saveOrgVisualEditor() {
+  renderOrgVisualEditor();
+  renderOrgChart(currentOrgEditorCompany);
+  showToast("조직도 편집 설정이 저장되었습니다.");
+}
+
+function renderOrgEditor() {
+  renderOrgVisualEditor();
+}
+
 
 function openOrgChart() {
   document.getElementById("orgChartModal")?.classList.add("active");
