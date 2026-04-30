@@ -696,13 +696,23 @@
                   <div class="actions"><button class="btn btn-line" onclick="openChecklistModal()">+ 추가하기</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-line" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">전체 엑셀 내보내기</button></div>
                 </div>
                 <div class="card-body">
-                  <div class="notice">정리 완료 후 내부 PM 및 외부 발주처 담당자에게 동시 발송하는 것을 전제로 구성했습니다. 구분은 지정된 드롭다운 목록만 선택 가능하며, 질의사항은 차수별 엑셀 다운로드 후 송부 완료 처리하면 해당 차수가 잠금 처리되어 다음 차수에만 추가 작성할 수 있습니다.</div>
                   <div class="checklist-toolbar">
-                    <div class="field"><label>프로젝트</label><select id="checklistProject"><option>ㅇㅇ시설 신축공사</option><option>샘플 프로젝트 A</option></select></div>
+                    <div class="field project-search-field">
+                      <label>프로젝트</label>
+                      <input id="checklistProject" list="checklistProjectList" value="ㅇㅇ시설 신축공사" oninput="renderChecklistGrid()" onchange="renderChecklistGrid()" placeholder="프로젝트명 검색 또는 선택">
+                      <datalist id="checklistProjectList">
+                        <option value="ㅇㅇ시설 신축공사"></option>
+                        <option value="샘플 프로젝트 A"></option>
+                        <option value="샘플 프로젝트 B"></option>
+                        <option value="공동주택 신축공사"></option>
+                        <option value="업무시설 증축공사"></option>
+                      </datalist>
+                    </div>
                     <div class="field"><label>담당자 필터</label><select id="checklistOwnerFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>QC TEAM</option><option>PM</option><option>산출 담당자</option><option>실장</option></select></div>
                     <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="renderChecklistGrid()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
+                  <div class="checklist-category-filter" id="checklistCategoryFilter"></div>
                   <div class="excel-grid-wrap"><table class="excel-grid"><colgroup>
                     <col class="qc-col-select">
                     <col class="qc-col-trade">
