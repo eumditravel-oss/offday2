@@ -2093,9 +2093,43 @@ function renderObjectionArea(row, realIndex) {
   `;
 }
 
+
+function normalizeSpecialChecklistCreator(row) {
+  const group = normalizeChecklistGroupName(row.group);
+  const no = String(row.no || "");
+
+  if (group === "Z1. 질의사항(1차)" && no === "026") {
+    row.creator = "PM";
+    row.createdBy = "PM";
+  }
+
+  if (group === "Z1. 질의사항(1차)" && no === "027") {
+    row.creator = "산출 담당자";
+    row.createdBy = "산출 담당자";
+  }
+
+  if (group === "Z7. 견적조건(최종)" && no === "028") {
+    row.creator = "산출 담당자";
+    row.createdBy = "산출 담당자";
+  }
+
+  if (Array.isArray(row.history)) {
+    row.history = row.history.map(history => {
+      if (history && history.action === "최초작성") {
+        return { ...history, worker: row.creator || row.createdBy || history.worker };
+      }
+      return history;
+    });
+  }
+
+  return row;
+}
+
+
 function normalizeChecklistRow(row) {
   if (!row) return row;
   row.group = normalizeChecklistGroupName(row.group);
+  normalizeSpecialChecklistCreator(row);
   row.creator = getChecklistCreatorByGroup(row.group);
   if (!row.createdAt) row.createdAt = "2026-04-29 09:00";
   ensureChecklistAttachments(row);
@@ -2118,8 +2152,7 @@ function normalizeChecklistRow(row) {
   row.owner = row.targets.join(", ");
   row.done = isChecklistRowDone(row);
   row.status = row.done ? "확인완료" : getChecklistDoneState(row);
-  return row;
-}
+  return normalizeSpecialChecklistCreator(row);}
 
 function getChecklistDoneState(row) {
   const checks = Array.isArray(row?.checks) ? row.checks : [];
@@ -2947,4 +2980,9 @@ function openAttachmentImage(rowIndex, fileIndex = 0) {
 
 function openAttachmentGallery(rowIndex) {
   openChecklistAttachmentGallery(rowIndex);
+}
+
+
+function applyChecklistDisplayOverrides() {
+  checklistRows.forEach(row => normalizeSpecialChecklistCreator(row));
 }
