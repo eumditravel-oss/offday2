@@ -1478,17 +1478,38 @@ function renderOrgPopupParentOptions(selectedPath = "0") {
     `).join("");
 }
 
+function getOrgPopupNodeClass(node, depth) {
+  const raw = (node.title || node.employeeId || "node").toString();
+  const slug = raw
+    .replace(/[^0-9a-zA-Z가-힣]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+  return `depth-${depth} org-popup-${slug || "node"}`;
+}
+
+function isOrgBranchNode(node) {
+  return Array.isArray(node.children) && node.children.length > 0;
+}
+
 function renderOrgPopupNode(node, path = "0", depth = 0) {
   const { emp, title, name } = orgNodeLabel(node);
   const children = node.children || [];
   const selected = path === selectedOrgNodePath ? "selected" : "";
   const typeClass = node.className || "";
+  const layoutClass = getOrgPopupNodeClass(node, depth);
   const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
   const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
   const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
 
+  const leafChildren = children
+    .map((child, index) => ({ child, index }))
+    .filter(item => !isOrgBranchNode(item.child));
+  const branchChildren = children
+    .map((child, index) => ({ child, index }))
+    .filter(item => isOrgBranchNode(item.child));
+
   return `
-    <div class="popup-node-wrap depth-${depth}">
+    <div class="popup-node-wrap ${layoutClass}" data-path="${path}" data-title="${displayTitle}">
       <div class="popup-node ${selected} ${typeClass} depth-${depth}"
         draggable="true"
         ondragstart="if(event.ctrlKey){event.preventDefault();return false;} opener.startOrgPopupDrag('${path}')"
@@ -1503,7 +1524,18 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
           ${emp ? `<button onclick="event.stopPropagation(); opener.openMiniCardPopup('${emp.empNo}')">인사카드</button>` : `<button onclick="event.stopPropagation(); opener.selectOrgPopupNode('${path}')">속성편집</button>`}
         </div>
       </div>
-      ${children.length ? `<div class="popup-node-children depth-${depth}">${children.map((child, index) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}</div>` : ""}
+
+      ${leafChildren.length ? `
+        <div class="popup-member-children depth-${depth} count-${leafChildren.length}">
+          ${leafChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
+        </div>
+      ` : ""}
+
+      ${branchChildren.length ? `
+        <div class="popup-branch-children depth-${depth} count-${branchChildren.length}">
+          ${branchChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
+        </div>
+      ` : ""}
     </div>
   `;
 }
@@ -1537,6 +1569,32 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree .depth-4>.popup-node strong{font-size:13px;}
   .popup-tree-inner.concost-tree .depth-3>.popup-node em,
   .popup-tree-inner.concost-tree .depth-4>.popup-node em{font-size:11px;}
+
+  /* 조직도 기준 레이아웃 보정: 직원 노드와 부서 노드를 분리 배치하여 겹침 제거 */
+  .popup-tree-inner.concost-tree{min-width:1760px;align-items:flex-start;justify-content:center;}
+  .popup-tree-inner.concost-tree .popup-node-wrap{width:max-content;max-width:none;}
+  .popup-tree-inner.concost-tree .popup-node-children{display:none;}
+  .popup-member-children,.popup-branch-children{position:relative;display:grid;justify-content:center;align-items:start;width:max-content;margin-left:auto;margin-right:auto;}
+  .popup-member-children::before,.popup-branch-children::before{content:"";position:absolute;top:18px;left:28px;right:28px;height:2px;background:#bfccdc;}
+  .popup-member-children>.popup-node-wrap::before,.popup-branch-children>.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc;}
+  .popup-member-children{grid-template-columns:repeat(1,176px);gap:12px;padding-top:40px;}
+  .popup-branch-children{grid-template-columns:repeat(auto-fit,minmax(190px,max-content));gap:34px 24px;padding-top:46px;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-branch-children.depth-0{display:flex;justify-content:center;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-branch-children.depth-0::before{display:none;}
+  .popup-tree-inner.concost-tree .org-popup-부사장>.popup-branch-children.depth-1{grid-template-columns:300px 820px 260px 190px;gap:40px;align-items:start;}
+  .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-member-children{grid-template-columns:176px;}
+  .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-branch-children{grid-template-columns:repeat(2,190px);gap:28px;}
+  .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-member-children,.popup-tree-inner.concost-tree .org-popup-qc>.popup-member-children{grid-template-columns:176px;}
+  .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-branch-children{grid-template-columns:360px 430px;gap:54px;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children{grid-template-columns:repeat(3,176px);gap:12px 16px;}
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-branch-children{grid-template-columns:repeat(3,190px);gap:24px;}
+  .popup-tree-inner.concost-tree .org-popup-구조팀>.popup-member-children,.popup-tree-inner.concost-tree .org-popup-bim-파트>.popup-member-children,.popup-tree-inner.concost-tree .org-popup-토목-조경파트>.popup-member-children{grid-template-columns:176px;}
+  .popup-tree-inner.concost-tree .org-popup-클레임센터>.popup-member-children{grid-template-columns:176px;}
+  .popup-tree-inner.concost-tree .org-popup-공사비닷컴{padding-top:44px;}
+  .popup-tree-inner.concost-tree .popup-member-children .popup-node{width:176px;min-height:94px;padding:10px 12px;border-radius:14px;}
+  .popup-tree-inner.concost-tree .popup-member-children .popup-node strong{font-size:13px;}
+  .popup-tree-inner.concost-tree .popup-member-children .popup-node em{font-size:11px;}
+  .popup-tree-inner.concost-tree .popup-node-wrap .popup-node-wrap{margin:0;}
 
 </style>
 </head>
