@@ -1814,7 +1814,7 @@ let checklistRows = [
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "PM",
     "createdAt": "2026-04-30 09:51",
     "comment": "발주처 우선 송부 필요",
     "attachments": []
@@ -1829,14 +1829,14 @@ let checklistRows = [
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "산출담당자",
     "createdAt": "2026-04-30 09:53",
     "comment": "",
     "attachments": [
       {
         "name": "동바리_질의첨부.png",
         "dataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMjQwIDE4MCI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxODAiIHJ4PSIxOCIgZmlsbD0iIzBmMTcyYSIvPgogIDxyZWN0IHg9IjE4IiB5PSIxOCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSIxNDQiIHJ4PSIxMiIgZmlsbD0iIzExMTgyNyIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIxMjAiIHk9IjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiPuuPmeuwlOumrDwvdGV4dD4KICA8dGV4dCB4PSIxMjAiIHk9IjExMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOTNjNWZkIj7sp4jsnZgg7LKo67aAPC90ZXh0Pgo8L3N2Zz4=",
-        "addedBy": "경영지원",
+        "addedBy": "산출담당자",
         "addedAt": "2026-04-30 09:53"
       }
     ]
@@ -1851,14 +1851,14 @@ let checklistRows = [
     "targets": [
       "PM"
     ],
-    "creator": "경영지원",
+    "creator": "산출담당자",
     "createdAt": "2026-04-30 10:01",
     "comment": "",
     "attachments": [
       {
         "name": "옥탑장식물_견적조건첨부.png",
         "dataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMjQwIDE4MCI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxODAiIHJ4PSIxOCIgZmlsbD0iIzBmMTcyYSIvPgogIDxyZWN0IHg9IjE4IiB5PSIxOCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSIxNDQiIHJ4PSIxMiIgZmlsbD0iIzExMTgyNyIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIxMjAiIHk9IjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiPuyYpe2DkeyepeyLneusvDwvdGV4dD4KICA8dGV4dCB4PSIxMjAiIHk9IjExMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOTNjNWZkIj7qsqzsoIHsobDqsbQg7LKo67aAPC90ZXh0Pgo8L3N2Zz4=",
-        "addedBy": "경영지원",
+        "addedBy": "산출담당자",
         "addedAt": "2026-04-30 10:01"
       }
     ]
