@@ -1492,7 +1492,7 @@ function renderOrgPopupNode(node, path = "0") {
     <div class="popup-node-wrap">
       <div class="popup-node ${selected} ${typeClass}"
         draggable="true"
-        ondragstart="opener.startOrgPopupDrag('${path}')"
+        ondragstart="if(event.ctrlKey){event.preventDefault();return false;} opener.startOrgPopupDrag('${path}')"
         ondragover="event.preventDefault(); this.classList.add('drop-ready')"
         ondragleave="this.classList.remove('drop-ready')"
         ondrop="event.preventDefault(); this.classList.remove('drop-ready'); opener.dropOrgPopupNode('${path}')"
@@ -1523,7 +1523,7 @@ function buildOrgPopupHtml() {
   .popup-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 20px;background:#fff;border-bottom:1px solid var(--line)}
   .popup-title strong{display:block;font-size:18px}.popup-title span{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:800}.popup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{border:0;border-radius:13px;padding:10px 14px;font-weight:900;cursor:pointer;background:#fff;color:#334155;border:1px solid var(--line)}.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-danger{background:#fee2e2;color:var(--red);border-color:#fecaca}.btn-dark{background:#0f172a;color:#fff;border-color:#0f172a}.btn:disabled{opacity:.45;cursor:not-allowed}
-  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px}.popup-tree{display:block;min-width:0;min-height:0;padding:40px;transform-origin:top left}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start;transform-origin:top left}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:flex;align-items:flex-start;justify-content:center;gap:22px;padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:35px;right:35px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:190px;min-height:128px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:14px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
+  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px;cursor:default}.popup-canvas.ctrl-pan{cursor:grabbing;user-select:none}.popup-tree{display:block;min-width:0;min-height:0;padding:46px 56px;transform-origin:top left}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start;transform-origin:top left}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,max-content));align-items:start;justify-content:center;gap:38px 20px;width:min(100%,1380px);padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:40px;right:40px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:176px;min-height:116px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:12px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
 </style>
 </head>
 <body>
@@ -1549,7 +1549,7 @@ function buildOrgPopupHtml() {
             <button id="popupTabConcost" class="tab" onclick="opener.switchOrgPopupCompany('CON-COST')">CON-COST</button>
             <button id="popupTabVietqs" class="tab" onclick="opener.switchOrgPopupCompany('Viet QS')">Viet QS</button>
           </div>
-          <div class="guide">노드를 다른 노드 위로 드래그하면 하위 조직으로 이동합니다. 직원명 클릭 후 우측에서 속성을 수정할 수 있습니다.</div>
+          <div class="guide">Ctrl + 좌클릭 드래그로 캔버스를 이동합니다. 노드는 다른 노드 위로 드래그하면 하위 조직으로 이동합니다.</div>
         </div>
         <div class="popup-canvas" id="popupCanvas"><div class="popup-tree" id="popupTree"></div></div>
       </section>
@@ -1562,10 +1562,43 @@ function buildOrgPopupHtml() {
         <div class="field"><label>표시 타입</label><select id="popupNodeClassSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('className', this.value)"><option value="">일반</option><option value="primary">대표/최상위</option><option value="secondary">임원/상위</option><option value="dotted">외부/참조</option></select></div>
         <div class="inspector-actions"><button class="btn" onclick="opener.openSelectedOrgEmployeeCard()">인사카드 열기</button><button class="btn btn-dark" onclick="opener.renderOrgVisualEditorPopup()">변경 반영</button></div>
         <div class="summary" id="popupNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
-        <div class="help">부서 추가는 ‘+ 하위 노드’ 또는 ‘+ 같은 단계’를 사용합니다. 위치 변경은 노드 드래그 앤 드롭, 동일 단계 순서 변경은 상단 순서 버튼을 사용합니다.</div>
+        <div class="help">부서 추가는 ‘+ 하위 노드’ 또는 ‘+ 같은 단계’를 사용합니다. 캔버스 이동은 Ctrl + 좌클릭 드래그, 조직 이동은 노드 드래그 앤 드롭을 사용합니다.</div>
       </aside>
     </main>
   </div>
+
+<script>
+(function(){
+  let isPanning=false;
+  let startX=0, startY=0, startLeft=0, startTop=0;
+  function getCanvas(){return document.getElementById('popupCanvas');}
+  document.addEventListener('mousedown', function(e){
+    const canvas=getCanvas();
+    if(!canvas || !e.ctrlKey || e.button !== 0 || !canvas.contains(e.target)) return;
+    isPanning=true;
+    startX=e.clientX; startY=e.clientY;
+    startLeft=canvas.scrollLeft; startTop=canvas.scrollTop;
+    canvas.classList.add('ctrl-pan');
+    e.preventDefault();
+  }, true);
+  document.addEventListener('mousemove', function(e){
+    if(!isPanning) return;
+    const canvas=getCanvas();
+    canvas.scrollLeft = startLeft - (e.clientX - startX);
+    canvas.scrollTop = startTop - (e.clientY - startY);
+    e.preventDefault();
+  }, true);
+  document.addEventListener('mouseup', function(){
+    if(!isPanning) return;
+    isPanning=false;
+    const canvas=getCanvas();
+    if(canvas) canvas.classList.remove('ctrl-pan');
+  }, true);
+  document.addEventListener('dragstart', function(e){
+    if(e.ctrlKey) e.preventDefault();
+  }, true);
+})();
+</script>
 </body>
 </html>`;
 }
@@ -1637,13 +1670,12 @@ function fitOrgPopupToView(force = false) {
 
   const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 1, 1);
   const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 1, 1);
-  const availableWidth = Math.max(canvas.clientWidth - 96, 320);
-  const availableHeight = Math.max(canvas.clientHeight - 96, 260);
-  const nextScale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
+  const availableWidth = Math.max(canvas.clientWidth - 112, 360);
+  const nextScale = Math.min(1, availableWidth / baseWidth);
 
-  orgEditorPopupZoom = Math.max(0.22, Math.min(1, Number(nextScale.toFixed(3))));
+  orgEditorPopupZoom = Math.max(0.38, Math.min(1, Number(nextScale.toFixed(3))));
   applyOrgPopupScale();
-  canvas.scrollLeft = 0;
+  canvas.scrollLeft = Math.max(0, (tree.scrollWidth - canvas.clientWidth) / 2);
   canvas.scrollTop = 0;
 }
 function updateOrgPopupInspector() {
