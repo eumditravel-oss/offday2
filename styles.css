@@ -2727,3 +2727,34 @@ body{
 .excel-grid td:nth-child(8){text-align:center !important;}
 .excel-grid td:nth-child(10) .history-row strong{font-size:12px !important;}
 .excel-grid td:nth-child(10) .history-row span{font-size:11px !important;}
+
+
+
+/* QC 검토/승인 테이블 - 검토항목 / 검토방법 / 코멘트 왼쪽 정렬 */
+.checklist-table td:nth-child(4),
+.checklist-table td:nth-child(5),
+.checklist-table td:nth-child(8){
+  text-align:left !important;
+  justify-content:flex-start !important;
+  align-items:flex-start !important;
+}
+
+.checklist-table td:nth-child(4) *,
+.checklist-table td:nth-child(5) *,
+.checklist-table td:nth-child(8) *{
+  text-align:left !important;
+  justify-content:flex-start !important;
+  align-items:flex-start !important;
+}
+
+.checklist-table td:nth-child(4){
+  padding-left:18px !important;
+}
+
+.checklist-table td:nth-child(5){
+  padding-left:18px !important;
+}
+
+.checklist-table td:nth-child(8){
+  padding-left:18px !important;
+}
