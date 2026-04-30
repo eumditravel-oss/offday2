@@ -1334,16 +1334,26 @@ function addOrgChildNode() {
   showToast("하위 노드를 추가했습니다.");
 }
 
-function addOrgSiblingNode() {
-  if (selectedOrgNodePath === "0") return addOrgChildNode();
+function addOrgSiblingNode(direction = "right") {
+  if (selectedOrgNodePath === "0") {
+    showToast("최상위 노드는 같은 단계 추가가 불가합니다. 하위 노드로 추가해 주세요.");
+    return;
+  }
+
   const parent = getOrgParentByPath(selectedOrgNodePath);
   if (!parent) return;
-  const index = Number(selectedOrgNodePath.split("-").pop());
-  parent.children.splice(index + 1, 0, { title: "신규 조직", children: [] });
-  selectedOrgNodePath = `${selectedOrgNodePath.split("-").slice(0, -1).join("-")}-${index + 1}`;
+  if (!parent.children) parent.children = [];
+
+  const parts = selectedOrgNodePath.split("-");
+  const index = Number(parts.pop());
+  const insertIndex = direction === "left" ? index : index + 1;
+
+  parent.children.splice(insertIndex, 0, { title: "신규 조직", children: [] });
+  selectedOrgNodePath = `-`;
+
   renderOrgVisualEditor();
   renderOrgChart(currentOrgEditorCompany);
-  showToast("같은 단계 노드를 추가했습니다.");
+  showToast(direction === "left" ? "왼쪽 같은 단계 노드를 추가했습니다." : "오른쪽 같은 단계 노드를 추가했습니다.");
 }
 
 function moveOrgNode(direction) {
@@ -1604,7 +1614,8 @@ function buildOrgPopupHtml() {
       <div class="popup-title"><strong>조직도 대형 편집창</strong><span>노드 선택 · 드래그 이동 · 직원 연결 · 인사카드 연동</span></div>
       <div class="popup-actions">
         <button class="btn" onclick="opener.addOrgChildNodeFromPopup()">+ 하위 노드</button>
-        <button class="btn" onclick="opener.addOrgSiblingNodeFromPopup()">+ 같은 단계</button>
+        <button class="btn" onclick="opener.addOrgSiblingNodeLeftFromPopup()">← 왼쪽으로 추가</button>
+        <button class="btn" onclick="opener.addOrgSiblingNodeRightFromPopup()">오른쪽으로 추가 →</button>
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(-1)">← 순서</button>
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(1)">순서 →</button>
         <button class="btn" onclick="opener.fitOrgPopupToView(true)">화면맞춤</button>
@@ -1634,7 +1645,7 @@ function buildOrgPopupHtml() {
         <div class="field"><label>표시 타입</label><select id="popupNodeClassSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('className', this.value)"><option value="">일반</option><option value="primary">대표/최상위</option><option value="secondary">임원/상위</option><option value="dotted">외부/참조</option></select></div>
         <div class="inspector-actions"><button class="btn" onclick="opener.openSelectedOrgEmployeeCard()">인사카드 열기</button><button class="btn btn-dark" onclick="opener.renderOrgVisualEditorPopup()">변경 반영</button></div>
         <div class="summary" id="popupNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
-        <div class="help">부서 추가는 ‘+ 하위 노드’ 또는 ‘+ 같은 단계’를 사용합니다. 캔버스 이동은 Ctrl + 좌클릭 드래그, 조직 이동은 노드 드래그 앤 드롭을 사용합니다.</div>
+        <div class="help">부서 추가는 ‘+ 하위 노드’, ‘왼쪽으로 추가’, ‘오른쪽으로 추가’를 사용합니다. 캔버스 이동은 Ctrl + 좌클릭 드래그, 조직 이동은 노드 드래그 앤 드롭을 사용합니다.</div>
       </aside>
     </main>
   </div>
@@ -1828,7 +1839,17 @@ function addOrgChildNodeFromPopup() {
 }
 
 function addOrgSiblingNodeFromPopup() {
-  addOrgSiblingNode();
+  addOrgSiblingNode("right");
+  renderOrgVisualEditorPopup();
+}
+
+function addOrgSiblingNodeLeftFromPopup() {
+  addOrgSiblingNode("left");
+  renderOrgVisualEditorPopup();
+}
+
+function addOrgSiblingNodeRightFromPopup() {
+  addOrgSiblingNode("right");
   renderOrgVisualEditorPopup();
 }
 
