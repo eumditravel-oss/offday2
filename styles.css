@@ -3093,3 +3093,88 @@ body{
   display:block !important;
   object-fit:cover !important;
 }
+
+
+
+/* === QC 검토 / 승인 상단 필터 재구성 === */
+#qcReview .card-body > .notice{
+  display:none !important;
+}
+
+#qcReview .checklist-toolbar{
+  display:grid;
+  grid-template-columns:1.45fr .9fr .9fr 1.7fr;
+  gap:12px;
+  align-items:end;
+  margin-bottom:14px;
+}
+
+#qcReview .project-search-field input{
+  height:46px;
+}
+
+.checklist-category-filter{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:10px 0 14px;
+  border-bottom:1px solid #e5edf7;
+  margin-bottom:0;
+}
+
+.category-filter-btn{
+  border:1px solid #dbe3ef;
+  background:#fff;
+  color:#334155;
+  border-radius:999px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+
+.category-filter-btn span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#eef2f7;
+  color:#475569;
+  font-size:11px;
+  font-weight:900;
+}
+
+.category-filter-btn.active{
+  background:#0f172a;
+  border-color:#0f172a;
+  color:#fff;
+}
+
+.category-filter-btn.active span{
+  background:#2563eb;
+  color:#fff;
+}
+
+.category-filter-btn:hover{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+}
+
+@media(max-width:1280px){
+  #qcReview .checklist-toolbar{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:760px){
+  #qcReview .checklist-toolbar{
+    grid-template-columns:1fr;
+  }
+}
