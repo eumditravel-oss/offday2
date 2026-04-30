@@ -1938,14 +1938,21 @@ function ensureChecklistAttachments(row) {
 
 function renderChecklistAttachmentCell(row, realIndex) {
   ensureChecklistAttachments(row);
-  const thumbs = row.attachments.map((file, idx) => `
-    <button class="attach-thumb" type="button" onclick="openImagePreview('${escapeJs(file.dataUrl)}')" title="${escapeHtml(file.name)}">
-      <img src="${file.dataUrl}" alt="${escapeHtml(file.name)}">
-    </button>
-  `).join("");
+  const thumbs = row.attachments.map((file, idx) => {
+    const src = file.dataUrl || file.url || file.src || "";
+    const name = file.name || `첨부 이미지 ${idx + 1}`;
+    return `
+      <button class="attach-thumb" type="button" onclick="openImagePreview('${escapeJs(src)}', '${escapeJs(name)}')" title="${escapeHtml(name)}">
+        <img src="${escapeHtml(src)}" alt="${escapeHtml(name)}">
+      </button>
+    `;
+  }).join("");
+
   return `
     <div class="attachment-cell readonly-attachment-cell">
-      <div class="attach-count">${row.attachments.length ? row.attachments.length + "개 첨부" : "첨부 없음"}</div>
+      ${row.attachments.length
+        ? `<button type="button" class="attach-count-btn" onclick="openAttachmentGalleryByData(${realIndex})">${row.attachments.length}개 첨부</button>`
+        : `<div class="attach-count">첨부 없음</div>`}
       <div class="attach-thumb-list">${thumbs}</div>
     </div>
   `;
@@ -1977,10 +1984,12 @@ function addChecklistAttachments(index, files) {
   });
 }
 
-function openImagePreview(src) {
-  const w = openAttachmentImageWindow("", "첨부 이미지");
-  if (!w) return;
-  w.document.write(`<img src="${src}" style="max-width:100%;height:auto;">`);
+function openImagePreview(src, title = "첨부 이미지") {
+  if (!src) {
+    showToast("이미지가 없습니다.");
+    return;
+  }
+  openAttachmentImageWindow(src, title);
 }
 
 let pendingObjectionFiles = [];
@@ -2756,13 +2765,13 @@ function openAttachmentGallery(rowIndex) {
 function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
   if (!imageUrl) {
     showToast("이미지가 없습니다.");
-    return;
+    return null;
   }
 
   const popup = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
   if (!popup) {
     showToast("팝업 차단을 해제해주세요.");
-    return;
+    return null;
   }
 
   popup.document.open();
@@ -2822,6 +2831,94 @@ function openAttachmentImageWindow(imageUrl, title = "첨부 이미지") {
       <div class="viewer">
         <img src="${imageUrl}" alt="${escapeHtml(title)}">
       </div>
+    </body>
+    </html>
+  `);
+  popup.document.close();
+  return popup;
+}
+
+
+function openAttachmentGalleryByData(rowIndex) {
+  const row = checklistRows[rowIndex];
+  if (!row || !Array.isArray(row.attachments) || !row.attachments.length) {
+    showToast("첨부 이미지가 없습니다.");
+    return;
+  }
+
+  if (row.attachments.length === 1) {
+    const file = row.attachments[0];
+    openImagePreview(file.dataUrl || file.url || file.src || "", file.name || "첨부 이미지");
+    return;
+  }
+
+  const popup = window.open("", "_blank", "width=1400,height=920,resizable=yes,scrollbars=yes");
+  if (!popup) {
+    showToast("팝업 차단을 해제해주세요.");
+    return;
+  }
+
+  const title = `${row.trade || "첨부"} 첨부 이미지`;
+  const imageCards = row.attachments.map((file, index) => {
+    const src = file.dataUrl || file.url || file.src || "";
+    const name = escapeHtml(file.name || `첨부 이미지 ${index + 1}`);
+    return `
+      <figure class="image-card">
+        <img src="${src}" alt="${name}">
+        <figcaption>${name}</figcaption>
+      </figure>
+    `;
+  }).join("");
+
+  popup.document.open();
+  popup.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(title)}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+          min-height:100vh;
+          background:#0f172a;
+          color:#fff;
+          font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;
+          padding:28px;
+        }
+        h1{font-size:22px;margin-bottom:18px;letter-spacing:-.4px}
+        .gallery{
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+          gap:20px;
+        }
+        .image-card{
+          background:#111827;
+          border:1px solid rgba(148,163,184,.35);
+          border-radius:18px;
+          padding:14px;
+          box-shadow:0 20px 60px rgba(0,0,0,.35);
+        }
+        .image-card img{
+          display:block;
+          width:100%;
+          max-height:78vh;
+          object-fit:contain;
+          background:#fff;
+          border-radius:14px;
+        }
+        figcaption{
+          margin-top:10px;
+          color:#cbd5e1;
+          font-size:13px;
+          font-weight:800;
+          text-align:center;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(title)}</h1>
+      <section class="gallery">${imageCards}</section>
     </body>
     </html>
   `);
