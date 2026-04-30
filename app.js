@@ -1407,6 +1407,292 @@ function renderOrgEditor() {
 }
 
 
+
+let orgEditorPopupWindow = null;
+let orgEditorDragSourcePath = null;
+let orgEditorPopupZoom = 1;
+
+function findOrgNodePathByReference(targetNode, company = currentOrgEditorCompany) {
+  const root = orgStructures[company]?.root;
+  let found = null;
+  function walk(node, path) {
+    if (!node || found) return;
+    if (node === targetNode) {
+      found = path;
+      return;
+    }
+    (node.children || []).forEach((child, index) => walk(child, `${path}-${index}`));
+  }
+  walk(root, "0");
+  return found;
+}
+
+function moveOrgNodeToParentByDrag(sourcePath, targetPath) {
+  if (!sourcePath || !targetPath) return;
+  if (sourcePath === "0") return showToast("최상위 노드는 드래그 이동할 수 없습니다.");
+  if (sourcePath === targetPath || targetPath.startsWith(`${sourcePath}-`)) {
+    return showToast("자기 자신 또는 하위 조직으로는 이동할 수 없습니다.");
+  }
+
+  const sourceParent = getOrgParentByPath(sourcePath);
+  const movingNode = getOrgNodeByPath(sourcePath);
+  const targetNode = getOrgNodeByPath(targetPath);
+  if (!sourceParent?.children || !movingNode || !targetNode) return;
+
+  const sourceIndex = Number(sourcePath.split("-").pop());
+  sourceParent.children.splice(sourceIndex, 1);
+  if (!targetNode.children) targetNode.children = [];
+  targetNode.children.push(movingNode);
+  selectedOrgNodePath = findOrgNodePathByReference(movingNode) || selectedOrgNodePath;
+
+  renderOrgChart(currentOrgEditorCompany);
+  renderOrgVisualEditor();
+  renderOrgVisualEditorPopup();
+  showToast("드래그한 노드를 선택 조직의 하위로 이동했습니다.");
+}
+
+function renderOrgPopupEmployeeOptions(selectedEmpNo = "") {
+  const currentCompany = currentOrgEditorCompany;
+  const ordered = [...employees].sort((a, b) => {
+    if (a.company !== b.company) return a.company === currentCompany ? -1 : 1;
+    return displayName(a).localeCompare(displayName(b), "ko");
+  });
+  return `<option value="">직원 미연결</option>` + ordered.map(emp => `
+    <option value="${emp.empNo}" ${emp.empNo === selectedEmpNo ? "selected" : ""}>
+      ${displayName(emp)} · ${emp.company} · ${emp.dept} · ${emp.empNo}
+    </option>
+  `).join("");
+}
+
+function renderOrgPopupParentOptions(selectedPath = "0") {
+  const rows = getOrgEditorRows(orgStructures[currentOrgEditorCompany].root, currentOrgEditorCompany);
+  const current = selectedPath;
+  const parentPath = current.includes("-") ? current.split("-").slice(0, -1).join("-") : "";
+
+  return rows
+    .filter(row => row.path !== current && !row.path.startsWith(`${current}-`))
+    .map(row => `
+      <option value="${row.path}" ${row.path === parentPath ? "selected" : ""}>
+        ${"— ".repeat(row.path.split("-").length - 1)}${row.title} ${row.name !== "-" ? `· ${row.name}` : ""}
+      </option>
+    `).join("");
+}
+
+function renderOrgPopupNode(node, path = "0") {
+  const { emp, title, name } = orgNodeLabel(node);
+  const children = node.children || [];
+  const selected = path === selectedOrgNodePath ? "selected" : "";
+  const typeClass = node.className || "";
+  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
+  const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
+  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
+
+  return `
+    <div class="popup-node-wrap">
+      <div class="popup-node ${selected} ${typeClass}"
+        draggable="true"
+        ondragstart="opener.startOrgPopupDrag('${path}')"
+        ondragover="event.preventDefault(); this.classList.add('drop-ready')"
+        ondragleave="this.classList.remove('drop-ready')"
+        ondrop="event.preventDefault(); this.classList.remove('drop-ready'); opener.dropOrgPopupNode('${path}')"
+        onclick="opener.selectOrgPopupNode('${path}')">
+        <div class="popup-node-top"><span>${displayTitle}</span><small>${path}</small></div>
+        <strong>${displayPerson}</strong>
+        <em>${meta}</em>
+        <div class="popup-node-actions">
+          ${emp ? `<button onclick="event.stopPropagation(); opener.openMiniCardPopup('${emp.empNo}')">인사카드</button>` : `<button onclick="event.stopPropagation(); opener.selectOrgPopupNode('${path}')">속성편집</button>`}
+        </div>
+      </div>
+      ${children.length ? `<div class="popup-node-children">${children.map((child, index) => renderOrgPopupNode(child, `${path}-${index}`)).join("")}</div>` : ""}
+    </div>
+  `;
+}
+
+function buildOrgPopupHtml() {
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CON-COST 조직도 대형 편집창</title>
+<style>
+  :root{--bg:#f4f6fb;--panel:#fff;--text:#0f172a;--muted:#64748b;--line:#dbe3ef;--blue:#2563eb;--blue2:#1d4ed8;--red:#dc2626;--shadow:0 16px 46px rgba(15,23,42,.10)}
+  *{box-sizing:border-box;margin:0;padding:0} body{font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden} button,input,select{font-family:inherit}
+  .popup-shell{height:100vh;display:grid;grid-template-rows:64px 1fr}
+  .popup-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 20px;background:#fff;border-bottom:1px solid var(--line)}
+  .popup-title strong{display:block;font-size:18px}.popup-title span{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:800}.popup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{border:0;border-radius:13px;padding:10px 14px;font-weight:900;cursor:pointer;background:#fff;color:#334155;border:1px solid var(--line)}.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-danger{background:#fee2e2;color:var(--red);border-color:#fecaca}.btn-dark{background:#0f172a;color:#fff;border-color:#0f172a}.btn:disabled{opacity:.45;cursor:not-allowed}
+  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px}.popup-tree{display:flex;justify-content:center;align-items:flex-start;min-width:1800px;min-height:1200px;padding:62px;transform-origin:top center}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:flex;align-items:flex-start;justify-content:center;gap:22px;padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:35px;right:35px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:190px;min-height:128px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:14px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
+</style>
+</head>
+<body>
+  <div class="popup-shell">
+    <header class="popup-top">
+      <div class="popup-title"><strong>조직도 대형 편집창</strong><span>노드 선택 · 드래그 이동 · 직원 연결 · 인사카드 연동</span></div>
+      <div class="popup-actions">
+        <button class="btn" onclick="opener.addOrgChildNodeFromPopup()">+ 하위 노드</button>
+        <button class="btn" onclick="opener.addOrgSiblingNodeFromPopup()">+ 같은 단계</button>
+        <button class="btn" onclick="opener.moveOrgNodeFromPopup(-1)">← 순서</button>
+        <button class="btn" onclick="opener.moveOrgNodeFromPopup(1)">순서 →</button>
+        <button class="btn" onclick="opener.zoomOrgPopup(-0.1)">-</button>
+        <button class="btn" onclick="opener.zoomOrgPopup(0.1)">+</button>
+        <button class="btn btn-danger" onclick="opener.deleteOrgNodeFromPopup()">삭제</button>
+        <button class="btn btn-primary" onclick="opener.saveOrgVisualEditor()">저장</button>
+      </div>
+    </header>
+    <main class="popup-main">
+      <section class="popup-canvas-wrap">
+        <div class="canvas-head">
+          <div class="tabs">
+            <button id="popupTabConcost" class="tab" onclick="opener.switchOrgPopupCompany('CON-COST')">CON-COST</button>
+            <button id="popupTabVietqs" class="tab" onclick="opener.switchOrgPopupCompany('Viet QS')">Viet QS</button>
+          </div>
+          <div class="guide">노드를 다른 노드 위로 드래그하면 하위 조직으로 이동합니다. 직원명 클릭 후 우측에서 속성을 수정할 수 있습니다.</div>
+        </div>
+        <div class="popup-canvas" id="popupCanvas"><div class="popup-tree" id="popupTree"></div></div>
+      </section>
+      <aside class="inspector">
+        <h3>NODE INSPECTOR</h3>
+        <div class="inspector-title" id="popupInspectorTitle">선택 노드 없음</div>
+        <div class="field"><label>조직/직책명</label><input id="popupNodeTitleInput" oninput="opener.updateSelectedOrgNodeFieldFromPopup('title', this.value)" /></div>
+        <div class="field"><label>연결 직원</label><select id="popupNodeEmployeeSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('employeeId', this.value)"></select></div>
+        <div class="field"><label>상위 조직 변경</label><select id="popupNodeParentSelect" onchange="opener.changeSelectedOrgParentFromPopup(this.value)"></select></div>
+        <div class="field"><label>표시 타입</label><select id="popupNodeClassSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('className', this.value)"><option value="">일반</option><option value="primary">대표/최상위</option><option value="secondary">임원/상위</option><option value="dotted">외부/참조</option></select></div>
+        <div class="inspector-actions"><button class="btn" onclick="opener.openSelectedOrgEmployeeCard()">인사카드 열기</button><button class="btn btn-dark" onclick="opener.renderOrgVisualEditorPopup()">변경 반영</button></div>
+        <div class="summary" id="popupNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
+        <div class="help">부서 추가는 ‘+ 하위 노드’ 또는 ‘+ 같은 단계’를 사용합니다. 위치 변경은 노드 드래그 앤 드롭, 동일 단계 순서 변경은 상단 순서 버튼을 사용합니다.</div>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>`;
+}
+
+function openOrgVisualEditorWindow() {
+  orgEditorPopupWindow = window.open("", "CONCOST_ORG_VISUAL_EDITOR", "width=1900,height=1050,left=40,top=20,resizable=yes,scrollbars=yes");
+  if (!orgEditorPopupWindow) return showToast("팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 실행해 주세요.");
+  orgEditorPopupWindow.document.open();
+  orgEditorPopupWindow.document.write(buildOrgPopupHtml());
+  orgEditorPopupWindow.document.close();
+  orgEditorPopupWindow.opener = window;
+  setTimeout(() => renderOrgVisualEditorPopup(), 50);
+}
+
+function renderOrgVisualEditorPopup() {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const doc = win.document;
+  const data = orgStructures[currentOrgEditorCompany];
+  if (!data) return;
+  if (!getOrgNodeByPath(selectedOrgNodePath, currentOrgEditorCompany)) selectedOrgNodePath = "0";
+
+  const tree = doc.getElementById("popupTree");
+  if (tree) {
+    tree.style.transform = `scale(${orgEditorPopupZoom})`;
+    tree.innerHTML = `<div class="popup-tree-inner">${renderOrgPopupNode(data.root, "0")}</div>`;
+  }
+
+  doc.getElementById("popupTabConcost")?.classList.toggle("active", currentOrgEditorCompany === "CON-COST");
+  doc.getElementById("popupTabVietqs")?.classList.toggle("active", currentOrgEditorCompany === "Viet QS");
+  updateOrgPopupInspector();
+}
+
+function updateOrgPopupInspector() {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const doc = win.document;
+  const node = getOrgNodeByPath(selectedOrgNodePath);
+  if (!node) return;
+  const { emp, title, name } = orgNodeLabel(node);
+
+  const inspectorTitle = doc.getElementById("popupInspectorTitle");
+  const titleInput = doc.getElementById("popupNodeTitleInput");
+  const employeeSelect = doc.getElementById("popupNodeEmployeeSelect");
+  const parentSelect = doc.getElementById("popupNodeParentSelect");
+  const classSelect = doc.getElementById("popupNodeClassSelect");
+  const summary = doc.getElementById("popupNodeSummary");
+
+  if (inspectorTitle) inspectorTitle.textContent = name || title || "조직 노드";
+  if (titleInput) titleInput.value = node.title || "";
+  if (employeeSelect) employeeSelect.innerHTML = renderOrgPopupEmployeeOptions(node.employeeId || "");
+  if (parentSelect) {
+    parentSelect.innerHTML = selectedOrgNodePath === "0"
+      ? `<option value="">최상위 노드는 상위조직 변경 불가</option>`
+      : renderOrgPopupParentOptions(selectedOrgNodePath);
+    parentSelect.disabled = selectedOrgNodePath === "0";
+  }
+  if (classSelect) classSelect.value = node.className || "";
+  if (summary) {
+    summary.innerHTML = `
+      <strong>현재 선택 노드</strong>
+      <span>회사: ${currentOrgEditorCompany}</span>
+      <span>조직/직책: ${title || "-"}</span>
+      <span>연결 직원: ${emp ? `${displayName(emp)} (${emp.empNo})` : "미연결"}</span>
+      <span>하위 노드: ${(node.children || []).length}개</span>
+      <span>경로: ${selectedOrgNodePath}</span>
+    `;
+  }
+}
+
+function selectOrgPopupNode(path) {
+  selectedOrgNodePath = path;
+  renderOrgVisualEditor();
+  renderOrgVisualEditorPopup();
+}
+
+function startOrgPopupDrag(path) {
+  orgEditorDragSourcePath = path;
+}
+
+function dropOrgPopupNode(targetPath) {
+  moveOrgNodeToParentByDrag(orgEditorDragSourcePath, targetPath);
+  orgEditorDragSourcePath = null;
+}
+
+function switchOrgPopupCompany(company) {
+  currentOrgEditorCompany = company;
+  currentOrgCompany = company;
+  selectedOrgNodePath = "0";
+  renderOrgVisualEditor();
+  renderOrgVisualEditorPopup();
+}
+
+function updateSelectedOrgNodeFieldFromPopup(field, value) {
+  updateSelectedOrgNodeField(field, value);
+  renderOrgVisualEditorPopup();
+}
+
+function changeSelectedOrgParentFromPopup(value) {
+  changeSelectedOrgParent(value);
+  renderOrgVisualEditorPopup();
+}
+
+function addOrgChildNodeFromPopup() {
+  addOrgChildNode();
+  renderOrgVisualEditorPopup();
+}
+
+function addOrgSiblingNodeFromPopup() {
+  addOrgSiblingNode();
+  renderOrgVisualEditorPopup();
+}
+
+function moveOrgNodeFromPopup(direction) {
+  moveOrgNode(direction);
+  renderOrgVisualEditorPopup();
+}
+
+function deleteOrgNodeFromPopup() {
+  deleteOrgNode();
+  renderOrgVisualEditorPopup();
+}
+
+function zoomOrgPopup(delta) {
+  orgEditorPopupZoom = Math.max(0.45, Math.min(1.6, Number((orgEditorPopupZoom + delta).toFixed(2))));
+  renderOrgVisualEditorPopup();
+}
+
+
 function openOrgChart() {
   document.getElementById("orgChartModal")?.classList.add("active");
   renderOrgChart(currentOrgCompany);
