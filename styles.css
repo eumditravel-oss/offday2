@@ -3599,3 +3599,74 @@ body{
 .org-chart-block.subpart{padding-top:0;}.org-chart-block.subpart>.org-block-title{background:#fef3c7;color:#111827;min-width:120px;min-height:38px;font-size:15px;}
 .management-block .org-subpart-grid{grid-template-columns:repeat(2,1fr);gap:12px;}.management-block .org-block-title,.claim-block .org-block-title{background:#88a5dc;}.tech-block>.org-block-title{background:#88a5dc;}.claim-block .org-member-column-wrap{grid-template-columns:1fr;}.org-side-dotted .org-block-title{background:#9ca3af;}.org-side-dotted .org-mini-person{background:#e5e7eb;}
 @media(max-width:1280px){.org-overview-fit.reference-layout{min-width:1360px}.org-ref-branch-row{grid-template-columns:230px minmax(620px,1fr) 220px 140px}.org-chart-title-box{width:560px;font-size:28px}}
+
+
+/* === QC 구분 접기/펼치기: 구분 행 클릭 시 세부 항목 표시/숨김 === */
+.group-separator-row{
+  cursor:pointer;
+  user-select:none;
+}
+.group-separator-row:hover td{
+  background:#eef6ff !important;
+}
+.group-band-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.group-band-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.group-toggle-btn{
+  width:28px;
+  height:28px;
+  border:1px solid #cfe0f3;
+  background:#fff;
+  border-radius:999px;
+  display:inline-grid;
+  place-items:center;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.group-toggle-icon{
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  color:#2563eb !important;
+  font-size:18px !important;
+  line-height:1;
+  transition:transform .22s ease;
+}
+.group-separator-row.group-collapsed .group-toggle-icon{
+  transform:rotate(-90deg);
+}
+.group-band-title small{
+  color:#94a3b8;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.group-band-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.checklist-detail-row{
+  animation:checklistSlideDown .22s ease both;
+  transform-origin:top center;
+}
+@keyframes checklistSlideDown{
+  from{opacity:0;transform:translateY(-6px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@media(max-width:900px){
+  .group-band-inner{align-items:flex-start;flex-direction:column;}
+  .group-band-title{flex-wrap:wrap;}
+  .group-band-actions{justify-content:flex-start;}
+}
