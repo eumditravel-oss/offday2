@@ -4176,3 +4176,122 @@ body{
   .actual-org-fit{padding-top:12px;padding-bottom:24px;}
   .actual-org-title-box{font-size:23px;padding:8px 16px;margin-bottom:10px;}
 }
+
+/* === 조직도 보기창 스크롤락 해제 + 확대/축소 보정 === */
+#orgChartModal{
+  align-items:stretch !important;
+  justify-content:stretch !important;
+  padding:10px !important;
+}
+
+#orgChartModal .modal-org-wide{
+  width:calc(100vw - 20px) !important;
+  height:calc(100vh - 20px) !important;
+  max-height:none !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+#orgChartModal .modal-head{
+  flex:0 0 auto;
+}
+
+#orgChartModal .modal-body{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:hidden !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px !important;
+  padding:16px !important;
+}
+
+#orgChartContent.org-chart-canvas{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:auto !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  border-radius:18px !important;
+}
+
+#orgChartContent .org-chart-header.compact{
+  flex:0 0 auto;
+  padding:12px 14px;
+}
+
+#orgChartContent .org-chart-header-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.actual-org-zoom-panel{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px;
+  border:1px solid var(--line2);
+  border-radius:14px;
+  background:#f8fafc;
+}
+
+.actual-org-zoom-panel strong{
+  min-width:48px;
+  text-align:center;
+  font-size:13px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.actual-zoom-btn{
+  width:34px;
+  height:34px;
+  padding:0 !important;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  line-height:1;
+}
+
+.actual-org-viewport{
+  width:100% !important;
+  height:100% !important;
+  overflow:auto !important;
+  display:block !important;
+  background:#fff !important;
+  cursor:default;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable both-edges;
+}
+
+.actual-org-viewport.panning{
+  cursor:grabbing !important;
+  user-select:none;
+}
+
+.actual-org-fit{
+  transform:none !important;
+  transform-origin:top left !important;
+  transition:none !important;
+  margin:0 !important;
+  padding:18px 22px 34px !important;
+}
+
+#orgChartModal .notice{
+  flex:0 0 auto;
+  margin:0 !important;
+}
+
+@media(max-width:1280px){
+  #orgChartContent .org-chart-header.compact{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  #orgChartContent .org-chart-header-actions{
+    justify-content:flex-start;
+  }
+}
