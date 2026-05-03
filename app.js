@@ -1105,7 +1105,7 @@ function renderActualOrgTree(root, company) {
   return `
     <div class="actual-org-viewport">
       <div class="actual-org-fit ${company === "CON-COST" ? "concost" : "vietqs"}">
-        ${company === "CON-COST" ? `<div class="actual-org-title-box">㈜컨코스트 조직도</div><div class="actual-org-date">2026. 4. 9.</div>` : ""}
+        ${company === "CON-COST" ? `<div class="actual-org-title-box">㈜컨코스트 조직도</div>` : ""}
         <div class="actual-org-scroll-note">편집창의 상위/하위 관계와 표시순서를 기준으로 자동 정렬됩니다.</div>
         <div class="actual-org-tree">
           <ul class="actual-org-root">
