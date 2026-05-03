@@ -2255,6 +2255,7 @@ const checklistCategoryOptions = [
 
 let selectedChecklistCategoryFilter = "전체";
 const collapsedChecklistGroups = new Set();
+let checklistDefaultCollapseInitialized = false;
 const checklistCategoryAliases = {
   "프로젝트 수주시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
   "프로젝트 수주 시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
@@ -3129,6 +3130,15 @@ function collapseAllChecklistGroups() {
   renderChecklistGrid();
 }
 
+function initializeChecklistDefaultCollapsed() {
+  if (checklistDefaultCollapseInitialized) return;
+  checklistCategoryOptions.forEach(category => {
+    const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === category).length;
+    if (count > 0) collapsedChecklistGroups.add(category);
+  });
+  checklistDefaultCollapseInitialized = true;
+}
+
 function renderChecklistCategoryButtons() {
   const wrap = document.getElementById("checklistCategoryFilter");
   if (!wrap) return;
@@ -3177,6 +3187,7 @@ function getChecklistFilteredRows() {
 }
 
 function renderChecklistGrid() {
+  initializeChecklistDefaultCollapsed();
   renderChecklistCategoryButtons();
   const body = document.getElementById("checklistGridBody");
   if (!body) return;
