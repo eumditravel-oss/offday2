@@ -3106,8 +3106,35 @@ function getChecklistCategoryLabel(category) {
 
 function setChecklistCategoryFilter(category) {
   selectedChecklistCategoryFilter = category || "전체";
-  renderChecklistCategoryButtons();
+  checklistCategoryPanelOpen = false;
   renderChecklistGrid();
+}
+
+function toggleChecklistCategoryPanel() {
+  checklistCategoryPanelOpen = !checklistCategoryPanelOpen;
+  renderChecklistCategoryButtons();
+}
+
+function getVisibleChecklistGroups() {
+  const groups = [];
+  getChecklistFilteredRows().forEach(({ row }) => {
+    const group = normalizeChecklistGroupName(row.group);
+    if (!groups.includes(group)) groups.push(group);
+  });
+  return groups;
+}
+
+function areAllVisibleChecklistGroupsCollapsed() {
+  const groups = getVisibleChecklistGroups();
+  return groups.length > 0 && groups.every(group => collapsedChecklistGroups.has(group));
+}
+
+function toggleChecklistDetailVisibility() {
+  if (areAllVisibleChecklistGroupsCollapsed()) {
+    expandAllChecklistGroups();
+  } else {
+    collapseAllChecklistGroups();
+  }
 }
 
 function toggleChecklistGroupCollapse(group) {
@@ -3154,17 +3181,22 @@ function renderChecklistCategoryButtons() {
     return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')"><span class="category-name">${escapeHtml(getChecklistCategoryLabel(category))}</span><span class="category-count">${count}</span></button>`;
   }).join("");
 
+  const allVisibleCollapsed = areAllVisibleChecklistGroupsCollapsed();
+  const detailButtonLabel = allVisibleCollapsed ? "펼치기" : "접기";
+  const detailButtonTitle = allVisibleCollapsed ? "현재 조회된 구분의 세부 항목을 모두 펼칩니다." : "현재 조회된 구분의 세부 항목을 모두 숨기고 구분명만 표시합니다.";
+
   wrap.innerHTML = `
     <div class="checklist-filter-shell ${checklistCategoryPanelOpen ? "open" : ""}">
-      <div class="checklist-filter-summary">
+      <div class="checklist-filter-summary" onclick="toggleChecklistCategoryPanel()" title="클릭하면 구분 선택 목록을 열고 닫습니다.">
         <div class="filter-summary-main">
           <span class="filter-summary-label">구분 필터</span>
           <strong>${escapeHtml(activeLabel)}</strong>
           <em>${activeCount}건</em>
         </div>
         <div class="filter-summary-actions">
-          <button type="button" class="category-filter-reset ${selectedChecklistCategoryFilter === "전체" ? "disabled" : ""}" onclick="setChecklistCategoryFilter('전체')">전체보기</button>
-          <button type="button" class="category-filter-toggle ${checklistCategoryPanelOpen ? "active" : ""}" onclick="toggleChecklistCategoryPanel()">구분 선택 <span>${checklistCategoryPanelOpen ? "접기" : "펼치기"}</span></button>
+          <button type="button" class="category-filter-reset ${selectedChecklistCategoryFilter === "전체" ? "disabled" : ""}" onclick="event.stopPropagation(); setChecklistCategoryFilter('전체')">전체보기</button>
+          <button type="button" class="category-filter-toggle ${checklistCategoryPanelOpen ? "active" : ""}" onclick="event.stopPropagation(); toggleChecklistCategoryPanel()">구분 선택 <span>${checklistCategoryPanelOpen ? "닫기" : "열기"}</span></button>
+          <button type="button" class="category-detail-toggle ${allVisibleCollapsed ? "expand" : "collapse"}" title="${detailButtonTitle}" onclick="event.stopPropagation(); toggleChecklistDetailVisibility()">${detailButtonLabel}</button>
         </div>
       </div>
       <div class="category-filter-panel ${checklistCategoryPanelOpen ? "open" : ""}">
