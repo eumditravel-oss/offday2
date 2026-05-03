@@ -1125,6 +1125,9 @@ function renderVietqsOrgChart(root) {
   return renderActualOrgTree(root, "Viet QS");
 }
 
+let actualOrgChartScale = 1;
+let actualOrgChartAutoScale = 1;
+
 function renderOrgChart(company = currentOrgCompany) {
   const target = document.getElementById("orgChartContent");
   if (!target) return;
@@ -1147,12 +1150,57 @@ function renderOrgChart(company = currentOrgCompany) {
         <div class="org-stat"><span>조직도 표기 인원</span><strong>${totalMembers}</strong></div>
         <div class="org-stat"><span>단일 인사카드</span><strong>${linkedCards}</strong></div>
         <button class="btn btn-line" onclick="switchPanel('orgEdit'); closeOrgChart();">조직도관리로 이동</button>
+        <div class="actual-org-zoom-panel" aria-label="조직도 확대 축소">
+          <button class="btn btn-line actual-zoom-btn" onclick="zoomActualOrgChart(-0.1)">−</button>
+          <strong id="actualOrgZoomLabel">100%</strong>
+          <button class="btn btn-line actual-zoom-btn" onclick="zoomActualOrgChart(0.1)">+</button>
+          <button class="btn btn-line" onclick="fitActualOrgChartToView()">화면맞춤</button>
+          <button class="btn btn-line" onclick="resetActualOrgChartZoom()">100%</button>
+        </div>
       </div>
     </div>
     ${chartMarkup}
   `;
 
-  requestAnimationFrame(() => fitActualOrgChartToView());
+  requestAnimationFrame(() => {
+    fitActualOrgChartToView();
+    setupActualOrgChartViewportControls();
+  });
+}
+
+function setActualOrgChartScale(scale, keepCenter = false) {
+  const canvas = document.getElementById("orgChartContent");
+  const viewport = canvas?.querySelector(".actual-org-viewport");
+  const fit = canvas?.querySelector(".actual-org-fit");
+  if (!canvas || !viewport || !fit) return;
+
+  const previousScale = Number(fit.dataset.actualScale || actualOrgChartScale || 1);
+  const safeScale = Math.min(1.8, Math.max(0.16, Number(scale.toFixed(3))));
+  const centerX = viewport.scrollLeft + viewport.clientWidth / 2;
+  const centerY = viewport.scrollTop + viewport.clientHeight / 2;
+  const ratio = previousScale ? safeScale / previousScale : 1;
+
+  actualOrgChartScale = safeScale;
+  fit.dataset.actualScale = String(safeScale);
+  fit.style.transform = "none";
+  fit.style.zoom = String(safeScale);
+
+  const label = document.getElementById("actualOrgZoomLabel");
+  if (label) label.textContent = `${Math.round(safeScale * 100)}%`;
+
+  if (keepCenter) {
+    viewport.scrollLeft = Math.max(0, centerX * ratio - viewport.clientWidth / 2);
+    viewport.scrollTop = Math.max(0, centerY * ratio - viewport.clientHeight / 2);
+  } else {
+    centerActualOrgChartViewport();
+  }
+}
+
+function centerActualOrgChartViewport() {
+  const viewport = document.querySelector("#orgChartContent .actual-org-viewport");
+  if (!viewport) return;
+  viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2);
+  viewport.scrollTop = 0;
 }
 
 function fitActualOrgChartToView() {
@@ -1161,22 +1209,69 @@ function fitActualOrgChartToView() {
   const fit = canvas?.querySelector(".actual-org-fit");
   if (!canvas || !viewport || !fit) return;
 
-  fit.style.transform = "scale(1)";
-  fit.style.marginLeft = "0";
-  fit.style.marginTop = "0";
+  fit.style.zoom = "1";
+  fit.style.transform = "none";
+  fit.dataset.actualScale = "1";
 
-  const naturalWidth = Math.max(fit.scrollWidth, fit.getBoundingClientRect().width);
-  const naturalHeight = Math.max(fit.scrollHeight, fit.getBoundingClientRect().height);
-  const availableWidth = Math.max(320, viewport.clientWidth - 22);
-  const availableHeight = Math.max(320, viewport.clientHeight - 18);
+  const naturalWidth = Math.max(fit.scrollWidth, fit.offsetWidth, 1);
+  const naturalHeight = Math.max(fit.scrollHeight, fit.offsetHeight, 1);
+  const availableWidth = Math.max(360, viewport.clientWidth - 28);
+  const availableHeight = Math.max(360, viewport.clientHeight - 24);
 
   const scale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
-  const safeScale = Math.max(0.34, Number((scale * 0.985).toFixed(3)));
+  actualOrgChartAutoScale = Math.max(0.16, Number((scale * 0.985).toFixed(3)));
+  setActualOrgChartScale(actualOrgChartAutoScale, false);
+}
 
-  fit.style.transform = `scale(${safeScale})`;
-  fit.style.marginTop = `${Math.max(0, (availableHeight - naturalHeight * safeScale) / 2)}px`;
-  fit.style.marginLeft = `${Math.max(0, (availableWidth - naturalWidth * safeScale) / 2)}px`;
-  fit.dataset.actualScale = String(safeScale);
+function zoomActualOrgChart(delta) {
+  const fit = document.querySelector("#orgChartContent .actual-org-fit");
+  const current = Number(fit?.dataset.actualScale || actualOrgChartScale || 1);
+  setActualOrgChartScale(current + delta, true);
+}
+
+function resetActualOrgChartZoom() {
+  setActualOrgChartScale(1, true);
+}
+
+function setupActualOrgChartViewportControls() {
+  const viewport = document.querySelector("#orgChartContent .actual-org-viewport");
+  if (!viewport || viewport.dataset.controlsReady === "1") return;
+  viewport.dataset.controlsReady = "1";
+
+  viewport.addEventListener("wheel", event => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    zoomActualOrgChart(event.deltaY > 0 ? -0.08 : 0.08);
+  }, { passive: false });
+
+  let isPanning = false;
+  let startX = 0;
+  let startY = 0;
+  let scrollLeft = 0;
+  let scrollTop = 0;
+
+  viewport.addEventListener("mousedown", event => {
+    if (event.button !== 1 && !(event.button === 0 && event.altKey)) return;
+    event.preventDefault();
+    isPanning = true;
+    startX = event.clientX;
+    startY = event.clientY;
+    scrollLeft = viewport.scrollLeft;
+    scrollTop = viewport.scrollTop;
+    viewport.classList.add("panning");
+  });
+
+  window.addEventListener("mousemove", event => {
+    if (!isPanning) return;
+    viewport.scrollLeft = scrollLeft - (event.clientX - startX);
+    viewport.scrollTop = scrollTop - (event.clientY - startY);
+  });
+
+  window.addEventListener("mouseup", () => {
+    if (!isPanning) return;
+    isPanning = false;
+    viewport.classList.remove("panning");
+  });
 }
 
 window.addEventListener("resize", () => {
