@@ -1103,13 +1103,15 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
 
 function renderActualOrgTree(root, company) {
   return `
-    <div class="actual-org-fit ${company === "CON-COST" ? "concost" : "vietqs"}">
-      ${company === "CON-COST" ? `<div class="actual-org-title-box">㈜컨코스트 조직도</div><div class="actual-org-date">2026. 4. 9.</div>` : ""}
-      <div class="actual-org-scroll-note">편집창의 상위/하위 관계와 표시순서를 기준으로 자동 정렬됩니다.</div>
-      <div class="actual-org-tree">
-        <ul class="actual-org-root">
-          ${renderActualOrgTreeNode(root, 0, "0")}
-        </ul>
+    <div class="actual-org-viewport">
+      <div class="actual-org-fit ${company === "CON-COST" ? "concost" : "vietqs"}">
+        ${company === "CON-COST" ? `<div class="actual-org-title-box">㈜컨코스트 조직도</div><div class="actual-org-date">2026. 4. 9.</div>` : ""}
+        <div class="actual-org-scroll-note">편집창의 상위/하위 관계와 표시순서를 기준으로 자동 정렬됩니다.</div>
+        <div class="actual-org-tree">
+          <ul class="actual-org-root">
+            ${renderActualOrgTreeNode(root, 0, "0")}
+          </ul>
+        </div>
       </div>
     </div>
   `;
@@ -1149,7 +1151,39 @@ function renderOrgChart(company = currentOrgCompany) {
     </div>
     ${chartMarkup}
   `;
+
+  requestAnimationFrame(() => fitActualOrgChartToView());
 }
+
+function fitActualOrgChartToView() {
+  const canvas = document.getElementById("orgChartContent");
+  const viewport = canvas?.querySelector(".actual-org-viewport");
+  const fit = canvas?.querySelector(".actual-org-fit");
+  if (!canvas || !viewport || !fit) return;
+
+  fit.style.transform = "scale(1)";
+  fit.style.marginLeft = "0";
+  fit.style.marginTop = "0";
+
+  const naturalWidth = Math.max(fit.scrollWidth, fit.getBoundingClientRect().width);
+  const naturalHeight = Math.max(fit.scrollHeight, fit.getBoundingClientRect().height);
+  const availableWidth = Math.max(320, viewport.clientWidth - 22);
+  const availableHeight = Math.max(320, viewport.clientHeight - 18);
+
+  const scale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
+  const safeScale = Math.max(0.34, Number((scale * 0.985).toFixed(3)));
+
+  fit.style.transform = `scale(${safeScale})`;
+  fit.style.marginTop = `${Math.max(0, (availableHeight - naturalHeight * safeScale) / 2)}px`;
+  fit.style.marginLeft = `${Math.max(0, (availableWidth - naturalWidth * safeScale) / 2)}px`;
+  fit.dataset.actualScale = String(safeScale);
+}
+
+window.addEventListener("resize", () => {
+  if (document.getElementById("orgChartModal")?.classList.contains("active")) {
+    requestAnimationFrame(() => fitActualOrgChartToView());
+  }
+});
 
 function switchOrgCompany(company, el) {
   document.querySelectorAll(".org-tab").forEach(tab => tab.classList.remove("active"));
@@ -2179,6 +2213,7 @@ function zoomOrgPopup(delta) {
 function openOrgChart() {
   document.getElementById("orgChartModal")?.classList.add("active");
   renderOrgChart(currentOrgCompany);
+  requestAnimationFrame(() => fitActualOrgChartToView());
 }
 
 function closeOrgChart() {
