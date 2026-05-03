@@ -4295,3 +4295,143 @@ body{
     justify-content:flex-start;
   }
 }
+
+
+/* === 조직도 보기창 날짜 제거 + 선 끊김/돌출 보정 === */
+.actual-org-date{
+  display:none !important;
+}
+
+/* 트리 선은 자식이 있는 실제 범위에서만 보이도록 재정의 */
+.actual-org-tree ul{
+  position:relative !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  gap:10px !important;
+  margin:0 !important;
+  padding:22px 0 0 !important;
+  list-style:none !important;
+}
+
+.actual-org-tree .actual-org-root{
+  padding-top:0 !important;
+}
+
+.actual-org-li{
+  position:relative !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  padding:22px 4px 0 !important;
+}
+
+.actual-org-root > .actual-org-li{
+  padding-top:0 !important;
+}
+
+.actual-org-li::before,
+.actual-org-li::after{
+  content:"" !important;
+  position:absolute !important;
+  top:0 !important;
+  width:50% !important;
+  height:22px !important;
+  border-top:2px solid #9ca3af !important;
+  background:transparent !important;
+  pointer-events:none !important;
+}
+
+.actual-org-li::before{
+  right:50% !important;
+  left:auto !important;
+  border-right:2px solid #9ca3af !important;
+  border-left:0 !important;
+}
+
+.actual-org-li::after{
+  left:50% !important;
+  right:auto !important;
+  border-left:2px solid #9ca3af !important;
+  border-right:0 !important;
+}
+
+/* 맨 왼쪽/오른쪽 바깥으로 선이 튀어나가는 부분 제거 */
+.actual-org-children > .actual-org-li:first-child::before{
+  display:none !important;
+}
+.actual-org-children > .actual-org-li:last-child::after{
+  display:none !important;
+}
+
+/* 자식이 1개뿐인 경우에는 수평선 없이 세로 연결선만 표시 */
+.actual-org-children > .actual-org-li:only-child::before{
+  display:block !important;
+  left:50% !important;
+  right:auto !important;
+  width:0 !important;
+  height:22px !important;
+  border-top:0 !important;
+  border-left:0 !important;
+  border-right:2px solid #9ca3af !important;
+}
+.actual-org-children > .actual-org-li:only-child::after{
+  display:none !important;
+}
+
+.actual-org-root > .actual-org-li::before,
+.actual-org-root > .actual-org-li::after{
+  display:none !important;
+}
+
+/* 부모에서 자식 묶음으로 내려가는 중앙선 */
+.actual-org-li.has-children > .actual-org-children::before{
+  content:"" !important;
+  position:absolute !important;
+  top:0 !important;
+  left:50% !important;
+  width:0 !important;
+  height:22px !important;
+  background:transparent !important;
+  border-left:2px solid #9ca3af !important;
+  transform:translateX(-1px) !important;
+  pointer-events:none !important;
+}
+
+/* 하위 직원 배치가 grid일 때도 빈 칸까지 선이 연장되지 않도록 각 노드 기준 선만 사용 */
+.actual-org-children.leaf-row{
+  display:grid !important;
+  justify-content:center !important;
+  align-items:start !important;
+  gap:8px 10px !important;
+  position:relative !important;
+  padding-top:22px !important;
+}
+.actual-org-children.leaf-row > .actual-org-li{
+  padding-top:22px !important;
+}
+.actual-org-children.leaf-row > .actual-org-li:first-child::before{
+  display:none !important;
+}
+.actual-org-children.leaf-row > .actual-org-li:last-child::after{
+  display:none !important;
+}
+.actual-org-children.leaf-row > .actual-org-li:only-child::before{
+  display:block !important;
+  left:50% !important;
+  right:auto !important;
+  width:0 !important;
+  border-top:0 !important;
+  border-right:2px solid #9ca3af !important;
+}
+.actual-org-children.leaf-row > .actual-org-li:only-child::after{
+  display:none !important;
+}
+
+/* 확대/축소 상태에서도 선 두께와 노드 정렬이 어긋나지 않도록 보정 */
+.actual-org-fit{
+  transform-origin:top left !important;
+}
+.actual-org-card{
+  box-sizing:border-box !important;
+}
