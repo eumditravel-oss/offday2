@@ -2254,6 +2254,7 @@ const checklistCategoryOptions = [
 
 
 let selectedChecklistCategoryFilter = "전체";
+const collapsedChecklistGroups = new Set();
 const checklistCategoryAliases = {
   "프로젝트 수주시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
   "프로젝트 수주 시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
@@ -3108,6 +3109,26 @@ function setChecklistCategoryFilter(category) {
   renderChecklistGrid();
 }
 
+function toggleChecklistGroupCollapse(group) {
+  const normalized = normalizeChecklistGroupName(group);
+  if (collapsedChecklistGroups.has(normalized)) {
+    collapsedChecklistGroups.delete(normalized);
+  } else {
+    collapsedChecklistGroups.add(normalized);
+  }
+  renderChecklistGrid();
+}
+
+function expandAllChecklistGroups() {
+  collapsedChecklistGroups.clear();
+  renderChecklistGrid();
+}
+
+function collapseAllChecklistGroups() {
+  getChecklistFilteredRows().forEach(({ row }) => collapsedChecklistGroups.add(normalizeChecklistGroupName(row.group)));
+  renderChecklistGrid();
+}
+
 function renderChecklistCategoryButtons() {
   const wrap = document.getElementById("checklistCategoryFilter");
   if (!wrap) return;
@@ -3171,10 +3192,17 @@ function renderChecklistGrid() {
   body.innerHTML = rows.map(({ row, realIndex }) => {
     normalizeChecklistRow(row);
     const locked = isChecklistCategoryLocked(row.group);
-    const groupBand = row.group !== lastGroup ? renderChecklistGroupBand(row.group) : "";
-    lastGroup = row.group;
+    const normalizedGroup = normalizeChecklistGroupName(row.group);
+    const isFirstInGroup = normalizedGroup !== lastGroup;
+    const groupBand = isFirstInGroup ? renderChecklistGroupBand(normalizedGroup) : "";
+    lastGroup = normalizedGroup;
+
+    if (collapsedChecklistGroups.has(normalizedGroup)) {
+      return groupBand;
+    }
+
     return `${groupBand}
-      <tr class="${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}">
+      <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)">${escapeHtml(row.trade)}</div></td>
         <td><div class="cell" ${locked ? "" : "contenteditable=\"true\""} onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)">${escapeHtml(row.no)}</div></td>
@@ -3195,24 +3223,25 @@ function renderChecklistGroupBand(group) {
   const isQuestion = isQuestionCategory(group);
   const isFinalEstimateCondition = group === "Z7. 견적조건(최종)";
   const locked = isChecklistCategoryLocked(group);
+  const collapsed = collapsedChecklistGroups.has(group);
   const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === group).length;
   const controls = [];
 
   if (group === firstCategoryName) {
-    controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button>`);
+    controls.push(`<button class="btn btn-line group-mini-btn" onclick="event.stopPropagation(); downloadFirstCategoryCsv();">발주처 송부용 엑셀 다운로드</button>`);
   }
 
   if (isQuestion || isFinalEstimateCondition) {
-    controls.push(`<button class="btn btn-line group-mini-btn" onclick="downloadQuestionCategoryCsv('${escapeJs(group)}')">질의 엑셀</button>`);
+    controls.push(`<button class="btn btn-line group-mini-btn" onclick="event.stopPropagation(); downloadQuestionCategoryCsv('${escapeJs(group)}')">질의 엑셀</button>`);
   }
 
   if (isQuestion) {
-    controls.push(`<button class="btn ${locked ? "btn-line" : "btn-primary"} group-mini-btn" ${locked ? "disabled" : ""} onclick="markQuestionCategorySent('${escapeJs(group)}')">${locked ? "송부완료" : "송부 완료 체크"}</button>`);
+    controls.push(`<button class="btn ${locked ? "btn-line" : "btn-primary"} group-mini-btn" ${locked ? "disabled" : ""} onclick="event.stopPropagation(); markQuestionCategorySent('${escapeJs(group)}')">${locked ? "송부완료" : "송부 완료 체크"}</button>`);
     const next = getNextQuestionCategory(group);
     if (locked && next) controls.push(`<span class="next-round-guide">다음 작성 가능: ${escapeHtml(next)}</span>`);
   }
 
-  return `<tr class="group-separator-row ${locked ? "group-locked" : ""}"><td colspan="11"><div class="group-band-inner"><div><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}</div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
+  return `<tr class="group-separator-row ${locked ? "group-locked" : ""} ${collapsed ? "group-collapsed" : ""}" onclick="toggleChecklistGroupCollapse('${escapeJs(group)}')"><td colspan="11"><div class="group-band-inner"><div class="group-band-title"><button type="button" class="group-toggle-btn" aria-label="구분 접기 펼치기"><span class="group-toggle-icon">⌄</span></button><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}<small>${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small></div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
 }
 
 function renderChecklistTargetChecks(row, realIndex) {
