@@ -3114,15 +3114,74 @@ body{
 }
 
 .checklist-category-filter{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
   padding:10px 0 14px;
   border-bottom:1px solid #e5edf7;
   margin-bottom:0;
 }
 
-.category-filter-btn{
+.checklist-filter-shell{
+  border:1px solid #dbe3ef;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 8px 22px rgba(15,23,42,.04);
+  overflow:hidden;
+}
+
+.checklist-filter-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 14px;
+  background:linear-gradient(180deg,#fff,#fbfdff);
+}
+
+.filter-summary-main{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.filter-summary-label{
+  display:inline-flex;
+  align-items:center;
+  height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#eef6ff;
+  color:#2563eb;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.filter-summary-main strong{
+  font-size:14px;
+  font-weight:900;
+  color:#0f172a;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.filter-summary-main em{
+  font-style:normal;
+  color:#64748b;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.filter-summary-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+
+.category-filter-reset,
+.category-filter-toggle{
   border:1px solid #dbe3ef;
   background:#fff;
   color:#334155;
@@ -3131,24 +3190,82 @@ body{
   font-size:12px;
   font-weight:900;
   cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
   white-space:nowrap;
 }
 
-.category-filter-btn span{
+.category-filter-reset.disabled{
+  opacity:.45;
+  cursor:default;
+}
+
+.category-filter-toggle{
+  background:#0f172a;
+  border-color:#0f172a;
+  color:#fff;
+}
+
+.category-filter-toggle span{
+  margin-left:6px;
+  color:#bfdbfe;
+  font-size:11px;
+}
+
+.category-filter-panel{
+  max-height:0;
+  overflow:hidden;
+  border-top:0 solid #e5edf7;
+  background:#f8fafc;
+  transition:max-height .24s ease, border-top-width .24s ease;
+}
+
+.category-filter-panel.open{
+  max-height:220px;
+  border-top-width:1px;
+}
+
+.category-filter-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:8px;
+  padding:12px;
+}
+
+.category-filter-btn{
+  border:1px solid #dbe3ef;
+  background:#fff;
+  color:#334155;
+  border-radius:14px;
+  padding:9px 10px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+  text-align:left;
+}
+
+.category-filter-btn .category-name{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.category-filter-btn .category-count{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:20px;
-  height:20px;
-  padding:0 6px;
+  min-width:22px;
+  height:22px;
+  padding:0 7px;
   border-radius:999px;
   background:#eef2f7;
   color:#475569;
   font-size:11px;
   font-weight:900;
+  flex:0 0 auto;
 }
 
 .category-filter-btn.active{
@@ -3157,12 +3274,14 @@ body{
   color:#fff;
 }
 
-.category-filter-btn.active span{
+.category-filter-btn.active .category-count{
   background:#2563eb;
   color:#fff;
 }
 
-.category-filter-btn:hover{
+.category-filter-btn:hover,
+.category-filter-reset:hover,
+.category-filter-toggle:hover{
   border-color:#2563eb;
   box-shadow:0 0 0 3px rgba(37,99,235,.08);
 }
@@ -3669,4 +3788,23 @@ body{
   .group-band-inner{align-items:flex-start;flex-direction:column;}
   .group-band-title{flex-wrap:wrap;}
   .group-band-actions{justify-content:flex-start;}
+}
+
+
+/* === QC 구분 필터: 접이식 선택 패널 보정 === */
+@media(max-width:760px){
+  .checklist-filter-summary{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .filter-summary-actions{
+    width:100%;
+  }
+  .category-filter-reset,
+  .category-filter-toggle{
+    flex:1;
+  }
+  .category-filter-grid{
+    grid-template-columns:1fr;
+  }
 }
