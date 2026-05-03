@@ -1563,7 +1563,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
       ` : ""}
 
       ${leafChildren.length ? `
-        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 176px);">
+        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 150px);">
           ${leafChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
         </div>
       ` : ""}
@@ -1648,6 +1648,46 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-1{grid-template-columns:repeat(1,176px)!important;}
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-2{grid-template-columns:repeat(2,176px)!important;}
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-3{grid-template-columns:repeat(3,176px)!important;}
+
+  /* 마우스 휠 기반 편집 UX 및 세로형 노드 보정 */
+  .popup-canvas{cursor:grab;}
+  .popup-canvas.wheel-pan{cursor:grabbing;user-select:none;}
+  .popup-canvas.ctrl-pan{cursor:grab;}
+  .popup-node{width:150px;min-height:132px;padding:11px 10px;border-radius:16px;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;}
+  .popup-node-top{gap:6px;align-items:flex-start;}
+  .popup-node-top span{max-width:88px;line-height:1.25;}
+  .popup-node strong{font-size:14px;line-height:1.32;word-break:keep-all;overflow-wrap:anywhere;}
+  .popup-node em{font-size:11px;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere;}
+  .popup-node-actions button{padding:6px 9px;font-size:11px;}
+  .popup-member-children{grid-template-columns:repeat(1,150px);}
+  .popup-member-children.cols-1{grid-template-columns:repeat(1,150px)!important;}
+  .popup-member-children.cols-2{grid-template-columns:repeat(2,150px)!important;}
+  .popup-member-children.cols-3{grid-template-columns:repeat(3,150px)!important;}
+  .popup-tree-inner.concost-tree .popup-member-children .popup-node{width:150px;min-height:112px;padding:10px;border-radius:14px;}
+  .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-member-children,
+  .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-member-children,
+  .popup-tree-inner.concost-tree .org-popup-qc>.popup-member-children,
+  .popup-tree-inner.concost-tree .org-popup-구조팀>.popup-member-children,
+  .popup-tree-inner.concost-tree .org-popup-bim-파트>.popup-member-children,
+  .popup-tree-inner.concost-tree .org-popup-토목-조경파트>.popup-member-children,
+  .popup-tree-inner.concost-tree .org-popup-클레임센터>.popup-member-children{grid-template-columns:150px!important;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-1{grid-template-columns:repeat(1,150px)!important;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-2{grid-template-columns:repeat(2,150px)!important;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-3{grid-template-columns:repeat(3,150px)!important;}
+
+  /* 하위 노드 연결선이 실제 자식 범위 밖으로 과하게 뻗지 않도록 보정 */
+  .popup-member-children::before,.popup-branch-children::before{left:50%;right:50%;}
+  .popup-member-children.count-1::before,.popup-branch-children.count-1::before{display:none;}
+  .popup-member-children.count-2::before,.popup-branch-children.count-2::before{left:25%;right:25%;}
+  .popup-member-children.count-3::before,.popup-branch-children.count-3::before{left:16.66%;right:16.66%;}
+  .popup-member-children.count-4::before,.popup-branch-children.count-4::before{left:12.5%;right:12.5%;}
+  .popup-member-children.count-5::before,.popup-branch-children.count-5::before{left:10%;right:10%;}
+  .popup-member-children.count-6::before,.popup-branch-children.count-6::before{left:8.33%;right:8.33%;}
+  .popup-member-children.count-7::before,.popup-branch-children.count-7::before{left:7.14%;right:7.14%;}
+  .popup-member-children.count-8::before,.popup-branch-children.count-8::before{left:6.25%;right:6.25%;}
+  .popup-member-children.count-9::before,.popup-branch-children.count-9::before{left:5.55%;right:5.55%;}
+  .popup-member-children.count-10::before,.popup-branch-children.count-10::before{left:5%;right:5%;}
+  .popup-member-children>.popup-node-wrap::before,.popup-branch-children>.popup-node-wrap::before{top:-22px;height:22px;}
   .popup-node.selected{position:relative;z-index:3;}
 
 </style>
@@ -1681,7 +1721,7 @@ function buildOrgPopupHtml() {
             <button id="popupTabConcost" class="tab" onclick="opener.switchOrgPopupCompany('CON-COST')">CON-COST</button>
             <button id="popupTabVietqs" class="tab" onclick="opener.switchOrgPopupCompany('Viet QS')">Viet QS</button>
           </div>
-          <div class="guide">Ctrl + 좌클릭 드래그로 캔버스를 이동합니다. 노드는 다른 노드 위로 드래그하면 하위 조직으로 이동합니다.</div>
+          <div class="guide">마우스 휠 위=확대, 아래=축소 · 마우스 휠 버튼을 누른 채 드래그하면 캔버스가 이동합니다. 노드는 다른 노드 위로 드래그하면 하위 조직으로 이동합니다.</div>
         </div>
         <div class="popup-canvas" id="popupCanvas"><div class="popup-tree" id="popupTree"></div></div>
       </section>
@@ -1695,7 +1735,7 @@ function buildOrgPopupHtml() {
         <div class="field"><label>하위 인원 배치</label><select id="popupNodeMemberColumnsSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('memberColumns', this.value)"><option value="1">1열 배치</option><option value="2">2열 배치</option><option value="3">3열 배치</option></select></div>
         <div class="inspector-actions"><button class="btn" onclick="opener.openSelectedOrgEmployeeCard()">인사카드 열기</button><button class="btn btn-dark" onclick="opener.renderOrgVisualEditorPopup()">변경 반영</button></div>
         <div class="summary" id="popupNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
-        <div class="help">부서 추가는 ‘+ 하위 노드’, ‘왼쪽으로 추가’, ‘오른쪽으로 추가’를 사용합니다. 캔버스 이동은 Ctrl + 좌클릭 드래그, 조직 이동은 노드 드래그 앤 드롭을 사용합니다.</div>
+        <div class="help">부서 추가는 ‘+ 하위 노드’, ‘왼쪽으로 추가’, ‘오른쪽으로 추가’를 사용합니다. 캔버스 이동은 마우스 휠 버튼 드래그, 확대/축소는 마우스 휠 스크롤, 조직 이동은 노드 드래그 앤 드롭을 사용합니다.</div>
       </aside>
     </main>
   </div>
@@ -1705,30 +1745,49 @@ function buildOrgPopupHtml() {
   let isPanning=false;
   let startX=0, startY=0, startLeft=0, startTop=0;
   function getCanvas(){return document.getElementById('popupCanvas');}
+
+  document.addEventListener('wheel', function(e){
+    const canvas=getCanvas();
+    if(!canvas || !canvas.contains(e.target)) return;
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.08 : -0.08;
+    if(opener && typeof opener.zoomOrgPopupAtCursor === 'function'){
+      opener.zoomOrgPopupAtCursor(delta, e.clientX, e.clientY);
+    }else if(opener && typeof opener.zoomOrgPopup === 'function'){
+      opener.zoomOrgPopup(delta);
+    }
+  }, {capture:true, passive:false});
+
   document.addEventListener('mousedown', function(e){
     const canvas=getCanvas();
-    if(!canvas || !e.ctrlKey || e.button !== 0 || !canvas.contains(e.target)) return;
+    if(!canvas || e.button !== 1 || !canvas.contains(e.target)) return;
     isPanning=true;
     startX=e.clientX; startY=e.clientY;
     startLeft=canvas.scrollLeft; startTop=canvas.scrollTop;
-    canvas.classList.add('ctrl-pan');
+    canvas.classList.add('wheel-pan');
     e.preventDefault();
   }, true);
+
   document.addEventListener('mousemove', function(e){
     if(!isPanning) return;
     const canvas=getCanvas();
+    if(!canvas) return;
     canvas.scrollLeft = startLeft - (e.clientX - startX);
     canvas.scrollTop = startTop - (e.clientY - startY);
     e.preventDefault();
   }, true);
-  document.addEventListener('mouseup', function(){
-    if(!isPanning) return;
+
+  document.addEventListener('mouseup', function(e){
+    if(!isPanning || e.button !== 1) return;
     isPanning=false;
     const canvas=getCanvas();
-    if(canvas) canvas.classList.remove('ctrl-pan');
+    if(canvas) canvas.classList.remove('wheel-pan');
+    e.preventDefault();
   }, true);
-  document.addEventListener('dragstart', function(e){
-    if(e.ctrlKey) e.preventDefault();
+
+  document.addEventListener('auxclick', function(e){
+    const canvas=getCanvas();
+    if(canvas && canvas.contains(e.target) && e.button === 1) e.preventDefault();
   }, true);
 })();
 </script>
@@ -2058,9 +2117,37 @@ function deleteOrgNodeFromPopup() {
   renderOrgVisualEditorPopup();
 }
 
+
+function zoomOrgPopupAtCursor(delta, clientX, clientY) {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const doc = win.document;
+  const canvas = doc.getElementById("popupCanvas");
+  if (!canvas) return zoomOrgPopup(delta);
+
+  orgEditorPopupAutoFit = false;
+  const oldZoom = orgEditorPopupZoom;
+  const nextZoom = Math.max(0.22, Math.min(1.8, Number((oldZoom + delta).toFixed(2))));
+  if (nextZoom === oldZoom) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const localX = clientX - rect.left;
+  const localY = clientY - rect.top;
+  const beforeX = (canvas.scrollLeft + localX) / oldZoom;
+  const beforeY = (canvas.scrollTop + localY) / oldZoom;
+
+  orgEditorPopupZoom = nextZoom;
+  renderOrgVisualEditorPopup();
+
+  win.requestAnimationFrame(() => {
+    canvas.scrollLeft = Math.max(0, beforeX * nextZoom - localX);
+    canvas.scrollTop = Math.max(0, beforeY * nextZoom - localY);
+  });
+}
+
 function zoomOrgPopup(delta) {
   orgEditorPopupAutoFit = false;
-  orgEditorPopupZoom = Math.max(0.22, Math.min(1.6, Number((orgEditorPopupZoom + delta).toFixed(2))));
+  orgEditorPopupZoom = Math.max(0.22, Math.min(1.8, Number((orgEditorPopupZoom + delta).toFixed(2))));
   renderOrgVisualEditorPopup();
 }
 
