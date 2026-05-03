@@ -1053,50 +1053,74 @@ function renderOrgDepartmentBlock(node, options = {}) {
   `;
 }
 
-function renderConcostOrgChart(root) {
-  const ceo = root;
-  const vice = (root.children || [])[0] || { title: "부사장", children: [] };
-  const branches = vice.children || [];
-  const findBranch = title => branches.find(node => node.title === title) || { title, children: [] };
-  const management = findBranch("경영지원본부");
-  const tech = findBranch("기술본부");
-  const claim = findBranch("클레임센터");
-  const dotted = findBranch("공사비닷컴");
+
+function isOrgActualLeaf(node) {
+  return !(node?.children || []).length;
+}
+
+function actualOrgNodeClass(node, depth = 0) {
+  const cls = [node.className || ""];
+  if (depth === 0) cls.push("primary");
+  if (depth === 1) cls.push("secondary");
+  if (isOrgActualLeaf(node)) cls.push("leaf");
+  if ((node.children || []).length) cls.push("branch");
+  return cls.filter(Boolean).join(" ");
+}
+
+function renderActualOrgCard(node, depth = 0) {
+  const { emp, title, name } = orgNodeLabel(node);
+  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
+  const displayNameText = emp ? displayName(emp) : (name || "직원 미연결");
+  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
+  const onclick = emp ? ` onclick="openMiniCardPopup('${emp.empNo}')"` : "";
 
   return `
-    <div class="org-overview-fit concost-fit reference-layout">
-      <div class="org-chart-title-box">㈜컨코스트 조직도</div>
-      <div class="org-ref-date">2026. 4. 9.</div>
-      <div class="org-ref-exec-stack">
-        ${renderOrgPersonButton(ceo, "primary")}
-        ${renderOrgPersonButton(vice, "secondary")}
-      </div>
-      <div class="org-ref-branch-row">
-        ${renderOrgDepartmentBlock(management, { className: "management-block", columns: 1 })}
-        ${renderOrgDepartmentBlock(tech, { className: "tech-block", columns: 3 })}
-        ${renderOrgDepartmentBlock(claim, { className: "claim-block", columns: 1 })}
-        ${dotted ? `<aside class="org-side-dotted">${renderOrgDepartmentBlock(dotted, { className: "dotted-block", columns: 1 })}</aside>` : ""}
+    <button class="actual-org-card ${actualOrgNodeClass(node, depth)}"${onclick}>
+      <span>${displayTitle}</span>
+      <strong>${displayNameText}</strong>
+      <small>${meta}</small>
+    </button>
+  `;
+}
+
+function renderActualOrgTreeNode(node, depth = 0, path = "0") {
+  const children = node.children || [];
+  const colCount = getOrgMemberColumnCount(node);
+  const hasOnlyLeafChildren = children.length && children.every(child => !(child.children || []).length);
+  const childrenClass = hasOnlyLeafChildren ? ` leaf-row cols-${colCount}` : "";
+
+  return `
+    <li class="actual-org-li depth-${depth} ${children.length ? "has-children" : ""}" data-path="${path}">
+      ${renderActualOrgCard(node, depth)}
+      ${children.length ? `
+        <ul class="actual-org-children${childrenClass}">
+          ${children.map((child, index) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
+        </ul>
+      ` : ""}
+    </li>
+  `;
+}
+
+function renderActualOrgTree(root, company) {
+  return `
+    <div class="actual-org-fit ${company === "CON-COST" ? "concost" : "vietqs"}">
+      ${company === "CON-COST" ? `<div class="actual-org-title-box">㈜컨코스트 조직도</div><div class="actual-org-date">2026. 4. 9.</div>` : ""}
+      <div class="actual-org-scroll-note">편집창의 상위/하위 관계와 표시순서를 기준으로 자동 정렬됩니다.</div>
+      <div class="actual-org-tree">
+        <ul class="actual-org-root">
+          ${renderActualOrgTreeNode(root, 0, "0")}
+        </ul>
       </div>
     </div>
   `;
 }
 
-function renderVietqsOrgChart(root) {
-  const topNodes = [root, ...(root.children || [])].slice(0, 3);
-  const branchParent = (root.children || [])[0] || root;
-  const branchNodes = branchParent.children || root.children || [];
+function renderConcostOrgChart(root) {
+  return renderActualOrgTree(root, "CON-COST");
+}
 
-  return `
-    <div class="org-overview-fit">
-      <div class="org-overview-exec">
-        ${topNodes.map((node, index) => renderOrgPersonButton(node, index === 0 ? "primary" : "secondary")).join("")}
-      </div>
-      <div class="org-overview-line"></div>
-      <div class="org-overview-grid vietqs-grid">
-        ${branchNodes.map(renderOrgBranchCard).join("")}
-      </div>
-    </div>
-  `;
+function renderVietqsOrgChart(root) {
+  return renderActualOrgTree(root, "Viet QS");
 }
 
 function renderOrgChart(company = currentOrgCompany) {
