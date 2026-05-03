@@ -3830,3 +3830,222 @@ body{
     grid-template-columns:1fr;
   }
 }
+
+
+/* === 조직도 보기창: 편집 데이터와 동일한 트리 기반 렌더링 보정 === */
+.org-chart-canvas{
+  overflow:auto;
+}
+.actual-org-fit{
+  position:relative;
+  width:max-content;
+  min-width:100%;
+  padding:28px 36px 54px;
+  background:#fff;
+}
+.actual-org-title-box{
+  width:620px;
+  margin:0 auto 24px;
+  border:3px solid #111827;
+  border-radius:12px;
+  padding:14px 20px;
+  text-align:center;
+  font-size:32px;
+  font-weight:900;
+  letter-spacing:-1.2px;
+}
+.actual-org-date{
+  position:absolute;
+  right:42px;
+  top:36px;
+  font-size:24px;
+  font-weight:900;
+  color:#111827;
+}
+.actual-org-scroll-note{
+  width:max-content;
+  min-width:420px;
+  margin:0 auto 14px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  text-align:center;
+}
+.actual-org-tree{
+  display:flex;
+  justify-content:center;
+  min-width:max-content;
+}
+.actual-org-tree ul{
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  gap:18px;
+  margin:0;
+  padding:28px 0 0;
+  list-style:none;
+}
+.actual-org-tree .actual-org-root{
+  padding-top:0;
+}
+.actual-org-li{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width:118px;
+  padding:28px 8px 0;
+  text-align:center;
+}
+.actual-org-root>.actual-org-li{
+  padding-top:0;
+}
+.actual-org-li::before,
+.actual-org-li::after{
+  content:"";
+  position:absolute;
+  top:0;
+  width:50%;
+  height:28px;
+  border-top:2px solid #9ca3af;
+}
+.actual-org-li::before{
+  right:50%;
+  border-right:2px solid #9ca3af;
+}
+.actual-org-li::after{
+  left:50%;
+  border-left:2px solid #9ca3af;
+}
+.actual-org-root>.actual-org-li::before,
+.actual-org-root>.actual-org-li::after,
+.actual-org-li:only-child::before,
+.actual-org-li:only-child::after{
+  display:none;
+}
+.actual-org-li:first-child::before,
+.actual-org-li:last-child::after{
+  border-top:0;
+}
+.actual-org-li.has-children>.actual-org-children::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:50%;
+  width:2px;
+  height:28px;
+  background:#9ca3af;
+}
+.actual-org-children.leaf-row{
+  display:grid;
+  justify-content:center;
+  gap:12px 14px;
+}
+.actual-org-children.leaf-row.cols-1{grid-template-columns:repeat(1, 118px);}
+.actual-org-children.leaf-row.cols-2{grid-template-columns:repeat(2, 118px);}
+.actual-org-children.leaf-row.cols-3{grid-template-columns:repeat(3, 118px);}
+.actual-org-children.leaf-row .actual-org-li{
+  min-width:118px;
+  padding-left:0;
+  padding-right:0;
+}
+.actual-org-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:118px;
+  min-height:64px;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  padding:7px 8px;
+  color:#111827;
+  font-weight:900;
+  line-height:1.25;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(15,23,42,.04);
+  white-space:normal;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.actual-org-card:hover{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08),0 6px 16px rgba(15,23,42,.06);
+}
+.actual-org-card span{
+  display:block;
+  max-width:100%;
+  color:#1d4ed8;
+  font-size:11px;
+  font-weight:900;
+  line-height:1.2;
+}
+.actual-org-card strong{
+  display:block;
+  max-width:100%;
+  margin-top:3px;
+  color:#111827;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.25;
+}
+.actual-org-card small{
+  display:block;
+  max-width:100%;
+  margin-top:4px;
+  color:#64748b;
+  font-size:10px;
+  font-weight:800;
+  line-height:1.2;
+}
+.actual-org-card.branch{
+  background:#f8fafc;
+}
+.actual-org-card.primary{
+  width:140px;
+  min-height:62px;
+  background:#1d4ed8;
+  border-color:#1d4ed8;
+  color:#fff;
+}
+.actual-org-card.secondary{
+  width:138px;
+  min-height:58px;
+  background:#3b82f6;
+  border-color:#3b82f6;
+  color:#fff;
+}
+.actual-org-card.primary span,
+.actual-org-card.primary strong,
+.actual-org-card.primary small,
+.actual-org-card.secondary span,
+.actual-org-card.secondary strong,
+.actual-org-card.secondary small{
+  color:#fff;
+}
+.actual-org-li.depth-2>.actual-org-card.branch{
+  min-height:50px;
+  background:#88a5dc;
+  border-color:#88a5dc;
+}
+.actual-org-li.depth-2>.actual-org-card.branch span,
+.actual-org-li.depth-2>.actual-org-card.branch strong,
+.actual-org-li.depth-2>.actual-org-card.branch small{
+  color:#fff;
+}
+.actual-org-li.depth-3>.actual-org-card.branch{
+  background:#fef3c7;
+  border-color:#fde68a;
+}
+.actual-org-li.depth-3>.actual-org-card.branch span,
+.actual-org-li.depth-3>.actual-org-card.branch strong{
+  color:#111827;
+}
+@media(max-width:1280px){
+  .actual-org-title-box{width:520px;font-size:28px;}
+  .actual-org-date{font-size:20px;}
+}
+
