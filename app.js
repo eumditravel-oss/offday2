@@ -2254,8 +2254,8 @@ const checklistCategoryOptions = [
 
 
 let selectedChecklistCategoryFilter = "전체";
+let checklistCategoryPanelOpen = false;
 const collapsedChecklistGroups = new Set();
-let checklistDefaultCollapseInitialized = false;
 const checklistCategoryAliases = {
   "프로젝트 수주시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
   "프로젝트 수주 시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
@@ -3130,15 +3130,6 @@ function collapseAllChecklistGroups() {
   renderChecklistGrid();
 }
 
-function initializeChecklistDefaultCollapsed() {
-  if (checklistDefaultCollapseInitialized) return;
-  checklistCategoryOptions.forEach(category => {
-    const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === category).length;
-    if (count > 0) collapsedChecklistGroups.add(category);
-  });
-  checklistDefaultCollapseInitialized = true;
-}
-
 function renderChecklistCategoryButtons() {
   const wrap = document.getElementById("checklistCategoryFilter");
   if (!wrap) return;
@@ -3155,13 +3146,32 @@ function renderChecklistCategoryButtons() {
     selectedChecklistCategoryFilter = "전체";
   }
 
-  wrap.innerHTML = categories.map(category => {
+  const activeLabel = getChecklistCategoryLabel(selectedChecklistCategoryFilter);
+  const activeCount = selectedChecklistCategoryFilter === "전체" ? checklistRows.length : (categoryCounts[selectedChecklistCategoryFilter] || 0);
+  const optionButtons = categories.map(category => {
     const active = selectedChecklistCategoryFilter === category ? "active" : "";
     const count = category === "전체" ? checklistRows.length : categoryCounts[category];
-    return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')">${escapeHtml(getChecklistCategoryLabel(category))}<span>${count}</span></button>`;
+    return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')"><span class="category-name">${escapeHtml(getChecklistCategoryLabel(category))}</span><span class="category-count">${count}</span></button>`;
   }).join("");
-}
 
+  wrap.innerHTML = `
+    <div class="checklist-filter-shell ${checklistCategoryPanelOpen ? "open" : ""}">
+      <div class="checklist-filter-summary">
+        <div class="filter-summary-main">
+          <span class="filter-summary-label">구분 필터</span>
+          <strong>${escapeHtml(activeLabel)}</strong>
+          <em>${activeCount}건</em>
+        </div>
+        <div class="filter-summary-actions">
+          <button type="button" class="category-filter-reset ${selectedChecklistCategoryFilter === "전체" ? "disabled" : ""}" onclick="setChecklistCategoryFilter('전체')">전체보기</button>
+          <button type="button" class="category-filter-toggle ${checklistCategoryPanelOpen ? "active" : ""}" onclick="toggleChecklistCategoryPanel()">구분 선택 <span>${checklistCategoryPanelOpen ? "접기" : "펼치기"}</span></button>
+        </div>
+      </div>
+      <div class="category-filter-panel ${checklistCategoryPanelOpen ? "open" : ""}">
+        <div class="category-filter-grid">${optionButtons}</div>
+      </div>
+    </div>`;
+}
 function getChecklistFilteredRows() {
   checklistRows.forEach(normalizeChecklistRow);
 
@@ -3187,7 +3197,6 @@ function getChecklistFilteredRows() {
 }
 
 function renderChecklistGrid() {
-  initializeChecklistDefaultCollapsed();
   renderChecklistCategoryButtons();
   const body = document.getElementById("checklistGridBody");
   if (!body) return;
