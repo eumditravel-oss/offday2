@@ -3134,6 +3134,7 @@ body{
   gap:14px;
   padding:12px 14px;
   background:linear-gradient(180deg,#fff,#fbfdff);
+  cursor:pointer;
 }
 
 .filter-summary-main{
@@ -3181,7 +3182,8 @@ body{
 }
 
 .category-filter-reset,
-.category-filter-toggle{
+.category-filter-toggle,
+.category-detail-toggle{
   border:1px solid #dbe3ef;
   background:#fff;
   color:#334155;
@@ -3202,6 +3204,24 @@ body{
   background:#0f172a;
   border-color:#0f172a;
   color:#fff;
+}
+
+.category-detail-toggle{
+  background:#fff;
+  border-color:#dbe3ef;
+  color:#334155;
+}
+
+.category-detail-toggle.collapse{
+  background:#fff7ed;
+  border-color:#fed7aa;
+  color:#9a3412;
+}
+
+.category-detail-toggle.expand{
+  background:#ecfdf5;
+  border-color:#bbf7d0;
+  color:#047857;
 }
 
 .category-filter-toggle span{
@@ -3281,7 +3301,8 @@ body{
 
 .category-filter-btn:hover,
 .category-filter-reset:hover,
-.category-filter-toggle:hover{
+.category-filter-toggle:hover,
+.category-detail-toggle:hover{
   border-color:#2563eb;
   box-shadow:0 0 0 3px rgba(37,99,235,.08);
 }
@@ -3801,7 +3822,8 @@ body{
     width:100%;
   }
   .category-filter-reset,
-  .category-filter-toggle{
+  .category-filter-toggle,
+  .category-detail-toggle{
     flex:1;
   }
   .category-filter-grid{
