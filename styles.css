@@ -4749,3 +4749,44 @@ body{
     text-align:left;
   }
 }
+
+
+/* 표시순서 관리 - 조직관리 연계형 편집 */
+.order-add-bar{
+  display:grid;
+  grid-template-columns:160px minmax(260px,1fr) auto;
+  gap:10px;
+  align-items:center;
+  margin-bottom:14px;
+  padding:12px;
+  border:1px solid var(--line2);
+  border-radius:16px;
+  background:#fbfdff;
+}
+.order-add-bar select,.order-add-bar input{margin:0;}
+#orderBody input,#orderBody select{
+  min-width:0;
+  height:40px;
+  padding:8px 10px;
+  border-radius:11px;
+  font-weight:800;
+}
+.order-code-input{
+  background:#f8fafc;
+  color:#475569;
+}
+.order-cell-select{
+  min-width:110px;
+}
+.order-actions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.order-actions .btn{
+  padding:8px 10px;
+  border-radius:11px;
+}
+@media(max-width:760px){
+  .order-add-bar{grid-template-columns:1fr;}
+}
