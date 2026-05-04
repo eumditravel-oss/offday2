@@ -5116,3 +5116,51 @@ body{
   .ledger-filter-head{align-items:flex-start;}
   .ledger-actions{margin-left:0;}
 }
+
+/* =========================
+   업무관리 > 프로젝트 관리 모듈
+   ========================= */
+.project-manage-card{overflow:visible}
+.project-manage-head{align-items:flex-start}
+.project-manage-body{background:#f8fafc}
+.pm-project-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+.pm-project-side{position:sticky;top:94px;background:#fff;border:1px solid var(--line2);border-radius:18px;padding:16px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
+.pm-side-title{font-size:12px;font-weight:900;color:#64748b;margin-bottom:10px;letter-spacing:.02em}
+.pm-shortcut-title{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.pm-project-list{display:grid;gap:8px}
+.pm-project-item{width:100%;text-align:left;border:1px solid var(--line2);background:#fff;border-radius:14px;padding:12px;cursor:pointer;transition:.18s ease}
+.pm-project-item strong{display:block;font-size:13px;color:#0f172a;margin-bottom:5px;line-height:1.35}
+.pm-project-item span{display:block;color:#64748b;font-size:12px;line-height:1.45}
+.pm-project-item:hover{border-color:#93c5fd;background:#f8fbff}
+.pm-project-item.active{border-color:var(--blue);background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.pm-anchor-link{display:block;border:1px solid var(--line2);background:#fbfdff;border-radius:12px;padding:9px 10px;margin-bottom:6px;font-size:12px;font-weight:900;color:#334155}
+.pm-anchor-link:hover{background:#eff6ff;color:#1d4ed8}
+.pm-project-content{display:grid;gap:16px;min-width:0}
+.pm-card{background:#fff;border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.04);scroll-margin-top:92px}
+.pm-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.pm-card-header h3{font-size:17px;letter-spacing:-.3px}
+.pm-card-header span{font-size:12px;color:#64748b;font-weight:900}
+.pm-project-subtitle{color:#64748b;font-weight:800;margin-bottom:14px}
+.status-badge{display:inline-flex;align-items:center;border-radius:999px;background:#eaf7ef;color:#16a34a;padding:6px 10px;font-weight:900;font-size:12px}
+.pm-overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pm-info-box{border:1px solid var(--line2);border-radius:14px;background:#fbfdff;padding:13px}
+.pm-info-box span{display:block;font-size:12px;font-weight:900;color:#64748b;margin-bottom:8px}
+.pm-info-box strong{font-size:15px;line-height:1.35}
+.pm-assignment-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.pm-assignment-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px}
+.pm-assignment-card h4{font-size:15px;margin-bottom:10px;color:#1d4ed8}
+.pm-team-row{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:8px 0;border-top:1px solid #edf2f7;font-size:12px}
+.pm-team-row:first-of-type{border-top:0}
+.pm-team-row b{color:#0f172a}
+.pm-team-row span{color:#64748b;font-weight:800}
+.pm-timeline{display:grid;gap:8px}
+.pm-timeline-item{border:1px solid var(--line2);border-radius:13px;background:#fbfdff;padding:11px 12px;font-weight:800;color:#334155}
+.pm-delivery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pm-delivery-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px;display:grid;gap:6px}
+.pm-delivery-card strong{font-size:14px;color:#0f172a}
+.pm-delivery-card span,.pm-delivery-card small{color:#64748b;font-weight:800}
+.pm-delivery-card em{font-style:normal;width:max-content;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}
+.pm-delivery-card em.done{background:#eaf7ef;color:#16a34a}
+.pm-delivery-card em.pending{background:#fff7ed;color:#d97706}
+@media(max-width:1280px){.pm-project-layout{grid-template-columns:1fr}.pm-project-side{position:static}.pm-overview-grid{grid-template-columns:repeat(2,1fr)}.pm-assignment-grid{grid-template-columns:1fr}.pm-delivery-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.pm-overview-grid{grid-template-columns:1fr}.pm-card-header{align-items:flex-start;flex-direction:column}.project-manage-head{align-items:flex-start}}
