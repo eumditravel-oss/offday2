@@ -1148,20 +1148,172 @@ function renderPermissionRows() {
   `).join("");
 }
 
+function getActiveOrderRows(category) {
+  return orderRows
+    .filter(row => row[0] === category && row[4] === "사용")
+    .sort((a, b) => Number(a[3]) - Number(b[3]));
+}
+
+function syncOrderRowsToOrgSettings() {
+  Object.keys(gradeOrder).forEach(key => delete gradeOrder[key]);
+  getActiveOrderRows("직급").forEach(row => {
+    gradeOrder[row[2]] = Number(row[3]) || 999;
+  });
+
+  applyCodeOrderToSelects();
+}
+
+function applyCodeOrderToSelects() {
+  const gradeNames = getActiveOrderRows("직급").map(row => row[2]);
+  const gradeSelectIds = ["gradeFilter", "cardGrade"];
+
+  gradeSelectIds.forEach(id => {
+    const select = document.getElementById(id);
+    if (!select) return;
+
+    const previousValue = select.value;
+    const hasAll = id === "gradeFilter";
+    select.innerHTML = `${hasAll ? '<option value="전체">전체</option>' : ''}${gradeNames.map(name => `<option value="${name}">${name}</option>`).join("")}`;
+
+    if ([...select.options].some(option => option.value === previousValue)) {
+      select.value = previousValue;
+    } else if (hasAll) {
+      select.value = "전체";
+    }
+  });
+}
+
 function renderOrderRows() {
   const tbody = document.getElementById("orderBody");
   if (!tbody) return;
 
-  tbody.innerHTML = orderRows.map(row => `
+  syncOrderRowsToOrgSettings();
+
+  const sortedRows = orderRows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const categoryCompare = String(a.row[0]).localeCompare(String(b.row[0]), "ko");
+      if (categoryCompare !== 0) return categoryCompare;
+      return Number(a.row[3]) - Number(b.row[3]);
+    });
+
+  tbody.innerHTML = sortedRows.map(({ row, index }) => `
     <tr>
-      <td>${row[0]}</td>
-      <td>${row[1]}</td>
-      <td>${row[2]}</td>
-      <td>${row[3]}</td>
-      <td><span class="badge green">${row[4]}</span></td>
-      <td><button class="btn btn-line" onclick="showToast('표시순서 변경 예시입니다.')">↑↓</button></td>
+      <td>
+        <select class="order-cell-select" onchange="updateOrderRow(${index}, 0, this.value)">
+          ${["직급", "직책", "부서", "재직상태"].map(category => `<option value="${category}" ${row[0] === category ? "selected" : ""}>${category}</option>`).join("")}
+        </select>
+      </td>
+      <td><input class="order-code-input" value="${row[1]}" onchange="updateOrderRow(${index}, 1, this.value)"></td>
+      <td><input value="${row[2]}" onchange="updateOrderRow(${index}, 2, this.value)"></td>
+      <td><input type="number" min="1" value="${row[3]}" onchange="updateOrderRow(${index}, 3, this.value)"></td>
+      <td>
+        <select class="order-cell-select" onchange="updateOrderRow(${index}, 4, this.value)">
+          <option value="사용" ${row[4] === "사용" ? "selected" : ""}>사용</option>
+          <option value="미사용" ${row[4] === "미사용" ? "selected" : ""}>미사용</option>
+        </select>
+      </td>
+      <td>
+        <div class="order-actions">
+          <button class="btn btn-line" onclick="moveOrderRow(${index}, -1)">↑</button>
+          <button class="btn btn-line" onclick="moveOrderRow(${index}, 1)">↓</button>
+          <button class="btn btn-danger" onclick="deleteOrderRow(${index})">삭제</button>
+        </div>
+      </td>
     </tr>
   `).join("");
+}
+
+function updateOrderRow(index, cellIndex, value) {
+  if (!orderRows[index]) return;
+  orderRows[index][cellIndex] = cellIndex === 3 ? Number(value) || 999 : value.trim();
+  normalizeOrderRows(orderRows[index][0]);
+  renderOrderRows();
+  refreshOrderLinkedViews();
+  showToast("표시순서가 조직관리 화면에 반영되었습니다.");
+}
+
+function normalizeOrderRows(category) {
+  const rows = orderRows
+    .filter(row => row[0] === category)
+    .sort((a, b) => Number(a[3]) - Number(b[3]));
+
+  rows.forEach((row, idx) => {
+    row[3] = idx + 1;
+  });
+}
+
+function moveOrderRow(index, direction) {
+  const row = orderRows[index];
+  if (!row) return;
+
+  const sameCategory = orderRows
+    .map((target, targetIndex) => ({ target, targetIndex }))
+    .filter(item => item.target[0] === row[0])
+    .sort((a, b) => Number(a.target[3]) - Number(b.target[3]));
+
+  const currentPosition = sameCategory.findIndex(item => item.targetIndex === index);
+  const next = sameCategory[currentPosition + direction];
+  if (!next) return;
+
+  const currentOrder = row[3];
+  row[3] = next.target[3];
+  next.target[3] = currentOrder;
+
+  renderOrderRows();
+  refreshOrderLinkedViews();
+  showToast("표시순서가 변경되어 조직관리 화면에 반영되었습니다.");
+}
+
+function getNextOrderCode(category) {
+  const prefixMap = { 직급: "G", 직책: "R", 부서: "D", 재직상태: "S" };
+  const prefix = prefixMap[category] || "C";
+  const maxNumber = orderRows
+    .filter(row => row[0] === category && String(row[1]).startsWith(prefix))
+    .map(row => Number(String(row[1]).replace(prefix, "")) || 0)
+    .reduce((max, value) => Math.max(max, value), 0);
+  return `${prefix}${String(maxNumber + 1).padStart(3, "0")}`;
+}
+
+function addOrderRow() {
+  const category = document.getElementById("orderAddCategory")?.value || "직급";
+  const nameInput = document.getElementById("orderAddName");
+  const name = (nameInput?.value || "").trim();
+
+  if (!name) {
+    showToast("추가할 표시명을 입력하세요.");
+    nameInput?.focus();
+    return;
+  }
+
+  const nextOrder = orderRows.filter(row => row[0] === category).length + 1;
+  orderRows.push([category, getNextOrderCode(category), name, nextOrder, "사용"]);
+
+  if (nameInput) nameInput.value = "";
+  renderOrderRows();
+  refreshOrderLinkedViews();
+  showToast(`${category} 코드가 추가되고 조직관리 화면에 반영되었습니다.`);
+}
+
+function deleteOrderRow(index) {
+  const row = orderRows[index];
+  if (!row) return;
+
+  if (!confirm(`${row[2]} 항목을 삭제할까요?`)) return;
+
+  const category = row[0];
+  orderRows.splice(index, 1);
+  normalizeOrderRows(category);
+  renderOrderRows();
+  refreshOrderLinkedViews();
+  showToast("표시순서 항목이 삭제되고 조직관리 화면에 반영되었습니다.");
+}
+
+function refreshOrderLinkedViews() {
+  syncOrderRowsToOrgSettings();
+  applyLedgerFilters(false);
+  renderEmployeeList(filterEmployeesForList(document.getElementById("employeeSearch")?.value || ""));
+  renderOrgEditor();
 }
 
 function validateRequired() {
