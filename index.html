@@ -19,7 +19,7 @@
       </div>
 
       <nav class="top-tabs">
-        <span data-module-tab="mail" onclick="showToast('전자메일 화면은 현재 연결 예시입니다.')">전자메일</span>
+        <span data-module-tab="mail" onclick="switchTopModule('mail')">전자메일</span>
         <span data-module-tab="approvalTop" onclick="showToast('전자결재 화면은 현재 연결 예시입니다.')">전자결재</span>
         <span data-module-tab="work" onclick="switchTopModule('work')">업무관리</span>
         <span data-module-tab="schedule" onclick="showToast('일정관리 화면은 현재 연결 예시입니다.')">일정관리</span>
@@ -29,12 +29,47 @@
       <div class="top-right">
         <button class="btn btn-line org-btn" onclick="openOrgChart()">조직도</button>
         <div class="lang">한국어</div>
-        <div class="bell">🔔</div>
+        <button class="bell" type="button" onclick="openReviewNotificationPanel()" title="검토 요청 알림">🔔</button>
         <div class="user">박용진 수석</div>
       </div>
     </header>
 
     <main class="content">
+
+      <section id="mailModule" class="module-view">
+        <section class="page-head">
+          <div>
+            <div class="breadcrumb">전자메일</div>
+            <h1>수신함</h1>
+            <p>체크리스트, 질의사항, 납품메일, 검토요청 메일을 구분하여 확인합니다.</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-line" onclick="renderMailInbox('전체')">새로고침</button>
+          </div>
+        </section>
+
+        <section class="mail-layout">
+          <article class="card mail-card">
+            <div class="card-head">
+              <div>
+                <h2>전자메일 · 수신함</h2>
+                <p class="subcopy">업무관리 체크리스트와 연동된 검토요청 메일이 자동 표시됩니다.</p>
+              </div>
+              <span class="badge blue" id="mailCountBadge">0건</span>
+            </div>
+            <div class="card-body">
+              <div class="mail-filter-tabs" id="mailFilterTabs">
+                <button class="mail-filter active" type="button" data-mail-filter="전체" onclick="renderMailInbox('전체')">전체</button>
+                <button class="mail-filter" type="button" data-mail-filter="체크리스트" onclick="renderMailInbox('체크리스트')">체크리스트</button>
+                <button class="mail-filter" type="button" data-mail-filter="질의사항" onclick="renderMailInbox('질의사항')">질의사항</button>
+                <button class="mail-filter" type="button" data-mail-filter="납품메일" onclick="renderMailInbox('납품메일')">납품메일</button>
+                <button class="mail-filter" type="button" data-mail-filter="검토요청" onclick="renderMailInbox('검토요청')">검토요청</button>
+              </div>
+              <div class="mail-list" id="mailInboxList"></div>
+            </div>
+          </article>
+        </section>
+      </section>
       <section id="supportModule" class="module-view active">
       <section class="page-head">
         <div>
@@ -949,6 +984,26 @@
       <h3>권한 필요</h3>
       <p>권한이 필요합니다.</p>
       <button class="btn btn-primary" onclick="closePermissionModal()">확인</button>
+    </div>
+  </div>
+
+
+  <div class="modal-backdrop" id="reviewNotificationModal">
+    <div class="modal modal-wide review-notification-modal">
+      <div class="modal-head">
+        <div>
+          <h2>검토 요청 알림</h2>
+          <p class="subcopy">제출자료 검토사항(PM)에서 산출 담당자에게 도착한 검토 요청입니다.</p>
+        </div>
+        <button class="close" onclick="closeReviewNotificationPanel()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="review-notification-list" id="reviewNotificationList"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-line" onclick="switchTopModule('mail'); renderMailInbox('검토요청'); closeReviewNotificationPanel();">전자메일 검토요청 보기</button>
+        <button class="btn btn-primary" onclick="closeReviewNotificationPanel()">확인</button>
+      </div>
     </div>
   </div>
 
