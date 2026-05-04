@@ -817,6 +817,15 @@ function renderEmployeeList(list = employees) {
   `).join("");
 }
 
+function toggleEmployeeTopList() {
+  const card = document.getElementById("employeeTopCard");
+  const btn = document.getElementById("employeeListToggleBtn");
+  if (!card || !btn) return;
+
+  const isCollapsed = card.classList.toggle("collapsed");
+  btn.textContent = isCollapsed ? "직원 목록 펼치기" : "직원 목록 접기";
+}
+
 function selectEmployee(empNo, el) {
   const emp = employees.find(e => e.empNo === empNo);
   if (!emp) return;
