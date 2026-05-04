@@ -5096,3 +5096,23 @@ body{
   .mail-search-grid{grid-template-columns:1fr}
 }
 .bell:not(.has-count)::after{display:none}
+
+/* 2026-05 UI cleanup: 불필요한 상단 설명 영역 제거 + 사원대장 액션 이동 */
+#supportModule > .workspace,
+#workModule > .workspace{
+  margin-top:0;
+}
+
+.ledger-filter-head{
+  align-items:center;
+}
+
+.ledger-actions{
+  margin-left:auto;
+  justify-content:flex-end;
+}
+
+@media(max-width:1280px){
+  .ledger-filter-head{align-items:flex-start;}
+  .ledger-actions{margin-left:0;}
+}
