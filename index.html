@@ -37,37 +37,94 @@
     <main class="content">
 
       <section id="mailModule" class="module-view">
-        <section class="page-head">
+        <section class="page-head mail-page-head">
           <div>
             <div class="breadcrumb">전자메일</div>
             <h1>수신함</h1>
             <p>체크리스트, 질의사항, 납품메일, 검토요청 메일을 구분하여 확인합니다.</p>
           </div>
           <div class="actions">
-            <button class="btn btn-line" onclick="renderMailInbox('전체')">새로고침</button>
+            <button class="btn btn-line" onclick="renderMailInbox(currentMailFilter || '전체')">새로고침</button>
+            <button class="btn btn-primary" onclick="showToast('편지 작성 화면은 예시입니다.')">편지를 쓰세요</button>
           </div>
         </section>
 
-        <section class="mail-layout">
-          <article class="card mail-card">
-            <div class="card-head">
-              <div>
-                <h2>전자메일 · 수신함</h2>
-                <p class="subcopy">업무관리 체크리스트와 연동된 검토요청 메일이 자동 표시됩니다.</p>
+        <section class="mail-workspace">
+          <aside class="mail-sidebox">
+            <button class="mail-side-item active" type="button" data-mail-box="inbox" onclick="setMailBox('inbox')">
+              <span>📥</span><b>받은편지함</b><em id="mailInboxSideCount">0</em>
+            </button>
+            <button class="mail-side-item" type="button" data-mail-box="sent" onclick="setMailBox('sent')">
+              <span>✈️</span><b>보낸편지함</b>
+            </button>
+            <button class="mail-side-item" type="button" data-mail-box="draft" onclick="setMailBox('draft')">
+              <span>📄</span><b>임시보관함</b>
+            </button>
+            <button class="mail-side-item" type="button" data-mail-box="reserved" onclick="setMailBox('reserved')">
+              <span>🕘</span><b>예약메일</b>
+            </button>
+            <button class="mail-side-item" type="button" data-mail-box="important" onclick="setMailBox('important')">
+              <span>☆</span><b>중요메일</b>
+            </button>
+          </aside>
+
+          <section class="mail-mainbox">
+            <article class="mail-search-card">
+              <div class="mail-search-grid">
+                <div class="field mail-search-field">
+                  <label>찾다</label>
+                  <input id="mailSearchInput" placeholder="발신자 또는 주제별로 검색..." oninput="renderMailInbox(currentMailFilter || '전체')" />
+                </div>
+                <div class="field">
+                  <label>프로젝트</label>
+                  <select id="mailProjectFilter" onchange="renderMailInbox(currentMailFilter || '전체')">
+                    <option value="전체">모두</option>
+                    <option value="ㅇㅇ시설 신축공사">ㅇㅇ시설 신축공사</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>태그</label>
+                  <select id="mailTagFilter" onchange="renderMailInbox(currentMailFilter || '전체')">
+                    <option value="전체">모든 태그</option>
+                    <option value="체크리스트">체크리스트</option>
+                    <option value="질의사항">질의사항</option>
+                    <option value="납품메일">납품메일</option>
+                    <option value="검토요청">검토요청</option>
+                  </select>
+                </div>
+                <button class="btn btn-line" onclick="clearMailFilters()">↻ 다시 놓기</button>
               </div>
-              <span class="badge blue" id="mailCountBadge">0건</span>
-            </div>
-            <div class="card-body">
-              <div class="mail-filter-tabs" id="mailFilterTabs">
+            </article>
+
+            <article class="mail-table-card">
+              <div class="mail-filter-tabs mail-filter-tabs-compact" id="mailFilterTabs">
                 <button class="mail-filter active" type="button" data-mail-filter="전체" onclick="renderMailInbox('전체')">전체</button>
                 <button class="mail-filter" type="button" data-mail-filter="체크리스트" onclick="renderMailInbox('체크리스트')">체크리스트</button>
                 <button class="mail-filter" type="button" data-mail-filter="질의사항" onclick="renderMailInbox('질의사항')">질의사항</button>
                 <button class="mail-filter" type="button" data-mail-filter="납품메일" onclick="renderMailInbox('납품메일')">납품메일</button>
                 <button class="mail-filter" type="button" data-mail-filter="검토요청" onclick="renderMailInbox('검토요청')">검토요청</button>
               </div>
-              <div class="mail-list" id="mailInboxList"></div>
-            </div>
-          </article>
+
+              <div class="mail-table-wrap">
+                <table class="mail-table">
+                  <thead>
+                    <tr>
+                      <th class="mail-star-col">☆</th>
+                      <th>보내는 사람</th>
+                      <th>꼬리표</th>
+                      <th>주제</th>
+                      <th>시간</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mailInboxList"></tbody>
+                </table>
+              </div>
+              <div class="mail-pager">
+                <span id="mailCountBadge">이메일 0건 표시</span>
+                <div class="mail-page-buttons"><button class="btn btn-line">‹</button><button class="btn btn-line active-page">1</button><button class="btn btn-line">›</button></div>
+              </div>
+            </article>
+          </section>
         </section>
       </section>
       <section id="supportModule" class="module-view active">
@@ -988,23 +1045,13 @@
   </div>
 
 
-  <div class="modal-backdrop" id="reviewNotificationModal">
-    <div class="modal modal-wide review-notification-modal">
-      <div class="modal-head">
-        <div>
-          <h2>검토 요청 알림</h2>
-          <p class="subcopy">제출자료 검토사항(PM)에서 산출 담당자에게 도착한 검토 요청입니다.</p>
-        </div>
-        <button class="close" onclick="closeReviewNotificationPanel()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="review-notification-list" id="reviewNotificationList"></div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-line" onclick="switchTopModule('mail'); renderMailInbox('검토요청'); closeReviewNotificationPanel();">전자메일 검토요청 보기</button>
-        <button class="btn btn-primary" onclick="closeReviewNotificationPanel()">확인</button>
-      </div>
+  <div class="review-popover" id="reviewNotificationPanel">
+    <div class="review-popover-head">
+      <strong>알림</strong>
+      <button type="button" onclick="markReviewNotificationsRead()">모두 읽음 처리</button>
     </div>
+    <div class="review-popover-list" id="reviewNotificationList"></div>
+    <button class="review-popover-foot" type="button" onclick="switchTopModule('mail'); renderMailInbox('검토요청'); closeReviewNotificationPanel();">모든 알림 보기</button>
   </div>
 
   <div class="toast" id="toast"></div>
