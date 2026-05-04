@@ -806,27 +806,36 @@ function renderEmployeeList(list = employees) {
   const box = document.getElementById("employeeList");
   if (!box) return;
 
+  if (!list.length) {
+    box.innerHTML = `<div class="employee-empty">검색 결과가 없습니다.</div>`;
+    return;
+  }
+
   box.innerHTML = list.map(emp => `
-    <div class="employee-item ${emp.empNo === selectedEmployeeId ? "active" : ""}" onclick="selectEmployee('${emp.empNo}', this)">
-      <div class="emp-photo">${displayName(emp)[0]}</div>
-      <div>
-        <div class="emp-name">${displayName(emp)}</div>
-        <div class="emp-meta">${emp.company} · ${emp.dept} · ${emp.grade} · ${emp.status}<br>${emp.empNo}</div>
-      </div>
-    </div>
+    <button type="button" class="employee-item ${emp.empNo === selectedEmployeeId ? "active" : ""}" onclick="selectEmployee('${emp.empNo}', this, true)">
+      <div class="emp-name">${displayName(emp)}</div>
+      <div class="emp-meta">${emp.company} · ${emp.dept} · ${emp.grade} · ${emp.status}</div>
+      <div class="emp-no">${emp.empNo}</div>
+    </button>
   `).join("");
 }
 
-function toggleEmployeeTopList() {
+function setEmployeeTopListCollapsed(collapsed) {
   const card = document.getElementById("employeeTopCard");
   const btn = document.getElementById("employeeListToggleBtn");
   if (!card || !btn) return;
 
-  const isCollapsed = card.classList.toggle("collapsed");
-  btn.textContent = isCollapsed ? "직원 목록 펼치기" : "직원 목록 접기";
+  card.classList.toggle("collapsed", collapsed);
+  btn.textContent = collapsed ? "직원 목록 펼치기" : "직원 목록 접기";
 }
 
-function selectEmployee(empNo, el) {
+function toggleEmployeeTopList() {
+  const card = document.getElementById("employeeTopCard");
+  if (!card) return;
+  setEmployeeTopListCollapsed(!card.classList.contains("collapsed"));
+}
+
+function selectEmployee(empNo, el, autoCollapse = false) {
   const emp = employees.find(e => e.empNo === empNo);
   if (!emp) return;
 
@@ -834,6 +843,7 @@ function selectEmployee(empNo, el) {
 
   document.querySelectorAll(".employee-item").forEach(item => item.classList.remove("active"));
   if (el) el.classList.add("active");
+  if (autoCollapse) setEmployeeTopListCollapsed(true);
 
   setText("profilePhoto", displayName(emp)[0]);
   setText("profileName", displayName(emp));
