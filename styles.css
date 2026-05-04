@@ -1926,11 +1926,11 @@ table td:nth-child(10){
 .excel-grid col.qc-col-select{width:44px;}
 .excel-grid col.qc-col-trade{width:78px;}
 .excel-grid col.qc-col-no{width:74px;}
-.excel-grid col.qc-col-item{width:260px;}
-.excel-grid col.qc-col-method{width:320px;}
+.excel-grid col.qc-col-item{width:298px;}
+.excel-grid col.qc-col-method{width:359px;}
 .excel-grid col.qc-col-target{width:96px;}
 .excel-grid col.qc-col-check{width:160px;}
-.excel-grid col.qc-col-comment{width:230px;}
+.excel-grid col.qc-col-comment{width:153px;}
 .excel-grid col.qc-col-attach{width:100px;}
 .excel-grid col.qc-col-history{width:155px;}
 .excel-grid col.qc-col-manage{width:90px;}
@@ -2120,11 +2120,11 @@ table td:last-child{
 .excel-grid col.qc-col-select{width:3% !important;}
 .excel-grid col.qc-col-trade{width:5% !important;}
 .excel-grid col.qc-col-no{width:5% !important;}
-.excel-grid col.qc-col-item{width:17% !important;}
-.excel-grid col.qc-col-method{width:21% !important;}
+.excel-grid col.qc-col-item{width:19.5% !important;}
+.excel-grid col.qc-col-method{width:23.5% !important;}
 .excel-grid col.qc-col-target{width:6% !important;}
 .excel-grid col.qc-col-check{width:10% !important;}
-.excel-grid col.qc-col-comment{width:15% !important;}
+.excel-grid col.qc-col-comment{width:10% !important;}
 .excel-grid col.qc-col-attach{width:6% !important;}
 .excel-grid col.qc-col-history{width:8% !important;}
 .excel-grid col.qc-col-manage{width:4% !important;}
