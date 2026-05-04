@@ -591,9 +591,22 @@
                 <article class="card">
                   <div class="card-head">
                     <h2>표시 순서 관리</h2>
-                    <span class="badge gray">코드는 고정, 순서만 변경</span>
+                    <div class="actions">
+                      <span class="badge gray">조직관리 연계</span>
+                      <button class="btn btn-primary" onclick="addOrderRow()">+ 코드 추가</button>
+                    </div>
                   </div>
                   <div class="card-body table-wrap">
+                    <div class="order-add-bar">
+                      <select id="orderAddCategory">
+                        <option value="직급">직급</option>
+                        <option value="직책">직책</option>
+                        <option value="부서">부서</option>
+                        <option value="재직상태">재직상태</option>
+                      </select>
+                      <input id="orderAddName" placeholder="추가할 표시명 입력 예: 선임, PM, BIM파트" />
+                      <button class="btn btn-line" onclick="addOrderRow()">추가</button>
+                    </div>
                     <table>
                       <thead><tr><th>구분</th><th>코드</th><th>표시명</th><th>표시순서</th><th>사용여부</th><th>관리</th></tr></thead>
                       <tbody id="orderBody"></tbody>
