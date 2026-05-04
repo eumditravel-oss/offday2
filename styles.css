@@ -4435,3 +4435,169 @@ body{
 .actual-org-card{
   box-sizing:border-box !important;
 }
+
+
+/* === 실제 조직도 보기창: 편집기와 동일한 분리형 트리 구조 적용 === */
+.actual-view-tree{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  width:max-content;
+  min-width:max-content;
+  margin:0 auto;
+  padding:8px 40px 30px;
+}
+.actual-view-node-wrap{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:max-content;
+  max-width:none;
+  flex:0 0 auto;
+}
+.actual-view-node-wrap::before{
+  content:"";
+  position:absolute;
+  top:-18px;
+  left:50%;
+  width:0;
+  height:18px;
+  border-left:2px solid #9ca3af;
+  transform:translateX(-1px);
+}
+.actual-view-tree > .actual-view-node-wrap::before{
+  display:none;
+}
+.actual-view-node{
+  width:92px;
+  min-height:58px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  background:#fff;
+  color:#111827;
+  padding:6px 6px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-weight:900;
+  line-height:1.18;
+  box-shadow:0 4px 12px rgba(15,23,42,.04);
+  cursor:pointer;
+  white-space:normal;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.actual-view-node:hover{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08),0 6px 16px rgba(15,23,42,.06);
+}
+.actual-view-node span{display:block;max-width:100%;color:#1d4ed8;font-size:10px;font-weight:900;line-height:1.15;}
+.actual-view-node strong{display:block;max-width:100%;margin-top:2px;color:#111827;font-size:12px;font-weight:900;line-height:1.18;}
+.actual-view-node em{display:block;max-width:100%;margin-top:3px;color:#64748b;font-size:9px;font-style:normal;font-weight:800;line-height:1.15;}
+.actual-view-node.primary,.actual-view-node.depth-0{width:112px;min-height:54px;background:#1d4ed8;border-color:#1d4ed8;color:#fff;}
+.actual-view-node.secondary,.actual-view-node.depth-1{width:108px;min-height:52px;background:#3b82f6;border-color:#3b82f6;color:#fff;}
+.actual-view-node.primary span,.actual-view-node.primary strong,.actual-view-node.primary em,
+.actual-view-node.secondary span,.actual-view-node.secondary strong,.actual-view-node.secondary em,
+.actual-view-node.depth-0 span,.actual-view-node.depth-0 strong,.actual-view-node.depth-0 em,
+.actual-view-node.depth-1 span,.actual-view-node.depth-1 strong,.actual-view-node.depth-1 em{color:#fff;}
+.actual-view-node.dotted{background:#f8fafc;border-color:#cbd5e1;color:#111827;}
+.actual-view-node.dotted span,.actual-view-node.dotted strong,.actual-view-node.dotted em{color:#111827;}
+.actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted){background:#88a5dc;border-color:#88a5dc;}
+.actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em{color:#fff;}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted){background:#fef3c7;border-color:#fde68a;}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong{color:#111827;}
+.actual-view-branch-children,
+.actual-view-member-children{
+  position:relative;
+  display:grid;
+  justify-content:center;
+  align-items:start;
+  width:max-content;
+  max-width:none;
+  margin-left:auto;
+  margin-right:auto;
+}
+.actual-view-branch-children{
+  grid-auto-flow:column;
+  grid-auto-columns:max-content;
+  gap:26px;
+  padding-top:38px;
+}
+.actual-view-member-children{
+  grid-auto-flow:row;
+  gap:8px 10px;
+  padding-top:34px;
+}
+.actual-view-branch-children::before,
+.actual-view-member-children::before{
+  content:"";
+  position:absolute;
+  top:18px;
+  left:0;
+  right:0;
+  height:2px;
+  background:#9ca3af;
+}
+.actual-view-branch-children > .actual-view-node-wrap::before,
+.actual-view-member-children > .actual-view-node-wrap::before{
+  top:-16px;
+  height:16px;
+}
+.actual-view-branch-children > .actual-view-node-wrap:first-child::after,
+.actual-view-member-children > .actual-view-node-wrap:first-child::after,
+.actual-view-branch-children > .actual-view-node-wrap:last-child::after,
+.actual-view-member-children > .actual-view-node-wrap:last-child::after{
+  content:"";
+  position:absolute;
+  top:-18px;
+  height:2px;
+  background:#fff;
+  z-index:1;
+}
+.actual-view-branch-children > .actual-view-node-wrap:first-child::after,
+.actual-view-member-children > .actual-view-node-wrap:first-child::after{
+  right:50%;
+  left:-2px;
+}
+.actual-view-branch-children > .actual-view-node-wrap:last-child::after,
+.actual-view-member-children > .actual-view-node-wrap:last-child::after{
+  left:50%;
+  right:-2px;
+}
+.actual-view-branch-children > .actual-view-node-wrap:only-child::after,
+.actual-view-member-children > .actual-view-node-wrap:only-child::after{
+  content:"";
+  position:absolute;
+  top:-18px;
+  left:-2px;
+  right:-2px;
+  height:2px;
+  background:#fff;
+  z-index:1;
+}
+.actual-view-member-children.cols-1{grid-template-columns:repeat(1,92px)!important;}
+.actual-view-member-children.cols-2{grid-template-columns:repeat(2,92px)!important;}
+.actual-view-member-children.cols-3{grid-template-columns:repeat(3,92px)!important;}
+.actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-branch-children.depth-0{display:flex;justify-content:center;}
+.actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-branch-children.depth-0::before{display:none;}
+.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-branch-children.depth-1{grid-auto-flow:column;grid-auto-columns:max-content;gap:30px;align-items:start;}
+.actual-view-tree.concost-tree .actual-view-경영지원본부 > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-개발-t-f > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-qc > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-클레임센터 > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-구조팀 > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-bim-파트 > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-토목-조경파트 > .actual-view-member-children{grid-template-columns:repeat(1,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-1{grid-template-columns:repeat(1,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-2{grid-template-columns:repeat(2,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-3{grid-template-columns:repeat(3,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-기술본부 > .actual-view-branch-children{gap:34px;}
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-branch-children{gap:20px;}
+.actual-org-title-box{margin-bottom:10px!important;}
+.actual-org-scroll-note{margin-bottom:6px!important;}
