@@ -4601,3 +4601,100 @@ body{
 .actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-branch-children{gap:20px;}
 .actual-org-title-box{margin-bottom:10px!important;}
 .actual-org-scroll-note{margin-bottom:6px!important;}
+
+/* 인사카드 직원 목록 상단 리스트 전환 */
+.card-layout-top{
+  display:block;
+}
+
+.employee-top-card{
+  margin-bottom:18px;
+}
+
+.employee-top-head{
+  align-items:center;
+}
+
+.employee-top-head .subcopy{
+  margin-top:5px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+  line-height:1.5;
+}
+
+.employee-top-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.employee-top-body{
+  transition:all .22s ease;
+}
+
+.employee-top-card.collapsed .employee-top-body{
+  display:none;
+}
+
+.employee-search-top{
+  margin-bottom:14px;
+  max-width:420px;
+}
+
+.employee-list-horizontal{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-height:none;
+  padding:2px 4px 12px 2px;
+  scroll-behavior:smooth;
+}
+
+.employee-list-horizontal .employee-item{
+  min-width:260px;
+  max-width:300px;
+  flex:0 0 280px;
+  margin:0;
+}
+
+.employee-list-horizontal .employee-item .emp-meta{
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.employee-list-horizontal::-webkit-scrollbar{
+  height:10px;
+}
+
+.employee-list-horizontal::-webkit-scrollbar-track{
+  background:#eef2f7;
+  border-radius:999px;
+}
+
+.employee-list-horizontal::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:999px;
+}
+
+.employee-list-horizontal::-webkit-scrollbar-thumb:hover{
+  background:#94a3b8;
+}
+
+@media(max-width:760px){
+  .employee-top-head{
+    align-items:flex-start;
+  }
+  .employee-top-controls{
+    justify-content:flex-start;
+  }
+  .employee-list-horizontal .employee-item{
+    min-width:230px;
+    flex-basis:240px;
+  }
+}
