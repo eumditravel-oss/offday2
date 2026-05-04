@@ -750,6 +750,7 @@
             <div class="side-title">업무관리 좌측 카테고리</div>
             <div class="side-group"><button class="side-main active" data-work-main="projectReceive">프로젝트 접수</button></div>
             <div class="side-group"><button class="side-main" data-work-main="pmSchedule">PM 배정 / 일정</button></div>
+            <div class="side-group"><button class="side-main" data-work-main="projectManage">프로젝트 관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="qcReview">프로젝트 질의응답 관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="deliveryData">납품 및 데이터관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="dailyReport">업무일지 / 진행률</button></div>
@@ -822,6 +823,63 @@
                     <col class="qc-col-manage">
                   </colgroup>
                   <thead><tr><th class="col-check"><input type="checkbox" id="checkAllRows" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th class="comment-col">코멘트</th><th class="attach-col">첨부</th><th class="history-col">처리 이력</th><th class="manage-col">관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div>
+                </div>
+              </article>
+            </section>
+
+
+
+            <section id="projectManage" class="work-panel">
+              <article class="card project-manage-card">
+                <div class="card-head project-manage-head">
+                  <div>
+                    <h2>프로젝트 관리</h2>
+                    <p class="subcopy">프로젝트별 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 한 화면에서 확인합니다.</p>
+                  </div>
+                  <div class="actions">
+                    <button class="btn btn-line" onclick="pmSimulateDelayReason()">착수지연 사유서 작성</button>
+                    <button class="btn btn-line" onclick="pmSimulateApproval()">상부 승인 처리</button>
+                    <button class="btn btn-primary" onclick="pmSimulateCompletionChange()">완료일정 변경</button>
+                  </div>
+                </div>
+                <div class="card-body project-manage-body">
+                  <div class="pm-project-layout">
+                    <aside class="pm-project-side">
+                      <div class="pm-side-title">프로젝트 목록</div>
+                      <div id="pmProjectList" class="pm-project-list"></div>
+                      <div class="pm-side-title pm-shortcut-title">바로가기</div>
+                      <a class="pm-anchor-link" href="#pmOverview">프로젝트 개요</a>
+                      <a class="pm-anchor-link" href="#pmMeeting">회의록</a>
+                      <a class="pm-anchor-link" href="#pmAssignment">배정인원</a>
+                      <a class="pm-anchor-link" href="#pmEmails">관련메일</a>
+                      <a class="pm-anchor-link" href="#pmOrder">수주일정</a>
+                      <a class="pm-anchor-link" href="#pmCompletion">완료시점</a>
+                      <a class="pm-anchor-link" href="#pmDelivery">납품관리</a>
+                    </aside>
+                    <main class="pm-project-content">
+                      <section id="pmOverview" class="pm-card pm-overview-card">
+                        <div class="pm-card-header"><h3 id="pmProjectTitle">프로젝트 상세</h3><span class="status-badge" id="pmProjectStatusBadge">진행중</span></div>
+                        <p id="pmProjectSubtitle" class="pm-project-subtitle">프로젝트를 선택하면 전체 업무관리 정보를 한 화면에서 확인할 수 있습니다.</p>
+                        <div class="pm-overview-grid">
+                          <div class="pm-info-box"><span>프로젝트명</span><strong id="pmSummaryProjectName">-</strong></div>
+                          <div class="pm-info-box"><span>발주처</span><strong id="pmSummaryClient">-</strong></div>
+                          <div class="pm-info-box"><span>담당부서</span><strong id="pmSummaryDept">-</strong></div>
+                          <div class="pm-info-box"><span>프로젝트 PM</span><strong id="pmSummaryPm">-</strong></div>
+                          <div class="pm-info-box"><span>수주일자</span><strong id="pmSummaryOrderDate">-</strong></div>
+                          <div class="pm-info-box"><span>착수일자</span><strong id="pmSummaryStartDate">-</strong></div>
+                          <div class="pm-info-box"><span>완료예정일</span><strong id="pmSummaryDueDate">-</strong></div>
+                          <div class="pm-info-box"><span>납품차수</span><strong id="pmSummaryDeliveryCount">-</strong></div>
+                        </div>
+                      </section>
+
+                      <section id="pmMeeting" class="pm-card"><div class="pm-card-header"><h3>회의록</h3><span>날짜 / 회의명 / 작성자 / 상세보기</span></div><div class="table-wrap"><table><thead><tr><th>날짜</th><th>회의명</th><th>작성자</th><th>상세</th></tr></thead><tbody id="pmMeetingTableBody"></tbody></table></div></section>
+                      <section id="pmAssignment" class="pm-card"><div class="pm-card-header"><h3>프로젝트 배정인원</h3><span>대분류 / 소분류 / 투입인원</span></div><div id="pmAssignmentGrid" class="pm-assignment-grid"></div></section>
+                      <section id="pmEmails" class="pm-card"><div class="pm-card-header"><h3>관련메일</h3><span>프로젝트 관련 송수신 메일 리스트</span></div><div class="table-wrap"><table><thead><tr><th>일자</th><th>구분</th><th>발신</th><th>수신</th><th>제목</th></tr></thead><tbody id="pmEmailTableBody"></tbody></table></div></section>
+                      <section id="pmOrder" class="pm-card"><div class="pm-card-header"><h3>수주일정</h3><span>수주 등록부터 착수 승인까지 이력</span></div><div id="pmOrderTimeline" class="pm-timeline"></div></section>
+                      <section id="pmCompletion" class="pm-card"><div class="pm-card-header"><h3>완료시점 관리</h3><span>완료예정일 변경 이력</span></div><div id="pmCompletionTimeline" class="pm-timeline"></div></section>
+                      <section id="pmDelivery" class="pm-card"><div class="pm-card-header"><h3>납품관리</h3><span>차수별 납품 파일과 승인 상태</span></div><div id="pmDeliveryGrid" class="pm-delivery-grid"></div></section>
+                    </main>
+                  </div>
                 </div>
               </article>
             </section>
@@ -1023,6 +1081,11 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="./data-core.js"></script>
+  <script src="./support-hr.js"></script>
+  <script src="./support-org.js"></script>
+  <script src="./work-qc-mail.js"></script>
+  <script src="./work-project-management.js"></script>
   <script src="./app.js"></script>
 
   <div class="modal-backdrop" id="objectionModal">
