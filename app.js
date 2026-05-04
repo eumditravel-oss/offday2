@@ -3482,6 +3482,14 @@ function switchTopModule(moduleName) {
 
   const support = document.getElementById("supportModule");
   const work = document.getElementById("workModule");
+  const mail = document.getElementById("mailModule");
+
+  if (moduleName === "mail") {
+    mail?.classList.add("active");
+    document.querySelector('[data-module-tab="mail"]')?.classList.add("active");
+    renderMailInbox(currentMailFilter || "전체");
+    return;
+  }
 
   if (moduleName === "work") {
     work?.classList.add("active");
@@ -3494,6 +3502,158 @@ function switchTopModule(moduleName) {
     document.querySelector('[data-module-tab="support"]')?.classList.add("active");
   }
 }
+
+let currentMailFilter = "전체";
+
+function getChecklistReviewRequestRows() {
+  const projectInput = document.getElementById("checklistProject");
+  const fallbackProject = projectInput?.value || "ㅇㅇ시설 신축공사";
+  return checklistRows
+    .map((row, realIndex) => ({ row: normalizeChecklistRow(row), realIndex }))
+    .filter(({ row }) => normalizeChecklistGroupName(row.group) === "제출자료 검토사항(PM)")
+    .map(({ row, realIndex }) => ({
+      id: `review-${realIndex}`,
+      type: "검토요청",
+      project: row.project || fallbackProject,
+      sender: row.creator || "PM",
+      title: `${row.project || fallbackProject} 검토요청_${String(row.item || "검토항목").replace(/\s+/g, " ").trim()}`,
+      item: row.item || "-",
+      method: row.method || "-",
+      trade: row.trade || "-",
+      no: row.no || "-",
+      targets: getChecklistTargets(row).join(", ") || "산출 담당자",
+      createdAt: row.createdAt || "-",
+      comment: row.comment || "",
+      rowIndex: realIndex
+    }));
+}
+
+function getMailItems() {
+  const reviewRequests = getChecklistReviewRequestRows();
+  const projectName = document.getElementById("checklistProject")?.value || "ㅇㅇ시설 신축공사";
+  const staticMails = [
+    {
+      id: "mail-checklist-001",
+      type: "체크리스트",
+      sender: "QC TEAM",
+      title: `${projectName} 체크리스트 확인 요청`,
+      createdAt: "2026-04-29 09:00",
+      item: "프로젝트 수주 시점 체크리스트",
+      method: "체크리스트 구분별 확인 필요",
+      comment: ""
+    },
+    {
+      id: "mail-question-001",
+      type: "질의사항",
+      sender: "PM",
+      title: `${projectName} 질의사항(1차) 확인 요청`,
+      createdAt: "2026-04-30 13:00",
+      item: "동구분 관련 질의사항",
+      method: "발주처 회신 후 반영 예정",
+      comment: ""
+    },
+    {
+      id: "mail-delivery-001",
+      type: "납품메일",
+      sender: "PM",
+      title: `${projectName} 납품자료 송부 확인`,
+      createdAt: "2026-04-30 15:30",
+      item: "납품자료 체크",
+      method: "송부 전 최종 확인",
+      comment: ""
+    }
+  ];
+  return [...reviewRequests, ...staticMails];
+}
+
+function renderMailInbox(filter = "전체") {
+  currentMailFilter = filter;
+  document.querySelectorAll(".mail-filter").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mailFilter === filter);
+  });
+
+  const list = document.getElementById("mailInboxList");
+  const badge = document.getElementById("mailCountBadge");
+  if (!list) return;
+
+  const all = getMailItems();
+  const items = filter === "전체" ? all : all.filter(mail => mail.type === filter);
+  if (badge) badge.textContent = `${items.length}건`;
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty-mail-box">표시할 메일이 없습니다.</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(mail => `
+    <article class="mail-item ${mail.type === "검토요청" ? "review-mail" : ""}" onclick="openMailDetail('${escapeJs(mail.id)}')">
+      <div class="mail-item-main">
+        <div class="mail-title-line">
+          <span class="mail-type-chip">${escapeHtml(mail.type)}</span>
+          <strong>${escapeHtml(mail.title)}</strong>
+        </div>
+        <div class="mail-meta-line">발신자: ${escapeHtml(mail.sender)} · 수신일시: ${escapeHtml(mail.createdAt)}</div>
+        <p>${escapeHtml(mail.method || mail.item || "")}</p>
+      </div>
+      <button class="btn btn-line mail-open-btn" type="button">열기</button>
+    </article>
+  `).join("");
+}
+
+function openMailDetail(mailId) {
+  const mail = getMailItems().find(item => item.id === mailId);
+  if (!mail) return;
+  if (mail.type === "검토요청") {
+    openReviewNotificationPanel(mail.rowIndex);
+    return;
+  }
+  showToast(`${mail.title} 메일을 열었습니다.`);
+}
+
+function openReviewNotificationPanel(focusRowIndex = null) {
+  const modal = document.getElementById("reviewNotificationModal");
+  const list = document.getElementById("reviewNotificationList");
+  if (!modal || !list) return;
+
+  let requests = getChecklistReviewRequestRows();
+  if (focusRowIndex !== null && focusRowIndex !== undefined) {
+    const focused = requests.find(item => String(item.rowIndex) === String(focusRowIndex));
+    if (focused) requests = [focused, ...requests.filter(item => item.rowIndex !== focused.rowIndex)];
+  }
+
+  list.innerHTML = requests.length ? requests.map(req => `
+    <article class="review-notification-item">
+      <div class="review-alert-head">
+        <span class="mail-type-chip">검토요청</span>
+        <strong>${escapeHtml(req.title)}</strong>
+      </div>
+      <div class="review-alert-meta">발신자: ${escapeHtml(req.sender)} · 요청 대상: ${escapeHtml(req.targets)} · 작성일시: ${escapeHtml(req.createdAt)}</div>
+      <div class="review-alert-grid">
+        <div><span>프로젝트</span><b>${escapeHtml(req.project)}</b></div>
+        <div><span>공종</span><b>${escapeHtml(req.trade)}</b></div>
+        <div><span>일련번호</span><b>${escapeHtml(req.no)}</b></div>
+        <div><span>검토항목</span><b>${escapeHtml(req.item)}</b></div>
+        <div class="wide"><span>검토방법</span><b>${escapeHtml(req.method)}</b></div>
+        <div class="wide"><span>코멘트</span><b>${escapeHtml(req.comment || "-")}</b></div>
+      </div>
+    </article>
+  `).join("") : `<div class="empty-mail-box">도착한 검토 요청이 없습니다.</div>`;
+
+  modal.classList.add("active");
+}
+
+function closeReviewNotificationPanel() {
+  document.getElementById("reviewNotificationModal")?.classList.remove("active");
+}
+
+function updateBellReviewCount() {
+  const bell = document.querySelector(".bell");
+  if (!bell) return;
+  const count = getChecklistReviewRequestRows().length;
+  bell.setAttribute("data-count", String(count));
+  bell.title = `검토 요청 알림 ${count}건`;
+}
+
 
 function switchWorkPanel(panelId) {
   const targetPanelId = panelId || "projectReceive";
@@ -3955,6 +4115,7 @@ function renderChecklistGrid() {
         <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`;
   }).join("");
+  updateBellReviewCount();
 }
 
 function renderChecklistGroupBand(group) {
