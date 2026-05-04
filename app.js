@@ -314,29 +314,285 @@ const assetLedger = [
 const orgStructures = {
   "CON-COST": {
     title: "㈜컨코스트 조직도",
-    date: "2026. 4. 9.",
-    root: { title: "대표이사", className: "primary", children: [
-      { title: "부사장", className: "secondary", children: [
-        { title: "경영지원본부", employeeId: "CC-001", children: [
-          { employeeId: "CC-002" },
-          { employeeId: "CC-003" },
-          { employeeId: "CC-004" },
-          { employeeId: "CC-005" },
-          { title: "개발 T/F", children: [{ employeeId: "EMP-2018-001" }, { employeeId: "CC-006" }, { employeeId: "CC-007" }] },
-          { title: "QC", children: [{ employeeId: "CC-008" }, { employeeId: "CC-009" }] }
-        ] },
-        { title: "기술본부", employeeId: "CC-010", children: [
-          { title: "마감", employeeId: "CC-009", children: [{ employeeId: "CC-011" }, { employeeId: "CC-012" }, { employeeId: "CC-013" }, { employeeId: "CC-014" }, { employeeId: "CC-015" }, { employeeId: "CC-016" }, { employeeId: "CC-017" }, { employeeId: "CC-018" }, { employeeId: "CC-019" }, { employeeId: "CC-020" }, { employeeId: "CC-021" }, { employeeId: "CC-022" }] },
-          { title: "구조/토목 조경", employeeId: "CC-008", children: [
-            { title: "구조팀", children: [{ employeeId: "CC-023" }, { employeeId: "CC-024" }, { employeeId: "CC-025" }, { employeeId: "CC-026" }, { employeeId: "CC-027" }, { employeeId: "CC-028" }] },
-            { title: "BIM 파트", employeeId: "CC-029", children: [{ employeeId: "EMP-2018-001" }] },
-            { title: "토목·조경파트", employeeId: "CC-030" }
-          ] }
-        ] },
-        { title: "클레임센터", employeeId: "CC-031", children: [{ employeeId: "CC-010" }, { employeeId: "CC-008" }, { employeeId: "CC-032" }, { employeeId: "CC-033" }] },
-        { title: "공사비닷컴", className: "dotted" }
-      ] }
-    ] }
+    date: "",
+    root: {
+    "title": "대표이사",
+    "className": "primary",
+    "memberColumns": 3,
+    "employeeId": "VQS-001",
+    "children": [
+        {
+            "title": "부사장",
+            "className": "secondary",
+            "memberColumns": 3,
+            "employeeId": "VQS-002",
+            "children": [
+                {
+                    "title": "경영지원본부",
+                    "memberColumns": 3,
+                    "employeeId": "CC-001",
+                    "children": [
+                        {
+                            "title": "실장",
+                            "memberColumns": 3,
+                            "employeeId": "CC-002",
+                            "children": []
+                        },
+                        {
+                            "title": "책임",
+                            "memberColumns": 3,
+                            "employeeId": "CC-003",
+                            "children": []
+                        },
+                        {
+                            "title": "선임",
+                            "memberColumns": 3,
+                            "employeeId": "CC-004",
+                            "children": []
+                        },
+                        {
+                            "title": "선임",
+                            "memberColumns": 3,
+                            "employeeId": "CC-005",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "title": "개발 T/F",
+                    "memberColumns": 3,
+                    "displayName": "개발 T/F",
+                    "children": [
+                        {
+                            "title": "파트 담당",
+                            "memberColumns": 3,
+                            "employeeId": "EMP-2018-001",
+                            "children": []
+                        },
+                        {
+                            "title": "개발",
+                            "memberColumns": 3,
+                            "employeeId": "CC-006",
+                            "children": []
+                        },
+                        {
+                            "title": "개발",
+                            "memberColumns": 3,
+                            "employeeId": "CC-007",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "title": "QC",
+                    "memberColumns": 3,
+                    "displayName": "QC",
+                    "children": [
+                        {
+                            "title": "실장",
+                            "memberColumns": 3,
+                            "employeeId": "CC-008",
+                            "children": []
+                        },
+                        {
+                            "title": "실장",
+                            "memberColumns": 3,
+                            "employeeId": "CC-009",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "title": "기술본부",
+                    "memberColumns": 3,
+                    "employeeId": "CC-010",
+                    "children": [
+                        {
+                            "title": "마감",
+                            "memberColumns": 3,
+                            "employeeId": "CC-009",
+                            "children": [
+                                {
+                                    "title": "수석",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-011",
+                                    "children": []
+                                },
+                                {
+                                    "title": "수석",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-012",
+                                    "children": []
+                                },
+                                {
+                                    "title": "수석",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-013",
+                                    "children": []
+                                },
+                                {
+                                    "title": "수석",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-014",
+                                    "children": []
+                                },
+                                {
+                                    "title": "수석",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-015",
+                                    "children": []
+                                },
+                                {
+                                    "title": "책임",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-016",
+                                    "children": []
+                                },
+                                {
+                                    "title": "책임",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-017",
+                                    "children": []
+                                },
+                                {
+                                    "title": "책임",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-018",
+                                    "children": []
+                                },
+                                {
+                                    "title": "선임",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-019",
+                                    "children": []
+                                },
+                                {
+                                    "title": "선임",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-020",
+                                    "children": []
+                                },
+                                {
+                                    "title": "선임",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-021",
+                                    "children": []
+                                },
+                                {
+                                    "title": "프로",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-022",
+                                    "children": []
+                                }
+                            ]
+                        },
+                        {
+                            "title": "구조/토목 조경",
+                            "memberColumns": 3,
+                            "employeeId": "CC-008",
+                            "children": [
+                                {
+                                    "title": "BIM 파트",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-029",
+                                    "children": [
+                                        {
+                                            "title": "파트 담당",
+                                            "memberColumns": 3,
+                                            "employeeId": "EMP-2018-001",
+                                            "children": []
+                                        }
+                                    ]
+                                },
+                                {
+                                    "title": "구조 파트",
+                                    "memberColumns": 1,
+                                    "employeeId": "CC-023",
+                                    "children": [
+                                        {
+                                            "title": "수석",
+                                            "memberColumns": 1,
+                                            "employeeId": "CC-024",
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "수석",
+                                            "memberColumns": 1,
+                                            "employeeId": "CC-025",
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "책임",
+                                            "memberColumns": 3,
+                                            "employeeId": "CC-026",
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "책임",
+                                            "memberColumns": 3,
+                                            "employeeId": "CC-027",
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "프로",
+                                            "memberColumns": 3,
+                                            "employeeId": "CC-028",
+                                            "children": []
+                                        }
+                                    ]
+                                },
+                                {
+                                    "title": "토목·조경파트",
+                                    "memberColumns": 3,
+                                    "employeeId": "CC-030",
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "title": "클레임센터",
+                    "memberColumns": 3,
+                    "employeeId": "CC-031",
+                    "children": [
+                        {
+                            "title": "본부장",
+                            "memberColumns": 3,
+                            "employeeId": "CC-010",
+                            "children": []
+                        },
+                        {
+                            "title": "실장",
+                            "memberColumns": 3,
+                            "employeeId": "CC-008",
+                            "children": []
+                        },
+                        {
+                            "title": "기술이사",
+                            "memberColumns": 3,
+                            "employeeId": "CC-032",
+                            "children": []
+                        },
+                        {
+                            "title": "기술이사",
+                            "memberColumns": 3,
+                            "employeeId": "CC-033",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "title": "공사비닷컴",
+                    "className": "dotted",
+                    "memberColumns": 3,
+                    "displayName": "공사비닷컴",
+                    "children": []
+                }
+            ]
+        }
+    ]
+}
   },
   "Viet QS": {
     title: "Viet QS Organization Chart",
@@ -962,9 +1218,9 @@ function employeeById(empNo) {
 }
 
 function orgNodeLabel(node) {
-  const emp = node.employeeId ? employeeById(node.employeeId) : null;
-  const title = node.title || (emp ? emp.position || emp.grade : "조직");
-  const name = emp ? displayName(emp) : "";
+  const emp = node?.employeeId ? employeeById(node.employeeId) : null;
+  const title = node?.title || (emp ? emp.position || emp.grade : "조직");
+  const name = emp ? displayName(emp) : (node?.displayName || "");
   return { emp, title, name };
 }
 
@@ -985,8 +1241,8 @@ function renderOrgPersonButton(node, extraClass = "") {
 }
 
 function collectOrgMembers(node, rows = []) {
-  if (node.employeeId) rows.push(node);
-  (node.children || []).forEach(child => collectOrgMembers(child, rows));
+  if (node?.employeeId) rows.push(node);
+  (node?.children || []).forEach(child => collectOrgMembers(child, rows));
   return rows;
 }
 
@@ -1084,20 +1340,41 @@ function renderActualOrgCard(node, depth = 0) {
 }
 
 function renderActualOrgTreeNode(node, depth = 0, path = "0") {
+  const { emp, title, name } = orgNodeLabel(node);
   const children = node.children || [];
-  const colCount = getOrgMemberColumnCount(node);
-  const hasOnlyLeafChildren = children.length && children.every(child => !(child.children || []).length);
-  const childrenClass = hasOnlyLeafChildren ? ` leaf-row cols-${colCount}` : "";
+  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
+  const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
+  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
+  const onclick = emp ? ` onclick="openMiniCardPopup('${emp.empNo}')"` : "";
+  const typeClass = node.className || "";
+  const layoutClass = getOrgPopupNodeClass(node, depth).replaceAll("org-popup-", "actual-view-");
+
+  const childItems = children.map((child, index) => ({ child, index }));
+  const branchChildren = childItems.filter(item => isOrgBranchNode(item.child, depth + 1));
+  const leafChildren = childItems.filter(item => !isOrgBranchNode(item.child, depth + 1));
+  const memberColumns = getOrgMemberColumnCount(node);
+  const branchColumns = Math.max(1, branchChildren.length);
 
   return `
-    <li class="actual-org-li depth-${depth} ${children.length ? "has-children" : ""}" data-path="${path}">
-      ${renderActualOrgCard(node, depth)}
-      ${children.length ? `
-        <ul class="actual-org-children${childrenClass}">
-          ${children.map((child, index) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
-        </ul>
+    <div class="actual-view-node-wrap ${layoutClass}" data-path="${path}">
+      <button class="actual-view-node ${typeClass} depth-${depth}"${onclick}>
+        <span>${displayTitle}</span>
+        <strong>${displayPerson}</strong>
+        <em>${meta}</em>
+      </button>
+
+      ${branchChildren.length ? `
+        <div class="actual-view-branch-children depth-${depth} count-${branchChildren.length}" style="grid-template-columns:repeat(${branchColumns}, max-content);">
+          ${branchChildren.map(({ child, index }) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
+        </div>
       ` : ""}
-    </li>
+
+      ${leafChildren.length ? `
+        <div class="actual-view-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 92px);">
+          ${leafChildren.map(({ child, index }) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
+        </div>
+      ` : ""}
+    </div>
   `;
 }
 
@@ -1107,10 +1384,8 @@ function renderActualOrgTree(root, company) {
       <div class="actual-org-fit ${company === "CON-COST" ? "concost" : "vietqs"}">
         ${company === "CON-COST" ? `<div class="actual-org-title-box">㈜컨코스트 조직도</div>` : ""}
         <div class="actual-org-scroll-note">편집창의 상위/하위 관계와 표시순서를 기준으로 자동 정렬됩니다.</div>
-        <div class="actual-org-tree">
-          <ul class="actual-org-root">
-            ${renderActualOrgTreeNode(root, 0, "0")}
-          </ul>
+        <div class="actual-view-tree ${company === "CON-COST" ? "concost-tree" : "vietqs-tree"}">
+          ${renderActualOrgTreeNode(root, 0, "0")}
         </div>
       </div>
     </div>
@@ -1143,7 +1418,7 @@ function renderOrgChart(company = currentOrgCompany) {
   target.innerHTML = `
     <div class="org-chart-header compact">
       <div>
-        <span>${data.date}</span>
+        ${data.date ? `<span>${data.date}</span>` : ""}
         <h3>${data.title}</h3>
       </div>
       <div class="org-chart-header-actions">
