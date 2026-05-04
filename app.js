@@ -3504,6 +3504,8 @@ function switchTopModule(moduleName) {
 }
 
 let currentMailFilter = "전체";
+let currentMailBox = "inbox";
+let reviewNotificationRead = false;
 
 function getChecklistReviewRequestRows() {
   const projectInput = document.getElementById("checklistProject");
@@ -3511,21 +3513,24 @@ function getChecklistReviewRequestRows() {
   return checklistRows
     .map((row, realIndex) => ({ row: normalizeChecklistRow(row), realIndex }))
     .filter(({ row }) => normalizeChecklistGroupName(row.group) === "제출자료 검토사항(PM)")
-    .map(({ row, realIndex }) => ({
-      id: `review-${realIndex}`,
-      type: "검토요청",
-      project: row.project || fallbackProject,
-      sender: row.creator || "PM",
-      title: `${row.project || fallbackProject} 검토요청_${String(row.item || "검토항목").replace(/\s+/g, " ").trim()}`,
-      item: row.item || "-",
-      method: row.method || "-",
-      trade: row.trade || "-",
-      no: row.no || "-",
-      targets: getChecklistTargets(row).join(", ") || "산출 담당자",
-      createdAt: row.createdAt || "-",
-      comment: row.comment || "",
-      rowIndex: realIndex
-    }));
+    .map(({ row, realIndex }) => {
+      const itemText = String(row.item || "검토항목").replace(/\s+/g, " ").trim();
+      return {
+        id: `review-${realIndex}`,
+        type: "검토요청",
+        project: row.project || fallbackProject,
+        sender: row.creator || "PM",
+        title: `${row.project || fallbackProject} 검토요청_${itemText}`,
+        item: row.item || "-",
+        method: row.method || "-",
+        trade: row.trade || "-",
+        no: row.no || "-",
+        targets: getChecklistTargets(row).join(", ") || "산출 담당자",
+        createdAt: row.createdAt || "2026-04-29 09:00",
+        comment: row.comment || "",
+        rowIndex: realIndex
+      };
+    });
 }
 
 function getMailItems() {
@@ -3566,6 +3571,39 @@ function getMailItems() {
   return [...reviewRequests, ...staticMails];
 }
 
+function setMailBox(boxName) {
+  currentMailBox = boxName || "inbox";
+  document.querySelectorAll("[data-mail-box]").forEach(btn => btn.classList.toggle("active", btn.dataset.mailBox === currentMailBox));
+  renderMailInbox(currentMailFilter || "전체");
+}
+
+function clearMailFilters() {
+  const search = document.getElementById("mailSearchInput");
+  const project = document.getElementById("mailProjectFilter");
+  const tag = document.getElementById("mailTagFilter");
+  if (search) search.value = "";
+  if (project) project.value = "전체";
+  if (tag) tag.value = "전체";
+  renderMailInbox("전체");
+}
+
+function getFilteredMailItems(filter = "전체") {
+  const searchValue = (document.getElementById("mailSearchInput")?.value || "").trim().toLowerCase();
+  const projectValue = document.getElementById("mailProjectFilter")?.value || "전체";
+  const tagValue = document.getElementById("mailTagFilter")?.value || "전체";
+
+  let items = getMailItems();
+  if (currentMailBox && currentMailBox !== "inbox") items = [];
+  if (filter !== "전체") items = items.filter(mail => mail.type === filter);
+  if (tagValue !== "전체") items = items.filter(mail => mail.type === tagValue);
+  if (projectValue !== "전체") items = items.filter(mail => (mail.project || "").includes(projectValue));
+  if (searchValue) {
+    items = items.filter(mail => [mail.sender, mail.title, mail.item, mail.method, mail.project, mail.type]
+      .join(" ").toLowerCase().includes(searchValue));
+  }
+  return items;
+}
+
 function renderMailInbox(filter = "전체") {
   currentMailFilter = filter;
   document.querySelectorAll(".mail-filter").forEach(btn => {
@@ -3574,30 +3612,41 @@ function renderMailInbox(filter = "전체") {
 
   const list = document.getElementById("mailInboxList");
   const badge = document.getElementById("mailCountBadge");
+  const sideCount = document.getElementById("mailInboxSideCount");
   if (!list) return;
 
-  const all = getMailItems();
-  const items = filter === "전체" ? all : all.filter(mail => mail.type === filter);
-  if (badge) badge.textContent = `${items.length}건`;
+  const inboxTotal = getMailItems().length;
+  if (sideCount) sideCount.textContent = inboxTotal;
+
+  const items = getFilteredMailItems(filter);
+  if (badge) badge.textContent = `이메일 1~${items.length}개 표시 / 총 ${items.length}개`;
 
   if (!items.length) {
-    list.innerHTML = `<div class="empty-mail-box">표시할 메일이 없습니다.</div>`;
+    list.innerHTML = `<tr><td colspan="5"><div class="empty-mail-box">표시할 메일이 없습니다.</div></td></tr>`;
     return;
   }
 
   list.innerHTML = items.map(mail => `
-    <article class="mail-item ${mail.type === "검토요청" ? "review-mail" : ""}" onclick="openMailDetail('${escapeJs(mail.id)}')">
-      <div class="mail-item-main">
-        <div class="mail-title-line">
-          <span class="mail-type-chip">${escapeHtml(mail.type)}</span>
+    <tr class="mail-row ${mail.type === "검토요청" ? "review-mail" : ""}" onclick="openMailDetail('${escapeJs(mail.id)}')">
+      <td class="mail-star-col">☆</td>
+      <td><strong>${escapeHtml(mail.sender)}</strong></td>
+      <td><span class="mail-type-chip ${mail.type === "검토요청" ? "review" : ""}">${escapeHtml(mail.type)}</span></td>
+      <td>
+        <div class="mail-subject-line">
           <strong>${escapeHtml(mail.title)}</strong>
+          <span>${escapeHtml(mail.method || mail.item || "")}</span>
         </div>
-        <div class="mail-meta-line">발신자: ${escapeHtml(mail.sender)} · 수신일시: ${escapeHtml(mail.createdAt)}</div>
-        <p>${escapeHtml(mail.method || mail.item || "")}</p>
-      </div>
-      <button class="btn btn-line mail-open-btn" type="button">열기</button>
-    </article>
+      </td>
+      <td class="mail-time-cell">${escapeHtml(formatMailTime(mail.createdAt))}</td>
+    </tr>
   `).join("");
+}
+
+function formatMailTime(value) {
+  const text = String(value || "");
+  if (!text) return "-";
+  const datePart = text.split(" ")[0];
+  return datePart.replace(/^2026-/, "").replace(/-/g, "/");
 }
 
 function openMailDetail(mailId) {
@@ -3611,9 +3660,9 @@ function openMailDetail(mailId) {
 }
 
 function openReviewNotificationPanel(focusRowIndex = null) {
-  const modal = document.getElementById("reviewNotificationModal");
+  const panel = document.getElementById("reviewNotificationPanel");
   const list = document.getElementById("reviewNotificationList");
-  if (!modal || !list) return;
+  if (!panel || !list) return;
 
   let requests = getChecklistReviewRequestRows();
   if (focusRowIndex !== null && focusRowIndex !== undefined) {
@@ -3621,36 +3670,36 @@ function openReviewNotificationPanel(focusRowIndex = null) {
     if (focused) requests = [focused, ...requests.filter(item => item.rowIndex !== focused.rowIndex)];
   }
 
-  list.innerHTML = requests.length ? requests.map(req => `
-    <article class="review-notification-item">
-      <div class="review-alert-head">
-        <span class="mail-type-chip">검토요청</span>
+  list.innerHTML = requests.length ? requests.slice(0, 6).map(req => `
+    <article class="review-popover-item" onclick="switchTopModule('mail'); renderMailInbox('검토요청'); closeReviewNotificationPanel();">
+      <div class="review-popover-title">
         <strong>${escapeHtml(req.title)}</strong>
+        <span>검토요청</span>
       </div>
-      <div class="review-alert-meta">발신자: ${escapeHtml(req.sender)} · 요청 대상: ${escapeHtml(req.targets)} · 작성일시: ${escapeHtml(req.createdAt)}</div>
-      <div class="review-alert-grid">
-        <div><span>프로젝트</span><b>${escapeHtml(req.project)}</b></div>
-        <div><span>공종</span><b>${escapeHtml(req.trade)}</b></div>
-        <div><span>일련번호</span><b>${escapeHtml(req.no)}</b></div>
-        <div><span>검토항목</span><b>${escapeHtml(req.item)}</b></div>
-        <div class="wide"><span>검토방법</span><b>${escapeHtml(req.method)}</b></div>
-        <div class="wide"><span>코멘트</span><b>${escapeHtml(req.comment || "-")}</b></div>
-      </div>
+      <p>${escapeHtml(req.method || req.item || "")}</p>
+      <small>${escapeHtml(req.createdAt)} · 발신자 ${escapeHtml(req.sender)}</small>
     </article>
   `).join("") : `<div class="empty-mail-box">도착한 검토 요청이 없습니다.</div>`;
 
-  modal.classList.add("active");
+  panel.classList.toggle("active");
 }
 
 function closeReviewNotificationPanel() {
-  document.getElementById("reviewNotificationModal")?.classList.remove("active");
+  document.getElementById("reviewNotificationPanel")?.classList.remove("active");
+}
+
+function markReviewNotificationsRead() {
+  reviewNotificationRead = true;
+  closeReviewNotificationPanel();
+  updateBellReviewCount();
 }
 
 function updateBellReviewCount() {
   const bell = document.querySelector(".bell");
   if (!bell) return;
-  const count = getChecklistReviewRequestRows().length;
+  const count = reviewNotificationRead ? 0 : getChecklistReviewRequestRows().length;
   bell.setAttribute("data-count", String(count));
+  bell.classList.toggle("has-count", count > 0);
   bell.title = `검토 요청 알림 ${count}건`;
 }
 
