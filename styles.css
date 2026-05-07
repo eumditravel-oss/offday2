@@ -5720,3 +5720,84 @@ body{
   border-top:1px solid #edf2f7;
   background:#fbfdff;
 }
+
+/* =========================================================
+   QC checklist v7: no horizontal scrollbar + column width rebalance
+   - 하단 횡스크롤 제거
+   - 코멘트 폭을 기존 10%에서 6%로 축소
+   - 줄인 4%를 검토항목/검토방법에 각각 2%씩 배분
+   ========================================================= */
+#workModule .excel-grid-wrap,
+.module-view#workModule .excel-grid-wrap,
+.excel-grid-wrap{
+  overflow-x:hidden !important;
+  overflow-y:visible !important;
+  max-width:100% !important;
+}
+
+#workModule .excel-grid,
+.module-view#workModule .excel-grid,
+.excel-grid{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  table-layout:fixed !important;
+}
+
+#workModule .excel-grid col.qc-col-select,
+.excel-grid col.qc-col-select{width:3% !important;}
+#workModule .excel-grid col.qc-col-trade,
+.excel-grid col.qc-col-trade{width:5% !important;}
+#workModule .excel-grid col.qc-col-no,
+.excel-grid col.qc-col-no{width:5% !important;}
+#workModule .excel-grid col.qc-col-item,
+.excel-grid col.qc-col-item{width:21.5% !important;}
+#workModule .excel-grid col.qc-col-method,
+.excel-grid col.qc-col-method{width:25.5% !important;}
+#workModule .excel-grid col.qc-col-target,
+.excel-grid col.qc-col-target{width:6% !important;}
+#workModule .excel-grid col.qc-col-check,
+.excel-grid col.qc-col-check{width:10% !important;}
+#workModule .excel-grid col.qc-col-comment,
+.excel-grid col.qc-col-comment{width:6% !important;}
+#workModule .excel-grid col.qc-col-attach,
+.excel-grid col.qc-col-attach{width:6% !important;}
+#workModule .excel-grid col.qc-col-history,
+.excel-grid col.qc-col-history{width:8% !important;}
+#workModule .excel-grid col.qc-col-manage,
+.excel-grid col.qc-col-manage{width:4% !important;}
+
+#workModule .excel-grid th,
+#workModule .excel-grid td,
+.module-view#workModule .excel-grid th,
+.module-view#workModule .excel-grid td,
+.excel-grid th,
+.excel-grid td{
+  min-width:0 !important;
+  max-width:none !important;
+  box-sizing:border-box !important;
+}
+
+#workModule .excel-grid .cell,
+.module-view#workModule .excel-grid .cell,
+.excel-grid .cell,
+#workModule .excel-editable-cell,
+.excel-editable-cell{
+  max-width:100% !important;
+  overflow-wrap:anywhere !important;
+  word-break:keep-all !important;
+}
+
+#workModule .excel-grid tbody tr:not(.group-row) td:nth-child(4),
+#workModule .excel-grid tbody tr:not(.group-row) td:nth-child(5),
+.module-view#workModule .excel-grid tbody tr:not(.group-row) td:nth-child(4),
+.module-view#workModule .excel-grid tbody tr:not(.group-row) td:nth-child(5){
+  padding-left:18px !important;
+  padding-right:18px !important;
+}
+
+#workModule .excel-grid tbody tr:not(.group-row) td:nth-child(8),
+.module-view#workModule .excel-grid tbody tr:not(.group-row) td:nth-child(8){
+  padding-left:10px !important;
+  padding-right:10px !important;
+}
