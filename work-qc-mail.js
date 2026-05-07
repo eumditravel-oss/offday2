@@ -13,7 +13,7 @@ const workPageMeta = {
 
 
 const checklistCategoryOptions = [
-  "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+  "프로젝트 초기(초기 내부 → 외부 제출용)",
   "QC팀 전달사항",
   "PM 전달사항",
   "제출자료 검토사항(PM→작업자)",
@@ -34,9 +34,9 @@ const collapsedChecklistGroups = new Set();
 let currentChecklistFocus = null;
 let openedChecklistTargetPicker = null;
 const checklistCategoryAliases = {
-  "프로젝트 수주시": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
-  "프로젝트 수주 시": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
-  "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+  "프로젝트 수주시": "프로젝트 초기(초기 내부 → 외부 제출용)",
+  "프로젝트 수주 시": "프로젝트 초기(초기 내부 → 외부 제출용)",
+  "프로젝트 초기(PM,작업자,발주처 송부용)": "프로젝트 초기(초기 내부 → 외부 제출용)",
 
   "QC팀 전달사항(유형 및 특이사항 관리)": "QC팀 전달사항",
   "자가검토 체크리스트(QC)": "QC팀 전달사항",
@@ -97,7 +97,7 @@ function getNextQuestionCategory(category) {
 
 let checklistRows = [
   {
-    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+    "group": "프로젝트 초기(초기 내부 → 외부 제출용)",
     "trade": "계약",
     "no": "001",
     "item": "프로젝트 업무 특성 파악\n(구조선수행, 입찰, 본실행,\n설계내역 등)",
@@ -112,7 +112,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+    "group": "프로젝트 초기(초기 내부 → 외부 제출용)",
     "trade": "접수자료",
     "no": "002",
     "item": "입찰 내역서, 산출기준서, 공사\n특기사항 접수 파악",
@@ -127,7 +127,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+    "group": "프로젝트 초기(초기 내부 → 외부 제출용)",
     "trade": "도면검토",
     "no": "003",
     "item": "도면 접수 여부 확인 (구조 / 건축 /\n토목)",
@@ -142,7 +142,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+    "group": "프로젝트 초기(초기 내부 → 외부 제출용)",
     "trade": "접수자료",
     "no": "004",
     "item": "내역서, 산출서, 기준서 접수 여부\n확인",
@@ -649,7 +649,7 @@ function getMailItems() {
       sender: "QC TEAM",
       title: `${projectName} 체크리스트 확인 요청`,
       createdAt: "2026-04-29 09:00",
-      item: "프로젝트 수주 시점 체크리스트",
+      item: "프로젝트 초기 체크리스트",
       method: "체크리스트 구분별 확인 필요",
       comment: ""
     },
@@ -833,7 +833,7 @@ function switchWorkPanel(panelId) {
 function getChecklistCreatorByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const creatorMap = {
-    "프로젝트 수주 시점(초기 내부 → 외부 제출용)": "QC TEAM",
+    "프로젝트 초기(초기 내부 → 외부 제출용)": "QC TEAM",
     "QC팀 전달사항(유형 및 특이사항 관리)": "QC TEAM",
     "작업 착수 전 확인 필요사항(PM)": "PM",
     "작업 진행 중 추가 전달사항(PM)": "PM",
@@ -847,7 +847,7 @@ function getChecklistCreatorByGroup(group) {
 function getChecklistTargetsByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const targetMap = {
-    "프로젝트 수주 시점(초기 내부 → 외부 제출용)": ["PM"],
+    "프로젝트 초기(초기 내부 → 외부 제출용)": ["PM"],
     "QC팀 전달사항": ["PM"],
     "PM 전달사항": ["산출 담당자"],
     "제출자료 검토사항(PM→작업자)": ["산출 담당자"],
