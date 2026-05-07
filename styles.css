@@ -5164,3 +5164,42 @@ body{
 .pm-delivery-card em.pending{background:#fff7ed;color:#d97706}
 @media(max-width:1280px){.pm-project-layout{grid-template-columns:1fr}.pm-project-side{position:static}.pm-overview-grid{grid-template-columns:repeat(2,1fr)}.pm-assignment-grid{grid-template-columns:1fr}.pm-delivery-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.pm-overview-grid{grid-template-columns:1fr}.pm-card-header{align-items:flex-start;flex-direction:column}.project-manage-head{align-items:flex-start}}
+
+
+/* 업무관리 > 프로젝트 질의응답 관리: 구분별 추가 및 엑셀형 셀 편집 */
+.group-add-btn{
+  background:#fff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.group-add-btn:hover{
+  background:#eff6ff;
+  border-color:#2563eb;
+}
+
+.excel-editable-cell{
+  min-height:34px;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid transparent;
+  white-space:pre-line;
+  line-height:1.5;
+  transition:.15s ease;
+}
+
+.excel-editable-cell:hover{
+  background:#f8fafc;
+}
+
+.excel-editable-cell:focus{
+  outline:none;
+  border-color:#2563eb;
+  background:#eff6ff;
+  box-shadow:0 0 0 2px rgba(37,99,235,.08);
+}
+
+.locked-row .excel-editable-cell{
+  cursor:not-allowed;
+  color:#64748b;
+}
