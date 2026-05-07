@@ -5203,3 +5203,41 @@ body{
   cursor:not-allowed;
   color:#64748b;
 }
+
+/* QC 체크 여부: 확인 / 해당 없음 버튼 */
+.done-check-stack{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  margin:3px 0;
+}
+
+.na-check-btn{
+  border:1px solid #dbe3ef;
+  background:#fff;
+  color:#475569;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.na-check-btn:hover{
+  border-color:#f59e0b;
+  color:#b45309;
+  background:#fff7ed;
+}
+
+.na-check-btn.active{
+  border-color:#f59e0b;
+  color:#b45309;
+  background:#fff7ed;
+}
+
+.na-check-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
