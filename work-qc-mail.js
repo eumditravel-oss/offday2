@@ -13,11 +13,11 @@ const workPageMeta = {
 
 
 const checklistCategoryOptions = [
-  "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+  "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
   "QC팀 전달사항",
   "PM 전달사항",
-  "제출자료 검토사항(PM)",
-  "최종자료 검토사항(QC)",
+  "제출자료 검토사항(PM→작업자)",
+  "최종자료 검토사항(QC→작업자)",
   "Z1. 질의사항(1차)",
   "Z2. 질의사항(2차)",
   "Z3. 질의사항(3차)",
@@ -32,8 +32,9 @@ let selectedChecklistCategoryFilter = "전체";
 let checklistCategoryPanelOpen = false;
 const collapsedChecklistGroups = new Set();
 const checklistCategoryAliases = {
-  "프로젝트 수주시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
-  "프로젝트 수주 시": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+  "프로젝트 수주시": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+  "프로젝트 수주 시": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
+  "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
 
   "QC팀 전달사항(유형 및 특이사항 관리)": "QC팀 전달사항",
   "자가검토 체크리스트(QC)": "QC팀 전달사항",
@@ -46,10 +47,12 @@ const checklistCategoryAliases = {
   "프로젝트 초기": "PM 전달사항",
   "기초 산출 담당자": "PM 전달사항",
 
-  "기초": "제출자료 검토사항(PM)",
-  "보": "제출자료 검토사항(PM)",
-  "슬라브": "제출자료 검토사항(PM)",
-  "옹벽": "제출자료 검토사항(PM)"
+  "제출자료 검토사항(PM)": "제출자료 검토사항(PM→작업자)",
+  "최종자료 검토사항(QC)": "최종자료 검토사항(QC→작업자)",
+  "기초": "제출자료 검토사항(PM→작업자)",
+  "보": "제출자료 검토사항(PM→작업자)",
+  "슬라브": "제출자료 검토사항(PM→작업자)",
+  "옹벽": "제출자료 검토사항(PM→작업자)"
 };
 
 const questionCategories = checklistCategoryOptions.filter(category => category.startsWith("Z") && category.includes("질의사항"));
@@ -92,7 +95,7 @@ function getNextQuestionCategory(category) {
 
 let checklistRows = [
   {
-    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
     "trade": "계약",
     "no": "001",
     "item": "프로젝트 업무 특성 파악\n(구조선수행, 입찰, 본실행,\n설계내역 등)",
@@ -107,7 +110,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
     "trade": "접수자료",
     "no": "002",
     "item": "입찰 내역서, 산출기준서, 공사\n특기사항 접수 파악",
@@ -122,7 +125,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
     "trade": "도면검토",
     "no": "003",
     "item": "도면 접수 여부 확인 (구조 / 건축 /\n토목)",
@@ -137,7 +140,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "프로젝트 수주 시점(PM,작업자,발주처 송부용)",
+    "group": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
     "trade": "접수자료",
     "no": "004",
     "item": "내역서, 산출서, 기준서 접수 여부\n확인",
@@ -379,7 +382,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "제출자료 검토사항(PM)",
+    "group": "제출자료 검토사항(PM→작업자)",
     "trade": "기초",
     "no": "014",
     "item": "버림두께 확인",
@@ -394,7 +397,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "제출자료 검토사항(PM)",
+    "group": "제출자료 검토사항(PM→작업자)",
     "trade": "보",
     "no": "016",
     "item": "각 층별 슬라브 두께별 공제 확인",
@@ -409,7 +412,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "제출자료 검토사항(PM)",
+    "group": "제출자료 검토사항(PM→작업자)",
     "trade": "슬라브",
     "no": "017",
     "item": "부호별 데크타입 오류 확인",
@@ -424,7 +427,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "제출자료 검토사항(PM)",
+    "group": "제출자료 검토사항(PM→작업자)",
     "trade": "옹벽",
     "no": "018",
     "item": "옹벽 상부 슬라브 또는 보 공제값\n오류 체크",
@@ -439,7 +442,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "제출자료 검토사항(PM)",
+    "group": "제출자료 검토사항(PM→작업자)",
     "trade": "보",
     "no": "022",
     "item": "B2G1 늑근 간격 150mm가 아닌\n300mm로 잘못 산출 됨",
@@ -454,7 +457,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "최종자료 검토사항(QC)",
+    "group": "최종자료 검토사항(QC→작업자)",
     "trade": "계수",
     "no": "023",
     "item": "유사 프로젝트 대비 콘크리트 계수\n확인",
@@ -470,7 +473,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "최종자료 검토사항(QC)",
+    "group": "최종자료 검토사항(QC→작업자)",
     "trade": "계수",
     "no": "024",
     "item": "유사프로젝트 거푸집 계수 검토",
@@ -486,7 +489,7 @@ let checklistRows = [
     "attachments": []
   },
   {
-    "group": "최종자료 검토사항(QC)",
+    "group": "최종자료 검토사항(QC→작업자)",
     "trade": "계수",
     "no": "025",
     "item": "유사 프로젝트 대비 철근 계수 검토",
@@ -613,7 +616,7 @@ function getChecklistReviewRequestRows() {
   const fallbackProject = projectInput?.value || "ㅇㅇ시설 신축공사";
   return checklistRows
     .map((row, realIndex) => ({ row: normalizeChecklistRow(row), realIndex }))
-    .filter(({ row }) => normalizeChecklistGroupName(row.group) === "제출자료 검토사항(PM)")
+    .filter(({ row }) => normalizeChecklistGroupName(row.group) === "제출자료 검토사항(PM→작업자)")
     .map(({ row, realIndex }) => {
       const itemText = String(row.item || "검토항목").replace(/\s+/g, " ").trim();
       return {
@@ -828,13 +831,13 @@ function switchWorkPanel(panelId) {
 function getChecklistCreatorByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const creatorMap = {
-    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": "QC TEAM",
+    "프로젝트 수주 시점(초기 내부 → 외부 제출용)": "QC TEAM",
     "QC팀 전달사항(유형 및 특이사항 관리)": "QC TEAM",
     "작업 착수 전 확인 필요사항(PM)": "PM",
     "작업 진행 중 추가 전달사항(PM)": "PM",
     "자가검토 체크리스트(QC)": "QC TEAM",
-    "제출자료 검토사항(PM)": "PM",
-    "최종자료 검토사항(QC)": "QC TEAM"
+    "제출자료 검토사항(PM→작업자)": "PM",
+    "최종자료 검토사항(QC→작업자)": "QC TEAM"
   };
   return creatorMap[normalized] || "경영지원";
 }
@@ -842,16 +845,16 @@ function getChecklistCreatorByGroup(group) {
 function getChecklistTargetsByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const targetMap = {
-    "프로젝트 수주 시점(PM,작업자,발주처 송부용)": ["PM"],
+    "프로젝트 수주 시점(초기 내부 → 외부 제출용)": ["PM"],
     "작업 착수 전 확인 필요사항(PM)": ["산출 담당자"],
     "자가검토 체크리스트(QC)": ["산출 담당자"],
-    "제출자료 검토사항(PM)": ["산출 담당자"]
+    "제출자료 검토사항(PM→작업자)": ["산출 담당자"]
   };
   return targetMap[normalized] || null;
 }
 
 function isObjectionAllowedRow(row) {
-  return normalizeChecklistGroupName(row?.group) === "제출자료 검토사항(PM)";
+  return normalizeChecklistGroupName(row?.group) === "제출자료 검토사항(PM→작업자)";
 }
 
 function ensureChecklistAttachments(row) {
@@ -1070,9 +1073,9 @@ function normalizeChecklistRow(row) {
 
   if (!Array.isArray(row.checks)) row.checks = [];
   row.targets.forEach(target => {
-    if (!row.checks.some(c => c.target === target)) row.checks.push({ target, done: false, checkedBy: "", checkedAt: "" });
+    if (!row.checks.some(c => c.target === target)) row.checks.push({ target, done: false, na: false, checkedBy: "", checkedAt: "" });
   });
-  row.checks = row.checks.filter(c => row.targets.includes(c.target));
+  row.checks = row.checks.filter(c => row.targets.includes(c.target)).map(c => ({ ...c, na: Boolean(c.na) }));
   row.owner = row.targets.join(", ");
   row.done = isChecklistRowDone(row);
   row.status = row.done ? "확인완료" : getChecklistDoneState(row);
@@ -1080,14 +1083,14 @@ function normalizeChecklistRow(row) {
 
 function getChecklistDoneState(row) {
   const checks = Array.isArray(row?.checks) ? row.checks : [];
-  if (!checks.length || checks.every(c => !c.done)) return "미확인";
-  if (checks.every(c => c.done)) return "확인완료";
+  if (!checks.length || checks.every(c => !c.done && !c.na)) return "미확인";
+  if (checks.every(c => c.done || c.na)) return "확인완료";
   return "부분완료";
 }
 
 function isChecklistRowDone(row) {
   const checks = Array.isArray(row?.checks) ? row.checks : [];
-  return checks.length > 0 && checks.every(c => c.done);
+  return checks.length > 0 && checks.every(c => c.done || c.na);
 }
 
 function getChecklistTargets(row) {
@@ -1297,12 +1300,22 @@ function renderChecklistGroupBand(group) {
 function renderChecklistTargetChecks(row, realIndex) {
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  const checks = row.checks.map((check, checkIndex) => `
-    <label class="done-check-wrap target-done-wrap" title="${escapeHtml(check.target)} 확인 체크">
-      <input type="checkbox" ${check.done ? "checked" : ""} ${locked ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
-      <span>${escapeHtml(check.target)} · ${check.done ? "확인완료" : "미확인"}</span>
-    </label>
-  `).join("");
+  const checks = row.checks.map((check, checkIndex) => {
+    const isDone = Boolean(check.done);
+    const isNa = Boolean(check.na);
+    const statusLabel = isNa ? "해당 없음" : (isDone ? "확인완료" : "미확인");
+    return `
+      <div class="done-check-stack" title="${escapeHtml(check.target)} 확인 또는 해당 없음 처리">
+        <label class="done-check-wrap target-done-wrap">
+          <input type="checkbox" ${isDone ? "checked" : ""} ${locked || isNa ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
+          <span>${escapeHtml(check.target)} · ${escapeHtml(statusLabel)}</span>
+        </label>
+        <button type="button" class="na-check-btn ${isNa ? "active" : ""}" ${locked ? "disabled" : ""} onclick="toggleChecklistNotApplicable(${realIndex}, ${checkIndex})">
+          해당 없음
+        </button>
+      </div>
+    `;
+  }).join("");
   return `${checks}${renderObjectionArea(row, realIndex)}`;
 }
 
@@ -1362,16 +1375,57 @@ function toggleChecklistDone(index, checkIndex, checked) {
   const worker = getCurrentWorkerName();
   const time = getChecklistTimeText();
   check.done = checked;
+  if (checked) check.na = false;
   check.checkedBy = checked ? worker : "";
   check.checkedAt = checked ? time : "";
   row.history = Array.isArray(row.history) ? row.history : [];
-  row.history = row.history.filter(h => !(h.action === "확인완료" && h.target === check.target));
+  row.history = row.history.filter(h => !(h.target === check.target && (h.action === "확인완료" || h.action === "해당 없음")));
   if (checked) {
     row.history.push({ action: "확인완료", target: check.target, worker, time });
     showToast(`${row.no}번 항목의 ${check.target} 확인완료가 기록되었습니다.`);
   } else {
     showToast(`${row.no}번 항목의 ${check.target} 확인완료 로그를 제거했습니다.`);
   }
+  row.done = isChecklistRowDone(row);
+  row.status = getChecklistDoneState(row);
+  renderChecklistGrid();
+}
+
+function toggleChecklistNotApplicable(index, checkIndex) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (isChecklistCategoryLocked(row.group)) {
+    showToast("송부 완료된 질의차수는 수정할 수 없습니다.");
+    renderChecklistGrid();
+    return;
+  }
+  const check = row.checks[checkIndex];
+  if (!check) return;
+
+  const worker = getCurrentWorkerName();
+  const time = getChecklistTimeText();
+  const nextNa = !check.na;
+
+  check.na = nextNa;
+  if (nextNa) {
+    check.done = false;
+    check.checkedBy = worker;
+    check.checkedAt = time;
+  } else {
+    check.checkedBy = "";
+    check.checkedAt = "";
+  }
+
+  row.history = Array.isArray(row.history) ? row.history : [];
+  row.history = row.history.filter(h => !(h.target === check.target && (h.action === "확인완료" || h.action === "해당 없음")));
+  if (nextNa) {
+    row.history.push({ action: "해당 없음", target: check.target, worker, time });
+    showToast(`${row.no}번 항목의 ${check.target} 해당 없음 처리가 기록되었습니다.`);
+  } else {
+    showToast(`${row.no}번 항목의 ${check.target} 해당 없음 처리를 해제했습니다.`);
+  }
+
   row.done = isChecklistRowDone(row);
   row.status = getChecklistDoneState(row);
   renderChecklistGrid();
