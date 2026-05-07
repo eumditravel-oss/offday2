@@ -5460,3 +5460,76 @@ body{
   color:#2563eb;
   font-size:11px;
 }
+
+/* QC checklist final cell centering override */
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(9),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11){
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6){
+  position:relative !important;
+  overflow:visible !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .done-check-stack,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(9) .attachment-cell,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10) .history-cell,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .manage-cell,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .row-actions,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .row-actions-center{
+  width:100% !important;
+  height:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 auto !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip-list,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(9) .attach-thumb-list{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  gap:5px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-select-btn,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .done-check-wrap,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .na-check-btn,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(9) .attach-count,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(9) .attach-inline-add,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10) .history-view-btn,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .btn{
+  margin-left:auto !important;
+  margin-right:auto !important;
+  align-self:center !important;
+  text-align:center !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .done-check-wrap{
+  justify-content:center !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .done-check-wrap span{
+  text-align:center !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(9) .inline-attachment-cell{
+  min-width:0 !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .row-actions .btn{
+  min-width:48px !important;
+  padding:7px 10px !important;
+}
