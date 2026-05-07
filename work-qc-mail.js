@@ -31,6 +31,8 @@ const checklistCategoryOptions = [
 let selectedChecklistCategoryFilter = "전체";
 let checklistCategoryPanelOpen = false;
 const collapsedChecklistGroups = new Set();
+let currentChecklistFocus = null;
+let openedChecklistTargetPicker = null;
 const checklistCategoryAliases = {
   "프로젝트 수주시": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
   "프로젝트 수주 시": "프로젝트 수주 시점(초기 내부 → 외부 제출용)",
@@ -846,9 +848,10 @@ function getChecklistTargetsByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const targetMap = {
     "프로젝트 수주 시점(초기 내부 → 외부 제출용)": ["PM"],
-    "작업 착수 전 확인 필요사항(PM)": ["산출 담당자"],
-    "자가검토 체크리스트(QC)": ["산출 담당자"],
-    "제출자료 검토사항(PM→작업자)": ["산출 담당자"]
+    "QC팀 전달사항": ["PM"],
+    "PM 전달사항": ["산출 담당자"],
+    "제출자료 검토사항(PM→작업자)": ["산출 담당자"],
+    "최종자료 검토사항(QC→작업자)": ["산출 담당자"]
   };
   return targetMap[normalized] || null;
 }
@@ -864,10 +867,16 @@ function ensureChecklistAttachments(row) {
 
 function renderChecklistAttachmentCell(row, realIndex) {
   ensureChecklistAttachments(row);
+  const locked = isChecklistCategoryLocked(row.group);
   const attachments = Array.isArray(row.attachments) ? row.attachments : [];
+  const inputId = `checklistInlineFile_${realIndex}`;
+  const addButton = `
+    <input id="${inputId}" class="inline-attach-input" type="file" accept="image/*" multiple onchange="addChecklistAttachments(${realIndex}, this.files); this.value='';" ${locked ? "disabled" : ""}>
+    <button type="button" class="attach-inline-add" ${locked ? "disabled" : ""} onclick="event.stopPropagation(); document.getElementById('${inputId}')?.click();">+ 첨부</button>
+  `;
 
   if (!attachments.length) {
-    return `<div class="attachment-cell readonly-attachment-cell"><div class="attach-count">첨부 없음</div></div>`;
+    return `<div class="attachment-cell readonly-attachment-cell inline-attachment-cell"><div class="attach-count">첨부 없음</div>${addButton}</div>`;
   }
 
   const thumbs = attachments.map((file, idx) => {
@@ -881,9 +890,10 @@ function renderChecklistAttachmentCell(row, realIndex) {
   }).join("");
 
   return `
-    <div class="attachment-cell readonly-attachment-cell">
+    <div class="attachment-cell readonly-attachment-cell inline-attachment-cell">
       <button type="button" class="attach-count-btn" onclick="openChecklistAttachmentGallery(${realIndex})">${attachments.length}개 첨부</button>
       <div class="attach-thumb-list">${thumbs}</div>
+      ${addButton}
     </div>
   `;
 }
@@ -1065,10 +1075,10 @@ function normalizeChecklistRow(row) {
   row.history.push({ action: "최초작성", worker: row.creator, time: row.createdAt });
 
   const groupTargets = getChecklistTargetsByGroup(row.group);
-  if (groupTargets) {
+  if (groupTargets && !row.manualTargets) {
     row.targets = [...groupTargets];
   } else if (!Array.isArray(row.targets) || !row.targets.length) {
-    row.targets = String(row.owner || "QC TEAM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
+    row.targets = groupTargets ? [...groupTargets] : String(row.owner || "QC TEAM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
   }
 
   if (!Array.isArray(row.checks)) row.checks = [];
@@ -1256,13 +1266,13 @@ function renderChecklistGrid() {
     return `${groupBand}
       <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
-        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="trade" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.trade)}</div></td>
-        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="no" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.no)}</div></td>
-        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="item" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.item)}</div></td>
-        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="method" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.method)}</div></td>
-        <td><div class="target-chip-list">${getChecklistTargets(row).map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div></td>
+        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="trade" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.trade)}</div></td>
+        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.no)}</div></td>
+        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="item" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.item)}</div></td>
+        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="method" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.method)}</div></td>
+        <td>${renderChecklistTargetCell(row, realIndex)}</td>
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
-        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="comment" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.comment)}</div></td>
+        <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="comment" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.comment)}</div></td>
         <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
         <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
         <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
@@ -1280,6 +1290,8 @@ function renderChecklistGroupBand(group) {
   const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === group).length;
   const controls = [];
 
+  controls.push(`<button class="btn btn-line group-mini-btn group-add-row-btn" ${locked ? "disabled" : ""} onclick="event.stopPropagation(); insertChecklistRowInGroup('${escapeJs(group)}')">+ 행 추가</button>`);
+
   if (group === firstCategoryName) {
     controls.push(`<button class="btn btn-line group-mini-btn" onclick="event.stopPropagation(); downloadFirstCategoryCsv();">발주처 송부용 엑셀 다운로드</button>`);
   }
@@ -1296,6 +1308,81 @@ function renderChecklistGroupBand(group) {
 
   return `<tr class="group-separator-row ${locked ? "group-locked" : ""} ${collapsed ? "group-collapsed" : ""}" onclick="toggleChecklistGroupCollapse('${escapeJs(group)}')"><td colspan="11"><div class="group-band-inner"><div class="group-band-title"><button type="button" class="group-toggle-btn" aria-label="구분 접기 펼치기"><span class="group-toggle-icon">⌄</span></button><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}<small>${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small></div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
 }
+
+
+function getChecklistTargetPool() {
+  return ["PM", "산출 담당자", "실장", "경영지원", "QC TEAM"];
+}
+
+function renderChecklistTargetCell(row, realIndex) {
+  normalizeChecklistRow(row);
+  const locked = isChecklistCategoryLocked(row.group);
+  const targets = getChecklistTargets(row);
+  const isOpen = openedChecklistTargetPicker === realIndex;
+  const pool = getChecklistTargetPool();
+  const picker = isOpen ? `
+    <div class="target-picker-panel" onclick="event.stopPropagation();">
+      <div class="target-picker-title">요청 대상 선택</div>
+      ${pool.map(target => `
+        <label class="target-picker-option">
+          <input type="checkbox" ${targets.includes(target) ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${realIndex}, '${escapeJs(target)}', this.checked)">
+          <span>${escapeHtml(target)}</span>
+        </label>
+      `).join("")}
+    </div>
+  ` : "";
+
+  return `
+    <div class="target-cell-wrap">
+      <div class="target-chip-list">${targets.map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div>
+      <button type="button" class="target-select-btn" ${locked ? "disabled" : ""} onclick="toggleChecklistTargetPicker(event, ${realIndex})">대상 선택</button>
+      ${picker}
+    </div>
+  `;
+}
+
+function toggleChecklistTargetPicker(event, index) {
+  event.stopPropagation();
+  openedChecklistTargetPicker = openedChecklistTargetPicker === index ? null : index;
+  renderChecklistGrid();
+}
+
+function setChecklistTargetSelected(index, target, checked) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (isChecklistCategoryLocked(row.group)) return;
+
+  const targets = new Set(row.targets || []);
+  if (checked) targets.add(target);
+  else targets.delete(target);
+
+  if (!targets.size) {
+    showToast("요청 대상은 최소 1명 이상 선택해야 합니다.");
+    renderChecklistGrid();
+    return;
+  }
+
+  row.manualTargets = true;
+  row.targets = Array.from(targets);
+  row.owner = row.targets.join(", ");
+  row.checks = row.targets.map(name => {
+    const old = row.checks?.find(check => check.target === name);
+    return old ? { ...old } : { target: name, done: false, na: false, checkedBy: "", checkedAt: "" };
+  });
+  row.history = Array.isArray(row.history) ? row.history : [];
+  row.history.push({ action: "요청대상 변경", worker: getCurrentWorkerName(), time: getChecklistTimeText() });
+  renderChecklistGrid();
+}
+
+document.addEventListener("click", event => {
+  if (!event.target.closest(".target-cell-wrap")) {
+    if (openedChecklistTargetPicker !== null) {
+      openedChecklistTargetPicker = null;
+      renderChecklistGrid();
+    }
+  }
+});
 
 function renderChecklistTargetChecks(row, realIndex) {
   normalizeChecklistRow(row);
@@ -1430,6 +1517,35 @@ function toggleChecklistNotApplicable(index, checkIndex) {
   row.status = getChecklistDoneState(row);
   renderChecklistGrid();
 }
+
+
+function setChecklistCellFocus(el) {
+  currentChecklistFocus = {
+    row: Number(el.dataset.row),
+    field: el.dataset.field,
+    group: checklistRows[Number(el.dataset.row)]?.group || selectedChecklistCategoryFilter || firstCategoryName
+  };
+}
+
+function focusChecklistCell(rowIndex, field = "trade") {
+  const target = document.querySelector(`.excel-editable-cell[data-row="${rowIndex}"][data-field="${field}"]`);
+  if (!target) return;
+  target.focus();
+  const range = document.createRange();
+  range.selectNodeContents(target);
+  range.collapse(false);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+document.addEventListener("keydown", event => {
+  if (event.ctrlKey && event.key === "F9") {
+    event.preventDefault();
+    const group = currentChecklistFocus?.group || (selectedChecklistCategoryFilter !== "전체" ? selectedChecklistCategoryFilter : firstCategoryName);
+    insertChecklistRowInGroup(group);
+  }
+});
 
 function updateChecklistCell(index, key, value) {
   if (!checklistRows[index]) return;
@@ -1674,6 +1790,7 @@ function saveChecklistModal() {
     method: document.getElementById("checklistModalMethod").value.trim(),
     owner: targets.join(", "),
     targets,
+    manualTargets: true,
     checks: targets.map(target => {
       const old = previous?.checks?.find(c => c.target === target);
       return old ? { ...old } : { target, done: false, checkedBy: "", checkedAt: "" };
@@ -1700,8 +1817,56 @@ function saveChecklistModal() {
   renderChecklistGrid();
 }
 
-function addChecklistRow() { openChecklistModal(); }
-function insertChecklistRowAfter(index) { openChecklistModal(index); }
+function makeBlankChecklistRow(group) {
+  const normalizedGroup = normalizeChecklistGroupName(group || selectedChecklistCategoryFilter || firstCategoryName);
+  const targets = getChecklistTargetsByGroup(normalizedGroup) || ["PM"];
+  const now = getChecklistTimeText();
+  const row = {
+    checked: false,
+    group: normalizedGroup,
+    trade: "",
+    no: nextChecklistNo(),
+    item: "",
+    method: "",
+    owner: targets.join(", "),
+    targets: [...targets],
+    checks: targets.map(target => ({ target, done: false, na: false, checkedBy: "", checkedAt: "" })),
+    creator: getChecklistCreatorByGroup(normalizedGroup),
+    createdAt: now,
+    comment: "",
+    attachments: [],
+    history: [{ action: "최초작성", worker: getChecklistCreatorByGroup(normalizedGroup), time: now }]
+  };
+  normalizeChecklistRow(row);
+  return row;
+}
+
+function insertChecklistRowInGroup(group = "") {
+  const normalizedGroup = normalizeChecklistGroupName(group || currentChecklistFocus?.group || selectedChecklistCategoryFilter || firstCategoryName);
+  if (isChecklistCategoryLocked(normalizedGroup)) {
+    showToast("송부 완료된 질의차수는 행을 추가할 수 없습니다.");
+    return;
+  }
+  const row = makeBlankChecklistRow(normalizedGroup);
+  const focusedIndex = Number(currentChecklistFocus?.row);
+  const insertAfterFocused = Number.isInteger(focusedIndex) && checklistRows[focusedIndex] && normalizeChecklistGroupName(checklistRows[focusedIndex].group) === normalizedGroup;
+  let insertAt = checklistRows.length;
+  if (insertAfterFocused) {
+    insertAt = focusedIndex + 1;
+  } else {
+    const sameGroupIndexes = checklistRows.map((item, index) => normalizeChecklistGroupName(item.group) === normalizedGroup ? index : -1).filter(index => index >= 0);
+    if (sameGroupIndexes.length) insertAt = Math.max(...sameGroupIndexes) + 1;
+  }
+  checklistRows.splice(insertAt, 0, row);
+  selectedChecklistCategoryFilter = selectedChecklistCategoryFilter === "전체" ? "전체" : normalizedGroup;
+  collapsedChecklistGroups.delete(normalizedGroup);
+  renderChecklistGrid();
+  requestAnimationFrame(() => focusChecklistCell(insertAt, "trade"));
+  showToast(`${normalizedGroup} 구분에 새 행을 추가했습니다.`);
+}
+
+function addChecklistRow() { insertChecklistRowInGroup(selectedChecklistCategoryFilter === "전체" ? firstCategoryName : selectedChecklistCategoryFilter); }
+function insertChecklistRowAfter(index) { insertChecklistRowInGroup(checklistRows[index]?.group || firstCategoryName); }
 function deleteChecklistRow(index) { 
   if (!checklistRows[index]) return;
   normalizeChecklistRow(checklistRows[index]);
