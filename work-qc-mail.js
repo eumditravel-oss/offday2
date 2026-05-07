@@ -1274,8 +1274,8 @@ function renderChecklistGrid() {
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
         <td><div class="cell excel-editable-cell" ${locked ? "" : "contenteditable=\"true\" tabindex=\"0\""} data-row="${realIndex}" data-field="comment" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.comment)}</div></td>
         <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
-        <td><div class="history-cell">${renderChecklistHistory(row)}</div></td>
-        <td><div class="row-actions"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
+        <td><div class="history-cell">${renderChecklistHistoryButton(row, realIndex)}</div></td>
+        <td class="manage-cell"><div class="row-actions row-actions-center"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`;
   }).join("");
   updateBellReviewCount();
@@ -1446,6 +1446,84 @@ function renderChecklistHistory(row) {
   return history.slice(-4).reverse().map(item => `
     <div class="history-line ${item.action === "최초작성" ? "created" : ""}"><strong>${escapeHtml(item.worker)}</strong><span>${escapeHtml(item.target ? item.action + "(" + item.target + ")" : item.action)} · ${escapeHtml(item.time)}</span></div>
   `).join("");
+}
+
+function renderChecklistHistoryButton(row, realIndex) {
+  normalizeChecklistRow(row);
+  const history = Array.isArray(row.history) ? row.history : [];
+  if (!history.length) return `<span class="history-empty">이력 없음</span>`;
+  return `
+    <button type="button" class="history-view-btn" onclick="openChecklistHistoryWindow(${realIndex})">
+      보기 <span>${history.length}</span>
+    </button>
+  `;
+}
+
+function openChecklistHistoryWindow(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  const history = Array.isArray(row.history) ? [...row.history].reverse() : [];
+  if (!history.length) {
+    showToast("처리 이력이 없습니다.");
+    return;
+  }
+
+  const title = `${row.no || ""} ${row.trade || ""} 처리 이력`.trim() || "처리 이력";
+  const popup = window.open("", "_blank", "width=820,height=720,resizable=yes,scrollbars=yes");
+  if (!popup) {
+    showToast("팝업 차단을 해제해주세요.");
+    return;
+  }
+
+  const rows = history.map((item, index) => `
+    <tr>
+      <td>${history.length - index}</td>
+      <td>${escapeHtml(item.action || "-")}</td>
+      <td>${escapeHtml(item.target || "-")}</td>
+      <td>${escapeHtml(item.worker || "-")}</td>
+      <td>${escapeHtml(item.time || "-")}</td>
+    </tr>
+  `).join("");
+
+  popup.document.open();
+  popup.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(title)}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;background:#f4f6fb;color:#111827;padding:24px}
+        .history-card{background:#fff;border:1px solid #dbe3ef;border-radius:20px;box-shadow:0 14px 44px rgba(15,23,42,.08);overflow:hidden}
+        .history-head{padding:18px 20px;border-bottom:1px solid #e5e7eb;background:#fbfdff}
+        .history-head h1{font-size:20px;letter-spacing:-.4px;margin-bottom:6px}
+        .history-head p{font-size:13px;color:#64748b;font-weight:800}
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:12px 14px;border-bottom:1px solid #edf2f7;text-align:left;font-size:13px;vertical-align:middle}
+        th{background:#f8fafc;color:#475569;font-weight:900}
+        td:first-child,th:first-child{width:64px;text-align:center;color:#64748b;font-weight:900}
+        tr:last-child td{border-bottom:0}
+      </style>
+    </head>
+    <body>
+      <section class="history-card">
+        <div class="history-head">
+          <h1>${escapeHtml(title)}</h1>
+          <p>구분: ${escapeHtml(row.group || "-")} / 검토항목: ${escapeHtml(row.item || "-")}</p>
+        </div>
+        <table>
+          <thead>
+            <tr><th>No</th><th>처리내용</th><th>대상</th><th>처리자</th><th>처리일시</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>
+    </body>
+    </html>
+  `);
+  popup.document.close();
 }
 
 function toggleChecklistDone(index, checkIndex, checked) {
