@@ -253,9 +253,7 @@ function renderOrgVisualNode(node, path = "0") {
   const children = node.children || [];
   const selected = path === selectedOrgNodePath ? "selected" : "";
   const typeClass = node.className || "";
-  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
-  const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
-  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
+  const { displayTitle, displayPerson, meta } = getOrgDisplayInfo(node, emp, title, name);
 
   return `
     <div class="org-v-node-wrap">
@@ -266,7 +264,7 @@ function renderOrgVisualNode(node, path = "0") {
         </div>
         <strong>${displayPerson}</strong>
         <em>${meta}</em>
-        ${emp ? `<button class="org-card-link" onclick="event.stopPropagation(); openMiniCardPopup('${emp.empNo}')">인사카드</button>` : ""}
+        ${emp && !isOrgDepartmentNode(node) ? `<button class="org-card-link" onclick="event.stopPropagation(); openMiniCardPopup('${emp.empNo}')">인사카드</button>` : ""}
       </div>
       ${children.length ? `
         <div class="org-v-children">
@@ -307,6 +305,7 @@ function updateOrgInspector() {
   const inspectorTitle = document.getElementById("orgInspectorTitle");
   const titleInput = document.getElementById("orgNodeTitleInput");
   const employeeSelect = document.getElementById("orgNodeEmployeeSelect");
+  const nodeTypeSelect = document.getElementById("orgNodeTypeSelect");
   const parentSelect = document.getElementById("orgNodeParentSelect");
   const classSelect = document.getElementById("orgNodeClassSelect");
   const memberColumnsSelect = document.getElementById("orgNodeMemberColumnsSelect");
@@ -321,7 +320,11 @@ function updateOrgInspector() {
   const { emp, title, name } = orgNodeLabel(node);
   if (inspectorTitle) inspectorTitle.textContent = name || title || "조직 노드";
   if (titleInput) titleInput.value = node.title || "";
-  if (employeeSelect) employeeSelect.innerHTML = renderOrgEmployeeOptions(node.employeeId || "");
+  if (nodeTypeSelect) nodeTypeSelect.value = isOrgDepartmentNode(node) ? "department" : "person";
+  if (employeeSelect) {
+    employeeSelect.innerHTML = renderOrgEmployeeOptions(isOrgDepartmentNode(node) ? "" : (node.employeeId || ""));
+    employeeSelect.disabled = isOrgDepartmentNode(node);
+  }
   if (parentSelect) {
     parentSelect.innerHTML = selectedOrgNodePath === "0"
       ? `<option value="">최상위 노드는 상위조직 변경 불가</option>`
@@ -335,7 +338,8 @@ function updateOrgInspector() {
       <strong>현재 선택 노드</strong>
       <span>회사: ${currentOrgEditorCompany}</span>
       <span>조직/직책: ${title || "-"}</span>
-      <span>연결 직원: ${emp ? `${displayName(emp)} (${emp.empNo})` : "미연결"}</span>
+      <span>노드 유형: ${isOrgDepartmentNode(node) ? "부서명" : "직원"}</span>
+      <span>연결 직원: ${emp && !isOrgDepartmentNode(node) ? `${displayName(emp)} (${emp.empNo})` : "미연결"}</span>
       <span>하위 노드: ${(node.children || []).length}개</span>
     `;
   }
@@ -359,10 +363,20 @@ function updateSelectedOrgNodeField(field, value) {
   const node = getOrgNodeByPath(selectedOrgNodePath);
   if (!node) return;
 
-  if (field === "employeeId" && !value) {
+  if (field === "nodeType") {
+    if (value === "department") {
+      node.nodeType = "department";
+      delete node.employeeId;
+      if (!node.displayName) node.displayName = node.title || "신규 부서";
+    } else {
+      delete node.nodeType;
+      delete node.displayName;
+    }
+  } else if (field === "employeeId" && !value) {
     delete node.employeeId;
   } else if (field === "title" && !value.trim()) {
     delete node.title;
+    if (isOrgDepartmentNode(node)) delete node.displayName;
   } else if (field === "className" && !value) {
     delete node.className;
   } else if (field === "memberColumns") {
@@ -370,6 +384,7 @@ function updateSelectedOrgNodeField(field, value) {
     node.memberColumns = Math.max(1, Math.min(3, Number.isFinite(nextColumns) ? nextColumns : 3));
   } else {
     node[field] = value;
+    if (field === "title" && isOrgDepartmentNode(node)) node.displayName = value;
   }
 
   renderOrgVisualEditor();
@@ -551,10 +566,35 @@ function getOrgPopupNodeClass(node, depth) {
   return `depth-${depth} org-popup-${slug || "node"}`;
 }
 
+
+function isOrgDepartmentNode(node) {
+  return String(node?.nodeType || node?.type || "").toLowerCase() === "department";
+}
+
+function getOrgDisplayInfo(node, emp, title, name) {
+  if (isOrgDepartmentNode(node)) {
+    const departmentName = node.displayName || node.title || "부서명";
+    return {
+      displayTitle: "부서명",
+      displayPerson: departmentName,
+      meta: "부서명"
+    };
+  }
+
+  return {
+    displayTitle: title || (emp ? emp.position || emp.grade : "조직"),
+    displayPerson: emp ? displayName(emp) : (name || "직원 미연결"),
+    meta: emp ? `${emp.company} · ${emp.dept}` : "조직 노드"
+  };
+}
+
 function isOrgBranchNode(node, depth = 0) {
   if (!node) return false;
 
+  if (isOrgDepartmentNode(node)) return true;
+
   const children = Array.isArray(node.children) ? node.children : [];
+  if (node.employeeId && children.length === 0) return false;
   const title = String(node.title || "");
   const structuralTitlePattern = /(본부|센터|파트|팀|T\/F|TF|QC|마감|구조|토목|조경|개발|클레임|공사비|Management|Director|Finish|Structure|Civil|Internal|Partition|Opening|External|Vertical|Horizon|Foundation)/i;
 
@@ -577,9 +617,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
   const selected = path === selectedOrgNodePath ? "selected" : "";
   const typeClass = node.className || "";
   const layoutClass = getOrgPopupNodeClass(node, depth);
-  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
-  const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
-  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
+  const { displayTitle, displayPerson, meta } = getOrgDisplayInfo(node, emp, title, name);
 
   const childItems = children.map((child, index) => ({ child, index }));
   const branchChildren = childItems.filter(item => isOrgBranchNode(item.child, depth + 1));
@@ -600,7 +638,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
         <strong>${displayPerson}</strong>
         <em>${meta}</em>
         <div class="popup-node-actions">
-          ${emp ? `<button onclick="event.stopPropagation(); opener.openMiniCardPopup('${emp.empNo}')">인사카드</button>` : `<button onclick="event.stopPropagation(); opener.selectOrgPopupNode('${path}')">속성편집</button>`}
+          ${emp && !isOrgDepartmentNode(node) ? `<button onclick="event.stopPropagation(); opener.openMiniCardPopup('${emp.empNo}')">인사카드</button>` : `<button onclick="event.stopPropagation(); opener.selectOrgPopupNode('${path}')">속성편집</button>`}
         </div>
       </div>
 
@@ -611,7 +649,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
       ` : ""}
 
       ${leafChildren.length ? `
-        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 150px);">
+        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 176px);">
           ${leafChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
         </div>
       ` : ""}
@@ -777,6 +815,7 @@ function buildOrgPopupHtml() {
         <h3>NODE INSPECTOR</h3>
         <div class="inspector-title" id="popupInspectorTitle">선택 노드 없음</div>
         <div class="field"><label>조직/직책명</label><input id="popupNodeTitleInput" oninput="opener.updateSelectedOrgNodeFieldFromPopup('title', this.value)" /></div>
+        <div class="field"><label>표기 타입</label><select id="popupNodeTypeSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('nodeType', this.value)"><option value="person">직원 연결</option><option value="department">부서명</option></select></div>
         <div class="field"><label>연결 직원</label><select id="popupNodeEmployeeSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('employeeId', this.value)"></select></div>
         <div class="field"><label>상위 조직 변경</label><select id="popupNodeParentSelect" onchange="opener.changeSelectedOrgParentFromPopup(this.value)"></select></div>
         <div class="field"><label>표시 타입</label><select id="popupNodeClassSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('className', this.value)"><option value="">일반</option><option value="primary">대표/최상위</option><option value="secondary">임원/상위</option><option value="dotted">외부/참조</option></select></div>
@@ -1072,6 +1111,7 @@ function updateOrgPopupInspector() {
   const inspectorTitle = doc.getElementById("popupInspectorTitle");
   const titleInput = doc.getElementById("popupNodeTitleInput");
   const employeeSelect = doc.getElementById("popupNodeEmployeeSelect");
+  const nodeTypeSelect = doc.getElementById("popupNodeTypeSelect");
   const parentSelect = doc.getElementById("popupNodeParentSelect");
   const classSelect = doc.getElementById("popupNodeClassSelect");
   const memberColumnsSelect = doc.getElementById("popupNodeMemberColumnsSelect");
@@ -1079,7 +1119,11 @@ function updateOrgPopupInspector() {
 
   if (inspectorTitle) inspectorTitle.textContent = name || title || "조직 노드";
   if (titleInput) titleInput.value = node.title || "";
-  if (employeeSelect) employeeSelect.innerHTML = renderOrgPopupEmployeeOptions(node.employeeId || "");
+  if (nodeTypeSelect) nodeTypeSelect.value = isOrgDepartmentNode(node) ? "department" : "person";
+  if (employeeSelect) {
+    employeeSelect.innerHTML = renderOrgPopupEmployeeOptions(isOrgDepartmentNode(node) ? "" : (node.employeeId || ""));
+    employeeSelect.disabled = isOrgDepartmentNode(node);
+  }
   if (parentSelect) {
     parentSelect.innerHTML = selectedOrgNodePath === "0"
       ? `<option value="">최상위 노드는 상위조직 변경 불가</option>`
@@ -1093,7 +1137,8 @@ function updateOrgPopupInspector() {
       <strong>현재 선택 노드</strong>
       <span>회사: ${currentOrgEditorCompany}</span>
       <span>조직/직책: ${title || "-"}</span>
-      <span>연결 직원: ${emp ? `${displayName(emp)} (${emp.empNo})` : "미연결"}</span>
+      <span>노드 유형: ${isOrgDepartmentNode(node) ? "부서명" : "직원"}</span>
+      <span>연결 직원: ${emp && !isOrgDepartmentNode(node) ? `${displayName(emp)} (${emp.empNo})` : "미연결"}</span>
       <span>하위 노드: ${(node.children || []).length}개</span>
       <span>하위 인원 배치: ${getOrgMemberColumnCount(node)}열</span>
       <span>경로: ${selectedOrgNodePath}</span>
