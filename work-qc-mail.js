@@ -69,7 +69,11 @@ const checklistCategoryTree = {
   },
   "QC팀 전달사항": {
     mids: ["구조팀", "마감팀", "토목팀"],
-    subs: { "구조팀": [], "마감팀": [], "토목팀": [] }
+    subs: {
+      "구조팀": [],
+      "마감팀": ["내부팀", "외부", "조적ㆍ창호"],
+      "토목팀": []
+    }
   },
   "PM 전달사항": {
     mids: ["구조", "마감", "토목"],
@@ -139,6 +143,11 @@ function inferChecklistSub(row, middle) {
     if (/수직|기둥|벽|옹벽/.test(text)) return "수직팀";
     if (/한국/.test(text)) return "한국";
     return "수평팀";
+  }
+  if (middle === "마감팀") {
+    if (/조적|창호/.test(text)) return "조적ㆍ창호";
+    if (/외부/.test(text)) return "외부";
+    return "내부팀";
   }
   if (middle === "마감") {
     if (/조적|창호/.test(text)) return "조적ㆍ창호";
@@ -704,6 +713,7191 @@ let checklistRows = [
       }
     ]
   }
+,
+
+  /* =========================================
+     QC팀 전달사항 · 마감팀 엑셀 변환 더미데이터
+     - 원본: 05. 수량산출 Check List_(컨코스트).xlsx
+     - 내부팀 시트 → 내부팀
+     - 외부팀 시트 → 외부
+     - 창호팀/조적팀 시트 → 조적ㆍ창호
+     ========================================= */
+  {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "레미콘",
+      "no": "QC-M001",
+      "item": "재료 할증 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "레미콘",
+      "no": "QC-M002",
+      "item": "CON`C 강도에 맞게 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "레미콘",
+      "no": "QC-M003",
+      "item": "높이를 곱하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "콘크리트타설",
+      "no": "QC-M004",
+      "item": "레미콘 미할증 수량과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "콘크리트타설",
+      "no": "QC-M005",
+      "item": "높이를 곱하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "와이어메쉬",
+      "no": "QC-M006",
+      "item": "해당재로가 설치되는지 도면을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "섬유보강재",
+      "no": "QC-M007",
+      "item": "해당재로가 설치되는지 도면을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "지수판",
+      "no": "QC-M008",
+      "item": "끊어치기 구간 및 지하층 이어치기 구간에 맞게 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "장비패드",
+      "no": "QC-M009",
+      "item": "사이즈별 수량확인을 하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "방수",
+      "no": "QC-M010",
+      "item": "방수계획도에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "방수",
+      "no": "QC-M011",
+      "item": "방수바탕면 정리 적용하였는가? (도막방수 & 복합방수)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "방수",
+      "no": "QC-M012",
+      "item": "석고보드 벽체 방수를 맞게 적용하였는가?(도막방수 & 시트방수)\n시멘트 액체방수, 침투성 방수 사용불가",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "방수",
+      "no": "QC-M013",
+      "item": "DA방수 적용을 \"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "코너 도막방수",
+      "no": "QC-M014",
+      "item": "바닥둘레 및 벽체 코너 길이로 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "드레인 주위 도막 방수",
+      "no": "QC-M015",
+      "item": "드레인 주위에 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "배수판(바닥,벽체)",
+      "no": "QC-M016",
+      "item": "배수판 규격 제대로 확인 하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "배수판(바닥,벽체)",
+      "no": "QC-M017",
+      "item": "배수판 무근콘크리트 충진을 \"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "방수보호재 or 보호모르타르",
+      "no": "QC-M018",
+      "item": "방수 수량과 동일하게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "방수모르타르바름",
+      "no": "QC-M019",
+      "item": "트렌치에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "신축줄눈[SAW CUT]",
+      "no": "QC-M020",
+      "item": "지하주차장 바닥에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "수밀코킹(실리콘)",
+      "no": "QC-M021",
+      "item": "ELEV 주위를 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "수밀코킹(실리콘)",
+      "no": "QC-M022",
+      "item": "이질재료의 접합부를 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "부자재",
+      "no": "QC-M023",
+      "item": "보호모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "타일",
+      "no": "QC-M024",
+      "item": "자재할증 3% 적용 확인 및 도면에 맞게 품명, 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "타일",
+      "no": "QC-M025",
+      "item": "단위세대일경우 타입별, 실별로 아이템을 구분하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "타일",
+      "no": "QC-M026",
+      "item": "타일 자재수량과 설치수량이 동일한가?(할증제외)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "바닥타일붙이기",
+      "no": "QC-M027",
+      "item": "도면에 맞게 품명, 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "바닥타일붙이기",
+      "no": "QC-M028",
+      "item": "단위세대일경우 실별로 설치를 구분하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "벽타일붙이기",
+      "no": "QC-M029",
+      "item": "도면에 맞게 품명, 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "벽타일붙이기",
+      "no": "QC-M030",
+      "item": "옹벽, 조적, 석고보드벽에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "코너비드",
+      "no": "QC-M031",
+      "item": "적용부위에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "부자재",
+      "no": "QC-M032",
+      "item": "타일설치 모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "모르타르바름(내벽)/(초벌)",
+      "no": "QC-M033",
+      "item": "화장실 천정속 조적벽면 초벌미장 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "모르타르바름(바닥)",
+      "no": "QC-M034",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "판넬히팅",
+      "no": "QC-M035",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M036",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M037",
+      "item": "방수하부를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M038",
+      "item": "EPS/TPS 등 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "조면처리",
+      "no": "QC-M039",
+      "item": "램프바닥에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "ELEV주위 모르타르 충전",
+      "no": "QC-M040",
+      "item": "ELEV 주위를 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "모르타르바름(벽)",
+      "no": "QC-M041",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "모르타르바름(벽)",
+      "no": "QC-M042",
+      "item": "높이별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M043",
+      "item": "부위별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M044",
+      "item": "높이별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M045",
+      "item": "방수하부를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "부자재",
+      "no": "QC-M046",
+      "item": "바닥 및 벽체 모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "경량철골천장틀",
+      "no": "QC-M047",
+      "item": "달대 높이 별 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "경량철골천장틀",
+      "no": "QC-M048",
+      "item": "달대 2M 이상 시 보강틀을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "경량철골천장틀",
+      "no": "QC-M049",
+      "item": "천정재료 산출시 \"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "경량철골천장틀",
+      "no": "QC-M050",
+      "item": "천정틀 포함하는 아이템을 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "알루미늄시트",
+      "no": "QC-M051",
+      "item": "평판과 곡판을 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "알루미늄시트",
+      "no": "QC-M052",
+      "item": "기본적인틀 이외 추가적인 틀을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "캐노피",
+      "no": "QC-M053",
+      "item": "규격 및 단위 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "사다리",
+      "no": "QC-M054",
+      "item": "도면에 맞게 규격 적용하였는가? (잡상세도 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "사다리",
+      "no": "QC-M055",
+      "item": "ELEV PIT에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "사다리",
+      "no": "QC-M056",
+      "item": "사다리에 안전케이지 포함 여부를 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "핸드레일",
+      "no": "QC-M057",
+      "item": "도면에 맞게 규격 적용하였는가? (상세도 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "커텐박스 및 조명박스",
+      "no": "QC-M058",
+      "item": "도면에 맞게 규격 적용하였는가? (천정평면도 및 상세도 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "장애인 관련 아이템",
+      "no": "QC-M059",
+      "item": "장애인설치계획도를 확인하여 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "코너비드",
+      "no": "QC-M060",
+      "item": "부위에 맞게 각종 비드를 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "코너비드",
+      "no": "QC-M061",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "앵글코너가드/장비패드",
+      "no": "QC-M062",
+      "item": "상세도를 확인하여 적용부위에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "집수정뚜껑",
+      "no": "QC-M063",
+      "item": "사이즈별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "집수정뚜껑",
+      "no": "QC-M064",
+      "item": "도면에 표시된 수량과 산출수량이 동일한가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "집수정뚜껑",
+      "no": "QC-M065",
+      "item": "강재 집수정을 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "AL 몰딩",
+      "no": "QC-M066",
+      "item": "누락없이 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "PD 칸막이",
+      "no": "QC-M067",
+      "item": "재료를 확인하여 산출하였는가?\n(철재 : 내부팀, 조적 : 조적팀)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "엘리베이터 후크",
+      "no": "QC-M068",
+      "item": "엘리베이터 수량과 동일하게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "천장점검구",
+      "no": "QC-M069",
+      "item": "도면에 표시가 되어있는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "천장점검구",
+      "no": "QC-M070",
+      "item": "사이즈별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "트렌치",
+      "no": "QC-M071",
+      "item": "도면 및 위치에 맞게 종류별로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "단열재",
+      "no": "QC-M072",
+      "item": "형별성능관계내역 및 단열계획도에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "단열재",
+      "no": "QC-M073",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "단열재",
+      "no": "QC-M074",
+      "item": "보측면 누락없이 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "단열재",
+      "no": "QC-M075",
+      "item": "아이템을 보기와 같이 정리하였는가?\n규격: (적용부위), (단열재 재질) (단열재 두께)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "석고판못붙임",
+      "no": "QC-M076",
+      "item": "자재와 수량 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "텍스 붙임",
+      "no": "QC-M077",
+      "item": "자재와 수량 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "도배바름(벽지)",
+      "no": "QC-M078",
+      "item": "기준서에 맞게 도배면 퍼티 관련 산출하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "도배바름(벽지)",
+      "no": "QC-M079",
+      "item": "타입별, 벽지 종류별, 실별 구분하여 산출하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "마루",
+      "no": "QC-M080",
+      "item": "타입별, 자재 종류별 구분 산출하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "마루",
+      "no": "QC-M081",
+      "item": "주방가구 하부 바닥면적 공제하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "재료분리대\n(현관디딤판)",
+      "no": "QC-M082",
+      "item": "현관디딤판과 온돌마루 경계부위에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "악세스후로아",
+      "no": "QC-M083",
+      "item": "자재포함으로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "OA플로어",
+      "no": "QC-M084",
+      "item": "자재를 분리하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "OA플로어",
+      "no": "QC-M085",
+      "item": "자재를 \"00000 / OA플로어\"으로 구분하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "계단논슬립",
+      "no": "QC-M086",
+      "item": "석재 이외의 재료일경우 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "페인트",
+      "no": "QC-M087",
+      "item": "부위에 맞게 규격 적용되었는가? (내부,내천정,외부,외천정 등)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "페인트",
+      "no": "QC-M088",
+      "item": "바탕면에 맞게 적용하였는가? (석고보드면, CONC,몰탈면)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "페인트",
+      "no": "QC-M089",
+      "item": "도장 횟수를 확인하였는가? (재료마감표 NOTE란 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "페인트",
+      "no": "QC-M090",
+      "item": "페인트를 도면에 맞게 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "분진방지페인트",
+      "no": "QC-M091",
+      "item": "악세스후로아 하부에 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "에폭시코팅, 라이닝, 페인트",
+      "no": "QC-M092",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "에폭시코팅, 라이닝, 페인트",
+      "no": "QC-M093",
+      "item": "주차통로구간, 주차구획구간에 대한 마감이 구분되어있는지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "주차장 마킹관련",
+      "no": "QC-M094",
+      "item": "주차마크 관련 주차계획도에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "그래픽 공사",
+      "no": "QC-M095",
+      "item": "색채계획도면 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "주방가구 하부 페인트",
+      "no": "QC-M096",
+      "item": "주방가구 하부 마루 공제부위에 적용하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "화강석붙임(바닥)",
+      "no": "QC-M097",
+      "item": "외부 지상출입구 바닥 및 외부계단 누락없이 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "화강석붙임(바닥)",
+      "no": "QC-M098",
+      "item": "바닥 모르타르 두께를 확인하며 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "디딤판",
+      "no": "QC-M099",
+      "item": "계단의 경우 디딤판을 M로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "챌판",
+      "no": "QC-M100",
+      "item": "계단의 경우 챌판을 M2로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "화강석붙임(벽)",
+      "no": "QC-M101",
+      "item": "(건식/앵커) or (건식/TRUSS) 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "화강석붙임(벽)",
+      "no": "QC-M102",
+      "item": "이격거리 W:200 이상일 경우 (건식/TRUSS)로 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "화강석붙임(벽)",
+      "no": "QC-M103",
+      "item": "내/외부 창문주위 창대석 및 마구리 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "세면대",
+      "no": "QC-M104",
+      "item": "WIDE별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "세면대",
+      "no": "QC-M105",
+      "item": "세면대 하부에 수납장이 있을경우 별도로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "부자재",
+      "no": "QC-M106",
+      "item": "바닥 및 벽체 모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "부자재",
+      "no": "QC-M107",
+      "item": "디딤판 등 M로 산출하는 아이템 산정시 WIDE를 곱하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "카스토퍼 및 코너가드",
+      "no": "QC-M108",
+      "item": "도면에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "엘리베이터 및 에스컬레이터",
+      "no": "QC-M109",
+      "item": "도면에 해당항목이 있다면 적용하였는가? (산출 해야합니다.)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "기계식주차시스템",
+      "no": "QC-M110",
+      "item": "도면에 해당항목이 있다면 적용하였는가? (산출 해야합니다.)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "차수판",
+      "no": "QC-M111",
+      "item": "도면에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "가구",
+      "no": "QC-M112",
+      "item": "상세도면에 맞게 규격 적용하였는가? 또한 수량이 맞는지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "화장대 상판",
+      "no": "QC-M113",
+      "item": "상판 분리하여 산출하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "주방가구 상판",
+      "no": "QC-M114",
+      "item": "상판 분리하여 산출하였는가? (단위세대)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "내부팀",
+      "trade": "가전",
+      "no": "QC-M115",
+      "item": "쿡탑, 후드 등 기본적인 산출 아이템 확인.",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 내부팀"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "강관쌍줄비계 or 시스템비계",
+      "no": "QC-M116",
+      "item": "건물의 외벽 및 구조체에서 0.9m 떨어진 외주길이에 건물높이+1.0M 까지의 외부면적으로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "강관쌍줄비계 or 시스템비계",
+      "no": "QC-M117",
+      "item": "저층부 비계산출시 높이를 흙에 뭍히는 구간까지 추가하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "강관쌍줄비계 or 시스템비계",
+      "no": "QC-M118",
+      "item": "골조용과 마감용 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "강관쌍줄비계 or 시스템비계",
+      "no": "QC-M119",
+      "item": "지하층 OPEN컷 구간 비계를 산출하였는가? 합벽거푸집 구간은 제외하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "강관쌍줄비계 or 시스템비계",
+      "no": "QC-M120",
+      "item": "갱폼 구간 제외하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "강관쌍줄비계 or 시스템비계",
+      "no": "QC-M121",
+      "item": "내부 OPEN부 높이 8M 이상인 구간 비계를 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "먹메김",
+      "no": "QC-M122",
+      "item": "연면적과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "CON'C보양",
+      "no": "QC-M123",
+      "item": "연면적+건축면적과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "타일 및 석재보양",
+      "no": "QC-M124",
+      "item": "석재 및 타일 바닥부분 수량과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "건축물 현장정리",
+      "no": "QC-M125",
+      "item": "연면적과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "면적당 규준틀",
+      "no": "QC-M126",
+      "item": "건축면적과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "레미콘",
+      "no": "QC-M127",
+      "item": "재료 할증 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "레미콘",
+      "no": "QC-M128",
+      "item": "CON`C 강도에 맞게 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "레미콘",
+      "no": "QC-M129",
+      "item": "높이를 곱하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "콘크리트타설",
+      "no": "QC-M130",
+      "item": "레미콘 미할증 수량과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "콘크리트타설",
+      "no": "QC-M131",
+      "item": "높이를 곱하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "와이어메쉬",
+      "no": "QC-M132",
+      "item": "해당재로가 설치되는지 도면을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "섬유보강재",
+      "no": "QC-M133",
+      "item": "해당재로가 설치되는지 도면을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "장비패드",
+      "no": "QC-M134",
+      "item": "사이즈별 수량확인을 하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "시멘트벽돌 & 미장벽돌",
+      "no": "QC-M135",
+      "item": "재료 할증 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "0.5B or 1.0B 시멘트벽돌쌓기",
+      "no": "QC-M136",
+      "item": "길이값과 높이값이 제대로 적용되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "0.5B or 1.0B 시멘트벽돌쌓기",
+      "no": "QC-M137",
+      "item": "옥상 PD부위 상세도면을 확인하여 산출을 하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "0.5B or 1.0B 시멘트벽돌쌓기",
+      "no": "QC-M138",
+      "item": "피로티, 지하주차장 상부 슬라스 단차 등을 도면에서 확인하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "벽돌 운반",
+      "no": "QC-M139",
+      "item": "벽돌쌓기 합계수량과 동일한가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "각종인방",
+      "no": "QC-M140",
+      "item": "규격에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M141",
+      "item": "방수계획도에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M142",
+      "item": "방수바탕면 정리 적용하였는가? (도막방수 & 복합방수)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M143",
+      "item": "노출형인지 비노출형인지 구분하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M144",
+      "item": "파라펫 방수설치 높이를 도면에서 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M145",
+      "item": "지하주차장 상부 슬라브 방수 산출시 단차구간을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M146",
+      "item": "지하주차장 상부 슬라브 방수 산출시 외곽둘레로 방수내림을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수",
+      "no": "QC-M147",
+      "item": "지하주차장 상부 슬라브 방수 산출시 각 동별로 벽체 방수를 누락없이 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "드레인 주위 도막 방수",
+      "no": "QC-M148",
+      "item": "드레인 주위에 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수보호재 or 보호모르타르",
+      "no": "QC-M149",
+      "item": "방수 수량과 동일하게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수보호재 or 보호모르타르",
+      "no": "QC-M150",
+      "item": "방수보호재인지 보호몰탈인지 도면에서 확인하고 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "방수모르타르바름",
+      "no": "QC-M151",
+      "item": "트렌치에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "신축줄눈 and\nSAW CUT",
+      "no": "QC-M152",
+      "item": "무근콘크리트가 설치되는 옥상에 산출하였는가?\n(노출형 방수 미산출)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "신축줄눈 and\nSAW CUT",
+      "no": "QC-M153",
+      "item": "설치간격은 상세도면을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "수밀코킹(실리콘)",
+      "no": "QC-M154",
+      "item": "파라펫 코킹이 설치되는지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "부자재",
+      "no": "QC-M155",
+      "item": "보호모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "모르타르바름(바닥)",
+      "no": "QC-M156",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M157",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M158",
+      "item": "무근콘크리트가 최종마감일경우 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M159",
+      "item": "지하주차장 상부 슬라브 무근콘크리트 산출시 제외하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M160",
+      "item": "방수하부를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "쇠흙손마감/기계휘니셔",
+      "no": "QC-M161",
+      "item": "EPS/TPS 등 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "조면처리",
+      "no": "QC-M162",
+      "item": "램프바닥에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "모르타르바름(바닥)",
+      "no": "QC-M163",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "모르타르바름(바닥)",
+      "no": "QC-M164",
+      "item": "높이별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M165",
+      "item": "부위별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M166",
+      "item": "높이별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M167",
+      "item": "방수하부를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "콘크리트면처리\n(마감미장)",
+      "no": "QC-M168",
+      "item": "외벽이 도장이 경우 창호주위에 추가로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "부자재",
+      "no": "QC-M169",
+      "item": "바닥 및 벽체 모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "경량철골천장틀",
+      "no": "QC-M170",
+      "item": "달대 높이 별 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "경량철골천장틀",
+      "no": "QC-M171",
+      "item": "달대 2M 이상 시 보강틀을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "경량철골천장틀",
+      "no": "QC-M172",
+      "item": "천정재료 산출시 \"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "경량철골천장틀",
+      "no": "QC-M173",
+      "item": "천정틀 포함하는 아이템을 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "알루미늄시트",
+      "no": "QC-M174",
+      "item": "평판과 곡판을 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "알루미늄시트",
+      "no": "QC-M175",
+      "item": "기본적인틀 이외 추가적인 틀을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "캐노피",
+      "no": "QC-M176",
+      "item": "규격 및 단위 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "사다리",
+      "no": "QC-M177",
+      "item": "도면에 맞게 규격 적용하였는가? (잡상세도 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "사다리",
+      "no": "QC-M178",
+      "item": "옥탑지붕에 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "사다리",
+      "no": "QC-M179",
+      "item": "사다리에 안전케이지 포함 여부를 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "핸드레일",
+      "no": "QC-M180",
+      "item": "도면에 맞게 규격 적용하였는가? (상세도 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "커텐박스 및 조명박스",
+      "no": "QC-M181",
+      "item": "도면에 맞게 규격 적용하였는가? (천정평면도 및 상세도 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "장애인 관련 아이템",
+      "no": "QC-M182",
+      "item": "장애인설치계획도를 확인하여 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "코너비드",
+      "no": "QC-M183",
+      "item": "부위에 맞게 각종 비드를 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "코너비드",
+      "no": "QC-M184",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "앵글코너가드/장비패드",
+      "no": "QC-M185",
+      "item": "상세도를 확인하여 적용부위에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "AL 몰딩",
+      "no": "QC-M186",
+      "item": "누락없이 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "천장점검구",
+      "no": "QC-M187",
+      "item": "도면에 표시가 되어있는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "천장점검구",
+      "no": "QC-M188",
+      "item": "사이즈별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "트렌치",
+      "no": "QC-M189",
+      "item": "도면 및 위치에 맞게 종류별로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "판넬설치",
+      "no": "QC-M190",
+      "item": "자재포함하여 종류별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "판넬설치",
+      "no": "QC-M191",
+      "item": "판넬공사에 설치되는 후레싱을 부위별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "판넬설치",
+      "no": "QC-M192",
+      "item": "지붕형태에 따른 후레싱은 \"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "익스펜션조인트",
+      "no": "QC-M193",
+      "item": "상세도 및 각종 도면을 확인하여 부위별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "파라펫링",
+      "no": "QC-M194",
+      "item": "설치간격을 상세도에서 확인하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "단열재",
+      "no": "QC-M195",
+      "item": "형별성능관계내역 및 단열계획도에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "단열재",
+      "no": "QC-M196",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "단열재",
+      "no": "QC-M197",
+      "item": "보측면 누락없이 산출되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "단열재",
+      "no": "QC-M198",
+      "item": "아이템을 보기와 같이 정리하였는가?\n규격: (적용부위), (단열재 재질) (단열재 두께)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "페인트",
+      "no": "QC-M199",
+      "item": "부위에 맞게 규격 적용되었는가? (내부,내천정,외부,외천정 등)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "페인트",
+      "no": "QC-M200",
+      "item": "바탕면에 맞게 적용하였는가? (석고보드면, CONC,몰탈면)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "페인트",
+      "no": "QC-M201",
+      "item": "도장 횟수를 확인하였는가? (재료마감표 NOTE란 확인)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "페인트",
+      "no": "QC-M202",
+      "item": "페인트를 도면에 맞게 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "에폭시코팅, 라이닝, 페인트",
+      "no": "QC-M203",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "층간조인트 탄성페인트",
+      "no": "QC-M204",
+      "item": "아파트일경우 페인트 설치구간에 둘레길이로 층별로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "석재뿜칠",
+      "no": "QC-M205",
+      "item": "설치위치별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "화강석붙임(바닥)",
+      "no": "QC-M206",
+      "item": "외부 지상출입구 바닥 및 외부계단 누락없이 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "화강석붙임(바닥)",
+      "no": "QC-M207",
+      "item": "바닥 모르타르 두께를 확인하며 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "디딤판",
+      "no": "QC-M208",
+      "item": "계단의 경우 디딤판을 M로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "챌판",
+      "no": "QC-M209",
+      "item": "계단의 경우 챌판을 M2로 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "화강석붙임(벽)",
+      "no": "QC-M210",
+      "item": "(건식/앵커) or (건식/TRUSS) 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "화강석붙임(벽)",
+      "no": "QC-M211",
+      "item": "이격거리 W:200 이상일 경우 (건식/TRUSS)로 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "화강석붙임(벽)",
+      "no": "QC-M212",
+      "item": "내/외부 창문주위 창대석 및 마구리 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "옥외 송수관 마감",
+      "no": "QC-M213",
+      "item": "잡상세도 확인하여 누락없이 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "국기계양대",
+      "no": "QC-M214",
+      "item": "국기계양대에 설치되는 석재는 포함으로 산출하였는가?(산출 X)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "부자재",
+      "no": "QC-M215",
+      "item": "바닥 및 벽체 모르타르 두께별로 부자재를 변경하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "부자재",
+      "no": "QC-M216",
+      "item": "디딤판 등 M로 산출하는 아이템 산정시 WIDE를 곱하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "루프드레인",
+      "no": "QC-M217",
+      "item": "우수계획도를 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "루프드레인",
+      "no": "QC-M218",
+      "item": "사이포닉시스템은 산출제외하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "루프드레인",
+      "no": "QC-M219",
+      "item": "수직형, L형인지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "선홈통",
+      "no": "QC-M220",
+      "item": "높이에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "외부",
+      "trade": "상자홈통, 빗물받이블럭",
+      "no": "QC-M221",
+      "item": "루프드레인(L형) 개소와 동일한가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 외부"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "수밀코킹(실리콘)",
+      "no": "QC-M222",
+      "item": "창호주위를 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "수밀코킹(실리콘)",
+      "no": "QC-M223",
+      "item": "벽지가 설치되는 부위에는 제외 하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "접합코킹",
+      "no": "QC-M224",
+      "item": "유리와 유리가 만나는 부위(프레임이 없는경우)에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "방화코킹",
+      "no": "QC-M225",
+      "item": "방화유리 설치구간에 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창문틀 주위 충전\n(몰탈 OR 발포)",
+      "no": "QC-M226",
+      "item": "벽체 종류별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창문틀 주위 충전\n(몰탈 OR 발포)",
+      "no": "QC-M227",
+      "item": "창호 종류별로 산출기준을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M228",
+      "item": "CAD작업도면과 동일하게 수량을 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M229",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M230",
+      "item": "하드웨어는 일람표에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M231",
+      "item": "커튼월 수량 입력시 수량 확인 하였는가?(층별입력 X)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M232",
+      "item": "단위세대 창호 산출시 문선 및 람마 포함여부 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M233",
+      "item": "창호 설치 위치를 명기하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창호",
+      "no": "QC-M234",
+      "item": "셔터일람표가 없지만 평면도를 보고 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "층간방화구획",
+      "no": "QC-M235",
+      "item": "산출 적용구간 확인하였는가? (누락주의)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "방충망",
+      "no": "QC-M236",
+      "item": "창호 종류별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "방충망",
+      "no": "QC-M237",
+      "item": "재질별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "방충망",
+      "no": "QC-M238",
+      "item": "프로젝트 창호 방충방을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "배연창",
+      "no": "QC-M239",
+      "item": "사이즈별로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "SGP칸막이 창호",
+      "no": "QC-M240",
+      "item": "창호도에 표현이 되어있는지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "커튼월백판넬",
+      "no": "QC-M241",
+      "item": "도면에 맞게 규격 적용하였는가? (단열재 규격 등)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "자동폐쇠장치",
+      "no": "QC-M242",
+      "item": "설치위치를 확인하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리",
+      "no": "QC-M243",
+      "item": "도면에 맞게 유리 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리",
+      "no": "QC-M244",
+      "item": "스팬드럴구간을 확인하여 유리를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리",
+      "no": "QC-M245",
+      "item": "유리가 이중으로 설치되는지 확인하고 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리",
+      "no": "QC-M246",
+      "item": "이중으로 설치될 경우 유리 사양이 다른지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리끼우기 및 닦기",
+      "no": "QC-M247",
+      "item": "유리 면적과 동일한지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리코킹",
+      "no": "QC-M248",
+      "item": "일반BAR 히든BAR에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리문",
+      "no": "QC-M249",
+      "item": "규격에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리문",
+      "no": "QC-M250",
+      "item": "플로어힌지, 손잡이 등 하드웨어 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "유리문",
+      "no": "QC-M251",
+      "item": "4면 프레임 유리문을 별도로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "자동문 & 회전문",
+      "no": "QC-M252",
+      "item": "도면에 맞게 규격 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "페인트",
+      "no": "QC-M253",
+      "item": "도어에 설치하는 페인트의 종류를 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "페인트",
+      "no": "QC-M254",
+      "item": "페인트 설치 구간을 확인하였는가?(문틀만 OR 전체)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "페인트",
+      "no": "QC-M255",
+      "item": "도어 종류별 도장배수를 확인하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "페인트",
+      "no": "QC-M256",
+      "item": "셔터도면에 페인트가 표현되어 있어도 산출 제외 하였는가? (산출 X)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "시멘트벽돌 & 미장벽돌",
+      "no": "QC-M257",
+      "item": "재료 할증 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "0.5B or 1.0B 시멘트벽돌쌓기",
+      "no": "QC-M258",
+      "item": "길이값과 높이값이 제대로 적용되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "0.5B or 1.0B 시멘트벽돌쌓기",
+      "no": "QC-M259",
+      "item": "슬라브 단차이가 생기는 부분을 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "0.5B or 1.0B 시멘트벽돌쌓기",
+      "no": "QC-M260",
+      "item": "보하부와 슬라브 하부를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "벽돌 운반",
+      "no": "QC-M261",
+      "item": "벽돌쌓기 합계수량과 동일한가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "블럭보강쌓기",
+      "no": "QC-M262",
+      "item": "4\", 6\", 8\" 규격별, 쌓기 종류별(사춤1종, 한면치장, 양면치장) 구분 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "블럭보강쌓기",
+      "no": "QC-M263",
+      "item": "보강근,블록메쉬 등 부속자재들 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "블럭보강쌓기",
+      "no": "QC-M264",
+      "item": "방습벽점검구 및 횐기그릴 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "블럭보강쌓기",
+      "no": "QC-M265",
+      "item": "방습벽일경우 슬리브를 산출하였는가?\n(최하층, 기준층 분리)",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "블럭보강쌓기",
+      "no": "QC-M266",
+      "item": "방습벽일경우 상세도에서 몰탈받이 메쉬도면을 확인하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "SGP칸막이",
+      "no": "QC-M267",
+      "item": "\"01. Vietnam Educational Materials and Measures. VER.02(23.01.26)\"기준에 맞게 적용하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "SGP칸막이 창호",
+      "no": "QC-M268",
+      "item": "창호도에 표현이 되어있는지 확인하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "방수턱",
+      "no": "QC-M269",
+      "item": "수량확인 및 구조팀에게 이기 하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "각종인방",
+      "no": "QC-M270",
+      "item": "규격에 맞게 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "각종인방",
+      "no": "QC-M271",
+      "item": "오픈 길이에 맞는 아이템을 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "건식벽",
+      "no": "QC-M272",
+      "item": "건식벽체 리스트에 있는 벽체들이 다 산출이 되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "건식벽",
+      "no": "QC-M273",
+      "item": "건축마감과 인테리어 마감이 분리가 되었는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "건식벽",
+      "no": "QC-M274",
+      "item": "도면이 없을경우 일반, 방수, 방화를 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "창상후 보강",
+      "no": "QC-M275",
+      "item": "높이별로 단열 유/무로 구분하여 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    },
+    {
+      "group": "QC팀 전달사항",
+      "middleCategory": "마감팀",
+      "subCategory": "조적ㆍ창호",
+      "trade": "벽공간 단열재",
+      "no": "QC-M276",
+      "item": "벽 공간 단열재 산출하였는가?",
+      "method": "",
+      "owner": "QC TEAM",
+      "targets": [
+        "마감팀 · 조적ㆍ창호"
+      ],
+      "creator": "QC TEAM",
+      "createdAt": "2026-05-08 09:00",
+      "status": "미확인",
+      "objectionEnabled": false,
+      "comment": "",
+      "attachments": [],
+      "history": [
+        {
+          "action": "엑셀 더미데이터 등록",
+          "worker": "QC TEAM",
+          "time": "2026-05-08 09:00"
+        }
+      ]
+    }
 ];
 checklistRows = checklistRows.map(row => ({
   ...row,
