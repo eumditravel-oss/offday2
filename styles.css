@@ -4613,7 +4613,7 @@ body{
   max-width:none;
   margin-left:auto;
   margin-right:auto;
-  gap:26px 14px;
+  gap:52px 34px;
   padding-top:38px;
 }
 .actual-view-unified-children::before{
@@ -4628,7 +4628,14 @@ body{
 .actual-view-unified-children.cols-1::before,
 .actual-view-unified-children.count-1::before{display:none;}
 .actual-view-unified-children.cols-2::before{left:25%;right:25%;}
-.actual-view-unified-children.cols-3::before{left:16.66%;right:16.66%;}
+.actual-view-unified-children.cols-3::before{left:16.67%;right:16.67%;}
+.actual-view-unified-children.cols-4::before{left:12.5%;right:12.5%;}
+.actual-view-unified-children.cols-5::before{left:10%;right:10%;}
+.actual-view-unified-children.cols-6::before{left:8.333%;right:8.333%;}
+.actual-view-unified-children.cols-7::before{left:7.143%;right:7.143%;}
+.actual-view-unified-children.cols-8::before{left:6.25%;right:6.25%;}
+.actual-view-unified-children.cols-9::before{left:5.556%;right:5.556%;}
+.actual-view-unified-children.cols-10::before{left:5%;right:5%;}
 .actual-view-unified-children > .actual-view-node-wrap::before{
   top:-16px;
   height:16px;
@@ -4657,6 +4664,13 @@ body{
 .actual-view-unified-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
 .actual-view-unified-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
 .actual-view-unified-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+.actual-view-unified-children.cols-4{grid-template-columns:repeat(4,max-content)!important;}
+.actual-view-unified-children.cols-5{grid-template-columns:repeat(5,max-content)!important;}
+.actual-view-unified-children.cols-6{grid-template-columns:repeat(6,max-content)!important;}
+.actual-view-unified-children.cols-7{grid-template-columns:repeat(7,max-content)!important;}
+.actual-view-unified-children.cols-8{grid-template-columns:repeat(8,max-content)!important;}
+.actual-view-unified-children.cols-9{grid-template-columns:repeat(9,max-content)!important;}
+.actual-view-unified-children.cols-10{grid-template-columns:repeat(10,max-content)!important;}
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0{display:flex;justify-content:center;}
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0::before{display:none;}
 
@@ -5973,7 +5987,7 @@ body{
 .org-v-scroll{min-width:max-content!important;width:max-content!important;justify-content:center!important;padding:34px 56px 70px!important;}
 .org-v-tree{width:max-content!important;min-width:max-content!important;justify-content:center!important;align-items:flex-start!important;}
 .org-v-node-wrap{width:max-content!important;max-width:none!important;flex:0 0 auto!important;}
-.org-v-children{display:flex!important;grid-template-columns:none!important;width:max-content!important;max-width:none!important;gap:42px!important;padding-top:48px!important;align-items:flex-start!important;justify-content:center!important;}
+.org-v-children{position:relative!important;display:grid!important;grid-auto-flow:row!important;width:max-content!important;max-width:none!important;gap:52px 34px!important;padding-top:50px!important;align-items:flex-start!important;justify-content:center!important;}
 .org-v-children::before{top:23px!important;left:88px!important;right:88px!important;height:2px!important;background:#cbd5e1!important;}
 .org-v-node-wrap::before{top:-25px!important;height:25px!important;background:#cbd5e1!important;}
 .org-v-children>.org-v-node-wrap:first-child::after,
@@ -6020,7 +6034,7 @@ body{
 .actual-view-node-wrap.depth-3>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
 .actual-view-node-wrap.depth-4>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
 .actual-view-node-wrap.depth-5>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong{color:#111827!important;}
-.actual-view-children{position:relative!important;display:flex!important;grid-template-columns:none!important;grid-auto-flow:unset!important;grid-auto-columns:unset!important;justify-content:center!important;align-items:flex-start!important;width:max-content!important;max-width:none!important;gap:42px!important;padding-top:48px!important;margin:0 auto!important;}
+.actual-view-children{position:relative!important;display:grid!important;grid-auto-flow:row!important;justify-content:center!important;align-items:flex-start!important;width:max-content!important;max-width:none!important;gap:52px 34px!important;padding-top:50px!important;margin:0 auto!important;}
 .actual-view-children::before{content:""!important;position:absolute!important;top:23px!important;left:46px!important;right:46px!important;height:2px!important;background:#9ca3af!important;z-index:0!important;}
 .actual-view-children>.actual-view-node-wrap::before{top:-25px!important;height:25px!important;}
 .actual-view-children>.actual-view-node-wrap:first-child::after,
@@ -6125,3 +6139,28 @@ body{
 .actual-view-tree.concost-tree .actual-view-마감 > .actual-view-unified-children{
   gap:60px 36px!important;
 }
+
+
+/* 2026-05-08: 조직도 하위 인원 배치 1~10열 확장 */
+.org-v-children.cols-1, .actual-view-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
+.org-v-children.cols-2, .actual-view-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
+.org-v-children.cols-3, .actual-view-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+.org-v-children.cols-4, .actual-view-children.cols-4{grid-template-columns:repeat(4,max-content)!important;}
+.org-v-children.cols-5, .actual-view-children.cols-5{grid-template-columns:repeat(5,max-content)!important;}
+.org-v-children.cols-6, .actual-view-children.cols-6{grid-template-columns:repeat(6,max-content)!important;}
+.org-v-children.cols-7, .actual-view-children.cols-7{grid-template-columns:repeat(7,max-content)!important;}
+.org-v-children.cols-8, .actual-view-children.cols-8{grid-template-columns:repeat(8,max-content)!important;}
+.org-v-children.cols-9, .actual-view-children.cols-9{grid-template-columns:repeat(9,max-content)!important;}
+.org-v-children.cols-10, .actual-view-children.cols-10{grid-template-columns:repeat(10,max-content)!important;}
+.org-v-children.cols-2::before, .actual-view-children.cols-2::before{left:25%!important;right:25%!important;}
+.org-v-children.cols-3::before, .actual-view-children.cols-3::before{left:16.67%!important;right:16.67%!important;}
+.org-v-children.cols-4::before, .actual-view-children.cols-4::before{left:12.5%!important;right:12.5%!important;}
+.org-v-children.cols-5::before, .actual-view-children.cols-5::before{left:10%!important;right:10%!important;}
+.org-v-children.cols-6::before, .actual-view-children.cols-6::before{left:8.333%!important;right:8.333%!important;}
+.org-v-children.cols-7::before, .actual-view-children.cols-7::before{left:7.143%!important;right:7.143%!important;}
+.org-v-children.cols-8::before, .actual-view-children.cols-8::before{left:6.25%!important;right:6.25%!important;}
+.org-v-children.cols-9::before, .actual-view-children.cols-9::before{left:5.556%!important;right:5.556%!important;}
+.org-v-children.cols-10::before, .actual-view-children.cols-10::before{left:5%!important;right:5%!important;}
+.org-v-children.cols-1::before,.org-v-children.count-1::before,.actual-view-children.cols-1::before,.actual-view-children.count-1::before{display:none!important;}
+.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-unified-children.depth-1,.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-children.depth-1{grid-template-columns:repeat(6,max-content)!important;}
+.org-v-node,.actual-view-node{width:196px!important;min-width:196px!important;}
