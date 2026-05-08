@@ -8686,7 +8686,7 @@ function renderChecklistGrid() {
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.no)}</div></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="item" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.item)}</div></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="method" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.method)}</div></td>
-        <td>${renderChecklistTargetCell(row, realIndex)}</td>
+        <td class="target-cell">${renderChecklistTargetCell(row, realIndex)}</td>
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="comment" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.comment)}</div></td>
         <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
