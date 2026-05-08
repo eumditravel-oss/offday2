@@ -317,15 +317,15 @@ const orgStructures = {
     date: "",
     root: {
     "title": "대표이사",
-    "className": "primary",
-    "memberColumns": 3,
     "employeeId": "VQS-001",
+    "className": "primary",
+    "memberColumns": 1,
     "children": [
         {
             "title": "부사장",
+            "employeeId": "VQS-002",
             "className": "secondary",
             "memberColumns": 6,
-            "employeeId": "VQS-002",
             "children": [
                 {
                     "title": "경영지원본부",
@@ -336,32 +336,32 @@ const orgStructures = {
                     "children": [
                         {
                             "title": "상무",
-                            "memberColumns": 1,
                             "employeeId": "CC-001",
+                            "memberColumns": 1,
                             "children": []
                         },
                         {
                             "title": "실장",
-                            "memberColumns": 3,
                             "employeeId": "CC-002",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "책임",
-                            "memberColumns": 3,
                             "employeeId": "CC-003",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "선임",
-                            "memberColumns": 3,
                             "employeeId": "CC-004",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "선임",
-                            "memberColumns": 3,
                             "employeeId": "CC-005",
+                            "memberColumns": 3,
                             "children": []
                         }
                     ]
@@ -375,20 +375,20 @@ const orgStructures = {
                     "children": [
                         {
                             "title": "파트 담당",
-                            "memberColumns": 3,
                             "employeeId": "EMP-2018-001",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "개발",
-                            "memberColumns": 3,
                             "employeeId": "CC-006",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "개발",
-                            "memberColumns": 3,
                             "employeeId": "CC-007",
+                            "memberColumns": 3,
                             "children": []
                         }
                     ]
@@ -402,14 +402,14 @@ const orgStructures = {
                     "children": [
                         {
                             "title": "실장",
-                            "memberColumns": 3,
                             "employeeId": "CC-008",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "실장",
-                            "memberColumns": 3,
                             "employeeId": "CC-009",
+                            "memberColumns": 3,
                             "children": []
                         }
                     ]
@@ -423,149 +423,150 @@ const orgStructures = {
                     "children": [
                         {
                             "title": "본부장",
-                            "memberColumns": 1,
                             "employeeId": "CC-010",
-                            "children": []
-                        },
-                        {
-                            "title": "마감",
-                            "memberColumns": 3,
-                            "employeeId": "CC-009",
+                            "memberColumns": 2,
                             "children": [
                                 {
-                                    "title": "수석",
+                                    "title": "마감",
+                                    "employeeId": "CC-009",
                                     "memberColumns": 3,
-                                    "employeeId": "CC-011",
-                                    "children": []
-                                },
-                                {
-                                    "title": "수석",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-012",
-                                    "children": []
-                                },
-                                {
-                                    "title": "수석",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-013",
-                                    "children": []
-                                },
-                                {
-                                    "title": "수석",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-014",
-                                    "children": []
-                                },
-                                {
-                                    "title": "수석",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-015",
-                                    "children": []
-                                },
-                                {
-                                    "title": "책임",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-016",
-                                    "children": []
-                                },
-                                {
-                                    "title": "책임",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-017",
-                                    "children": []
-                                },
-                                {
-                                    "title": "책임",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-018",
-                                    "children": []
-                                },
-                                {
-                                    "title": "선임",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-019",
-                                    "children": []
-                                },
-                                {
-                                    "title": "선임",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-020",
-                                    "children": []
-                                },
-                                {
-                                    "title": "선임",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-021",
-                                    "children": []
-                                },
-                                {
-                                    "title": "프로",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-022",
-                                    "children": []
-                                }
-                            ]
-                        },
-                        {
-                            "title": "구조/토목 조경",
-                            "memberColumns": 3,
-                            "employeeId": "CC-008",
-                            "children": [
-                                {
-                                    "title": "BIM 파트",
-                                    "memberColumns": 3,
-                                    "employeeId": "CC-029",
-                                    "children": [
-                                        {
-                                            "title": "파트 담당",
-                                            "memberColumns": 3,
-                                            "employeeId": "EMP-2018-001",
-                                            "children": []
-                                        }
-                                    ]
-                                },
-                                {
-                                    "title": "구조 파트",
-                                    "memberColumns": 1,
-                                    "employeeId": "CC-023",
                                     "children": [
                                         {
                                             "title": "수석",
-                                            "memberColumns": 1,
-                                            "employeeId": "CC-024",
+                                            "employeeId": "CC-011",
+                                            "memberColumns": 3,
                                             "children": []
                                         },
                                         {
                                             "title": "수석",
-                                            "memberColumns": 1,
-                                            "employeeId": "CC-025",
+                                            "employeeId": "CC-012",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "수석",
+                                            "employeeId": "CC-013",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "수석",
+                                            "employeeId": "CC-014",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "수석",
+                                            "employeeId": "CC-015",
+                                            "memberColumns": 3,
                                             "children": []
                                         },
                                         {
                                             "title": "책임",
+                                            "employeeId": "CC-016",
                                             "memberColumns": 3,
-                                            "employeeId": "CC-026",
                                             "children": []
                                         },
                                         {
                                             "title": "책임",
+                                            "employeeId": "CC-017",
                                             "memberColumns": 3,
-                                            "employeeId": "CC-027",
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "책임",
+                                            "employeeId": "CC-018",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "선임",
+                                            "employeeId": "CC-019",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "선임",
+                                            "employeeId": "CC-020",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        },
+                                        {
+                                            "title": "선임",
+                                            "employeeId": "CC-021",
+                                            "memberColumns": 3,
                                             "children": []
                                         },
                                         {
                                             "title": "프로",
+                                            "employeeId": "CC-022",
                                             "memberColumns": 3,
-                                            "employeeId": "CC-028",
                                             "children": []
                                         }
                                     ]
                                 },
                                 {
-                                    "title": "토목·조경파트",
+                                    "title": "구조/토목 조경",
+                                    "employeeId": "CC-008",
                                     "memberColumns": 3,
-                                    "employeeId": "CC-030",
-                                    "children": []
+                                    "children": [
+                                        {
+                                            "title": "BIM 파트",
+                                            "employeeId": "CC-029",
+                                            "memberColumns": 3,
+                                            "children": [
+                                                {
+                                                    "title": "파트 담당",
+                                                    "employeeId": "EMP-2018-001",
+                                                    "memberColumns": 3,
+                                                    "children": []
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "title": "구조 파트",
+                                            "employeeId": "CC-023",
+                                            "memberColumns": 1,
+                                            "children": [
+                                                {
+                                                    "title": "수석",
+                                                    "employeeId": "CC-024",
+                                                    "memberColumns": 1,
+                                                    "children": []
+                                                },
+                                                {
+                                                    "title": "수석",
+                                                    "employeeId": "CC-025",
+                                                    "memberColumns": 1,
+                                                    "children": []
+                                                },
+                                                {
+                                                    "title": "책임",
+                                                    "employeeId": "CC-026",
+                                                    "memberColumns": 3,
+                                                    "children": []
+                                                },
+                                                {
+                                                    "title": "책임",
+                                                    "employeeId": "CC-027",
+                                                    "memberColumns": 3,
+                                                    "children": []
+                                                },
+                                                {
+                                                    "title": "프로",
+                                                    "employeeId": "CC-028",
+                                                    "memberColumns": 3,
+                                                    "children": []
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "title": "토목·조경파트",
+                                            "employeeId": "CC-030",
+                                            "memberColumns": 3,
+                                            "children": []
+                                        }
+                                    ]
                                 }
                             ]
                         }
@@ -580,41 +581,42 @@ const orgStructures = {
                     "children": [
                         {
                             "title": "센터장",
-                            "memberColumns": 1,
                             "employeeId": "CC-031",
+                            "memberColumns": 1,
                             "children": []
                         },
                         {
                             "title": "본부장",
-                            "memberColumns": 3,
                             "employeeId": "CC-010",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "실장",
-                            "memberColumns": 3,
                             "employeeId": "CC-008",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "기술이사",
-                            "memberColumns": 3,
                             "employeeId": "CC-032",
+                            "memberColumns": 3,
                             "children": []
                         },
                         {
                             "title": "기술이사",
-                            "memberColumns": 3,
                             "employeeId": "CC-033",
+                            "memberColumns": 3,
                             "children": []
                         }
                     ]
                 },
                 {
                     "title": "공사비닷컴",
+                    "displayName": "공사비닷컴",
+                    "nodeType": "department",
                     "className": "dotted",
                     "memberColumns": 3,
-                    "displayName": "공사비닷컴",
                     "children": []
                 }
             ]
