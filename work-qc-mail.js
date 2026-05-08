@@ -32,6 +32,7 @@ let selectedChecklistCategoryFilter = "전체";
 let checklistCategoryPanelOpen = false;
 const collapsedChecklistGroups = new Set();
 const collapsedChecklistMiddles = new Set();
+const collapsedChecklistSubs = new Set();
 let currentChecklistFocus = null;
 let openedChecklistTargetPicker = null;
 const checklistCategoryAliases = {
@@ -112,13 +113,20 @@ function normalizeChecklistGroupName(group) {
   return checklistCategoryAliases[value] || value || firstCategoryName;
 }
 
+function isQuestionOrEstimateGroup(group) {
+  const normalized = normalizeChecklistGroupName(group);
+  return /^Z[1-7]\./.test(normalized) && (normalized.includes("질의사항") || normalized.includes("견적조건"));
+}
+
 function getChecklistMiddleOptions(group) {
   const normalized = normalizeChecklistGroupName(group);
+  if (isQuestionOrEstimateGroup(normalized)) return ["구조", "토목", "마감"];
   return checklistCategoryTree[normalized]?.mids || [];
 }
 
 function getChecklistSubOptions(group, middle) {
   const normalized = normalizeChecklistGroupName(group);
+  if (isQuestionOrEstimateGroup(normalized)) return [];
   const tree = checklistCategoryTree[normalized];
   if (!tree || !middle) return [];
   return tree.subs?.[middle] || [];
@@ -131,6 +139,11 @@ function inferChecklistMiddle(row) {
     if (/토목|토공|흙막이|가시설|터파기/.test(text)) return "토목팀";
     if (/마감|조적|창호|외부|내부|석재|타일|도장/.test(text)) return "마감팀";
     return "구조팀";
+  }
+  if (isQuestionOrEstimateGroup(group)) {
+    if (/토목|토공|흙막이|가시설|터파기/.test(text)) return "토목";
+    if (/마감|조적|창호|외부|내부|석재|타일|도장/.test(text)) return "마감";
+    return "구조";
   }
   if (/토목|토공|흙막이|가시설|터파기/.test(text)) return "토목";
   if (/마감|조적|창호|외부|내부|석재|타일|도장/.test(text)) return "마감";
@@ -8193,12 +8206,12 @@ function getChecklistTargetsByGroup(group, row = null) {
 
 function getChecklistTargetPool(row = null) {
   const group = normalizeChecklistGroupName(row?.group || document.getElementById("checklistModalGroup")?.value || selectedChecklistCategoryFilter || firstCategoryName);
-  const tree = checklistCategoryTree[group];
-  if (!tree) return ["PM", "QC TEAM", "경영지원"];
+  const mids = getChecklistMiddleOptions(group);
+  if (!mids.length) return ["PM", "QC TEAM", "경영지원"];
 
   const pool = [];
-  (tree.mids || []).forEach(mid => {
-    const subs = tree.subs?.[mid] || [];
+  mids.forEach(mid => {
+    const subs = getChecklistSubOptions(group, mid);
     if (subs.length) subs.forEach(sub => pool.push(`${mid} · ${sub}`));
     else pool.push(mid);
   });
@@ -8662,6 +8675,10 @@ function renderChecklistGrid() {
       lastSubKey = subKey;
     }
 
+    if (sub && collapsedChecklistSubs.has(getChecklistSubCollapseKey(normalizedGroup, middle, sub))) {
+      return bands.join("");
+    }
+
     return `${bands.join("")}
       <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
@@ -8688,9 +8705,22 @@ function renderChecklistMiddleBand(group, middle) {
   return `<tr class="middle-separator-row ${collapsed ? "middle-collapsed" : ""}" onclick="toggleChecklistMiddleCollapse('${escapeJs(normalized)}', '${escapeJs(middle)}')"><td colspan="11"><div class="middle-band-inner"><button type="button" class="middle-toggle-btn" aria-label="중분류 접기 펼치기"><span>${collapsed ? "›" : "⌄"}</span></button><span>중분류</span><strong>${escapeHtml(middle)}</strong><em>${count}건</em><small class="middle-fold-guide">${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small>${flow}</div></td></tr>`;
 }
 
+function getChecklistSubCollapseKey(group, middle, sub) {
+  return `${normalizeChecklistGroupName(group)}::${middle || "기타"}::${sub || ""}`;
+}
+
+function toggleChecklistSubCollapse(group, middle, sub) {
+  const key = getChecklistSubCollapseKey(group, middle, sub);
+  if (collapsedChecklistSubs.has(key)) collapsedChecklistSubs.delete(key);
+  else collapsedChecklistSubs.add(key);
+  renderChecklistGrid();
+}
+
 function renderChecklistSubBand(group, middle, sub) {
-  const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === group && row.middleCategory === middle && row.subCategory === sub).length;
-  return `<tr class="sub-separator-row"><td colspan="11"><div class="sub-band-inner"><span>소분류</span><strong>${escapeHtml(sub)}</strong><em>${count}건</em></div></td></tr>`;
+  const normalized = normalizeChecklistGroupName(group);
+  const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === normalized && row.middleCategory === middle && row.subCategory === sub).length;
+  const collapsed = collapsedChecklistSubs.has(getChecklistSubCollapseKey(normalized, middle, sub));
+  return `<tr class="sub-separator-row ${collapsed ? "sub-collapsed" : ""}" onclick="toggleChecklistSubCollapse('${escapeJs(normalized)}', '${escapeJs(middle)}', '${escapeJs(sub)}')"><td colspan="11"><div class="sub-band-inner"><button type="button" class="sub-toggle-btn" aria-label="소분류 접기 펼치기"><span>${collapsed ? "›" : "⌄"}</span></button><span>소분류</span><strong>${escapeHtml(sub)}</strong><em>${count}건</em><small class="sub-fold-guide">${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small></div></td></tr>`;
 }
 
 function renderChecklistGroupBand(group) {
