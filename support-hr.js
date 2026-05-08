@@ -687,10 +687,15 @@ function employeeById(empNo) {
   return employees.find(e => e.empNo === empNo);
 }
 
+function isOrgDepartmentNode(node) {
+  return String(node?.nodeType || node?.type || "").toLowerCase() === "department";
+}
+
 function orgNodeLabel(node) {
-  const emp = node?.employeeId ? employeeById(node.employeeId) : null;
-  const title = node?.title || (emp ? emp.position || emp.grade : "조직");
-  const name = emp ? displayName(emp) : (node?.displayName || "");
+  const isDepartment = isOrgDepartmentNode(node);
+  const emp = !isDepartment && node?.employeeId ? employeeById(node.employeeId) : null;
+  const title = isDepartment ? "부서명" : (node?.title || (emp ? emp.position || emp.grade : "조직"));
+  const name = isDepartment ? (node?.displayName || node?.title || "부서명") : (emp ? displayName(emp) : (node?.displayName || ""));
   return { emp, title, name };
 }
 
