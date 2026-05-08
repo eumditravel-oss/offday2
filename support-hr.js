@@ -824,9 +824,10 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
   const typeClass = node.className || "";
   const layoutClass = getOrgPopupNodeClass(node, depth).replaceAll("org-popup-", "actual-view-");
   const childCount = children.length;
+  const childColumnCount = childCount ? Math.min(childCount, getOrgMemberColumnCount(node)) : 1;
 
   return `
-    <div class="actual-view-node-wrap ${layoutClass}" data-path="${path}">
+    <div class="actual-view-node-wrap ${layoutClass} depth-${depth}" data-path="${path}">
       <button class="actual-view-node ${typeClass} depth-${depth}"${onclick}>
         <span>${displayTitle}</span>
         <strong>${displayPerson}</strong>
@@ -834,7 +835,7 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
       </button>
 
       ${childCount ? `
-        <div class="actual-view-children depth-${depth} count-${childCount}">
+        <div class="actual-view-unified-children depth-${depth} count-${childCount} cols-${childColumnCount}" style="--org-child-count:${childCount};--org-child-cols:${childColumnCount};grid-template-columns:repeat(${childColumnCount}, max-content) !important;">
           ${children.map((child, index) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
         </div>
       ` : ""}
