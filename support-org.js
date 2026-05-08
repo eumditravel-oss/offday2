@@ -700,6 +700,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
   const layoutClass = getOrgPopupNodeClass(node, depth);
   const { displayTitle, displayPerson, meta } = getOrgDisplayInfo(node, emp, title, name);
   const childCount = children.length;
+  const childColumnCount = childCount ? Math.min(childCount, getOrgMemberColumnCount(node)) : 1;
 
   return `
     <div class="popup-node-wrap ${layoutClass}" data-path="${path}" data-title="${displayTitle}">
@@ -720,7 +721,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
       </div>
 
       ${childCount ? `
-        <div class="popup-unified-children depth-${depth} count-${childCount}" style="--org-child-count:${childCount};grid-template-columns:repeat(${childCount}, max-content);">
+        <div class="popup-unified-children depth-${depth} count-${childCount} cols-${childColumnCount}" style="--org-child-count:${childCount};--org-child-cols:${childColumnCount};grid-template-columns:repeat(${childColumnCount}, max-content) !important;">
           ${children.map((child, index) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
         </div>
       ` : ""}
@@ -858,6 +859,14 @@ function buildOrgPopupHtml() {
   .popup-member-children.count-2::before,.popup-branch-children.count-2::before{left:25%;right:25%;}
   .popup-member-children.count-3::before,.popup-branch-children.count-3::before{left:16.66%;right:16.66%;}
   .popup-member-children.count-4::before,.popup-branch-children.count-4::before{left:12.5%;right:12.5%;}
+  .popup-unified-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
+  .popup-unified-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
+  .popup-unified-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+  .popup-unified-children.count-1::before{display:none;}
+  .popup-unified-children::before{left:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2));right:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2));}
+  .popup-unified-children.cols-1::before{display:none;}
+  .popup-unified-children.cols-2::before{left:25%;right:25%;}
+  .popup-unified-children.cols-3::before{left:16.66%;right:16.66%;}
   .popup-member-children.count-5::before,.popup-branch-children.count-5::before{left:10%;right:10%;}
   .popup-member-children.count-6::before,.popup-branch-children.count-6::before{left:8.33%;right:8.33%;}
   .popup-member-children.count-7::before,.popup-branch-children.count-7::before{left:7.14%;right:7.14%;}
