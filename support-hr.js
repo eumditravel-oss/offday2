@@ -834,7 +834,7 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
       </button>
 
       ${childCount ? `
-        <div class="actual-view-children depth-${depth} count-${childCount}" style="--org-child-count:${childCount};grid-template-columns:repeat(${childCount}, max-content);">
+        <div class="actual-view-children depth-${depth} count-${childCount}">
           ${children.map((child, index) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
         </div>
       ` : ""}
