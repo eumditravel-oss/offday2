@@ -7344,3 +7344,142 @@ body{
   margin-right:auto !important;
   text-align:center !important;
 }
+
+
+/* =========================================================
+   QC checklist v12: target route vertical order + muted group/middle/sub colors
+   요청대상 칩은 항상 중분류 지정 버튼 위에 중앙 배치
+   ========================================================= */
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
+.excel-grid tbody tr.checklist-detail-row td.target-cell{
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding:8px 6px !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+.target-cell-wrap{
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  display:grid !important;
+  grid-template-rows:auto auto !important;
+  justify-items:center !important;
+  align-items:center !important;
+  align-content:center !important;
+  gap:6px !important;
+  margin:0 auto !important;
+  text-align:center !important;
+}
+
+.target-route-area,
+.target-chip-list,
+.target-action-row{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  gap:5px !important;
+  margin:0 auto !important;
+}
+
+.target-route-area{order:1 !important;}
+.target-action-row{order:2 !important;}
+
+.target-route-chip,
+.target-chip{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:center !important;
+  width:auto !important;
+  min-width:42px !important;
+  max-width:118px !important;
+  height:auto !important;
+  min-height:24px !important;
+  margin:0 auto !important;
+  padding:4px 8px !important;
+  border-radius:999px !important;
+  border:1px solid #bfdbfe !important;
+  background:#eff6ff !important;
+  color:#1d4ed8 !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  line-height:1.2 !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  overflow:visible !important;
+}
+
+.target-select-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:center !important;
+  width:auto !important;
+  min-width:66px !important;
+  max-width:118px !important;
+  margin:0 auto !important;
+  padding:4px 8px !important;
+  font-size:11px !important;
+  line-height:1.2 !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+}
+
+.classify-select-btn{
+  background:#eef2f7 !important;
+  border-color:#cbd5e1 !important;
+  color:#334155 !important;
+}
+.target-people-select-btn{
+  background:#f8fbff !important;
+  border-color:#bfdbfe !important;
+  color:#2563eb !important;
+}
+
+/* 구분 / 중분류 / 소분류: 과하지 않은 톤 차이 */
+.group-band-inner{
+  background:#f8fafc !important;
+  border-top:1px solid #d8e0ea !important;
+}
+.group-band-title > span{
+  background:#e2e8f0 !important;
+  color:#334155 !important;
+  border:1px solid #cbd5e1 !important;
+}
+.group-band-title > strong{
+  color:#0f172a !important;
+}
+
+.middle-band-inner{
+  background:#eef6ff !important;
+  border-top:1px solid #c7d9f0 !important;
+}
+.middle-band-inner > span{
+  background:#dbeafe !important;
+  color:#1d4ed8 !important;
+  border:1px solid #bfdbfe !important;
+}
+.middle-band-inner > strong{
+  color:#1e3a8a !important;
+}
+
+.sub-band-inner{
+  background:#f6f8fb !important;
+  border-top:1px dashed #d1d9e6 !important;
+}
+.sub-band-inner > span{
+  background:#edf2f7 !important;
+  color:#475569 !important;
+  border:1px solid #d7dee9 !important;
+}
+.sub-band-inner > strong{
+  color:#334155 !important;
+}
