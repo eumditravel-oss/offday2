@@ -13,11 +13,11 @@ const workPageMeta = {
 
 
 const checklistCategoryOptions = [
-  "프로젝트 초기(초기 내부 → 외부 제출용)",
+  "프로젝트 초기",
   "QC팀 전달사항",
   "PM 전달사항",
-  "제출자료 검토사항(PM→작업자)",
-  "최종자료 검토사항(QC→작업자)",
+  "제출자료 검토사항",
+  "최종자료 검토사항",
   "Z1. 질의사항(1차)",
   "Z2. 질의사항(2차)",
   "Z3. 질의사항(3차)",
@@ -34,9 +34,11 @@ const collapsedChecklistGroups = new Set();
 let currentChecklistFocus = null;
 let openedChecklistTargetPicker = null;
 const checklistCategoryAliases = {
-  "프로젝트 수주시": "프로젝트 초기(초기 내부 → 외부 제출용)",
-  "프로젝트 수주 시": "프로젝트 초기(초기 내부 → 외부 제출용)",
-  "프로젝트 초기(PM,작업자,발주처 송부용)": "프로젝트 초기(초기 내부 → 외부 제출용)",
+  "프로젝트 초기(초기 내부 → 외부 제출용)": "프로젝트 초기",
+  "프로젝트 초기(PM,작업자,발주처 송부용)": "프로젝트 초기",
+  "프로젝트 수주시": "프로젝트 초기",
+  "프로젝트 수주 시": "프로젝트 초기",
+  "프로젝트 초기": "프로젝트 초기",
 
   "QC팀 전달사항(유형 및 특이사항 관리)": "QC팀 전달사항",
   "자가검토 체크리스트(QC)": "QC팀 전달사항",
@@ -46,15 +48,58 @@ const checklistCategoryAliases = {
 
   "작업 착수 전 확인 필요사항(PM)": "PM 전달사항",
   "작업 진행 중 추가 전달사항(PM)": "PM 전달사항",
-  "프로젝트 초기": "PM 전달사항",
   "기초 산출 담당자": "PM 전달사항",
 
-  "제출자료 검토사항(PM)": "제출자료 검토사항(PM→작업자)",
-  "최종자료 검토사항(QC)": "최종자료 검토사항(QC→작업자)",
-  "기초": "제출자료 검토사항(PM→작업자)",
-  "보": "제출자료 검토사항(PM→작업자)",
-  "슬라브": "제출자료 검토사항(PM→작업자)",
-  "옹벽": "제출자료 검토사항(PM→작업자)"
+  "제출자료 검토사항(PM)": "제출자료 검토사항",
+  "제출자료 검토사항(PM→작업자)": "제출자료 검토사항",
+  "기초": "제출자료 검토사항",
+  "보": "제출자료 검토사항",
+  "슬라브": "제출자료 검토사항",
+  "옹벽": "제출자료 검토사항",
+
+  "최종자료 검토사항(QC)": "최종자료 검토사항",
+  "최종자료 검토사항(QC→작업자)": "최종자료 검토사항"
+};
+
+const checklistCategoryTree = {
+  "프로젝트 초기": {
+    mids: ["구조", "마감", "토목"],
+    subs: { "구조": [], "마감": [], "토목": [] }
+  },
+  "QC팀 전달사항": {
+    mids: ["구조", "마감", "토목"],
+    subs: {
+      "구조": ["수평팀", "수직팀", "한국"],
+      "마감": ["내부1", "내부2", "내부3", "조적ㆍ창호", "외부", "한국"],
+      "토목": []
+    }
+  },
+  "PM 전달사항": {
+    mids: ["구조", "마감", "토목"],
+    subs: {
+      "구조": ["수평팀", "수직팀", "한국"],
+      "마감": ["내부1", "내부2", "내부3", "조적ㆍ창호", "외부", "한국"],
+      "토목": []
+    }
+  },
+  "제출자료 검토사항": {
+    mids: ["구조", "마감", "토목"],
+    subs: {
+      "구조": ["수평팀", "수직팀", "한국"],
+      "마감": ["내부1", "내부2", "내부3", "조적ㆍ창호", "외부", "한국"],
+      "토목": []
+    },
+    flow: "PM이 오류사항을 대분류·중분류·소분류로 지정하여 보내면 해당 팀장과 직원이 오류리스트에서 본인 프로젝트를 가져가 확인합니다."
+  },
+  "최종자료 검토사항": {
+    mids: ["구조", "마감", "토목"],
+    subs: {
+      "구조": ["수평팀", "수직팀", "한국"],
+      "마감": ["내부1", "내부2", "내부3", "조적ㆍ창호", "외부", "한국"],
+      "토목": []
+    },
+    flow: "PM이 오류사항을 대분류·중분류·소분류로 지정하여 보내면 해당 팀장과 직원이 오류리스트에서 본인 프로젝트를 가져가 확인합니다."
+  }
 };
 
 const questionCategories = checklistCategoryOptions.filter(category => category.startsWith("Z") && category.includes("질의사항"));
@@ -64,6 +109,96 @@ const firstCategoryName = checklistCategoryOptions[0];
 function normalizeChecklistGroupName(group) {
   const value = String(group || "").trim();
   return checklistCategoryAliases[value] || value || firstCategoryName;
+}
+
+function getChecklistMiddleOptions(group) {
+  const normalized = normalizeChecklistGroupName(group);
+  return checklistCategoryTree[normalized]?.mids || [];
+}
+
+function getChecklistSubOptions(group, middle) {
+  const normalized = normalizeChecklistGroupName(group);
+  const tree = checklistCategoryTree[normalized];
+  if (!tree || !middle) return [];
+  return tree.subs?.[middle] || [];
+}
+
+function inferChecklistMiddle(row) {
+  const text = `${row?.middleCategory || ""} ${row?.trade || ""} ${row?.item || ""} ${row?.method || ""}`;
+  if (/토목|토공|흙막이|가시설|터파기/.test(text)) return "토목";
+  if (/마감|조적|창호|외부|내부|석재|타일|도장/.test(text)) return "마감";
+  return "구조";
+}
+
+function inferChecklistSub(row, middle) {
+  const text = `${row?.subCategory || ""} ${row?.trade || ""} ${row?.item || ""} ${row?.method || ""}`;
+  if (middle === "구조") {
+    if (/수직|기둥|벽|옹벽/.test(text)) return "수직팀";
+    if (/한국/.test(text)) return "한국";
+    return "수평팀";
+  }
+  if (middle === "마감") {
+    if (/조적|창호/.test(text)) return "조적ㆍ창호";
+    if (/외부/.test(text)) return "외부";
+    if (/한국/.test(text)) return "한국";
+    return "내부1";
+  }
+  return "";
+}
+
+function normalizeChecklistClassification(row) {
+  if (!row) return row;
+  row.group = normalizeChecklistGroupName(row.group);
+  const middleOptions = getChecklistMiddleOptions(row.group);
+  if (middleOptions.length) {
+    if (!middleOptions.includes(row.middleCategory)) row.middleCategory = inferChecklistMiddle(row);
+    if (!middleOptions.includes(row.middleCategory)) row.middleCategory = middleOptions[0];
+    const subOptions = getChecklistSubOptions(row.group, row.middleCategory);
+    if (subOptions.length) {
+      if (!subOptions.includes(row.subCategory)) row.subCategory = inferChecklistSub(row, row.middleCategory);
+      if (!subOptions.includes(row.subCategory)) row.subCategory = subOptions[0];
+    } else {
+      row.subCategory = "";
+    }
+  } else {
+    row.middleCategory = row.middleCategory || "";
+    row.subCategory = row.subCategory || "";
+  }
+  return row;
+}
+
+function renderChecklistMiddleOptions(selectedMiddle = "") {
+  const groupEl = document.getElementById("checklistModalGroup");
+  const middleEl = document.getElementById("checklistModalMiddle");
+  const subEl = document.getElementById("checklistModalSub");
+  if (!groupEl || !middleEl || !subEl) return;
+  const options = getChecklistMiddleOptions(groupEl.value);
+  middleEl.innerHTML = options.length
+    ? options.map(value => `<option value="${escapeHtml(value)}" ${value === selectedMiddle ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")
+    : `<option value="">중분류 없음</option>`;
+  middleEl.disabled = !options.length;
+  if (options.length && !options.includes(middleEl.value)) middleEl.value = options[0];
+  renderChecklistSubOptions(subEl.dataset.selected || "");
+}
+
+function renderChecklistSubOptions(selectedSub = "") {
+  const groupEl = document.getElementById("checklistModalGroup");
+  const middleEl = document.getElementById("checklistModalMiddle");
+  const subEl = document.getElementById("checklistModalSub");
+  if (!groupEl || !middleEl || !subEl) return;
+  const options = getChecklistSubOptions(groupEl.value, middleEl.value);
+  subEl.innerHTML = options.length
+    ? options.map(value => `<option value="${escapeHtml(value)}" ${value === selectedSub ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")
+    : `<option value="">소분류 없음</option>`;
+  subEl.disabled = !options.length;
+  if (options.length && !options.includes(subEl.value)) subEl.value = options[0];
+  subEl.dataset.selected = "";
+}
+
+function handleChecklistGroupChange() {
+  const group = document.getElementById("checklistModalGroup")?.value || firstCategoryName;
+  renderChecklistMiddleOptions("");
+  renderChecklistTargetOptions(getChecklistTargetsByGroup(group) || ["QC TEAM"]);
 }
 
 function getQuestionCategoryIndex(category) {
@@ -833,13 +968,11 @@ function switchWorkPanel(panelId) {
 function getChecklistCreatorByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const creatorMap = {
-    "프로젝트 초기(초기 내부 → 외부 제출용)": "QC TEAM",
-    "QC팀 전달사항(유형 및 특이사항 관리)": "QC TEAM",
-    "작업 착수 전 확인 필요사항(PM)": "PM",
-    "작업 진행 중 추가 전달사항(PM)": "PM",
-    "자가검토 체크리스트(QC)": "QC TEAM",
-    "제출자료 검토사항(PM→작업자)": "PM",
-    "최종자료 검토사항(QC→작업자)": "QC TEAM"
+    "프로젝트 초기": "QC TEAM",
+    "QC팀 전달사항": "QC TEAM",
+    "PM 전달사항": "PM",
+    "제출자료 검토사항": "PM",
+    "최종자료 검토사항": "QC TEAM"
   };
   return creatorMap[normalized] || "경영지원";
 }
@@ -847,17 +980,17 @@ function getChecklistCreatorByGroup(group) {
 function getChecklistTargetsByGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   const targetMap = {
-    "프로젝트 초기(초기 내부 → 외부 제출용)": ["PM"],
+    "프로젝트 초기": ["PM"],
     "QC팀 전달사항": ["PM"],
     "PM 전달사항": ["산출 담당자"],
-    "제출자료 검토사항(PM→작업자)": ["산출 담당자"],
-    "최종자료 검토사항(QC→작업자)": ["산출 담당자"]
+    "제출자료 검토사항": ["산출 담당자"],
+    "최종자료 검토사항": ["산출 담당자"]
   };
   return targetMap[normalized] || null;
 }
 
 function isObjectionAllowedRow(row) {
-  return normalizeChecklistGroupName(row?.group) === "제출자료 검토사항(PM→작업자)";
+  return ["제출자료 검토사항", "최종자료 검토사항"].includes(normalizeChecklistGroupName(row?.group));
 }
 
 function ensureChecklistAttachments(row) {
@@ -1065,6 +1198,7 @@ function normalizeSpecialChecklistCreator(row) {
 function normalizeChecklistRow(row) {
   if (!row) return row;
   row.group = normalizeChecklistGroupName(row.group);
+  normalizeChecklistClassification(row);
   row.project = row.project || "ㅇㅇ시설 신축공사";
   normalizeSpecialChecklistCreator(row);
   row.creator = getChecklistCreatorByGroup(row.group);
@@ -1232,7 +1366,7 @@ function getChecklistFilteredRows() {
     const ownerOk = owner === "전체" || targets.includes(owner);
     const state = getChecklistDoneState(row);
     const doneOk = doneFilter === "전체" || state === doneFilter;
-    const text = `${rowProject} ${row.group} ${row.trade} ${row.no} ${row.item} ${row.method} ${targets.join(" ")} ${state} ${row.comment}`.toLowerCase();
+    const text = `${rowProject} ${row.group} ${row.middleCategory || ""} ${row.subCategory || ""} ${row.trade} ${row.no} ${row.item} ${row.method} ${targets.join(" ")} ${state} ${row.comment}`.toLowerCase();
 
     return projectOk && categoryOk && ownerOk && doneOk && (!search || text.includes(search));
   });
@@ -1306,7 +1440,7 @@ function renderChecklistGroupBand(group) {
     if (locked && next) controls.push(`<span class="next-round-guide">다음 작성 가능: ${escapeHtml(next)}</span>`);
   }
 
-  return `<tr class="group-separator-row ${locked ? "group-locked" : ""} ${collapsed ? "group-collapsed" : ""}" onclick="toggleChecklistGroupCollapse('${escapeJs(group)}')"><td colspan="11"><div class="group-band-inner"><div class="group-band-title"><button type="button" class="group-toggle-btn" aria-label="구분 접기 펼치기"><span class="group-toggle-icon">⌄</span></button><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}<small>${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small></div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
+  return `<tr class="group-separator-row ${locked ? "group-locked" : ""} ${collapsed ? "group-collapsed" : ""}" onclick="toggleChecklistGroupCollapse('${escapeJs(group)}')"><td colspan="13"><div class="group-band-inner"><div class="group-band-title"><button type="button" class="group-toggle-btn" aria-label="구분 접기 펼치기"><span class="group-toggle-icon">⌄</span></button><span>구분</span><strong>${escapeHtml(group)}</strong><em>${count}건</em>${locked ? `<b>잠금</b>` : ""}<small>${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small></div><div class="group-band-actions">${controls.join("")}</div></div></td></tr>`;
 }
 
 
@@ -1844,6 +1978,9 @@ function openChecklistModal(index = null) {
   });
   const selectedGroup = row?.group || defaultGroup || firstCategoryName;
   renderChecklistCategoryOptions(selectedGroup);
+  const subEl = document.getElementById("checklistModalSub");
+  if (subEl) subEl.dataset.selected = row?.subCategory || "";
+  renderChecklistMiddleOptions(row?.middleCategory || "");
   renderChecklistTargetOptions(row ? getChecklistTargets(row) : (getChecklistTargetsByGroup(selectedGroup) || ["QC TEAM"]));
   document.getElementById("checklistTargetError")?.classList.remove("show");
   checklistModalAttachments = row?.attachments ? [...row.attachments] : [];
@@ -1899,6 +2036,8 @@ function saveChecklistModal() {
     checkedAt: "",
     history: Array.isArray(previous?.history) ? previous.history.filter(h => h.action === "최초작성" || (h.action === "확인완료" && targets.includes(h.target))) : [],
     group: selectedGroup,
+    middleCategory: document.getElementById("checklistModalMiddle")?.value || "",
+    subCategory: document.getElementById("checklistModalSub")?.value || "",
     trade: document.getElementById("checklistModalTrade").value.trim(),
     no: document.getElementById("checklistModalNo").value.trim() || nextChecklistNo(),
     item: document.getElementById("checklistModalItem").value.trim(),
@@ -1941,6 +2080,8 @@ function makeBlankChecklistRow(group) {
   const row = {
     checked: false,
     group: normalizedGroup,
+    middleCategory: getChecklistMiddleOptions(normalizedGroup)[0] || "",
+    subCategory: "",
     trade: "",
     no: nextChecklistNo(),
     item: "",
