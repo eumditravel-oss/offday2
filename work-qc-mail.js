@@ -1755,7 +1755,7 @@ function renderChecklistTargetChecks(row, realIndex) {
       </div>
     `;
   }).join("");
-  return `${checks}${renderObjectionArea(row, realIndex)}`;
+  return `<div class="done-cell-stack">${checks}${renderObjectionArea(row, realIndex)}</div>`;
 }
 
 function escapeHtml(value) {
