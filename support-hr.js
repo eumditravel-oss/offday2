@@ -823,12 +823,7 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
   const onclick = emp ? ` onclick="openMiniCardPopup('${emp.empNo}')"` : "";
   const typeClass = node.className || "";
   const layoutClass = getOrgPopupNodeClass(node, depth).replaceAll("org-popup-", "actual-view-");
-
-  const childItems = children.map((child, index) => ({ child, index }));
-  const branchChildren = childItems.filter(item => isOrgBranchNode(item.child, depth + 1));
-  const leafChildren = childItems.filter(item => !isOrgBranchNode(item.child, depth + 1));
-  const memberColumns = getOrgMemberColumnCount(node);
-  const branchColumns = Math.max(1, branchChildren.length);
+  const childCount = children.length;
 
   return `
     <div class="actual-view-node-wrap ${layoutClass}" data-path="${path}">
@@ -838,15 +833,9 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
         <em>${meta}</em>
       </button>
 
-      ${branchChildren.length ? `
-        <div class="actual-view-branch-children depth-${depth} count-${branchChildren.length}" style="grid-template-columns:repeat(${branchColumns}, max-content);">
-          ${branchChildren.map(({ child, index }) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
-        </div>
-      ` : ""}
-
-      ${leafChildren.length ? `
-        <div class="actual-view-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 92px);">
-          ${leafChildren.map(({ child, index }) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
+      ${childCount ? `
+        <div class="actual-view-children depth-${depth} count-${childCount}" style="--org-child-count:${childCount};grid-template-columns:repeat(${childCount}, max-content);">
+          ${children.map((child, index) => renderActualOrgTreeNode(child, depth + 1, `${path}-${index}`)).join("")}
         </div>
       ` : ""}
     </div>
