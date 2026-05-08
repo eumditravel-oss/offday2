@@ -699,12 +699,7 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
   const typeClass = node.className || "";
   const layoutClass = getOrgPopupNodeClass(node, depth);
   const { displayTitle, displayPerson, meta } = getOrgDisplayInfo(node, emp, title, name);
-
-  const childItems = children.map((child, index) => ({ child, index }));
-  const branchChildren = childItems.filter(item => isOrgBranchNode(item.child, depth + 1));
-  const leafChildren = childItems.filter(item => !isOrgBranchNode(item.child, depth + 1));
-  const memberColumns = getOrgMemberColumnCount(node);
-  const branchColumns = Math.max(1, branchChildren.length);
+  const childCount = children.length;
 
   return `
     <div class="popup-node-wrap ${layoutClass}" data-path="${path}" data-title="${displayTitle}">
@@ -724,15 +719,9 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
         </div>
       </div>
 
-      ${branchChildren.length ? `
-        <div class="popup-branch-children depth-${depth} count-${branchChildren.length}" style="--org-child-count:${branchChildren.length};grid-template-columns:repeat(${branchColumns}, max-content);">
-          ${branchChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
-        </div>
-      ` : ""}
-
-      ${leafChildren.length ? `
-        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="--org-child-count:${leafChildren.length};grid-template-columns:repeat(${memberColumns}, 176px);">
-          ${leafChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
+      ${childCount ? `
+        <div class="popup-unified-children depth-${depth} count-${childCount}" style="--org-child-count:${childCount};grid-template-columns:repeat(${childCount}, max-content);">
+          ${children.map((child, index) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
         </div>
       ` : ""}
     </div>
@@ -780,6 +769,26 @@ function buildOrgPopupHtml() {
   .popup-branch-children{grid-template-columns:repeat(auto-fit,minmax(190px,max-content));gap:34px 24px;padding-top:46px;}
   .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-branch-children.depth-0{display:flex;justify-content:center;}
   .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-branch-children.depth-0::before{display:none;}
+  .popup-unified-children{position:relative;display:grid;justify-content:center;align-items:start;width:max-content;margin-left:auto;margin-right:auto;gap:34px 24px;padding-top:46px;}
+  .popup-unified-children::before{content:"";position:absolute;top:18px;left:28px;right:28px;height:2px;background:#bfccdc;}
+  .popup-unified-children>.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc;}
+  .popup-unified-children>.popup-node-wrap:first-child::after,.popup-unified-children>.popup-node-wrap:last-child::after{content:"";position:absolute;top:-28px;height:2px;background:#f8fafc;z-index:1;}
+  .popup-unified-children>.popup-node-wrap:first-child::after{right:50%;left:-2px;}
+  .popup-unified-children>.popup-node-wrap:last-child::after{left:50%;right:-2px;}
+  .popup-unified-children>.popup-node-wrap:only-child::after{content:"";position:absolute;top:-28px;left:-2px;right:-2px;height:2px;background:#f8fafc;z-index:1;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0{display:flex;justify-content:center;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0::before{display:none;}
+  .popup-tree-inner.concost-tree .org-popup-부사장>.popup-unified-children.depth-1{grid-template-columns:300px 190px 190px 820px 260px 190px!important;gap:40px;align-items:start;}
+  .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-unified-children{grid-template-columns:190px 540px 430px!important;gap:54px;align-items:start;}
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children{grid-template-columns:190px 190px 190px!important;gap:24px;align-items:start;}
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-unified-children{grid-template-columns:repeat(3,176px)!important;gap:12px 16px;}
+  .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-qc>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-클레임센터>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조팀>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-bim-파트>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-토목-조경파트>.popup-unified-children{grid-template-columns:176px!important;}
   .popup-tree-inner.concost-tree .org-popup-부사장>.popup-branch-children.depth-1{grid-template-columns:300px 820px 260px 190px;gap:40px;align-items:start;}
   .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-member-children{grid-template-columns:176px;}
   .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-branch-children{grid-template-columns:repeat(2,190px);gap:28px;}
