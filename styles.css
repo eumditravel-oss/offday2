@@ -6308,8 +6308,6 @@ body{
   z-index:2;
 }
 
-```
-
 
 /* QC split table final alignment override */
 .excel-grid tbody tr.checklist-detail-row td:nth-child(6),
@@ -6512,4 +6510,130 @@ body{
   padding:0 8px !important;
   font-size:12px !important;
   line-height:30px !important;
+}
+
+
+/* =========================================================
+   QC checklist v9: centered target/history, middle fold, QC team route simplification
+   ========================================================= */
+#workModule .excel-grid,
+.module-view#workModule .excel-grid,
+.excel-grid{
+  min-width:1500px !important;
+}
+
+#workModule .excel-grid col.qc-col-target,
+.excel-grid col.qc-col-target{width:150px !important;}
+#workModule .excel-grid col.qc-col-check,
+.excel-grid col.qc-col-check{width:225px !important;}
+#workModule .excel-grid col.qc-col-history,
+.excel-grid col.qc-col-history{width:138px !important;}
+#workModule .excel-grid col.qc-col-manage,
+.excel-grid col.qc-col-manage{width:124px !important;}
+
+.excel-grid thead th:nth-child(6),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6),
+.excel-grid thead th:nth-child(10),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10),
+.excel-grid thead th:nth-child(11),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11){
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6){
+  padding-left:8px !important;
+  padding-right:8px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 auto !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip-list{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-select-btn{
+  margin-left:auto !important;
+  margin-right:auto !important;
+  text-align:center !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10){
+  overflow:visible !important;
+  padding-left:8px !important;
+  padding-right:8px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10) .history-cell{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  overflow:visible !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10) .history-view-btn{
+  width:auto !important;
+  min-width:76px !important;
+  max-width:100% !important;
+  padding:6px 10px !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+}
+
+.middle-separator-row{
+  cursor:pointer;
+}
+
+.middle-separator-row.middle-collapsed .middle-band-inner{
+  background:#f8fbff !important;
+}
+
+.middle-toggle-btn{
+  width:24px;
+  height:24px;
+  border:1px solid #bfdbfe;
+  border-radius:999px;
+  background:#fff;
+  color:#2563eb;
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+
+.middle-fold-guide{
+  margin-left:0 !important;
+  color:#94a3b8 !important;
+  font-size:12px !important;
+  white-space:nowrap;
+}
+
+.objection-area{
+  max-width:100% !important;
+  overflow:hidden !important;
+}
+
+.btn-objection{
+  width:auto !important;
+  min-width:86px !important;
+  max-width:100% !important;
+  white-space:nowrap !important;
 }
