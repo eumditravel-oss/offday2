@@ -7270,3 +7270,77 @@ body{
   font-size:11px !important;
   font-weight:800 !important;
 }
+
+/* =========================================================
+   QC checklist v13: request target cell final center lock
+   - 요청 대상 열/셀/버튼 묶음 전체 중앙정렬 고정
+   ========================================================= */
+#workModule .excel-grid thead th:nth-child(6),
+.excel-grid thead th:nth-child(6),
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6),
+.excel-grid tbody tr.checklist-detail-row td.target-cell,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6){
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding-left:0 !important;
+  padding-right:0 !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
+.excel-grid tbody tr.checklist-detail-row td.target-cell{
+  position:relative !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  justify-items:center !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  text-align:center !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip-list,
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-action-row,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip-list,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-action-row,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip-list,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-action-row,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip-list,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-action-row{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  justify-items:center !important;
+  width:100% !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  text-align:center !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip,
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-select-btn,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-select-btn,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-select-btn,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-select-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  text-align:center !important;
+}
