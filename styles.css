@@ -7483,3 +7483,183 @@ body{
 .sub-band-inner > strong{
   color:#334155 !important;
 }
+
+/* =========================================================
+   QC checklist v14: category band tone hierarchy + target route final alignment
+   - 구분/중분류/소분류 명암 단계 구분
+   - 구분 행 가로선 제거 및 배경 단절 제거
+   - 요청대상 칩을 중분류 지정 버튼 바로 위 중앙 고정
+   ========================================================= */
+#workModule .excel-grid tbody tr.group-separator-row td,
+.excel-grid tbody tr.group-separator-row td{
+  background:#fbfdff !important;
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+
+#workModule .excel-grid tbody tr.middle-separator-row td,
+.excel-grid tbody tr.middle-separator-row td{
+  background:#eef6ff !important;
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+
+#workModule .excel-grid tbody tr.sub-separator-row td,
+.excel-grid tbody tr.sub-separator-row td{
+  background:#e4eefb !important;
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+
+#workModule .group-band-inner,
+.group-band-inner{
+  width:100% !important;
+  background:#fbfdff !important;
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+
+#workModule .middle-band-inner,
+.middle-band-inner{
+  width:100% !important;
+  background:#eef6ff !important;
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+
+#workModule .sub-band-inner,
+.sub-band-inner{
+  width:100% !important;
+  background:#e4eefb !important;
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+
+#workModule .group-band-title > span,
+.group-band-title > span{
+  background:#eef2f7 !important;
+  color:#475569 !important;
+  border:1px solid #d7dee8 !important;
+}
+
+#workModule .middle-band-inner > span,
+.middle-band-inner > span{
+  background:#dbeafe !important;
+  color:#1d4ed8 !important;
+  border:1px solid #bfdbfe !important;
+}
+
+#workModule .sub-band-inner > span,
+.sub-band-inner > span{
+  background:#c7dbf6 !important;
+  color:#1e3a8a !important;
+  border:1px solid #a9c7ee !important;
+}
+
+#workModule .group-band-title > strong,
+.group-band-title > strong{color:#334155 !important;}
+
+#workModule .middle-band-inner > strong,
+.middle-band-inner > strong{color:#1e3a8a !important;}
+
+#workModule .sub-band-inner > strong,
+.sub-band-inner > strong{color:#172554 !important;}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
+.excel-grid tbody tr.checklist-detail-row td.target-cell{
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding:8px 4px !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+.target-cell-wrap{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  justify-items:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  gap:5px !important;
+  text-align:center !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-area,
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-action-row,
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip-list,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-area,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-action-row,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip-list,
+.target-route-area,
+.target-action-row,
+.target-chip-list{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  justify-items:center !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  gap:5px !important;
+  text-align:center !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-area,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-area,
+.target-route-area{
+  order:1 !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-action-row,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-action-row,
+.target-action-row{
+  order:2 !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-chip,
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip,
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-select-btn,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-chip,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-chip,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-select-btn,
+.target-route-chip,
+.target-chip,
+.target-select-btn{
+  position:static !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:center !important;
+  float:none !important;
+  clear:both !important;
+  width:fit-content !important;
+  min-width:0 !important;
+  max-width:118px !important;
+  margin:0 auto !important;
+  text-align:center !important;
+  transform:none !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-chip,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-route-chip,
+.target-route-chip{
+  min-width:42px !important;
+  padding:4px 9px !important;
+  background:#eff6ff !important;
+  border:1px solid #bfdbfe !important;
+  color:#1d4ed8 !important;
+}
