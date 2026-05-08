@@ -329,9 +329,17 @@ const orgStructures = {
             "children": [
                 {
                     "title": "경영지원본부",
-                    "memberColumns": 3,
-                    "employeeId": "CC-001",
+                    "displayName": "경영지원본부",
+                    "nodeType": "department",
+                    "className": "secondary",
+                    "memberColumns": 1,
                     "children": [
+                        {
+                            "title": "상무",
+                            "memberColumns": 1,
+                            "employeeId": "CC-001",
+                            "children": []
+                        },
                         {
                             "title": "실장",
                             "memberColumns": 3,
@@ -360,8 +368,10 @@ const orgStructures = {
                 },
                 {
                     "title": "개발 T/F",
-                    "memberColumns": 3,
                     "displayName": "개발 T/F",
+                    "nodeType": "department",
+                    "className": "secondary",
+                    "memberColumns": 1,
                     "children": [
                         {
                             "title": "파트 담당",
@@ -385,8 +395,10 @@ const orgStructures = {
                 },
                 {
                     "title": "QC",
-                    "memberColumns": 3,
                     "displayName": "QC",
+                    "nodeType": "department",
+                    "className": "secondary",
+                    "memberColumns": 1,
                     "children": [
                         {
                             "title": "실장",
@@ -404,9 +416,17 @@ const orgStructures = {
                 },
                 {
                     "title": "기술본부",
-                    "memberColumns": 3,
-                    "employeeId": "CC-010",
+                    "displayName": "기술본부",
+                    "nodeType": "department",
+                    "className": "secondary",
+                    "memberColumns": 1,
                     "children": [
+                        {
+                            "title": "본부장",
+                            "memberColumns": 1,
+                            "employeeId": "CC-010",
+                            "children": []
+                        },
                         {
                             "title": "마감",
                             "memberColumns": 3,
@@ -553,9 +573,17 @@ const orgStructures = {
                 },
                 {
                     "title": "클레임센터",
-                    "memberColumns": 3,
-                    "employeeId": "CC-031",
+                    "displayName": "클레임센터",
+                    "nodeType": "department",
+                    "className": "secondary",
+                    "memberColumns": 1,
                     "children": [
+                        {
+                            "title": "센터장",
+                            "memberColumns": 1,
+                            "employeeId": "CC-031",
+                            "children": []
+                        },
                         {
                             "title": "본부장",
                             "memberColumns": 3,
