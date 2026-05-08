@@ -6637,3 +6637,239 @@ body{
   max-width:100% !important;
   white-space:nowrap !important;
 }
+
+
+/* =========================================================
+   QC checklist v10: final clipping/centering + inline classification
+   ========================================================= */
+#workModule .excel-grid-wrap,
+.module-view#workModule .excel-grid-wrap,
+.excel-grid-wrap{
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  padding-right:0 !important;
+}
+
+#workModule .excel-grid,
+.module-view#workModule .excel-grid,
+.excel-grid{
+  width:100% !important;
+  min-width:1280px !important;
+  table-layout:fixed !important;
+}
+
+#workModule .excel-grid col.qc-col-select,.excel-grid col.qc-col-select{width:38px !important;}
+#workModule .excel-grid col.qc-col-trade,.excel-grid col.qc-col-trade{width:78px !important;}
+#workModule .excel-grid col.qc-col-no,.excel-grid col.qc-col-no{width:70px !important;}
+#workModule .excel-grid col.qc-col-item,.excel-grid col.qc-col-item{width:235px !important;}
+#workModule .excel-grid col.qc-col-method,.excel-grid col.qc-col-method{width:270px !important;}
+#workModule .excel-grid col.qc-col-target,.excel-grid col.qc-col-target{width:150px !important;}
+#workModule .excel-grid col.qc-col-check,.excel-grid col.qc-col-check{width:218px !important;}
+#workModule .excel-grid col.qc-col-comment,.excel-grid col.qc-col-comment{width:135px !important;}
+#workModule .excel-grid col.qc-col-attach,.excel-grid col.qc-col-attach{width:92px !important;}
+#workModule .excel-grid col.qc-col-history,.excel-grid col.qc-col-history{width:116px !important;}
+#workModule .excel-grid col.qc-col-manage,.excel-grid col.qc-col-manage{width:96px !important;}
+
+.excel-grid thead th,
+.excel-grid tbody td{
+  overflow:visible !important;
+}
+
+.excel-grid thead th:nth-child(6),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6),
+.excel-grid thead th:nth-child(7),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7),
+.excel-grid thead th:nth-child(10),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10),
+.excel-grid thead th:nth-child(11),
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11){
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6){
+  padding:8px 7px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap{
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 auto !important;
+  gap:7px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip-list,
+.target-chip-list{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+}
+
+.target-action-row{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-chip,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-select-btn,
+.target-chip,
+.target-select-btn{
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 auto !important;
+  text-align:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+}
+
+.classify-select-btn{
+  background:#eef6ff !important;
+  border-color:#bfdbfe !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7){
+  padding:8px 8px !important;
+  overflow:visible !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .done-check-stack,
+.done-check-stack{
+  width:100% !important;
+  max-width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  overflow:visible !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .done-check-wrap,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .na-check-btn,
+.done-check-wrap,
+.na-check-btn{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  height:28px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .objection-area,
+.objection-area{
+  position:static !important;
+  width:100% !important;
+  max-width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  margin:6px 0 0 0 !important;
+  padding:0 !important;
+  overflow:visible !important;
+  transform:none !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(7) .btn-objection,
+.btn-objection{
+  width:auto !important;
+  min-width:74px !important;
+  max-width:100% !important;
+  height:28px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 auto !important;
+  padding:0 10px !important;
+  white-space:nowrap !important;
+  line-height:28px !important;
+  box-sizing:border-box !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10){
+  padding:8px 6px !important;
+  overflow:visible !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10) .history-cell,
+.history-cell{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 auto !important;
+  overflow:visible !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(10) .history-view-btn,
+.history-view-btn{
+  width:auto !important;
+  min-width:70px !important;
+  max-width:100% !important;
+  height:30px !important;
+  padding:0 9px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11){
+  padding:8px 5px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .row-actions,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .row-actions-center{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+}
+
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .btn{
+  width:68px !important;
+  min-width:68px !important;
+  height:28px !important;
+  padding:0 6px !important;
+  font-size:12px !important;
+  line-height:28px !important;
+}
+
+.classify-modal-card .field{
+  margin-bottom:12px;
+}
+.classify-modal-card select{
+  height:46px;
+}
