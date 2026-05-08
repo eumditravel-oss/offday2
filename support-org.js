@@ -23,6 +23,26 @@ function renderVietqsOrgChart(root) {
 let actualOrgChartScale = 1;
 let actualOrgChartAutoScale = 1;
 
+function ensureOrgDefaultColumnSettings() {
+  const concostRoot = orgStructures?.["CON-COST"]?.root;
+  if (!concostRoot) return;
+  const stack = [concostRoot];
+  while (stack.length) {
+    const node = stack.shift();
+    const empNo = node?.employeeId || node?.employee?.empNo || "";
+    const title = String(node?.title || "").trim();
+    if (empNo === "VQS-002" || title === "부사장") {
+      node.memberColumns = 6;
+      node.layoutColumns = 6;
+      break;
+    }
+    (node.children || []).forEach(child => stack.push(child));
+  }
+}
+
+ensureOrgDefaultColumnSettings();
+
+
 function renderOrgChart(company = currentOrgCompany) {
   const target = document.getElementById("orgChartContent");
   if (!target) return;
@@ -383,7 +403,7 @@ function updateSelectedOrgNodeField(field, value) {
     delete node.className;
   } else if (field === "memberColumns") {
     const nextColumns = Number(value);
-    node.memberColumns = Math.max(1, Math.min(3, Number.isFinite(nextColumns) ? nextColumns : 3));
+    node.memberColumns = Math.max(1, Math.min(10, Number.isFinite(nextColumns) ? nextColumns : 3));
   } else {
     node[field] = value;
     if (field === "title" && isOrgDepartmentNode(node)) node.displayName = value;
@@ -691,7 +711,7 @@ function isOrgBranchNode(node, depth = 0) {
 
 function getOrgMemberColumnCount(node) {
   const raw = Number(node?.memberColumns || node?.layoutColumns || 3);
-  return Math.max(1, Math.min(3, Number.isFinite(raw) ? raw : 3));
+  return Math.max(1, Math.min(10, Number.isFinite(raw) ? raw : 3));
 }
 
 function renderOrgPopupNode(node, path = "0", depth = 0) {
@@ -864,6 +884,13 @@ function buildOrgPopupHtml() {
   .popup-unified-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
   .popup-unified-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
   .popup-unified-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+  .popup-unified-children.cols-4{grid-template-columns:repeat(4,max-content)!important;}
+  .popup-unified-children.cols-5{grid-template-columns:repeat(5,max-content)!important;}
+  .popup-unified-children.cols-6{grid-template-columns:repeat(6,max-content)!important;}
+  .popup-unified-children.cols-7{grid-template-columns:repeat(7,max-content)!important;}
+  .popup-unified-children.cols-8{grid-template-columns:repeat(8,max-content)!important;}
+  .popup-unified-children.cols-9{grid-template-columns:repeat(9,max-content)!important;}
+  .popup-unified-children.cols-10{grid-template-columns:repeat(10,max-content)!important;}
   .popup-unified-children.count-1::before{display:none;}
   .popup-unified-children::before{left:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2));right:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2));}
   .popup-unified-children.cols-1::before{display:none;}
@@ -921,7 +948,7 @@ function buildOrgPopupHtml() {
 
 
 
-  /* 2026-05-08 조직도 배치 보정: 하위 인원 배치값(1/2/3열)을 실제 가지 수로 반영하고 직책 텍스트 세로 쪼개짐 방지 */
+  /* 2026-05-08 조직도 배치 보정: 하위 인원 배치값(1~10열)을 실제 가지 수로 반영하고 직책 텍스트 세로 쪼개짐 방지 */
   .popup-node{width:188px!important;min-width:188px!important;}
   .popup-node-top span{white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;min-width:34px!important;flex:0 0 auto!important;}
   .popup-node strong,.popup-node em{word-break:keep-all!important;overflow-wrap:normal!important;}
@@ -944,11 +971,25 @@ function buildOrgPopupHtml() {
   .popup-unified-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
   .popup-unified-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
   .popup-unified-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+  .popup-unified-children.cols-4{grid-template-columns:repeat(4,max-content)!important;}
+  .popup-unified-children.cols-5{grid-template-columns:repeat(5,max-content)!important;}
+  .popup-unified-children.cols-6{grid-template-columns:repeat(6,max-content)!important;}
+  .popup-unified-children.cols-7{grid-template-columns:repeat(7,max-content)!important;}
+  .popup-unified-children.cols-8{grid-template-columns:repeat(8,max-content)!important;}
+  .popup-unified-children.cols-9{grid-template-columns:repeat(9,max-content)!important;}
+  .popup-unified-children.cols-10{grid-template-columns:repeat(10,max-content)!important;}
   .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0{display:grid!important;grid-template-columns:repeat(var(--org-child-cols, 3),max-content)!important;gap:70px!important;}
   .popup-unified-children::before{left:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2))!important;right:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2))!important;}
   .popup-unified-children.cols-1::before,.popup-unified-children.count-1::before{display:none!important;}
   .popup-unified-children.cols-2::before{left:25%!important;right:25%!important;}
-  .popup-unified-children.cols-3::before{left:16.66%!important;right:16.66%!important;}
+  .popup-unified-children.cols-3::before{left:16.67%!important;right:16.67%!important;}
+  .popup-unified-children.cols-4::before{left:12.5%!important;right:12.5%!important;}
+  .popup-unified-children.cols-5::before{left:10%!important;right:10%!important;}
+  .popup-unified-children.cols-6::before{left:8.333%!important;right:8.333%!important;}
+  .popup-unified-children.cols-7::before{left:7.143%!important;right:7.143%!important;}
+  .popup-unified-children.cols-8::before{left:6.25%!important;right:6.25%!important;}
+  .popup-unified-children.cols-9::before{left:5.556%!important;right:5.556%!important;}
+  .popup-unified-children.cols-10::before{left:5%!important;right:5%!important;}
 
 </style>
 </head>
@@ -994,7 +1035,7 @@ function buildOrgPopupHtml() {
         <div class="field"><label>연결 직원</label><select id="popupNodeEmployeeSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('employeeId', this.value)"></select></div>
         <div class="field"><label>상위 조직 변경</label><select id="popupNodeParentSelect" onchange="opener.changeSelectedOrgParentFromPopup(this.value)"></select></div>
         <div class="field"><label>표시 타입</label><select id="popupNodeClassSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('className', this.value)"><option value="">일반</option><option value="primary">대표/최상위</option><option value="secondary">임원/상위</option><option value="dotted">외부/참조</option></select></div>
-        <div class="field"><label>하위 인원 배치</label><select id="popupNodeMemberColumnsSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('memberColumns', this.value)"><option value="1">1열 배치</option><option value="2">2열 배치</option><option value="3">3열 배치</option></select></div>
+        <div class="field"><label>하위 인원 배치</label><select id="popupNodeMemberColumnsSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('memberColumns', this.value)"><option value="1">1열 배치</option><option value="2">2열 배치</option><option value="3">3열 배치</option><option value="4">4열 배치</option><option value="5">5열 배치</option><option value="6">6열 배치</option><option value="7">7열 배치</option><option value="8">8열 배치</option><option value="9">9열 배치</option><option value="10">10열 배치</option></select></div>
         <div class="inspector-actions"><button class="btn" onclick="opener.openSelectedOrgEmployeeCard()">인사카드 열기</button><button class="btn btn-dark" onclick="opener.renderOrgVisualEditorPopup()">변경 반영</button></div>
         <div class="summary" id="popupNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
         <div class="help">부서 추가는 ‘+ 하위 노드’, ‘왼쪽으로 추가’, ‘오른쪽으로 추가’를 사용합니다. 드래그는 노드 왼쪽에 놓으면 같은 상위의 앞쪽, 가운데에 놓으면 해당 노드 하위, 오른쪽에 놓으면 같은 상위의 뒤쪽으로 배치됩니다. 선 연결 모드는 원본 노드와 새 상위 노드를 직접 클릭해 연결합니다.</div>
@@ -1223,7 +1264,7 @@ function orgExportToMarkdown(company, root) {
   lines.push(`- 기준 회사: ${company}`);
   lines.push(`- 총 노드 수: ${rows.length}`);
   lines.push("- path는 조직도 내 위치이며, parentPath가 같으면 같은 단계의 형제 노드입니다.");
-  lines.push("- memberColumns는 하위 인원을 1열/2열/3열 중 몇 열로 배치할지 나타냅니다.");
+  lines.push("- memberColumns는 하위 인원을 1~10열 중 몇 열로 배치할지 나타냅니다.");
   lines.push("");
   lines.push("## 계층 구조");
   rows.forEach(row => {
