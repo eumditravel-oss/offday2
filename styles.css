@@ -6336,3 +6336,180 @@ body{
   text-align:center !important;
   vertical-align:middle !important;
 }
+
+/* =========================================================
+   QC checklist v8: category rows + target route list + clipping fixes
+   ========================================================= */
+#workModule .excel-grid-wrap,
+.module-view#workModule .excel-grid-wrap,
+.excel-grid-wrap{
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+}
+
+#workModule .excel-grid,
+.module-view#workModule .excel-grid,
+.excel-grid{
+  min-width:1380px !important;
+  table-layout:fixed !important;
+}
+
+#workModule .excel-grid col.qc-col-select,
+.excel-grid col.qc-col-select{width:42px !important;}
+#workModule .excel-grid col.qc-col-trade,
+.excel-grid col.qc-col-trade{width:88px !important;}
+#workModule .excel-grid col.qc-col-no,
+.excel-grid col.qc-col-no{width:78px !important;}
+#workModule .excel-grid col.qc-col-item,
+.excel-grid col.qc-col-item{width:260px !important;}
+#workModule .excel-grid col.qc-col-method,
+.excel-grid col.qc-col-method{width:300px !important;}
+#workModule .excel-grid col.qc-col-target,
+.excel-grid col.qc-col-target{width:150px !important;}
+#workModule .excel-grid col.qc-col-check,
+.excel-grid col.qc-col-check{width:220px !important;}
+#workModule .excel-grid col.qc-col-comment,
+.excel-grid col.qc-col-comment{width:170px !important;}
+#workModule .excel-grid col.qc-col-attach,
+.excel-grid col.qc-col-attach{width:100px !important;}
+#workModule .excel-grid col.qc-col-history,
+.excel-grid col.qc-col-history{width:120px !important;}
+#workModule .excel-grid col.qc-col-manage,
+.excel-grid col.qc-col-manage{width:112px !important;}
+
+.group-separator-row td,
+.middle-separator-row td,
+.sub-separator-row td{
+  padding:0 !important;
+  border-bottom:1px solid #dbe7f6 !important;
+  background:#f8fbff !important;
+}
+
+.middle-band-inner,
+.sub-band-inner{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 18px;
+  font-weight:900;
+}
+
+.middle-band-inner{
+  background:#eef6ff;
+  border-top:1px solid #cfe0f7;
+}
+
+.sub-band-inner{
+  background:#f8fbff;
+  padding-left:42px;
+  border-top:1px dashed #d8e5f4;
+}
+
+.middle-band-inner span,
+.sub-band-inner span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:24px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#e0ecff;
+  color:#1d4ed8;
+  font-size:12px;
+}
+
+.sub-band-inner span{
+  background:#f1f5f9;
+  color:#475569;
+}
+
+.middle-band-inner strong,
+.sub-band-inner strong{
+  color:#0f172a;
+  font-size:14px;
+}
+
+.middle-band-inner em,
+.sub-band-inner em{
+  font-style:normal;
+  color:#64748b;
+  font-size:12px;
+}
+
+.middle-band-inner small{
+  margin-left:auto;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.4;
+  font-weight:800;
+}
+
+.target-chip-list{
+  align-items:stretch !important;
+  gap:5px !important;
+}
+
+.target-chip,
+.target-select-btn,
+.done-check-wrap span,
+.na-check-btn,
+.btn-objection{
+  max-width:100% !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  line-height:1.35 !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+}
+
+.target-chip{
+  display:flex !important;
+  justify-content:center;
+  align-items:center;
+  min-height:26px;
+  padding:5px 8px !important;
+  text-align:center;
+}
+
+.target-cell-wrap{
+  min-width:0 !important;
+  width:100% !important;
+}
+
+.done-check-stack{
+  width:100% !important;
+  max-width:100% !important;
+  align-items:stretch !important;
+}
+
+.done-check-wrap,
+.na-check-btn,
+.btn-objection{
+  width:100% !important;
+  justify-content:center !important;
+}
+
+.btn-objection{
+  min-height:30px;
+  padding:5px 10px !important;
+}
+
+.manage-cell,
+.row-actions,
+.row-actions-center{
+  min-width:0 !important;
+  width:100% !important;
+}
+
+.row-actions .btn,
+.row-actions-center .btn,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(11) .btn{
+  width:76px !important;
+  min-width:76px !important;
+  height:30px !important;
+  padding:0 8px !important;
+  font-size:12px !important;
+  line-height:30px !important;
+}
