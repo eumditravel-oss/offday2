@@ -324,7 +324,7 @@ const orgStructures = {
         {
             "title": "부사장",
             "className": "secondary",
-            "memberColumns": 3,
+            "memberColumns": 6,
             "employeeId": "VQS-002",
             "children": [
                 {
@@ -626,7 +626,7 @@ const orgStructures = {
     title: "Viet QS Organization Chart",
     date: "2026. 04.07",
     root: { employeeId: "VQS-001", className: "primary", children: [
-      { employeeId: "VQS-002", className: "secondary", children: [
+      { employeeId: "VQS-002", className: "secondary", memberColumns: 6, children: [
         { title: "Management Support", employeeId: "VQS-003", children: [{ employeeId: "VQS-004" }, { employeeId: "VQS-005" }] },
         { title: "Director", employeeId: "CC-010" },
         { title: "Finish", employeeId: "CC-009", children: [
