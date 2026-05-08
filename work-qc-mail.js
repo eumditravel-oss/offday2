@@ -8761,10 +8761,12 @@ function renderChecklistTargetCell(row, realIndex) {
 
   return `
     <div class="target-cell-wrap">
-      <div class="target-chip-list">${targets.map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div>
+      <div class="target-route-area">
+        <div class="target-chip-list">${targets.map(t => `<span class="target-chip target-route-chip">${escapeHtml(t)}</span>`).join("")}</div>
+      </div>
       <div class="target-action-row">
         ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
-        <button type="button" class="target-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
+        <button type="button" class="target-select-btn target-people-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
       </div>
     </div>
   `;
