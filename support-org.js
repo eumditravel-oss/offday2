@@ -254,6 +254,8 @@ function renderOrgVisualNode(node, path = "0") {
   const selected = path === selectedOrgNodePath ? "selected" : "";
   const typeClass = node.className || "";
   const { displayTitle, displayPerson, meta } = getOrgDisplayInfo(node, emp, title, name);
+  const childCount = children.length;
+  const childColumnCount = childCount ? Math.min(childCount, getOrgMemberColumnCount(node)) : 1;
 
   return `
     <div class="org-v-node-wrap">
@@ -266,8 +268,8 @@ function renderOrgVisualNode(node, path = "0") {
         <em>${meta}</em>
         ${emp && !isOrgDepartmentNode(node) ? `<button class="org-card-link" onclick="event.stopPropagation(); openMiniCardPopup('${emp.empNo}')">인사카드</button>` : ""}
       </div>
-      ${children.length ? `
-        <div class="org-v-children">
+      ${childCount ? `
+        <div class="org-v-children count-${childCount} cols-${childColumnCount}" style="--org-child-count:${childCount};--org-child-cols:${childColumnCount};grid-template-columns:repeat(${childColumnCount}, max-content) !important;">
           ${children.map((child, index) => renderOrgVisualNode(child, `${path}-${index}`)).join("")}
         </div>
       ` : ""}
@@ -916,6 +918,37 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0::before{display:none!important;}
   .popup-node-children,.popup-branch-children,.popup-member-children{display:none!important;}
   .popup-tree-inner.concost-tree .org-popup-공사비닷컴{padding-top:0!important;}
+
+
+
+  /* 2026-05-08 조직도 배치 보정: 하위 인원 배치값(1/2/3열)을 실제 가지 수로 반영하고 직책 텍스트 세로 쪼개짐 방지 */
+  .popup-node{width:188px!important;min-width:188px!important;}
+  .popup-node-top span{white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;min-width:34px!important;flex:0 0 auto!important;}
+  .popup-node strong,.popup-node em{word-break:keep-all!important;overflow-wrap:normal!important;}
+  .popup-unified-children,
+  .popup-tree-inner.concost-tree .popup-unified-children,
+  .popup-tree-inner.vietqs-tree .popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-부사장>.popup-unified-children.depth-1,
+  .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-qc>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-클레임센터>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조팀>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-bim-파트>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-토목-조경파트>.popup-unified-children{
+    display:grid!important;grid-auto-flow:row!important;align-items:start!important;justify-content:center!important;width:max-content!important;max-width:none!important;gap:56px 32px!important;padding-top:50px!important;margin:0 auto!important;
+  }
+  .popup-unified-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
+  .popup-unified-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
+  .popup-unified-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0{display:grid!important;grid-template-columns:repeat(var(--org-child-cols, 3),max-content)!important;gap:70px!important;}
+  .popup-unified-children::before{left:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2))!important;right:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2))!important;}
+  .popup-unified-children.cols-1::before,.popup-unified-children.count-1::before{display:none!important;}
+  .popup-unified-children.cols-2::before{left:25%!important;right:25%!important;}
+  .popup-unified-children.cols-3::before{left:16.66%!important;right:16.66%!important;}
 
 </style>
 </head>
