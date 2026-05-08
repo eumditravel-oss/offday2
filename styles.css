@@ -5908,3 +5908,73 @@ body{
 .actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em,
 .actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em,
 .actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em{color:#64748b!important;}
+
+
+/* === 조직도 최종 보정: 보기창/관리창 겹침 제거 + 색상 단순화 === */
+.org-visual-canvas{overflow:auto!important;}
+.org-v-scroll{min-width:max-content!important;width:max-content!important;justify-content:center!important;padding:34px 56px 70px!important;}
+.org-v-tree{width:max-content!important;min-width:max-content!important;justify-content:center!important;align-items:flex-start!important;}
+.org-v-node-wrap{width:max-content!important;max-width:none!important;flex:0 0 auto!important;}
+.org-v-children{display:flex!important;grid-template-columns:none!important;width:max-content!important;max-width:none!important;gap:42px!important;padding-top:48px!important;align-items:flex-start!important;justify-content:center!important;}
+.org-v-children::before{top:23px!important;left:88px!important;right:88px!important;height:2px!important;background:#cbd5e1!important;}
+.org-v-node-wrap::before{top:-25px!important;height:25px!important;background:#cbd5e1!important;}
+.org-v-children>.org-v-node-wrap:first-child::after,
+.org-v-children>.org-v-node-wrap:last-child::after{content:"";position:absolute;top:-26px;height:2px;background:#fbfdff;z-index:1;}
+.org-v-children>.org-v-node-wrap:first-child::after{left:-4px;right:50%;}
+.org-v-children>.org-v-node-wrap:last-child::after{left:50%;right:-4px;}
+.org-v-children>.org-v-node-wrap:only-child::after{content:"";position:absolute;top:-26px;left:-4px;right:-4px;height:2px;background:#fbfdff;z-index:1;}
+.org-v-node{position:relative;z-index:2;background:#fff!important;color:#0f172a!important;}
+.org-v-node.primary{background:#1d4ed8!important;border-color:#1d4ed8!important;color:#fff!important;}
+.org-v-node.secondary{background:#3b82f6!important;border-color:#3b82f6!important;color:#fff!important;}
+.org-v-node.dotted{background:#f8fafc!important;border-color:#cbd5e1!important;color:#334155!important;opacity:.72!important;}
+.org-v-node.primary .org-v-node-top span,.org-v-node.primary .org-v-node-top small,.org-v-node.primary strong,.org-v-node.primary em,
+.org-v-node.secondary .org-v-node-top span,.org-v-node.secondary .org-v-node-top small,.org-v-node.secondary strong,.org-v-node.secondary em{color:#fff!important;}
+.org-v-node:not(.primary):not(.secondary) .org-v-node-top span{color:#1d4ed8!important;}
+.org-v-node:not(.primary):not(.secondary) .org-v-node-top small{color:#94a3b8!important;}
+.org-v-node:not(.primary):not(.secondary) strong{color:#0f172a!important;}
+.org-v-node:not(.primary):not(.secondary) em{color:#64748b!important;}
+
+.actual-view-tree{display:flex!important;justify-content:center!important;align-items:flex-start!important;width:max-content!important;min-width:max-content!important;margin:0 auto!important;padding:10px 70px 50px!important;}
+.actual-view-node-wrap{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;width:max-content!important;max-width:none!important;flex:0 0 auto!important;margin:0!important;}
+.actual-view-node-wrap::before{content:""!important;position:absolute!important;top:-25px!important;left:50%!important;width:0!important;height:25px!important;border-left:2px solid #9ca3af!important;background:transparent!important;transform:translateX(-1px)!important;z-index:0!important;}
+.actual-view-tree>.actual-view-node-wrap::before{display:none!important;}
+.actual-view-node{position:relative!important;z-index:2!important;background:#fff!important;border-color:#cbd5e1!important;color:#111827!important;}
+.actual-view-node span{color:#1d4ed8!important;}
+.actual-view-node strong{color:#111827!important;}
+.actual-view-node em{color:#64748b!important;}
+.actual-view-node.primary,.actual-view-node.depth-0{background:#1d4ed8!important;border-color:#1d4ed8!important;color:#fff!important;}
+.actual-view-node.secondary,.actual-view-node.depth-1{background:#3b82f6!important;border-color:#3b82f6!important;color:#fff!important;}
+.actual-view-node.primary span,.actual-view-node.primary strong,.actual-view-node.primary em,
+.actual-view-node.secondary span,.actual-view-node.secondary strong,.actual-view-node.secondary em,
+.actual-view-node.depth-0 span,.actual-view-node.depth-0 strong,.actual-view-node.depth-0 em,
+.actual-view-node.depth-1 span,.actual-view-node.depth-1 strong,.actual-view-node.depth-1 em{color:#fff!important;}
+.actual-view-node.dotted{background:#f8fafc!important;border-color:#cbd5e1!important;color:#334155!important;opacity:.72!important;}
+.actual-view-node.dotted span,.actual-view-node.dotted strong,.actual-view-node.dotted em{color:#334155!important;}
+.actual-view-node-wrap.depth-2>.actual-view-node:not(.primary):not(.secondary):not(.dotted),
+.actual-view-node-wrap.depth-3>.actual-view-node:not(.primary):not(.secondary):not(.dotted),
+.actual-view-node-wrap.depth-4>.actual-view-node:not(.primary):not(.secondary):not(.dotted),
+.actual-view-node-wrap.depth-5>.actual-view-node:not(.primary):not(.secondary):not(.dotted){background:#fff!important;border-color:#cbd5e1!important;color:#111827!important;}
+.actual-view-node-wrap.depth-2>.actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-3>.actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-4>.actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-5>.actual-view-node:not(.primary):not(.secondary):not(.dotted) span{color:#1d4ed8!important;}
+.actual-view-node-wrap.depth-2>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-3>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-4>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-5>.actual-view-node:not(.primary):not(.secondary):not(.dotted) strong{color:#111827!important;}
+.actual-view-children{position:relative!important;display:flex!important;grid-template-columns:none!important;grid-auto-flow:unset!important;grid-auto-columns:unset!important;justify-content:center!important;align-items:flex-start!important;width:max-content!important;max-width:none!important;gap:42px!important;padding-top:48px!important;margin:0 auto!important;}
+.actual-view-children::before{content:""!important;position:absolute!important;top:23px!important;left:46px!important;right:46px!important;height:2px!important;background:#9ca3af!important;z-index:0!important;}
+.actual-view-children>.actual-view-node-wrap::before{top:-25px!important;height:25px!important;}
+.actual-view-children>.actual-view-node-wrap:first-child::after,
+.actual-view-children>.actual-view-node-wrap:last-child::after{content:""!important;position:absolute!important;top:-26px!important;height:2px!important;background:#fff!important;z-index:1!important;}
+.actual-view-children>.actual-view-node-wrap:first-child::after{left:-4px!important;right:50%!important;}
+.actual-view-children>.actual-view-node-wrap:last-child::after{left:50%!important;right:-4px!important;}
+.actual-view-children>.actual-view-node-wrap:only-child::after{content:""!important;position:absolute!important;top:-26px!important;left:-4px!important;right:-4px!important;height:2px!important;background:#fff!important;z-index:1!important;}
+.actual-view-children>.actual-view-node-wrap:only-child::before{display:block!important;}
+.actual-view-branch-children,.actual-view-member-children{display:none!important;}
+.actual-view-tree.concost-tree>.actual-view-node-wrap>.actual-view-children.depth-0{gap:56px!important;}
+.actual-view-tree.concost-tree>.actual-view-node-wrap>.actual-view-children.depth-0::before{display:none!important;}
+.actual-view-tree.concost-tree .actual-view-기술본부>.actual-view-children,
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경>.actual-view-children{gap:42px!important;}
+.actual-org-fit{padding:18px 70px 42px!important;}
+.actual-org-viewport{overflow:auto!important;}
