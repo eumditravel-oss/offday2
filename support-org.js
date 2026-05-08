@@ -867,6 +867,47 @@ function buildOrgPopupHtml() {
   .popup-member-children>.popup-node-wrap::before,.popup-branch-children>.popup-node-wrap::before{top:-22px;height:22px;}
   .popup-node.selected{position:relative;z-index:3;}
 
+
+
+  /* === 조직도 편집 팝업 최종 보정: 겹침 방지 / 자유 배치 기반 트리 === */
+  .popup-tree{padding:52px 72px 80px!important;min-width:max-content!important;min-height:max-content!important;}
+  .popup-tree-inner,
+  .popup-tree-inner.concost-tree,
+  .popup-tree-inner.vietqs-tree{display:flex!important;justify-content:center!important;align-items:flex-start!important;min-width:max-content!important;width:max-content!important;max-width:none!important;}
+  .popup-node-wrap{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;width:max-content!important;max-width:none!important;flex:0 0 auto!important;margin:0!important;}
+  .popup-node{position:relative!important;z-index:2!important;flex:0 0 auto!important;background:#fff!important;color:#0f172a!important;}
+  .popup-node.primary{background:#1d4ed8!important;border-color:#1d4ed8!important;color:#fff!important;}
+  .popup-node.secondary{background:#3b82f6!important;border-color:#3b82f6!important;color:#fff!important;}
+  .popup-node.dotted{background:#f8fafc!important;border-color:#cbd5e1!important;color:#334155!important;opacity:.72!important;}
+  .popup-node.primary .popup-node-top span,.popup-node.primary .popup-node-top small,.popup-node.primary strong,.popup-node.primary em,
+  .popup-node.secondary .popup-node-top span,.popup-node.secondary .popup-node-top small,.popup-node.secondary strong,.popup-node.secondary em{color:#fff!important;}
+  .popup-node.dotted .popup-node-top span,.popup-node.dotted .popup-node-top small,.popup-node.dotted strong,.popup-node.dotted em{color:#334155!important;}
+  .popup-unified-children,
+  .popup-tree-inner.concost-tree .popup-unified-children,
+  .popup-tree-inner.vietqs-tree .popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-부사장>.popup-unified-children.depth-1,
+  .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-마감>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-qc>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-클레임센터>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조팀>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-bim-파트>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-토목-조경파트>.popup-unified-children{position:relative!important;display:flex!important;grid-template-columns:none!important;grid-auto-flow:unset!important;grid-auto-columns:unset!important;justify-content:center!important;align-items:flex-start!important;width:max-content!important;max-width:none!important;gap:42px!important;padding-top:48px!important;margin:0 auto!important;}
+  .popup-unified-children::before{content:""!important;position:absolute!important;top:23px!important;left:88px!important;right:88px!important;height:2px!important;background:#bfccdc!important;z-index:0!important;}
+  .popup-unified-children>.popup-node-wrap::before{content:""!important;position:absolute!important;top:-25px!important;left:50%!important;width:0!important;height:25px!important;border-left:2px solid #bfccdc!important;background:transparent!important;transform:translateX(-1px)!important;z-index:0!important;}
+  .popup-unified-children>.popup-node-wrap:first-child::after,
+  .popup-unified-children>.popup-node-wrap:last-child::after{content:""!important;position:absolute!important;top:-26px!important;height:2px!important;background:#f8fbff!important;z-index:1!important;}
+  .popup-unified-children>.popup-node-wrap:first-child::after{left:-4px!important;right:50%!important;}
+  .popup-unified-children>.popup-node-wrap:last-child::after{left:50%!important;right:-4px!important;}
+  .popup-unified-children>.popup-node-wrap:only-child::after{content:""!important;position:absolute!important;top:-26px!important;left:-4px!important;right:-4px!important;height:2px!important;background:#f8fbff!important;z-index:1!important;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0{gap:54px!important;}
+  .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0::before{display:none!important;}
+  .popup-node-children,.popup-branch-children,.popup-member-children{display:none!important;}
+  .popup-tree-inner.concost-tree .org-popup-공사비닷컴{padding-top:0!important;}
+
 </style>
 </head>
 <body>
