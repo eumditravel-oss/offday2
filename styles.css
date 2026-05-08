@@ -5801,3 +5801,110 @@ body{
   padding-left:10px !important;
   padding-right:10px !important;
 }
+
+
+/* === 조직도 실제 보기: 하위 노드 분리 배치/노란색 단계 표시 제거 === */
+.actual-view-children{
+  position:relative;
+  display:grid;
+  justify-content:center;
+  align-items:start;
+  width:max-content;
+  max-width:none;
+  margin-left:auto;
+  margin-right:auto;
+  gap:26px;
+  padding-top:38px;
+}
+.actual-view-children::before{
+  content:"";
+  position:absolute;
+  top:18px;
+  left:0;
+  right:0;
+  height:2px;
+  background:#9ca3af;
+}
+.actual-view-children > .actual-view-node-wrap::before{
+  top:-16px;
+  height:16px;
+}
+.actual-view-children > .actual-view-node-wrap:first-child::after,
+.actual-view-children > .actual-view-node-wrap:last-child::after{
+  content:"";
+  position:absolute;
+  top:-18px;
+  height:2px;
+  background:#fff;
+  z-index:1;
+}
+.actual-view-children > .actual-view-node-wrap:first-child::after{right:50%;left:-2px;}
+.actual-view-children > .actual-view-node-wrap:last-child::after{left:50%;right:-2px;}
+.actual-view-children > .actual-view-node-wrap:only-child::after{
+  content:"";
+  position:absolute;
+  top:-18px;
+  left:-2px;
+  right:-2px;
+  height:2px;
+  background:#fff;
+  z-index:1;
+}
+.actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-children.depth-0{
+  display:flex;
+  justify-content:center;
+}
+.actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-children.depth-0::before{display:none;}
+.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-children.depth-1{
+  grid-template-columns:108px 108px 108px max-content 108px 108px!important;
+  gap:30px;
+  align-items:start;
+}
+.actual-view-tree.concost-tree .actual-view-기술본부 > .actual-view-children{
+  grid-template-columns:92px max-content max-content!important;
+  gap:34px;
+  align-items:start;
+}
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-children{
+  grid-template-columns:92px 92px 92px!important;
+  gap:20px;
+  align-items:start;
+}
+.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-children{
+  grid-template-columns:repeat(3,92px)!important;
+  gap:8px 10px;
+}
+.actual-view-tree.concost-tree .actual-view-경영지원본부 > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-개발-t-f > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-qc > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-클레임센터 > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-구조팀 > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-bim-파트 > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-토목-조경파트 > .actual-view-children{
+  grid-template-columns:92px!important;
+  gap:8px;
+}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted),
+.actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted),
+.actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted){
+  background:#fff!important;
+  border-color:#cbd5e1!important;
+  color:#111827!important;
+}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em,
+.actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em,
+.actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
+.actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em{
+  color:inherit!important;
+}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
+.actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span{color:#1d4ed8!important;}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em,
+.actual-view-node-wrap.depth-4 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em,
+.actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em{color:#64748b!important;}
