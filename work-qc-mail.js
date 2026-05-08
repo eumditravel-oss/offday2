@@ -1533,13 +1533,113 @@ function renderChecklistTargetCell(row, realIndex) {
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
   const targets = getChecklistTargets(row);
+  const hasMiddleOptions = getChecklistMiddleOptions(row.group).length > 0;
 
   return `
     <div class="target-cell-wrap">
       <div class="target-chip-list">${targets.map(t => `<span class="target-chip">${escapeHtml(t)}</span>`).join("")}</div>
-      <button type="button" class="target-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
+      <div class="target-action-row">
+        ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
+        <button type="button" class="target-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
+      </div>
     </div>
   `;
+}
+
+function renderChecklistClassifyModal(index) {
+  const row = checklistRows[index];
+  if (!row) return "";
+  normalizeChecklistRow(row);
+  const locked = isChecklistCategoryLocked(row.group);
+  const middleOptions = getChecklistMiddleOptions(row.group);
+  const currentMiddle = row.middleCategory || middleOptions[0] || "";
+  const subOptions = getChecklistSubOptions(row.group, currentMiddle);
+  const currentSub = row.subCategory || subOptions[0] || "";
+
+  return `
+    <div class="target-modal-card classify-modal-card" onclick="event.stopPropagation();">
+      <div class="target-modal-head">
+        <div>
+          <strong>중분류 지정</strong>
+          <span>${escapeHtml(row.no || "-")} · ${escapeHtml(row.group || "")}</span>
+        </div>
+        <button type="button" class="close" onclick="closeChecklistClassifyModal()">×</button>
+      </div>
+      <div class="target-modal-body classify-modal-body">
+        <div class="field"><label>중분류</label><select id="inlineChecklistMiddle" ${locked || !middleOptions.length ? "disabled" : ""} onchange="refreshInlineChecklistSubOptions(${index})">${middleOptions.length ? middleOptions.map(value => `<option value="${escapeHtml(value)}" ${value === currentMiddle ? "selected" : ""}>${escapeHtml(value)}</option>`).join("") : `<option value="">중분류 없음</option>`}</select></div>
+        <div class="field"><label>소분류</label><select id="inlineChecklistSub" ${locked || !subOptions.length ? "disabled" : ""}>${subOptions.length ? subOptions.map(value => `<option value="${escapeHtml(value)}" ${value === currentSub ? "selected" : ""}>${escapeHtml(value)}</option>`).join("") : `<option value="">소분류 없음</option>`}</select></div>
+      </div>
+      <div class="target-modal-foot">
+        <button type="button" class="btn btn-line" onclick="closeChecklistClassifyModal()">닫기</button>
+        <button type="button" class="btn btn-primary" ${locked ? "disabled" : ""} onclick="applyChecklistClassifyModal(${index})">적용</button>
+      </div>
+    </div>
+  `;
+}
+
+function openChecklistClassifyModal(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (isChecklistCategoryLocked(row.group)) {
+    showToast("송부 완료된 질의차수는 중분류를 수정할 수 없습니다.");
+    return;
+  }
+
+  closeChecklistClassifyModal();
+  closeChecklistTargetModal();
+  const layer = document.createElement("div");
+  layer.id = "checklistClassifyModal";
+  layer.className = "target-modal-backdrop active";
+  layer.innerHTML = renderChecklistClassifyModal(index);
+  layer.addEventListener("click", closeChecklistClassifyModal);
+  document.body.appendChild(layer);
+}
+
+function closeChecklistClassifyModal() {
+  document.getElementById("checklistClassifyModal")?.remove();
+}
+
+function refreshInlineChecklistSubOptions(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  const group = normalizeChecklistGroupName(row.group);
+  const middle = document.getElementById("inlineChecklistMiddle")?.value || "";
+  const subEl = document.getElementById("inlineChecklistSub");
+  if (!subEl) return;
+  const options = getChecklistSubOptions(group, middle);
+  subEl.innerHTML = options.length
+    ? options.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")
+    : `<option value="">소분류 없음</option>`;
+  subEl.disabled = !options.length;
+}
+
+function applyChecklistClassifyModal(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  if (isChecklistCategoryLocked(row.group)) return;
+
+  const middle = document.getElementById("inlineChecklistMiddle")?.value || "";
+  const sub = document.getElementById("inlineChecklistSub")?.value || "";
+  const validMiddles = getChecklistMiddleOptions(row.group);
+  if (validMiddles.length && !validMiddles.includes(middle)) {
+    showToast("선택 가능한 중분류가 아닙니다.");
+    return;
+  }
+
+  row.middleCategory = middle;
+  row.subCategory = getChecklistSubOptions(row.group, middle).length ? sub : "";
+  row.manualTargets = false;
+  row.targets = [];
+  row.checks = [];
+  normalizeChecklistRow(row);
+  row.history.push({ action: "중분류 지정", target: getChecklistRouteLabel(row), worker: getCurrentWorkerName(), time: getChecklistTimeText() });
+  closeChecklistClassifyModal();
+  collapsedChecklistGroups.delete(normalizeChecklistGroupName(row.group));
+  collapsedChecklistMiddles.delete(getChecklistMiddleCollapseKey(row.group, row.middleCategory));
+  renderChecklistGrid();
+  showToast("중분류가 반영되었습니다.");
 }
 
 function renderChecklistTargetModal(index) {
