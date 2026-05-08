@@ -1100,13 +1100,21 @@ function buildOrgPopupHtml() {
 
 function openOrgVisualEditorWindow() {
   orgEditorPopupAutoFit = true;
+  orgEditorPopupZoom = 1;
+  if (!getOrgNodeByPath(selectedOrgNodePath, currentOrgEditorCompany)) selectedOrgNodePath = "0";
   orgEditorPopupWindow = window.open("", "CONCOST_ORG_VISUAL_EDITOR", "width=1900,height=1050,left=40,top=20,resizable=yes,scrollbars=yes");
   if (!orgEditorPopupWindow) return showToast("팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 실행해 주세요.");
   orgEditorPopupWindow.document.open();
   orgEditorPopupWindow.document.write(buildOrgPopupHtml());
   orgEditorPopupWindow.document.close();
   orgEditorPopupWindow.opener = window;
-  setTimeout(() => renderOrgVisualEditorPopup(), 50);
+
+  setTimeout(() => {
+    renderOrgVisualEditorPopup();
+    orgEditorPopupWindow?.requestAnimationFrame(() => {
+      orgEditorPopupWindow?.requestAnimationFrame(() => fitOrgPopupToView(true));
+    });
+  }, 80);
 }
 
 function renderOrgVisualEditorPopup() {
@@ -1167,14 +1175,19 @@ function fitOrgPopupToView(force = false) {
   tree.style.height = "auto";
 
   const baseWidth = Math.max(inner.scrollWidth || inner.offsetWidth || 1, 1);
-  const baseHeight = Math.max(inner.scrollHeight || inner.offsetHeight || 1, 1);
-  const availableWidth = Math.max(canvas.clientWidth - 220, 360);
-  const availableHeight = Math.max(canvas.clientHeight - 180, 360);
-  const nextScale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
+  const availableWidth = Math.max(canvas.clientWidth - 96, 480);
 
-  orgEditorPopupZoom = Math.max(0.26, Math.min(1, Number(nextScale.toFixed(3))));
+  /*
+    초기 편집창은 전체 세로 높이에 맞추지 않습니다.
+    전체 높이에 맞추면 조직도가 과도하게 축소되어 좌측에 작게 보이는 문제가 발생합니다.
+    가로 폭 기준으로 읽을 수 있는 배율을 잡고, 선택 노드를 화면 중앙에 배치합니다.
+  */
+  const widthScale = availableWidth / baseWidth;
+  const nextScale = Math.min(1, Math.max(0.52, widthScale));
+
+  orgEditorPopupZoom = Math.max(0.42, Math.min(1, Number(nextScale.toFixed(3))));
   applyOrgPopupScale();
-  scrollOrgPopupCanvas(force ? "selected" : "center");
+  scrollOrgPopupCanvas("selected");
 }
 function scrollOrgPopupCanvas(mode = "center") {
   const win = orgEditorPopupWindow;
