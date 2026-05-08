@@ -488,6 +488,8 @@ function renderOrgEditor() {
 
 let orgEditorPopupWindow = null;
 let orgEditorDragSourcePath = null;
+let orgEditorConnectionMode = false;
+let orgEditorConnectionSourcePath = null;
 let orgEditorPopupZoom = 1;
 let orgEditorPopupAutoFit = true;
 
@@ -507,8 +509,29 @@ function findOrgNodePathByReference(targetNode, company = currentOrgEditorCompan
 }
 
 function moveOrgNodeToParentByDrag(sourcePath, targetPath) {
+  return moveOrgNodeByDrop(sourcePath, targetPath, "center");
+}
+
+function getOrgDropPositionFromEvent(clientX, targetElement) {
+  if (!targetElement || !Number.isFinite(clientX)) return "center";
+  const rect = targetElement.getBoundingClientRect();
+  const x = clientX - rect.left;
+  if (x < rect.width * 0.33) return "left";
+  if (x > rect.width * 0.67) return "right";
+  return "center";
+}
+
+function updateOrgPopupDropGuide(event, element) {
+  if (!element) return;
+  event.preventDefault();
+  const position = getOrgDropPositionFromEvent(event.clientX, element);
+  element.classList.remove("drop-left", "drop-center", "drop-right");
+  element.classList.add("drop-ready", `drop-${position}`);
+}
+
+function moveOrgNodeByDrop(sourcePath, targetPath, position = "center") {
   if (!sourcePath || !targetPath) return;
-  if (sourcePath === "0") return showToast("최상위 노드는 드래그 이동할 수 없습니다.");
+  if (sourcePath === "0") return showToast("최상위 노드는 이동할 수 없습니다.");
   if (sourcePath === targetPath || targetPath.startsWith(`${sourcePath}-`)) {
     return showToast("자기 자신 또는 하위 조직으로는 이동할 수 없습니다.");
   }
@@ -520,14 +543,72 @@ function moveOrgNodeToParentByDrag(sourcePath, targetPath) {
 
   const sourceIndex = Number(sourcePath.split("-").pop());
   sourceParent.children.splice(sourceIndex, 1);
-  if (!targetNode.children) targetNode.children = [];
-  targetNode.children.push(movingNode);
-  selectedOrgNodePath = findOrgNodePathByReference(movingNode) || selectedOrgNodePath;
 
+  if (position === "center" || targetPath === "0") {
+    const liveTarget = getOrgNodeByPath(targetPath);
+    if (!liveTarget) return;
+    if (!liveTarget.children) liveTarget.children = [];
+    liveTarget.children.push(movingNode);
+  } else {
+    const targetParentPath = targetPath.split("-").slice(0, -1).join("-") || "0";
+    const targetParent = getOrgNodeByPath(targetParentPath);
+    if (!targetParent?.children) return;
+    let targetIndex = Number(targetPath.split("-").pop());
+
+    if (sourceParent === targetParent && sourceIndex < targetIndex) targetIndex -= 1;
+    const insertIndex = position === "left" ? targetIndex : targetIndex + 1;
+    targetParent.children.splice(insertIndex, 0, movingNode);
+  }
+
+  selectedOrgNodePath = findOrgNodePathByReference(movingNode) || selectedOrgNodePath;
   renderOrgChart(currentOrgEditorCompany);
   renderOrgVisualEditor();
   renderOrgVisualEditorPopup();
-  showToast("드래그한 노드를 선택 조직의 하위로 이동했습니다.");
+
+  const label = position === "left" ? "선택 위치의 왼쪽/앞쪽에 배치했습니다." : position === "right" ? "선택 위치의 오른쪽/뒤쪽에 배치했습니다." : "선택 조직의 하위로 직접 연결했습니다.";
+  showToast(label);
+}
+
+function handleOrgPopupNodeClick(path, event) {
+  if (orgEditorConnectionMode) {
+    event?.stopPropagation?.();
+    connectOrgNodesByClick(path);
+    return;
+  }
+  selectOrgPopupNode(path);
+}
+
+function toggleOrgConnectionMode() {
+  orgEditorConnectionMode = !orgEditorConnectionMode;
+  orgEditorConnectionSourcePath = null;
+  updateOrgConnectionModeButton();
+  showToast(orgEditorConnectionMode ? "선 연결 모드입니다. 이동할 노드를 먼저 클릭한 뒤 새 상위 조직을 클릭하세요." : "선 연결 모드를 해제했습니다.");
+}
+
+function updateOrgConnectionModeButton() {
+  const win = orgEditorPopupWindow;
+  if (!win || win.closed) return;
+  const btn = win.document.getElementById("connectionModeBtn");
+  if (!btn) return;
+  btn.textContent = orgEditorConnectionMode ? "선 연결 모드 ON" : "선 연결 모드 OFF";
+  btn.classList.toggle("btn-primary", orgEditorConnectionMode);
+  btn.classList.toggle("btn-dark", !orgEditorConnectionMode);
+}
+
+function connectOrgNodesByClick(path) {
+  if (!orgEditorConnectionSourcePath) {
+    if (path === "0") return showToast("최상위 노드는 연결 원본으로 선택할 수 없습니다.");
+    orgEditorConnectionSourcePath = path;
+    selectedOrgNodePath = path;
+    renderOrgVisualEditorPopup();
+    showToast("연결할 새 상위 조직을 클릭하세요.");
+    return;
+  }
+  const sourcePath = orgEditorConnectionSourcePath;
+  orgEditorConnectionSourcePath = null;
+  orgEditorConnectionMode = false;
+  updateOrgConnectionModeButton();
+  moveOrgNodeByDrop(sourcePath, path, "center");
 }
 
 function renderOrgPopupEmployeeOptions(selectedEmpNo = "") {
@@ -630,10 +711,11 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
       <div class="popup-node ${selected} ${typeClass} depth-${depth}"
         draggable="true"
         ondragstart="if(event.ctrlKey){event.preventDefault();return false;} opener.startOrgPopupDrag('${path}')"
-        ondragover="event.preventDefault(); this.classList.add('drop-ready')"
-        ondragleave="this.classList.remove('drop-ready')"
-        ondrop="event.preventDefault(); this.classList.remove('drop-ready'); opener.dropOrgPopupNode('${path}')"
-        onclick="opener.selectOrgPopupNode('${path}')">
+        ondragenter="opener.updateOrgPopupDropGuide(event, this)"
+        ondragover="event.preventDefault(); opener.updateOrgPopupDropGuide(event, this)"
+        ondragleave="this.classList.remove('drop-ready','drop-left','drop-center','drop-right')"
+        ondrop="event.preventDefault(); this.classList.remove('drop-ready','drop-left','drop-center','drop-right'); opener.dropOrgPopupNode('${path}', event.clientX)"
+        onclick="opener.handleOrgPopupNodeClick('${path}', event)">
         <div class="popup-node-top"><span>${displayTitle}</span><small>${path}</small></div>
         <strong>${displayPerson}</strong>
         <em>${meta}</em>
@@ -643,13 +725,13 @@ function renderOrgPopupNode(node, path = "0", depth = 0) {
       </div>
 
       ${branchChildren.length ? `
-        <div class="popup-branch-children depth-${depth} count-${branchChildren.length}" style="grid-template-columns:repeat(${branchColumns}, max-content);">
+        <div class="popup-branch-children depth-${depth} count-${branchChildren.length}" style="--org-child-count:${branchChildren.length};grid-template-columns:repeat(${branchColumns}, max-content);">
           ${branchChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
         </div>
       ` : ""}
 
       ${leafChildren.length ? `
-        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="grid-template-columns:repeat(${memberColumns}, 176px);">
+        <div class="popup-member-children depth-${depth} count-${leafChildren.length} cols-${memberColumns}" style="--org-child-count:${leafChildren.length};grid-template-columns:repeat(${memberColumns}, 176px);">
           ${leafChildren.map(({ child, index }) => renderOrgPopupNode(child, `${path}-${index}`, depth + 1)).join("")}
         </div>
       ` : ""}
@@ -671,7 +753,7 @@ function buildOrgPopupHtml() {
   .popup-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 20px;background:#fff;border-bottom:1px solid var(--line)}
   .popup-title strong{display:block;font-size:18px}.popup-title span{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:800}.popup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{border:0;border-radius:13px;padding:10px 14px;font-weight:900;cursor:pointer;background:#fff;color:#334155;border:1px solid var(--line)}.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-danger{background:#fee2e2;color:var(--red);border-color:#fecaca}.btn-dark{background:#0f172a;color:#fff;border-color:#0f172a}.btn:disabled{opacity:.45;cursor:not-allowed}
-  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px;cursor:default}.popup-canvas.ctrl-pan{cursor:grabbing;user-select:none}.popup-tree{display:block;min-width:0;min-height:0;padding:46px 56px;transform-origin:top left}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start;transform-origin:top left}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,max-content));align-items:start;justify-content:center;gap:38px 20px;width:min(100%,1380px);padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:40px;right:40px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:176px;min-height:116px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:12px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
+  .popup-main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 64px);min-height:0}.popup-canvas-wrap{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f8fafc}.canvas-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}.tabs{display:flex;gap:7px}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}.guide{font-size:12px;color:var(--muted);font-weight:800}.popup-canvas{position:relative;flex:1;overflow:auto;background-color:#f8fbff;background-image:linear-gradient(#e8eef7 1px,transparent 1px),linear-gradient(90deg,#e8eef7 1px,transparent 1px);background-size:32px 32px;cursor:default}.popup-canvas.ctrl-pan{cursor:grabbing;user-select:none}.popup-tree{display:block;min-width:0;min-height:0;padding:46px 56px;transform-origin:top left}.popup-tree-inner{display:flex;justify-content:center;align-items:flex-start;transform-origin:top left}.popup-node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}.popup-node-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,max-content));align-items:start;justify-content:center;gap:38px 20px;width:min(100%,1380px);padding-top:44px;position:relative}.popup-node-children::before{content:"";position:absolute;top:22px;left:40px;right:40px;height:2px;background:#bfccdc}.popup-node-wrap::before{content:"";position:absolute;top:-22px;width:2px;height:22px;background:#bfccdc}.popup-tree-inner>.popup-node-wrap::before{display:none}.popup-node{width:176px;min-height:116px;background:#fff;border:2px solid #cfe0f6;border-radius:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:12px;cursor:grab;line-height:1.35;transition:.12s}.popup-node:active{cursor:grabbing}.popup-node:hover{border-color:#2563eb;transform:translateY(-1px)}.popup-node.selected{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.15),0 12px 28px rgba(15,23,42,.11)}.popup-node.drop-ready{outline:4px solid rgba(22,163,74,.22);border-color:#16a34a}.popup-node.drop-left{box-shadow:inset 6px 0 0 #f59e0b,0 10px 24px rgba(15,23,42,.08)}.popup-node.drop-right{box-shadow:inset -6px 0 0 #f59e0b,0 10px 24px rgba(15,23,42,.08)}.popup-node.drop-center{box-shadow:inset 0 -6px 0 #16a34a,0 10px 24px rgba(15,23,42,.08)}.popup-node.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.popup-node.secondary{background:#3b82f6;color:#fff;border-color:#3b82f6}.popup-node.dotted{background:#94a3b8;color:#fff;border-color:#94a3b8}.popup-node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}.popup-node-top span{font-size:12px;font-weight:900;color:#1d4ed8}.popup-node.primary .popup-node-top span,.popup-node.secondary .popup-node-top span,.popup-node.dotted .popup-node-top span{color:#fff}.popup-node-top small{font-size:11px;color:#94a3b8;font-weight:900}.popup-node strong{display:block;font-size:15px;font-weight:900;margin-bottom:7px}.popup-node em{display:block;font-style:normal;color:#64748b;font-size:12px;font-weight:900}.popup-node.primary em,.popup-node.secondary em,.popup-node.dotted em{color:rgba(255,255,255,.86)}.popup-node-actions{margin-top:10px}.popup-node-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer}.inspector{background:#fff;border-left:1px solid var(--line);padding:18px;overflow:auto}.inspector h3{font-size:12px;color:#2563eb;letter-spacing:1px;margin-bottom:7px}.inspector-title{font-size:20px;font-weight:900;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:900;margin-bottom:7px;color:#334155}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;font-size:14px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.summary{border:1px dashed #cfe0f6;background:#f8fbff;border-radius:16px;padding:13px;line-height:1.75;font-weight:800;color:#475569;font-size:12px}.summary strong{display:block;color:#0f172a;margin-bottom:6px}.summary span{display:block}.help{margin-top:14px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}
 
   .popup-tree-inner.concost-tree{min-width:1550px;justify-content:center;}
   .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-node-children.depth-0{display:flex;justify-content:center;width:100%;}
@@ -762,7 +844,7 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children.cols-3{grid-template-columns:repeat(3,150px)!important;}
 
   /* 하위 노드 연결선이 실제 자식 범위 밖으로 과하게 뻗지 않도록 보정 */
-  .popup-member-children::before,.popup-branch-children::before{left:50%;right:50%;}
+  .popup-member-children::before,.popup-branch-children::before{left:calc(50% / max(var(--org-child-count, 2), 2));right:calc(50% / max(var(--org-child-count, 2), 2));}
   .popup-member-children.count-1::before,.popup-branch-children.count-1::before{display:none;}
   .popup-member-children.count-2::before,.popup-branch-children.count-2::before{left:25%;right:25%;}
   .popup-member-children.count-3::before,.popup-branch-children.count-3::before{left:16.66%;right:16.66%;}
@@ -789,6 +871,7 @@ function buildOrgPopupHtml() {
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(-1)">← 순서</button>
         <button class="btn" onclick="opener.moveOrgNodeFromPopup(1)">순서 →</button>
         <button class="btn" onclick="opener.fitOrgPopupToView(true)">화면맞춤</button>
+        <button class="btn btn-dark" id="connectionModeBtn" onclick="opener.toggleOrgConnectionMode()">선 연결 모드 OFF</button>
         <button class="btn" onclick="opener.scrollOrgPopupCanvas('left')">← 전체좌측</button>
         <button class="btn" onclick="opener.scrollOrgPopupCanvas('selected')">선택위치</button>
         <button class="btn" onclick="opener.scrollOrgPopupCanvas('right')">전체우측 →</button>
@@ -807,7 +890,7 @@ function buildOrgPopupHtml() {
             <button id="popupTabConcost" class="tab" onclick="opener.switchOrgPopupCompany('CON-COST')">CON-COST</button>
             <button id="popupTabVietqs" class="tab" onclick="opener.switchOrgPopupCompany('Viet QS')">Viet QS</button>
           </div>
-          <div class="guide">마우스 휠 위=확대, 아래=축소 · 마우스 휠 버튼을 누른 채 드래그하면 캔버스가 이동합니다. 노드는 다른 노드 위로 드래그하면 하위 조직으로 이동합니다.</div>
+          <div class="guide">드래그 위치 기준: 왼쪽=앞에 배치, 가운데=하위 연결, 오른쪽=뒤에 배치 · 선 연결 모드 ON 후 원본 노드 → 상위 노드를 순서대로 클릭하면 직접 연결됩니다.</div>
         </div>
         <div class="popup-canvas" id="popupCanvas"><div class="popup-tree" id="popupTree"></div></div>
       </section>
@@ -822,7 +905,7 @@ function buildOrgPopupHtml() {
         <div class="field"><label>하위 인원 배치</label><select id="popupNodeMemberColumnsSelect" onchange="opener.updateSelectedOrgNodeFieldFromPopup('memberColumns', this.value)"><option value="1">1열 배치</option><option value="2">2열 배치</option><option value="3">3열 배치</option></select></div>
         <div class="inspector-actions"><button class="btn" onclick="opener.openSelectedOrgEmployeeCard()">인사카드 열기</button><button class="btn btn-dark" onclick="opener.renderOrgVisualEditorPopup()">변경 반영</button></div>
         <div class="summary" id="popupNodeSummary">좌측 캔버스에서 편집할 조직 또는 직원을 선택하세요.</div>
-        <div class="help">부서 추가는 ‘+ 하위 노드’, ‘왼쪽으로 추가’, ‘오른쪽으로 추가’를 사용합니다. 캔버스 이동은 마우스 휠 버튼 드래그, 확대/축소는 마우스 휠 스크롤, 조직 이동은 노드 드래그 앤 드롭을 사용합니다.</div>
+        <div class="help">부서 추가는 ‘+ 하위 노드’, ‘왼쪽으로 추가’, ‘오른쪽으로 추가’를 사용합니다. 드래그는 노드 왼쪽에 놓으면 같은 상위의 앞쪽, 가운데에 놓으면 해당 노드 하위, 오른쪽에 놓으면 같은 상위의 뒤쪽으로 배치됩니다. 선 연결 모드는 원본 노드와 새 상위 노드를 직접 클릭해 연결합니다.</div>
       </aside>
     </main>
   </div>
@@ -913,6 +996,7 @@ function renderOrgVisualEditorPopup() {
   doc.getElementById("popupTabConcost")?.classList.toggle("active", currentOrgEditorCompany === "CON-COST");
   doc.getElementById("popupTabVietqs")?.classList.toggle("active", currentOrgEditorCompany === "Viet QS");
   updateOrgPopupInspector();
+  updateOrgConnectionModeButton();
 }
 
 function applyOrgPopupScale() {
@@ -1156,8 +1240,11 @@ function startOrgPopupDrag(path) {
   orgEditorDragSourcePath = path;
 }
 
-function dropOrgPopupNode(targetPath) {
-  moveOrgNodeToParentByDrag(orgEditorDragSourcePath, targetPath);
+function dropOrgPopupNode(targetPath, clientX) {
+  const win = orgEditorPopupWindow;
+  const targetElement = win && !win.closed ? win.document.querySelector(`.popup-node-wrap[data-path="${targetPath}"] > .popup-node`) : null;
+  const position = getOrgDropPositionFromEvent(clientX, targetElement);
+  moveOrgNodeByDrop(orgEditorDragSourcePath, targetPath, position);
   orgEditorDragSourcePath = null;
 }
 
