@@ -4509,7 +4509,7 @@ body{
 .actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
 .actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong,
 .actual-view-node-wrap.depth-2 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em{color:#fff;}
-.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted){background:#fef3c7;border-color:#fde68a;}
+.actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted){background:#fff;border-color:#cbd5e1;}
 .actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) span,
 .actual-view-node-wrap.depth-3 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) strong{color:#111827;}
 .actual-view-branch-children,
@@ -4601,6 +4601,64 @@ body{
 .actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-branch-children{gap:20px;}
 .actual-org-title-box{margin-bottom:10px!important;}
 .actual-org-scroll-note{margin-bottom:6px!important;}
+
+
+/* === 실제 조직도 보기창: 하위 인원 1/2/3열 배치 공통 적용 === */
+.actual-view-unified-children{
+  position:relative;
+  display:grid;
+  justify-content:center;
+  align-items:start;
+  width:max-content;
+  max-width:none;
+  margin-left:auto;
+  margin-right:auto;
+  gap:26px 14px;
+  padding-top:38px;
+}
+.actual-view-unified-children::before{
+  content:"";
+  position:absolute;
+  top:18px;
+  left:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2));
+  right:calc(50% / max(var(--org-child-cols, var(--org-child-count, 2)), 2));
+  height:2px;
+  background:#9ca3af;
+}
+.actual-view-unified-children.cols-1::before,
+.actual-view-unified-children.count-1::before{display:none;}
+.actual-view-unified-children.cols-2::before{left:25%;right:25%;}
+.actual-view-unified-children.cols-3::before{left:16.66%;right:16.66%;}
+.actual-view-unified-children > .actual-view-node-wrap::before{
+  top:-16px;
+  height:16px;
+}
+.actual-view-unified-children > .actual-view-node-wrap:first-child::after,
+.actual-view-unified-children > .actual-view-node-wrap:last-child::after{
+  content:"";
+  position:absolute;
+  top:-18px;
+  height:2px;
+  background:#f8fbff;
+  z-index:1;
+}
+.actual-view-unified-children > .actual-view-node-wrap:first-child::after{right:50%;left:-2px;}
+.actual-view-unified-children > .actual-view-node-wrap:last-child::after{left:50%;right:-2px;}
+.actual-view-unified-children > .actual-view-node-wrap:only-child::after{
+  content:"";
+  position:absolute;
+  top:-18px;
+  left:-2px;
+  right:-2px;
+  height:2px;
+  background:#f8fbff;
+  z-index:1;
+}
+.actual-view-unified-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
+.actual-view-unified-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
+.actual-view-unified-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
+.actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0{display:flex;justify-content:center;}
+.actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0::before{display:none;}
 
 /* 인사카드 직원 목록 상단 간결 리스트 */
 .card-layout-top{
