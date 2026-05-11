@@ -8550,16 +8550,60 @@ function collapseAllChecklistGroups() {
   renderChecklistGrid();
 }
 
+
+let checklistRenderFrame = 0;
+let checklistRenderTimer = 0;
+let checklistRenderMetaCache = { categoryCounts: {}, middleCounts: {}, subCounts: {} };
+
+function scheduleChecklistGridRender(delay = 120) {
+  window.clearTimeout(checklistRenderTimer);
+  checklistRenderTimer = window.setTimeout(() => {
+    if (checklistRenderFrame) window.cancelAnimationFrame(checklistRenderFrame);
+    checklistRenderFrame = window.requestAnimationFrame(() => {
+      checklistRenderFrame = 0;
+      renderChecklistGrid();
+    });
+  }, delay);
+}
+
+function buildChecklistRenderMetaCache() {
+  const categoryCounts = Object.create(null);
+  const middleCounts = Object.create(null);
+  const subCounts = Object.create(null);
+
+  checklistRows.forEach(row => {
+    normalizeChecklistRow(row);
+    const group = normalizeChecklistGroupName(row.group);
+    const middle = row.middleCategory || "기타";
+    const sub = row.subCategory || "";
+    categoryCounts[group] = (categoryCounts[group] || 0) + 1;
+    middleCounts[`${group}::${middle}`] = (middleCounts[`${group}::${middle}`] || 0) + 1;
+    if (sub) subCounts[`${group}::${middle}::${sub}`] = (subCounts[`${group}::${middle}::${sub}`] || 0) + 1;
+  });
+
+  checklistRenderMetaCache = { categoryCounts, middleCounts, subCounts };
+}
+
+function getChecklistCategoryCount(group) {
+  return checklistRenderMetaCache.categoryCounts[normalizeChecklistGroupName(group)] || 0;
+}
+
+function getChecklistMiddleCount(group, middle) {
+  return checklistRenderMetaCache.middleCounts[`${normalizeChecklistGroupName(group)}::${middle || "기타"}`] || 0;
+}
+
+function getChecklistSubCount(group, middle, sub) {
+  return checklistRenderMetaCache.subCounts[`${normalizeChecklistGroupName(group)}::${middle || "기타"}::${sub || ""}`] || 0;
+}
+
 function renderChecklistCategoryButtons() {
   const wrap = document.getElementById("checklistCategoryFilter");
   if (!wrap) return;
 
-  const categoryCounts = checklistCategoryOptions.reduce((acc, category) => {
-    acc[category] = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === category).length;
-    return acc;
-  }, {});
+  buildChecklistRenderMetaCache();
+  const categoryCounts = checklistRenderMetaCache.categoryCounts;
 
-  const visibleCategories = checklistCategoryOptions.filter(category => categoryCounts[category] > 0);
+  const visibleCategories = checklistCategoryOptions.filter(category => getChecklistCategoryCount(category) > 0);
   const categories = ["전체", ...visibleCategories];
 
   if (selectedChecklistCategoryFilter !== "전체" && !visibleCategories.includes(selectedChecklistCategoryFilter)) {
@@ -8567,10 +8611,10 @@ function renderChecklistCategoryButtons() {
   }
 
   const activeLabel = getChecklistCategoryLabel(selectedChecklistCategoryFilter);
-  const activeCount = selectedChecklistCategoryFilter === "전체" ? checklistRows.length : (categoryCounts[selectedChecklistCategoryFilter] || 0);
+  const activeCount = selectedChecklistCategoryFilter === "전체" ? checklistRows.length : getChecklistCategoryCount(selectedChecklistCategoryFilter);
   const optionButtons = categories.map(category => {
     const active = selectedChecklistCategoryFilter === category ? "active" : "";
-    const count = category === "전체" ? checklistRows.length : categoryCounts[category];
+    const count = category === "전체" ? checklistRows.length : getChecklistCategoryCount(category);
     return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')"><span class="category-name">${escapeHtml(getChecklistCategoryLabel(category))}</span><span class="category-count">${count}</span></button>`;
   }).join("");
 
@@ -8622,6 +8666,11 @@ function getChecklistFilteredRows() {
 }
 
 function renderChecklistGrid() {
+  if (checklistRenderFrame) {
+    window.cancelAnimationFrame(checklistRenderFrame);
+    checklistRenderFrame = 0;
+  }
+  window.clearTimeout(checklistRenderTimer);
   renderChecklistCategoryButtons();
   const body = document.getElementById("checklistGridBody");
   if (!body) return;
@@ -8701,7 +8750,7 @@ function renderChecklistGrid() {
 
 function renderChecklistMiddleBand(group, middle) {
   const normalized = normalizeChecklistGroupName(group);
-  const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === normalized && (row.middleCategory || "기타") === middle).length;
+  const count = getChecklistMiddleCount(normalized, middle);
   const collapsed = collapsedChecklistMiddles.has(getChecklistMiddleCollapseKey(normalized, middle));
   const flow = checklistCategoryTree[normalized]?.flow ? `<small>${escapeHtml(checklistCategoryTree[normalized].flow)}</small>` : "";
   return `<tr class="middle-separator-row ${collapsed ? "middle-collapsed" : ""}" onclick="toggleChecklistMiddleCollapse('${escapeJs(normalized)}', '${escapeJs(middle)}')"><td colspan="11"><div class="middle-band-inner"><button type="button" class="middle-toggle-btn" aria-label="중분류 접기 펼치기"><span>${collapsed ? "›" : "⌄"}</span></button><span>중분류</span><strong>${escapeHtml(middle)}</strong><em>${count}건</em><small class="middle-fold-guide">${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small>${flow}</div></td></tr>`;
@@ -8720,7 +8769,7 @@ function toggleChecklistSubCollapse(group, middle, sub) {
 
 function renderChecklistSubBand(group, middle, sub) {
   const normalized = normalizeChecklistGroupName(group);
-  const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === normalized && row.middleCategory === middle && row.subCategory === sub).length;
+  const count = getChecklistSubCount(normalized, middle, sub);
   const collapsed = collapsedChecklistSubs.has(getChecklistSubCollapseKey(normalized, middle, sub));
   return `<tr class="sub-separator-row ${collapsed ? "sub-collapsed" : ""}" onclick="toggleChecklistSubCollapse('${escapeJs(normalized)}', '${escapeJs(middle)}', '${escapeJs(sub)}')"><td colspan="11"><div class="sub-band-inner"><button type="button" class="sub-toggle-btn" aria-label="소분류 접기 펼치기"><span>${collapsed ? "›" : "⌄"}</span></button><span>소분류</span><strong>${escapeHtml(sub)}</strong><em>${count}건</em><small class="sub-fold-guide">${collapsed ? "클릭하여 펼치기" : "클릭하여 접기"}</small></div></td></tr>`;
 }
@@ -8731,7 +8780,7 @@ function renderChecklistGroupBand(group) {
   const isFinalEstimateCondition = group === "Z7. 견적조건(최종)";
   const locked = isChecklistCategoryLocked(group);
   const collapsed = collapsedChecklistGroups.has(group);
-  const count = checklistRows.filter(row => normalizeChecklistGroupName(row.group) === group).length;
+  const count = getChecklistCategoryCount(group);
   const controls = [];
 
   controls.push(`<button class="btn btn-line group-mini-btn group-add-row-btn" ${locked ? "disabled" : ""} onclick="event.stopPropagation(); insertChecklistRowInGroup('${escapeJs(group)}')">+ 행 추가</button>`);
