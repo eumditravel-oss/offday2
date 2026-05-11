@@ -113,6 +113,19 @@ function normalizeChecklistGroupName(group) {
   return checklistCategoryAliases[value] || value || firstCategoryName;
 }
 
+function normalizeChecklistNo(value) {
+  const raw = String(value ?? "").trim();
+  const digits = raw.match(/\d+/g)?.join("") || "";
+  if (!digits) return "001";
+  return digits.slice(-3).padStart(3, "0");
+}
+
+function getChecklistNoScopeKey(row) {
+  const group = normalizeChecklistGroupName(row?.group);
+  const middle = row?.middleCategory || inferChecklistMiddle(row || {}) || "기타";
+  return `${group}::${middle}`;
+}
+
 function isQuestionOrEstimateGroup(group) {
   const normalized = normalizeChecklistGroupName(group);
   return /^Z[1-7]\./.test(normalized) && (normalized.includes("질의사항") || normalized.includes("견적조건"));
@@ -8428,6 +8441,7 @@ function normalizeChecklistRow(row) {
   if (!row) return row;
   row.group = normalizeChecklistGroupName(row.group);
   normalizeChecklistClassification(row);
+  row.no = normalizeChecklistNo(row.no);
   row.project = row.project || "ㅇㅇ시설 신축공사";
   normalizeSpecialChecklistCreator(row);
   row.creator = getChecklistCreatorByGroup(row.group);
@@ -8662,6 +8676,7 @@ function renderChecklistCategoryButtons() {
     </div>`;
 }
 function getChecklistFilteredRows() {
+  renumberAllChecklistRowsByClassification();
   checklistRows.forEach(normalizeChecklistRow);
 
   const project = (document.getElementById("checklistProject")?.value || "").trim();
@@ -8765,7 +8780,7 @@ function renderChecklistGrid() {
       <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}" data-row-index="${realIndex}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="trade" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.trade)}</div></td>
-        <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.no)}</div></td>
+        <td class="serial-no-cell"><div class="cell excel-editable-cell serial-no-value" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(normalizeChecklistNo(row.no))}</div></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="item" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.item)}</div></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="method" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.method)}</div></td>
         <td class="target-cell">${renderChecklistTargetCell(row, realIndex)}</td>
@@ -9474,7 +9489,7 @@ function updateChecklistCell(index, key, value) {
     renderChecklistGrid();
     return;
   }
-  checklistRows[index][key] = key === "group" ? normalizeChecklistGroupName(value) : String(value).trim();
+  checklistRows[index][key] = key === "group" ? normalizeChecklistGroupName(value) : (key === "no" ? normalizeChecklistNo(value) : String(value).trim());
   if (key === "owner") {
     checklistRows[index].targets = String(value).split(/[,/]/).map(v => v.trim()).filter(Boolean);
     checklistRows[index].checks = [];
@@ -9545,7 +9560,15 @@ function moveChecklistCell(event, el) {
 
 function updateChecklistCheck(index, checked) { if (checklistRows[index]) checklistRows[index].checked = checked; }
 function toggleAllChecklistRows(box) { getChecklistFilteredRows().forEach(({ realIndex }) => checklistRows[realIndex].checked = box.checked); renderChecklistGrid(); }
-function nextChecklistNo() { const nums = checklistRows.map(r => Number(String(r.no).replace(/\D/g, ""))).filter(Boolean); return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0"); }
+function nextChecklistNo(group = "", middle = "") {
+  const normalizedGroup = normalizeChecklistGroupName(group || selectedChecklistCategoryFilter || firstCategoryName);
+  const scopeMiddle = middle || getChecklistMiddleOptions(normalizedGroup)[0] || "";
+  const nums = checklistRows
+    .filter(row => normalizeChecklistGroupName(row.group) === normalizedGroup && String(row.middleCategory || "") === String(scopeMiddle || ""))
+    .map(row => Number(normalizeChecklistNo(row.no)))
+    .filter(Boolean);
+  return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0");
+}
 
 function renderChecklistCategoryOptions(selectedGroup = "") {
   const select = document.getElementById("checklistModalGroup");
@@ -9640,7 +9663,7 @@ function openChecklistModal(index = null) {
   const values = {
     checklistModalGroup: row?.group || defaultGroup || firstCategoryName,
     checklistModalTrade: row?.trade || "",
-    checklistModalNo: row?.no || nextChecklistNo(),
+    checklistModalNo: normalizeChecklistNo(row?.no || nextChecklistNo(row?.group, row?.middleCategory)),
     checklistModalItem: row?.item || "",
     checklistModalMethod: row?.method || "",
     checklistModalComment: row?.comment || ""
@@ -9715,7 +9738,7 @@ function saveChecklistModal() {
     middleCategory: document.getElementById("checklistModalMiddle")?.value || "",
     subCategory: document.getElementById("checklistModalSub")?.value || "",
     trade: document.getElementById("checklistModalTrade").value.trim(),
-    no: document.getElementById("checklistModalNo").value.trim() || nextChecklistNo(),
+    no: normalizeChecklistNo(document.getElementById("checklistModalNo").value || nextChecklistNo(selectedGroup, document.getElementById("checklistModalMiddle")?.value || "")),
     item: document.getElementById("checklistModalItem").value.trim(),
     method: document.getElementById("checklistModalMethod").value.trim(),
     owner: targets.join(", "),
@@ -9762,7 +9785,7 @@ function makeBlankChecklistRow(group) {
     middleCategory: middle,
     subCategory: sub,
     trade: "",
-    no: nextChecklistNo(),
+    no: nextChecklistNo(normalizedGroup, middle),
     item: "",
     method: "",
     owner: targets.join(", "),
@@ -9778,14 +9801,28 @@ function makeBlankChecklistRow(group) {
   return row;
 }
 
+
+function renumberAllChecklistRowsByClassification() {
+  const counters = new Map();
+  checklistRows.forEach(row => {
+    normalizeChecklistClassification(row);
+    const scopeKey = getChecklistNoScopeKey(row);
+    const count = (counters.get(scopeKey) || 0) + 1;
+    counters.set(scopeKey, count);
+    row.no = String(count).padStart(3, "0");
+  });
+}
+
 function renumberChecklistGroup(group) {
   const normalizedGroup = normalizeChecklistGroupName(group);
-  let count = 1;
+  const counters = new Map();
   checklistRows.forEach(row => {
-    if (normalizeChecklistGroupName(row.group) === normalizedGroup) {
-      row.no = String(count).padStart(3, "0");
-      count += 1;
-    }
+    normalizeChecklistClassification(row);
+    if (normalizeChecklistGroupName(row.group) !== normalizedGroup) return;
+    const scopeKey = getChecklistNoScopeKey(row);
+    const count = (counters.get(scopeKey) || 0) + 1;
+    counters.set(scopeKey, count);
+    row.no = String(count).padStart(3, "0");
   });
 }
 
@@ -9841,7 +9878,7 @@ function duplicateCheckedRows() {
   const duplicated = checklistRows.filter(row => { normalizeChecklistRow(row); return row.checked && !isChecklistCategoryLocked(row.group); }).map(row => {
     const copy = JSON.parse(JSON.stringify(row));
     copy.checked = false;
-    copy.no = nextChecklistNo();
+    copy.no = nextChecklistNo(copy.group, copy.middleCategory);
     copy.creator = getCurrentWorkerName();
     copy.createdAt = getChecklistTimeText();
     copy.history = [{ action: "최초작성", worker: copy.creator, time: copy.createdAt }];
