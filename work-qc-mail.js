@@ -9439,6 +9439,37 @@ function refreshChecklistTargetModal(index) {
   if (box) box.innerHTML = renderChecklistTargetModal(index);
 }
 
+
+function updateChecklistTargetModalSelectionState(index) {
+  const modal = document.getElementById("checklistTargetModal");
+  const row = checklistRows[index];
+  if (!modal || !row) return;
+
+  const selectedList = modal.querySelector(".target-selected-list");
+  if (selectedList) selectedList.innerHTML = renderChecklistSelectedAssignees(row);
+
+  modal.querySelectorAll(".checklist-org-chart-node").forEach(node => {
+    const onclick = node.getAttribute("onclick") || "";
+    const match = onclick.match(/handleChecklistOrgTargetClick\(\s*\d+\s*,\s*'([^']*)'/);
+    if (!match) return;
+    let target = match[1];
+    try { target = target.replace(/\\'/g, "'").replace(/\\\\/g, "\\"); } catch (_) {}
+    const selected = isChecklistTargetSelected(row, target);
+    node.classList.toggle("selected", selected);
+    const check = node.querySelector(".checklist-org-chart-check");
+    if (check) check.textContent = selected ? "✓" : "";
+  });
+
+  const clientSendTarget = makeChecklistClientSendTarget();
+  const clientOption = modal.querySelector(".target-client-send-option");
+  if (clientOption) {
+    const checked = isChecklistTargetSelected(row, clientSendTarget);
+    clientOption.classList.toggle("selected", checked);
+    const input = clientOption.querySelector('input[type="checkbox"]');
+    if (input) input.checked = checked;
+  }
+}
+
 function clearChecklistAssignees(index) {
   const row = checklistRows[index];
   if (!row) return;
@@ -9480,8 +9511,11 @@ function setChecklistTargetSelected(index, target, checked, keepModalOpen = fals
   row.history = Array.isArray(row.history) ? row.history : [];
   row.history.push({ action: "요청대상 변경", target: row.targets.map(formatChecklistAssigneeLabel).join(", "), worker: getCurrentWorkerName(), time: getChecklistTimeText() });
 
-  if (keepModalOpen) refreshChecklistTargetModal(index);
-  else renderChecklistGrid();
+  if (keepModalOpen) {
+    updateChecklistTargetModalSelectionState(index);
+  } else {
+    renderChecklistGrid();
+  }
 }
 
 function renderChecklistTargetChecks(row, realIndex) {
