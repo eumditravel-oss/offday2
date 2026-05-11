@@ -8368,3 +8368,77 @@ body.checklist-target-modal-open{
   overflow:hidden !important;
   overscroll-behavior:none !important;
 }
+
+/* 일련번호 열: 분류별 001, 002 형식 숫자 전용 표시 및 셀 폭 대응 */
+.checklist-grid-table td.serial-no-cell,
+.checklist-grid-table th:nth-child(3),
+#checklistGridBody td:nth-child(3) {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.checklist-grid-table .serial-no-value,
+#checklistGridBody td:nth-child(3) .excel-editable-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 44px;
+  min-width: 32px;
+  margin: 0 auto;
+  padding: 4px 3px;
+  font-size: clamp(10px, 0.72vw, 13px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  overflow: hidden;
+  text-overflow: clip;
+  box-sizing: border-box;
+}
+
+/* 일련번호 열 최종 보정: 숫자 3자리 표시, 줄바꿈 방지, 좁은 폭 자동 축소 */
+#workModule .excel-grid col.qc-col-no,
+.excel-grid col.qc-col-no {
+  width: 64px !important;
+  min-width: 56px !important;
+  max-width: 72px !important;
+}
+
+#workModule .excel-grid th:nth-child(3),
+#workModule .excel-grid td.serial-no-cell,
+#workModule #checklistGridBody td:nth-child(3),
+.excel-grid th:nth-child(3),
+.excel-grid td.serial-no-cell,
+#checklistGridBody td:nth-child(3) {
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+#workModule .excel-grid .serial-no-value,
+#workModule #checklistGridBody td:nth-child(3) .excel-editable-cell,
+.excel-grid .serial-no-value,
+#checklistGridBody td:nth-child(3) .excel-editable-cell {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 42px !important;
+  min-width: 30px !important;
+  margin: 0 auto !important;
+  padding: 3px 2px !important;
+  font-size: clamp(10px, 0.68vw, 12px) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.045em !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  box-sizing: border-box !important;
+}
