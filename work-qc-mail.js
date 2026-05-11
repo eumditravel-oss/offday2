@@ -8554,6 +8554,26 @@ function collapseAllChecklistGroups() {
 let checklistRenderFrame = 0;
 let checklistRenderTimer = 0;
 let checklistRenderMetaCache = { categoryCounts: {}, middleCounts: {}, subCounts: {} };
+const CHECKLIST_DETAIL_RENDER_STEP = 80;
+let checklistDetailRenderLimit = CHECKLIST_DETAIL_RENDER_STEP;
+let checklistLastRenderSignature = "";
+
+function resetChecklistDetailRenderLimit() {
+  checklistDetailRenderLimit = CHECKLIST_DETAIL_RENDER_STEP;
+}
+
+function getChecklistRenderSignature() {
+  const project = (document.getElementById("checklistProject")?.value || "").trim();
+  const owner = document.getElementById("checklistOwnerFilter")?.value || "전체";
+  const doneFilter = document.getElementById("checklistDoneFilter")?.value || "전체";
+  const search = (document.getElementById("checklistSearch")?.value || "").trim().toLowerCase();
+  return [project, owner, doneFilter, search, selectedChecklistCategoryFilter || "전체"].join("||");
+}
+
+function loadMoreChecklistRows() {
+  checklistDetailRenderLimit += CHECKLIST_DETAIL_RENDER_STEP;
+  scheduleChecklistGridRender(0);
+}
 
 function scheduleChecklistGridRender(delay = 120) {
   window.clearTimeout(checklistRenderTimer);
@@ -8671,9 +8691,17 @@ function renderChecklistGrid() {
     checklistRenderFrame = 0;
   }
   window.clearTimeout(checklistRenderTimer);
+
+  const renderSignature = getChecklistRenderSignature();
+  if (renderSignature !== checklistLastRenderSignature) {
+    checklistLastRenderSignature = renderSignature;
+    resetChecklistDetailRenderLimit();
+  }
+
   renderChecklistCategoryButtons();
   const body = document.getElementById("checklistGridBody");
   if (!body) return;
+
   const rows = getChecklistFilteredRows().sort((a, b) => {
     const ai = checklistCategoryOptions.indexOf(normalizeChecklistGroupName(a.row.group));
     const bi = checklistCategoryOptions.indexOf(normalizeChecklistGroupName(b.row.group));
@@ -8686,11 +8714,15 @@ function renderChecklistGrid() {
     if (sub !== 0) return sub;
     return String(a.row.no).localeCompare(String(b.row.no), "ko", { numeric: true });
   });
+
+  const html = [];
   let lastGroup = "";
   let lastMiddleKey = "";
   let lastSubKey = "";
+  let visibleDetailCount = 0;
+  let skippedDetailCount = 0;
 
-  body.innerHTML = rows.map(({ row, realIndex }) => {
+  rows.forEach(({ row, realIndex }) => {
     normalizeChecklistRow(row);
     const locked = isChecklistCategoryLocked(row.group);
     const normalizedGroup = normalizeChecklistGroupName(row.group);
@@ -8698,40 +8730,39 @@ function renderChecklistGrid() {
     const sub = row.subCategory || "";
     const middleKey = `${normalizedGroup}::${middle}`;
     const subKey = `${middleKey}::${sub}`;
-    const bands = [];
 
     if (normalizedGroup !== lastGroup) {
-      bands.push(renderChecklistGroupBand(normalizedGroup));
+      html.push(renderChecklistGroupBand(normalizedGroup));
       lastGroup = normalizedGroup;
       lastMiddleKey = "";
       lastSubKey = "";
     }
 
-    if (collapsedChecklistGroups.has(normalizedGroup)) {
-      return bands.join("");
-    }
+    if (collapsedChecklistGroups.has(normalizedGroup)) return;
 
     if (middleKey !== lastMiddleKey) {
-      bands.push(renderChecklistMiddleBand(normalizedGroup, middle));
+      html.push(renderChecklistMiddleBand(normalizedGroup, middle));
       lastMiddleKey = middleKey;
       lastSubKey = "";
     }
 
-    if (collapsedChecklistMiddles.has(getChecklistMiddleCollapseKey(normalizedGroup, middle))) {
-      return bands.join("");
-    }
+    if (collapsedChecklistMiddles.has(getChecklistMiddleCollapseKey(normalizedGroup, middle))) return;
 
     if (sub && subKey !== lastSubKey) {
-      bands.push(renderChecklistSubBand(normalizedGroup, middle, sub));
+      html.push(renderChecklistSubBand(normalizedGroup, middle, sub));
       lastSubKey = subKey;
     }
 
-    if (sub && collapsedChecklistSubs.has(getChecklistSubCollapseKey(normalizedGroup, middle, sub))) {
-      return bands.join("");
+    if (sub && collapsedChecklistSubs.has(getChecklistSubCollapseKey(normalizedGroup, middle, sub))) return;
+
+    visibleDetailCount += 1;
+    if (visibleDetailCount > checklistDetailRenderLimit) {
+      skippedDetailCount += 1;
+      return;
     }
 
-    return `${bands.join("")}
-      <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}">
+    html.push(`
+      <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}" data-row-index="${realIndex}">
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="trade" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.trade)}</div></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.no)}</div></td>
@@ -8743,11 +8774,25 @@ function renderChecklistGrid() {
         <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
         <td><div class="history-cell">${renderChecklistHistoryButton(row, realIndex)}</div></td>
         <td class="manage-cell"><div class="row-actions row-actions-center"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
-      </tr>`;
-  }).join("");
+      </tr>`);
+  });
+
+  if (skippedDetailCount > 0) {
+    html.push(`
+      <tr class="checklist-more-row">
+        <td colspan="11">
+          <div class="checklist-more-inner">
+            <strong>${skippedDetailCount}건이 추가로 있습니다.</strong>
+            <span>초기 렌더링 부하를 줄이기 위해 ${checklistDetailRenderLimit}건까지만 먼저 표시합니다.</span>
+            <button type="button" class="btn btn-line" onclick="loadMoreChecklistRows()">더 보기 +${Math.min(CHECKLIST_DETAIL_RENDER_STEP, skippedDetailCount)}건</button>
+          </div>
+        </td>
+      </tr>`);
+  }
+
+  body.innerHTML = html.join("");
   updateBellReviewCount();
 }
-
 function renderChecklistMiddleBand(group, middle) {
   const normalized = normalizeChecklistGroupName(group);
   const count = getChecklistMiddleCount(normalized, middle);
