@@ -7939,6 +7939,15 @@ checklistRows = checklistRows.map(row => ({
   group: normalizeChecklistGroupName(row.group)
 }));
 
+// QC팀 전달사항은 모든 프로젝트 공통 템플릿 자료이므로
+// 초기 프로젝트 체크리스트 화면에는 표시하지 않고,
+// 상단의 "QC팀 전달사항 편집하기"에서 선택 후 불러올 때만 현재 프로젝트에 반영한다.
+const qcTeamTemplateSeedRows = checklistRows
+  .filter(row => normalizeChecklistGroupName(row.group) === "QC팀 전달사항")
+  .map(row => ({ ...row }));
+
+checklistRows = checklistRows.filter(row => normalizeChecklistGroupName(row.group) !== "QC팀 전달사항");
+
 // QC 체크리스트 더미데이터가 기존 브라우저 저장값에 덮이지 않도록 초기 표시용 저장값만 제거
 try {
   localStorage.removeItem("qcChecklistRows");
@@ -11097,9 +11106,8 @@ function makeQcTemplateRowFromChecklist(row, index = 0) {
 }
 
 function getDefaultQcTeamTemplateRows() {
-  const rows = checklistRows
-    .filter(row => normalizeChecklistGroupName(row.group) === "QC팀 전달사항")
-    .map((row, index) => makeQcTemplateRowFromChecklist(row, index));
+  const seedRows = Array.isArray(qcTeamTemplateSeedRows) ? qcTeamTemplateSeedRows : [];
+  const rows = seedRows.map((row, index) => makeQcTemplateRowFromChecklist(row, index));
   return rows.length ? rows : [{
     id: `qctpl_${Date.now()}_base`,
     group: "QC팀 전달사항",
