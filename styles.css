@@ -8285,3 +8285,39 @@ body.checklist-target-modal-open{
 .checklist-card *{
   scroll-behavior:auto !important;
 }
+
+/* 프로젝트 질의응답 관리 성능 개선: 대량 행 렌더링 부하 완화 */
+#qcReview .excel-grid-wrap{
+  overscroll-behavior: contain;
+  contain: layout paint;
+}
+#qcReview .excel-grid{
+  table-layout: fixed;
+}
+#qcReview .checklist-detail-row{
+  content-visibility: auto;
+  contain-intrinsic-size: 96px;
+}
+#qcReview .checklist-more-row td{
+  background:#f8fbff !important;
+  padding:14px 16px !important;
+  text-align:center;
+}
+#qcReview .checklist-more-inner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  min-height:44px;
+  color:#34435a;
+  font-size:13px;
+}
+#qcReview .checklist-more-inner strong{
+  font-size:13px;
+  color:#10213f;
+}
+#qcReview .checklist-more-inner span{
+  color:#6b7a90;
+  font-size:12px;
+}
