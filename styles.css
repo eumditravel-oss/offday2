@@ -9298,3 +9298,31 @@ body.checklist-target-modal-open{
 #checklistTargetModal .checklist-org-chart-node:hover{
   transform:none !important;
 }
+
+
+/* QC quick add modal and keyboard navigation refinements */
+.checklist-quick-add-modal {
+  width: min(760px, calc(100vw - 48px));
+  max-height: min(640px, calc(100vh - 64px));
+}
+
+.checklist-quick-add-modal .modal-body {
+  overflow: visible;
+}
+
+.checklist-quick-add-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.excel-editable-cell:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  background: #fffef7;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.18);
+}
+
+@media (max-width: 860px) {
+  .checklist-quick-add-grid {
+    grid-template-columns: 1fr;
+  }
+}
