@@ -8259,3 +8259,29 @@ body.checklist-target-modal-open{
   position:relative !important;
   z-index:241 !important;
 }
+
+
+/* =========================================================
+   QC 체크리스트 성능 보정
+   - 대량 행 렌더링 시 레이아웃/페인트 범위를 체크리스트 영역으로 제한
+   - 스크롤 중 고정 헤더/행 그림자 계산 부담 완화
+   ========================================================= */
+.checklist-card,
+.excel-grid-wrap{
+  contain:layout paint;
+}
+
+.excel-grid tbody{
+  contain:layout paint;
+}
+
+.excel-grid .checklist-detail-row,
+.excel-grid .middle-separator-row,
+.excel-grid .sub-separator-row{
+  content-visibility:auto;
+  contain-intrinsic-size:76px;
+}
+
+.checklist-card *{
+  scroll-behavior:auto !important;
+}
