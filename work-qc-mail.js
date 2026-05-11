@@ -8449,10 +8449,11 @@ function normalizeChecklistRow(row) {
   if (!row.targets.length) row.targets = [getChecklistRouteLabel(row) || "PM"];
 
   if (!Array.isArray(row.checks)) row.checks = [];
-  row.targets.forEach(target => {
+  const requiredCheckTargets = Array.from(new Set(row.targets.map(getChecklistCheckTargetForAssignee)));
+  requiredCheckTargets.forEach(target => {
     if (!row.checks.some(c => c.target === target)) row.checks.push({ target, done: false, na: false, checkedBy: "", checkedAt: "" });
   });
-  row.checks = row.checks.filter(c => row.targets.includes(c.target)).map(c => ({ ...c, na: Boolean(c.na) }));
+  row.checks = row.checks.filter(c => requiredCheckTargets.includes(c.target)).map(c => ({ ...c, na: Boolean(c.na) }));
   row.owner = row.targets.join(", ");
   row.done = isChecklistRowDone(row);
   row.status = row.done ? "확인완료" : getChecklistDoneState(row);
@@ -8916,6 +8917,12 @@ function formatChecklistAssigneeLabel(target) {
   return value;
 }
 
+function getChecklistCheckTargetForAssignee(target) {
+  const value = String(target || "");
+  if (value === makeChecklistClientSendTarget()) return "PM";
+  return value;
+}
+
 function isChecklistTargetSelected(row, target) {
   return Array.isArray(row?.targets) && row.targets.includes(target);
 }
@@ -8985,14 +8992,18 @@ function renderChecklistTargetModal(index) {
             }).join("")}
           </div>
         </div>
-        <div class="target-selector-section">
-          <div class="target-selector-title">개인 선택 · 인사카드</div>
+        <div class="target-selector-section person-target-selector-section">
+          <div class="target-selector-title person-selector-title-row">
+            <span>개인 선택 · 인사카드</span>
+            <input type="search" class="person-card-search" placeholder="이름/부서/직위 검색" oninput="filterChecklistPeopleOptions(this.value)">
+          </div>
           <div class="target-selector-list person-selector-list">
             ${people.map(emp => {
               const target = makeChecklistEmployeeTarget(emp);
               const checked = isChecklistTargetSelected(row, target);
+              const searchText = `${displayName(emp)} ${emp.company || ""} ${emp.dept || ""} ${emp.grade || emp.position || ""} ${emp.empNo || ""}`;
               return `
-                <div class="target-person-option ${checked ? "selected" : ""}">
+                <div class="target-person-option ${checked ? "selected" : ""}" data-search="${escapeHtml(searchText.toLowerCase())}">
                   <label>
                     <input type="checkbox" ${checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
                     <span class="employee-info"><b>${escapeHtml(displayName(emp))}</b><small>${escapeHtml(emp.company)} · ${escapeHtml(emp.dept)} · ${escapeHtml(emp.grade || emp.position || "")}</small></span>
@@ -9011,6 +9022,14 @@ function renderChecklistTargetModal(index) {
       </div>
     </div>
   `;
+}
+
+function filterChecklistPeopleOptions(keyword) {
+  const term = String(keyword || "").trim().toLowerCase();
+  document.querySelectorAll("#checklistTargetModal .target-person-option").forEach(option => {
+    const text = option.dataset.search || option.textContent.toLowerCase();
+    option.style.display = !term || text.includes(term) ? "flex" : "none";
+  });
 }
 
 function openChecklistTargetModal(index) {
@@ -9074,7 +9093,8 @@ function setChecklistTargetSelected(index, target, checked, keepModalOpen = fals
   row.manualTargets = targets.size > 0;
   row.targets = targets.size ? Array.from(targets) : [getChecklistRouteLabel(row) || "PM"];
   row.owner = row.targets.join(", ");
-  row.checks = row.targets.map(name => {
+  const checkTargets = Array.from(new Set(row.targets.map(getChecklistCheckTargetForAssignee)));
+  row.checks = checkTargets.map(name => {
     const old = row.checks?.find(check => check.target === name);
     return old ? { ...old } : { target: name, done: false, na: false, checkedBy: "", checkedAt: "" };
   });
