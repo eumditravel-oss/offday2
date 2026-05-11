@@ -9720,3 +9720,19 @@ body.checklist-target-modal-open{
   word-break:keep-all !important;
   overflow-wrap:anywhere !important;
 }
+
+
+/* ===============================
+   코멘트 헤더 중앙 정렬 보정
+   - 타이틀(th)만 중앙 정렬
+   - 내용(td)은 좌측 정렬 유지
+=============================== */
+.excel-grid th.comment-col{
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+.excel-grid td.comment-col,
+.excel-grid td:nth-child(8){
+  text-align:left !important;
+}
