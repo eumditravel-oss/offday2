@@ -121,9 +121,18 @@ function normalizeChecklistNo(value) {
 }
 
 function getChecklistNoScopeKey(row) {
-  const group = normalizeChecklistGroupName(row?.group);
-  const middle = row?.middleCategory || inferChecklistMiddle(row || {}) || "기타";
-  return `${group}::${middle}`;
+  const targetRow = row || {};
+  const group = normalizeChecklistGroupName(targetRow.group);
+  const middle = targetRow.middleCategory || inferChecklistMiddle(targetRow) || "기타";
+  const subOptions = getChecklistSubOptions(group, middle);
+  const sub = subOptions.length
+    ? (targetRow.subCategory || inferChecklistSub(targetRow, middle) || subOptions[0] || "기타")
+    : "__NO_SUB__";
+
+  // 일련번호는 가장 하위 분류 단위로 001부터 다시 시작한다.
+  // - 중분류 바로 아래에 항목이 있으면: 구분 + 중분류 기준 001, 002...
+  // - 소분류 바로 아래에 항목이 있으면: 구분 + 중분류 + 소분류 기준 001, 002...
+  return `${group}::${middle}::${sub}`;
 }
 
 function isQuestionOrEstimateGroup(group) {
@@ -9560,11 +9569,16 @@ function moveChecklistCell(event, el) {
 
 function updateChecklistCheck(index, checked) { if (checklistRows[index]) checklistRows[index].checked = checked; }
 function toggleAllChecklistRows(box) { getChecklistFilteredRows().forEach(({ realIndex }) => checklistRows[realIndex].checked = box.checked); renderChecklistGrid(); }
-function nextChecklistNo(group = "", middle = "") {
+function nextChecklistNo(group = "", middle = "", sub = "") {
   const normalizedGroup = normalizeChecklistGroupName(group || selectedChecklistCategoryFilter || firstCategoryName);
   const scopeMiddle = middle || getChecklistMiddleOptions(normalizedGroup)[0] || "";
+  const scopeSub = sub || getChecklistSubOptions(normalizedGroup, scopeMiddle)[0] || "";
+  const scopeKey = getChecklistNoScopeKey({ group: normalizedGroup, middleCategory: scopeMiddle, subCategory: scopeSub });
   const nums = checklistRows
-    .filter(row => normalizeChecklistGroupName(row.group) === normalizedGroup && String(row.middleCategory || "") === String(scopeMiddle || ""))
+    .filter(row => {
+      normalizeChecklistClassification(row);
+      return getChecklistNoScopeKey(row) === scopeKey;
+    })
     .map(row => Number(normalizeChecklistNo(row.no)))
     .filter(Boolean);
   return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0");
@@ -9663,7 +9677,7 @@ function openChecklistModal(index = null) {
   const values = {
     checklistModalGroup: row?.group || defaultGroup || firstCategoryName,
     checklistModalTrade: row?.trade || "",
-    checklistModalNo: normalizeChecklistNo(row?.no || nextChecklistNo(row?.group, row?.middleCategory)),
+    checklistModalNo: normalizeChecklistNo(row?.no || nextChecklistNo(row?.group, row?.middleCategory, row?.subCategory)),
     checklistModalItem: row?.item || "",
     checklistModalMethod: row?.method || "",
     checklistModalComment: row?.comment || ""
@@ -9738,7 +9752,7 @@ function saveChecklistModal() {
     middleCategory: document.getElementById("checklistModalMiddle")?.value || "",
     subCategory: document.getElementById("checklistModalSub")?.value || "",
     trade: document.getElementById("checklistModalTrade").value.trim(),
-    no: normalizeChecklistNo(document.getElementById("checklistModalNo").value || nextChecklistNo(selectedGroup, document.getElementById("checklistModalMiddle")?.value || "")),
+    no: normalizeChecklistNo(document.getElementById("checklistModalNo").value || nextChecklistNo(selectedGroup, document.getElementById("checklistModalMiddle")?.value || "", document.getElementById("checklistModalSub")?.value || "")),
     item: document.getElementById("checklistModalItem").value.trim(),
     method: document.getElementById("checklistModalMethod").value.trim(),
     owner: targets.join(", "),
@@ -9785,7 +9799,7 @@ function makeBlankChecklistRow(group) {
     middleCategory: middle,
     subCategory: sub,
     trade: "",
-    no: nextChecklistNo(normalizedGroup, middle),
+    no: nextChecklistNo(normalizedGroup, middle, sub),
     item: "",
     method: "",
     owner: targets.join(", "),
@@ -9878,7 +9892,7 @@ function duplicateCheckedRows() {
   const duplicated = checklistRows.filter(row => { normalizeChecklistRow(row); return row.checked && !isChecklistCategoryLocked(row.group); }).map(row => {
     const copy = JSON.parse(JSON.stringify(row));
     copy.checked = false;
-    copy.no = nextChecklistNo(copy.group, copy.middleCategory);
+    copy.no = nextChecklistNo(copy.group, copy.middleCategory, copy.subCategory);
     copy.creator = getCurrentWorkerName();
     copy.createdAt = getChecklistTimeText();
     copy.history = [{ action: "최초작성", worker: copy.creator, time: copy.createdAt }];
