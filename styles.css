@@ -9244,3 +9244,57 @@ body.checklist-target-modal-open{
     display:none !important;
   }
 }
+
+
+/* === QC 대상 선택 조직도: 선명도 보정 및 검색창 제거 === */
+#checklistTargetModal .checklist-org-search{
+  display:none !important;
+}
+
+#checklistTargetModal .checklist-org-chart-head{
+  justify-content:flex-start !important;
+}
+
+#checklistTargetModal .checklist-org-chart-canvas,
+#checklistTargetModal .checklist-org-chart,
+#checklistTargetModal .checklist-org-chart .actual-view-node-wrap,
+#checklistTargetModal .checklist-org-chart .actual-view-node{
+  -webkit-font-smoothing:antialiased !important;
+  -moz-osx-font-smoothing:grayscale !important;
+  text-rendering:geometricPrecision !important;
+  filter:none !important;
+  opacity:1 !important;
+  backface-visibility:hidden !important;
+  transform-style:flat !important;
+}
+
+#checklistTargetModal .checklist-org-chart .actual-view-node{
+  min-width:142px !important;
+  min-height:58px !important;
+  padding:10px 13px !important;
+  border-width:1.5px !important;
+  box-shadow:0 6px 14px rgba(15,23,42,.06) !important;
+}
+
+#checklistTargetModal .checklist-org-chart .actual-view-node span{
+  font-size:11.5px !important;
+  line-height:1.18 !important;
+  font-weight:1000 !important;
+}
+
+#checklistTargetModal .checklist-org-chart .actual-view-node strong{
+  font-size:14px !important;
+  line-height:1.2 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.2px !important;
+}
+
+#checklistTargetModal .checklist-org-chart .actual-view-node em{
+  font-size:10.5px !important;
+  line-height:1.18 !important;
+  font-weight:900 !important;
+}
+
+#checklistTargetModal .checklist-org-chart-node:hover{
+  transform:none !important;
+}
