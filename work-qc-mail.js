@@ -9048,11 +9048,37 @@ function openChecklistTargetModal(index) {
   layer.className = "target-modal-backdrop active";
   layer.innerHTML = renderChecklistTargetModal(index);
   layer.addEventListener("click", closeChecklistTargetModal);
+  layer.addEventListener("wheel", trapChecklistTargetModalWheel, { passive: false });
+  document.body.classList.add("checklist-target-modal-open");
   document.body.appendChild(layer);
 }
 
 function closeChecklistTargetModal() {
   document.getElementById("checklistTargetModal")?.remove();
+  document.body.classList.remove("checklist-target-modal-open");
+}
+
+function trapChecklistTargetModalWheel(event) {
+  const modal = document.querySelector("#checklistTargetModal .people-target-modal-card");
+  if (!modal) return;
+
+  const scrollHost = event.target.closest(".target-selector-list, .people-target-modal-body");
+  if (!scrollHost || !modal.contains(scrollHost)) {
+    event.preventDefault();
+    return;
+  }
+
+  const canScroll = scrollHost.scrollHeight > scrollHost.clientHeight;
+  if (!canScroll) {
+    event.preventDefault();
+    return;
+  }
+
+  const atTop = scrollHost.scrollTop <= 0;
+  const atBottom = Math.ceil(scrollHost.scrollTop + scrollHost.clientHeight) >= scrollHost.scrollHeight;
+  if ((event.deltaY < 0 && atTop) || (event.deltaY > 0 && atBottom)) {
+    event.preventDefault();
+  }
 }
 
 function refreshChecklistTargetModal(index) {
