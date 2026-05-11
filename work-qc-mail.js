@@ -8781,6 +8781,8 @@ function renderChecklistClassifyModal(index) {
   const currentMiddle = row.middleCategory || middleOptions[0] || "";
   const subOptions = getChecklistSubOptions(row.group, currentMiddle);
   const currentSub = row.subCategory || subOptions[0] || "";
+  const subField = subOptions.length ? `
+        <div class="field"><label>소분류</label><select id="inlineChecklistSub" ${locked ? "disabled" : ""}>${subOptions.map(value => `<option value="${escapeHtml(value)}" ${value === currentSub ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></div>` : "";
 
   return `
     <div class="target-modal-card classify-modal-card" onclick="event.stopPropagation();">
@@ -8793,7 +8795,7 @@ function renderChecklistClassifyModal(index) {
       </div>
       <div class="target-modal-body classify-modal-body">
         <div class="field"><label>중분류</label><select id="inlineChecklistMiddle" ${locked || !middleOptions.length ? "disabled" : ""} onchange="refreshInlineChecklistSubOptions(${index})">${middleOptions.length ? middleOptions.map(value => `<option value="${escapeHtml(value)}" ${value === currentMiddle ? "selected" : ""}>${escapeHtml(value)}</option>`).join("") : `<option value="">중분류 없음</option>`}</select></div>
-        <div class="field"><label>소분류</label><select id="inlineChecklistSub" ${locked || !subOptions.length ? "disabled" : ""}>${subOptions.length ? subOptions.map(value => `<option value="${escapeHtml(value)}" ${value === currentSub ? "selected" : ""}>${escapeHtml(value)}</option>`).join("") : `<option value="">소분류 없음</option>`}</select></div>
+        ${subField}
       </div>
       <div class="target-modal-foot">
         <button type="button" class="btn btn-line" onclick="closeChecklistClassifyModal()">닫기</button>
@@ -8894,8 +8896,17 @@ function makeChecklistEmployeeTarget(emp) {
   return `개인:${emp.empNo}`;
 }
 
+function makeChecklistClientSendTarget() {
+  return "발주처 송부 필요";
+}
+
+function shouldShowChecklistClientSendTarget(row) {
+  return normalizeChecklistGroupName(row?.group) === firstCategoryName;
+}
+
 function formatChecklistAssigneeLabel(target) {
   const value = String(target || "");
+  if (value === makeChecklistClientSendTarget()) return "발주처 송부 필요";
   if (value.startsWith("부서:")) return value.replace("부서:", "부서 · ");
   if (value.startsWith("개인:")) {
     const empNo = value.replace("개인:", "");
@@ -8928,6 +8939,9 @@ function renderChecklistTargetModal(index) {
   const departments = getChecklistAssigneeDepartments();
   const people = getChecklistActiveEmployees();
   const routeLabel = getChecklistRouteLabel(row);
+  const clientSendTarget = makeChecklistClientSendTarget();
+  const showClientSendTarget = shouldShowChecklistClientSendTarget(row);
+  const clientSendChecked = isChecklistTargetSelected(row, clientSendTarget);
 
   return `
     <div class="target-modal-card people-target-modal-card" onclick="event.stopPropagation();" data-row-index="${index}">
@@ -8946,6 +8960,16 @@ function renderChecklistTargetModal(index) {
         <div class="target-selected-list">${renderChecklistSelectedAssignees(row)}</div>
       </div>
       <div class="target-modal-body people-target-modal-body">
+        ${showClientSendTarget ? `
+        <div class="target-selector-section client-send-selector-section">
+          <div class="target-selector-title">발주처 송부 선택</div>
+          <div class="target-selector-list client-send-selector-list">
+            <label class="target-modal-option target-client-send-option ${clientSendChecked ? "selected" : ""}">
+              <input type="checkbox" ${clientSendChecked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(clientSendTarget)}', this.checked, true)">
+              <span><b>발주처 송부 필요</b><small>해당 검토항목을 발주처에게 메일로 송부해야 할 때 선택</small></span>
+            </label>
+          </div>
+        </div>` : ""}
         <div class="target-selector-section">
           <div class="target-selector-title">부서 선택</div>
           <div class="target-selector-list dept-selector-list">
@@ -8971,7 +8995,7 @@ function renderChecklistTargetModal(index) {
                 <div class="target-person-option ${checked ? "selected" : ""}">
                   <label>
                     <input type="checkbox" ${checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
-                    <span><b>${escapeHtml(displayName(emp))}</b><small>${escapeHtml(emp.company)} · ${escapeHtml(emp.dept)} · ${escapeHtml(emp.grade || emp.position || "")}</small></span>
+                    <span class="employee-info"><b>${escapeHtml(displayName(emp))}</b><small>${escapeHtml(emp.company)} · ${escapeHtml(emp.dept)} · ${escapeHtml(emp.grade || emp.position || "")}</small></span>
                   </label>
                   <button type="button" class="mini-card-open-btn" onclick="event.stopPropagation(); openMiniCardPopup('${escapeJs(emp.empNo)}')">인사카드</button>
                 </div>
