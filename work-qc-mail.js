@@ -8758,13 +8758,14 @@ function renderChecklistTargetCell(row, realIndex) {
   const locked = isChecklistCategoryLocked(row.group);
   const targets = getChecklistTargets(row);
   const hasMiddleOptions = getChecklistMiddleOptions(row.group).length > 0;
+  const targetChips = targets.map(t => `<span class="target-chip target-route-chip target-stack-item">${escapeHtml(t)}</span>`).join("");
 
   return `
-    <div class="target-cell-wrap">
-      <div class="target-stack">
-        ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
-        <button type="button" class="target-select-btn target-people-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
-        <div class="target-chip-list">${targets.map(t => `<span class="target-chip target-route-chip">${escapeHtml(t)}</span>`).join("")}</div>
+    <div class="target-cell-wrap target-cell-center-wrap">
+      <div class="target-stack-center">
+        ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn target-stack-item" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
+        <button type="button" class="target-select-btn target-people-select-btn target-stack-item" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
+        ${targetChips}
       </div>
     </div>
   `;
