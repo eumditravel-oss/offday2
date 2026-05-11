@@ -174,25 +174,15 @@ function inferChecklistMiddle(row) {
 
 function inferChecklistSub(row, middle) {
   const text = `${row?.subCategory || ""} ${row?.trade || ""} ${row?.item || ""} ${row?.method || ""}`;
-  if (middle === "구조팀") {
-    if (/PM/.test(text)) return "PM";
-    if (/수직|기둥|벽|옹벽/.test(text)) return "수직팀";
-    if (/수평|보|슬라브|기초/.test(text)) return "수평팀";
-    if (/한국/.test(text)) return "한국팀";
-    return "공통";
-  }
   if (middle === "구조") {
     if (/수직|기둥|벽|옹벽/.test(text)) return "수직팀";
     if (/한국/.test(text)) return "한국";
     return "수평팀";
   }
   if (middle === "마감팀") {
-    if (/PM/.test(text)) return "PM";
-    if (/조적|창호/.test(text)) return "조적ㆍ창호팀";
-    if (/외부/.test(text)) return "외부팀";
-    if (/한국/.test(text)) return "한국팀";
-    if (/내부/.test(text)) return "내부팀";
-    return "공통";
+    if (/조적|창호/.test(text)) return "조적ㆍ창호";
+    if (/외부/.test(text)) return "외부";
+    return "내부팀";
   }
   if (middle === "마감") {
     if (/조적|창호/.test(text)) return "조적ㆍ창호";
@@ -11255,7 +11245,7 @@ function renderQcTeamTemplateModal() {
       <tr data-qc-template-id="${escapeHtml(row.id)}">
         <td><input type="checkbox" data-qc-template-select value="${escapeHtml(row.id)}" ${selectedIds.has(row.id) ? "checked" : ""}></td>
         <td><select onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'middleCategory', this.value)">${getChecklistMiddleOptions("QC팀 전달사항").map(mid => `<option value="${escapeHtml(mid)}" ${mid === row.middleCategory ? "selected" : ""}>${escapeHtml(mid)}</option>`).join("")}</select></td>
-        <td><select onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'subCategory', this.value)" ${subOptions.length ? "" : "disabled"}>${subOptions.length ? subOptions.map(sub => `<option value="${escapeHtml(sub)}" ${sub === row.subCategory ? "selected" : ""}>${escapeHtml(sub)}</option>`).join("") : `<option value="">소분류 없음</option>`}</select></td>
+        <td><select onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'subCategory', this.value)"><option value="">소분류 없음</option>${subOptions.map(sub => `<option value="${escapeHtml(sub)}" ${sub === row.subCategory ? "selected" : ""}>${escapeHtml(sub)}</option>`).join("")}</select></td>
         <td><input value="${escapeHtml(row.trade || "")}" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'trade', this.value)"></td>
         <td><textarea rows="2" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'item', this.value)">${escapeHtml(row.item || "")}</textarea></td>
         <td><textarea rows="2" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'method', this.value)">${escapeHtml(row.method || "")}</textarea></td>
