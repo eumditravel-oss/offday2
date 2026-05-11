@@ -9783,7 +9783,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   font-weight:800;
 }
 .qc-template-modal{
-  width:min(1180px, calc(100vw - 48px));
+  width:min(1520px, calc(100vw - 72px));
   max-height:calc(100vh - 64px);
   display:flex;
   flex-direction:column;
@@ -9848,7 +9848,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .qc-template-table{
   width:100%;
-  min-width:1080px;
+  min-width:1340px;
   border-collapse:collapse;
   table-layout:fixed;
 }
