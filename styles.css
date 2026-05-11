@@ -9349,3 +9349,160 @@ body.checklist-target-modal-open{
   width:100% !important;
   max-width:100% !important;
 }
+
+/* =========================================================
+   QC 체크리스트 최종 패치: 체크여부 보기 버튼화 + 컬럼 폭 재분배
+   - 체크여부: 처리이력처럼 "보기" 버튼 1개만 표시
+   - 체크여부 폭: 기존 대비 약 1/2 수준으로 축소
+   - 코멘트 폭: 체크여부에서 줄어든 폭만큼 확장
+   ========================================================= */
+#workModule .excel-grid col.qc-col-check,
+.module-view#workModule .excel-grid col.qc-col-check,
+.excel-grid col.qc-col-check{
+  width:110px !important;
+}
+
+#workModule .excel-grid col.qc-col-comment,
+.module-view#workModule .excel-grid col.qc-col-comment,
+.excel-grid col.qc-col-comment{
+  width:260px !important;
+}
+
+#workModule .excel-grid th:nth-child(7),
+#workModule .excel-grid td:nth-child(7),
+.module-view#workModule .excel-grid th:nth-child(7),
+.module-view#workModule .excel-grid td:nth-child(7),
+.excel-grid th:nth-child(7),
+.excel-grid td:nth-child(7){
+  width:110px !important;
+  min-width:110px !important;
+  max-width:110px !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding:8px 6px !important;
+}
+
+#workModule .excel-grid th:nth-child(8),
+#workModule .excel-grid td:nth-child(8),
+.module-view#workModule .excel-grid th:nth-child(8),
+.module-view#workModule .excel-grid td:nth-child(8),
+.excel-grid th:nth-child(8),
+.excel-grid td:nth-child(8){
+  width:260px !important;
+  min-width:260px !important;
+  max-width:260px !important;
+  text-align:left !important;
+  vertical-align:middle !important;
+  padding-left:12px !important;
+  padding-right:12px !important;
+}
+
+.done-cell,
+#workModule .done-cell,
+.excel-grid td.done-cell{
+  min-width:110px !important;
+  width:110px !important;
+  max-width:110px !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+  overflow:visible !important;
+}
+
+.done-cell-view-only{
+  width:100% !important;
+  min-height:34px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 auto !important;
+  padding:0 !important;
+}
+
+.checklist-check-view-btn{
+  min-width:68px !important;
+  height:30px !important;
+  padding:0 10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  border:1px solid #bfdbfe !important;
+  border-radius:999px !important;
+  background:#fff !important;
+  color:#1d4ed8 !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+
+.checklist-check-view-btn.pending span{
+  background:#eef2ff !important;
+  color:#2563eb !important;
+}
+
+.checklist-check-view-btn.partial{
+  border-color:#fbbf24 !important;
+  color:#b45309 !important;
+  background:#fffbeb !important;
+}
+
+.checklist-check-view-btn.partial span{
+  background:#fef3c7 !important;
+  color:#b45309 !important;
+}
+
+.checklist-check-view-btn.complete{
+  border-color:#86efac !important;
+  color:#15803d !important;
+  background:#f0fdf4 !important;
+}
+
+.checklist-check-view-btn.complete span{
+  background:#dcfce7 !important;
+  color:#15803d !important;
+}
+
+.excel-grid td:nth-child(8) .cell,
+.excel-grid td:nth-child(8) .comment-cell,
+.excel-grid td:nth-child(8) [contenteditable="true"]{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  min-height:38px !important;
+  white-space:pre-wrap !important;
+  word-break:keep-all !important;
+  overflow-wrap:anywhere !important;
+}
+
+.check-modal-layer{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:9999 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:24px !important;
+  background:rgba(15,23,42,.46) !important;
+}
+
+.check-modal-card{
+  width:min(720px, calc(100vw - 48px)) !important;
+  max-height:calc(100vh - 72px) !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  border:1px solid #d7e3f3 !important;
+  border-radius:24px !important;
+  background:#fff !important;
+  box-shadow:0 24px 70px rgba(15,23,42,.24) !important;
+}
+
+.check-modal-head,
+.check-modal-footer{
+  flex:0 0 auto !important;
+}
+
+.check-modal-body{
+  flex:1 1 auto !important;
+  overflow:auto !important;
+}
