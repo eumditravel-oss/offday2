@@ -9832,10 +9832,14 @@ function toggleChecklistNotApplicable(index, checkIndex) {
 
 
 function setChecklistCellFocus(el) {
+  const rowIndex = Number(el.dataset.row);
+  const row = checklistRows[rowIndex] ? normalizeChecklistRow(checklistRows[rowIndex]) : null;
   currentChecklistFocus = {
-    row: Number(el.dataset.row),
+    row: rowIndex,
     field: el.dataset.field,
-    group: checklistRows[Number(el.dataset.row)]?.group || selectedChecklistCategoryFilter || firstCategoryName
+    group: row?.group || selectedChecklistCategoryFilter || firstCategoryName,
+    middleCategory: row?.middleCategory || "",
+    subCategory: row?.subCategory || ""
   };
 }
 
@@ -9852,18 +9856,15 @@ function focusChecklistCell(rowIndex, field = "trade") {
 }
 
 document.addEventListener("keydown", event => {
-  const key = String(event.key || "").toLowerCase();
-
-  if (event.ctrlKey && key === "f9") {
+  if (event.ctrlKey && event.key === "F9") {
     event.preventDefault();
+    const focusedIndex = Number(currentChecklistFocus?.row);
+    if (Number.isInteger(focusedIndex) && checklistRows[focusedIndex]) {
+      insertChecklistRowAfter(focusedIndex);
+      return;
+    }
     const group = currentChecklistFocus?.group || (selectedChecklistCategoryFilter !== "전체" ? selectedChecklistCategoryFilter : firstCategoryName);
     insertChecklistRowInGroup(group);
-    return;
-  }
-
-  if (event.ctrlKey && key === "f3") {
-    event.preventDefault();
-    openChecklistQuickAddModal();
   }
 });
 
@@ -9883,59 +9884,29 @@ function updateChecklistCell(index, key, value) {
   }
 }
 
-function isChecklistRowVisibleForKeyboard(row) {
-  normalizeChecklistRow(row);
-  const group = normalizeChecklistGroupName(row.group);
-  if (collapsedChecklistGroups.has(group)) return false;
-  const middle = row.middleCategory || "기타";
-  if (collapsedChecklistMiddles.has(getChecklistMiddleCollapseKey(group, middle))) return false;
-  const sub = row.subCategory || "";
-  if (sub && collapsedChecklistSubs.has(getChecklistSubCollapseKey(group, middle, sub))) return false;
-  return true;
-}
-
-function getChecklistKeyboardScopeKey(row) {
-  normalizeChecklistRow(row);
-  const group = normalizeChecklistGroupName(row.group);
-  const middle = row.middleCategory || "기타";
-  const sub = row.subCategory || "";
-  return sub ? `${group}::${middle}::${sub}` : `${group}::${middle}`;
-}
-
-function getChecklistKeyboardRows(currentRowIndex) {
-  const currentRow = checklistRows[currentRowIndex];
-  if (!currentRow) return [];
-  const currentScope = getChecklistKeyboardScopeKey(currentRow);
-  return getChecklistFilteredRows()
-    .filter(({ row }) => isChecklistRowVisibleForKeyboard(row) && getChecklistKeyboardScopeKey(row) === currentScope)
-    .sort((a, b) => {
-      const ag = checklistCategoryOptions.indexOf(normalizeChecklistGroupName(a.row.group));
-      const bg = checklistCategoryOptions.indexOf(normalizeChecklistGroupName(b.row.group));
-      const ai = ag < 0 ? 999 : ag;
-      const bi = bg < 0 ? 999 : bg;
-      if (ai !== bi) return ai - bi;
-      const mid = String(a.row.middleCategory || "").localeCompare(String(b.row.middleCategory || ""), "ko", { numeric: true });
-      if (mid !== 0) return mid;
-      const sub = String(a.row.subCategory || "").localeCompare(String(b.row.subCategory || ""), "ko", { numeric: true });
-      if (sub !== 0) return sub;
-      return String(a.row.no || "").localeCompare(String(b.row.no || ""), "ko", { numeric: true });
-    })
-    .map(item => item.realIndex);
-}
-
 function moveChecklistCell(event, el) {
   const editableKeys = ["Enter", "ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft", "Tab"];
   if (!editableKeys.includes(event.key) || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
+
+  const cells = Array.from(document.querySelectorAll('.excel-editable-cell[contenteditable="true"]'));
+  const currentIndex = cells.indexOf(el);
+  if (currentIndex < 0) return;
 
   const currentRow = Number(el.dataset.row);
   const currentField = el.dataset.field;
   const fields = ["trade", "no", "item", "method", "comment"];
   const fieldIndex = fields.indexOf(currentField);
-  if (!Number.isInteger(currentRow) || fieldIndex < 0) return;
-
-  const visibleRows = getChecklistKeyboardRows(currentRow);
+  const visibleRows = getChecklistFilteredRows()
+    .sort((a, b) => {
+      const ai = checklistCategoryOptions.indexOf(a.row.group);
+      const bi = checklistCategoryOptions.indexOf(b.row.group);
+      const ag = ai < 0 ? 999 : ai;
+      const bg = bi < 0 ? 999 : bi;
+      if (ag !== bg) return ag - bg;
+      return String(a.row.no).localeCompare(String(b.row.no), "ko", { numeric: true });
+    })
+    .map(item => item.realIndex);
   const rowPosition = visibleRows.indexOf(currentRow);
-  if (rowPosition < 0) return;
 
   let targetRow = currentRow;
   let targetField = currentField;
@@ -9958,14 +9929,14 @@ function moveChecklistCell(event, el) {
     }
   }
 
-  event.preventDefault();
-  updateChecklistCell(Number(el.dataset.row), el.dataset.field, el.innerText);
-
   const selector = `.excel-editable-cell[data-row="${targetRow}"][data-field="${targetField}"]`;
   const target = document.querySelector(selector);
   if (!target || target === el) return;
 
+  event.preventDefault();
+  updateChecklistCell(Number(el.dataset.row), el.dataset.field, el.innerText);
   target.focus();
+
   const range = document.createRange();
   range.selectNodeContents(target);
   range.collapse(false);
@@ -9973,7 +9944,6 @@ function moveChecklistCell(event, el) {
   selection.removeAllRanges();
   selection.addRange(range);
 }
-
 
 function updateChecklistCheck(index, checked) { if (checklistRows[index]) checklistRows[index].checked = checked; }
 function toggleAllChecklistRows(box) { getChecklistFilteredRows().forEach(({ realIndex }) => checklistRows[realIndex].checked = box.checked); renderChecklistGrid(); }
@@ -10194,136 +10164,10 @@ function saveChecklistModal() {
   renderChecklistGrid();
 }
 
-
-function getChecklistDefaultGroupForQuickAdd() {
-  return currentChecklistFocus?.group || (selectedChecklistCategoryFilter !== "전체" ? selectedChecklistCategoryFilter : firstCategoryName);
-}
-
-function ensureChecklistQuickAddModal() {
-  let modal = document.getElementById("checklistQuickAddModal");
-  if (modal) return modal;
-  modal = document.createElement("div");
-  modal.id = "checklistQuickAddModal";
-  modal.className = "modal-backdrop checklist-quick-add-backdrop";
-  modal.innerHTML = `
-    <div class="modal checklist-quick-add-modal" onclick="event.stopPropagation();">
-      <div class="modal-head">
-        <h2>분류 선택 후 행 추가</h2>
-        <button class="close" onclick="closeChecklistQuickAddModal()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="notice">Ctrl+F3으로 열 수 있습니다. 구분, 중분류, 소분류를 선택한 뒤 해당 분류 안에 새 항목을 추가합니다.</div>
-        <div class="form-grid checklist-quick-add-grid">
-          <div class="field"><label>구분</label><select id="quickAddChecklistGroup" onchange="refreshChecklistQuickAddMiddleOptions()"></select></div>
-          <div class="field"><label>중분류</label><select id="quickAddChecklistMiddle" onchange="refreshChecklistQuickAddSubOptions()"></select></div>
-          <div class="field"><label>소분류</label><select id="quickAddChecklistSub"></select></div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-line" onclick="closeChecklistQuickAddModal()">취소</button>
-        <button class="btn btn-primary" onclick="saveChecklistQuickAddModal()">해당 분류에 추가</button>
-      </div>
-    </div>`;
-  modal.addEventListener("click", event => {
-    if (event.target === modal) closeChecklistQuickAddModal();
-  });
-  document.body.appendChild(modal);
-  return modal;
-}
-
-function openChecklistQuickAddModal() {
-  const modal = ensureChecklistQuickAddModal();
-  const currentGroup = normalizeChecklistGroupName(getChecklistDefaultGroupForQuickAdd());
-  const groupSelect = modal.querySelector("#quickAddChecklistGroup");
-  if (groupSelect) {
-    groupSelect.innerHTML = checklistCategoryOptions.map(group => {
-      const locked = isChecklistCategoryLocked(group);
-      const selected = group === currentGroup ? "selected" : "";
-      const disabled = locked ? "disabled" : "";
-      const label = locked ? `${group} · 송부완료` : group;
-      return `<option value="${escapeHtml(group)}" ${selected} ${disabled}>${escapeHtml(label)}</option>`;
-    }).join("");
-    if (checklistCategoryOptions.includes(currentGroup) && !isChecklistCategoryLocked(currentGroup)) groupSelect.value = currentGroup;
-  }
-  refreshChecklistQuickAddMiddleOptions();
-  modal.classList.add("active");
-  setTimeout(() => groupSelect?.focus(), 0);
-}
-
-function closeChecklistQuickAddModal() {
-  document.getElementById("checklistQuickAddModal")?.classList.remove("active");
-}
-
-function refreshChecklistQuickAddMiddleOptions() {
-  const modal = ensureChecklistQuickAddModal();
-  const group = normalizeChecklistGroupName(modal.querySelector("#quickAddChecklistGroup")?.value || firstCategoryName);
-  const middleSelect = modal.querySelector("#quickAddChecklistMiddle");
-  if (!middleSelect) return;
-  const options = getChecklistMiddleOptions(group);
-  middleSelect.innerHTML = options.length
-    ? options.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")
-    : `<option value="">중분류 없음</option>`;
-  const focusedRow = checklistRows[Number(currentChecklistFocus?.row)];
-  if (focusedRow && normalizeChecklistGroupName(focusedRow.group) === group && options.includes(focusedRow.middleCategory)) {
-    middleSelect.value = focusedRow.middleCategory;
-  }
-  refreshChecklistQuickAddSubOptions();
-}
-
-function refreshChecklistQuickAddSubOptions() {
-  const modal = ensureChecklistQuickAddModal();
-  const group = normalizeChecklistGroupName(modal.querySelector("#quickAddChecklistGroup")?.value || firstCategoryName);
-  const middle = modal.querySelector("#quickAddChecklistMiddle")?.value || "";
-  const subSelect = modal.querySelector("#quickAddChecklistSub");
-  if (!subSelect) return;
-  const options = getChecklistSubOptions(group, middle);
-  subSelect.innerHTML = options.length
-    ? [`<option value="">소분류 없음</option>`, ...options.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)].join("")
-    : `<option value="">소분류 없음</option>`;
-  const focusedRow = checklistRows[Number(currentChecklistFocus?.row)];
-  if (focusedRow && normalizeChecklistGroupName(focusedRow.group) === group && focusedRow.middleCategory === middle && options.includes(focusedRow.subCategory)) {
-    subSelect.value = focusedRow.subCategory;
-  }
-}
-
-function saveChecklistQuickAddModal() {
-  const modal = ensureChecklistQuickAddModal();
-  const group = normalizeChecklistGroupName(modal.querySelector("#quickAddChecklistGroup")?.value || firstCategoryName);
-  const middle = modal.querySelector("#quickAddChecklistMiddle")?.value || "";
-  const sub = modal.querySelector("#quickAddChecklistSub")?.value || "";
-  if (isChecklistCategoryLocked(group)) {
-    showToast("송부 완료된 구분에는 행을 추가할 수 없습니다.");
-    return;
-  }
-  const row = makeBlankChecklistRow(group);
-  row.middleCategory = middle;
-  row.subCategory = sub;
-  row.no = nextChecklistNo(group, middle, sub);
-  normalizeChecklistRow(row);
-
-  const sameScopeIndexes = checklistRows.map((item, index) => {
-    normalizeChecklistClassification(item);
-    return normalizeChecklistGroupName(item.group) === group &&
-      (item.middleCategory || "") === middle &&
-      (item.subCategory || "") === sub ? index : -1;
-  }).filter(index => index >= 0);
-  const insertAt = sameScopeIndexes.length ? Math.max(...sameScopeIndexes) + 1 : checklistRows.length;
-  checklistRows.splice(insertAt, 0, row);
-  renumberChecklistGroup(group);
-  selectedChecklistCategoryFilter = selectedChecklistCategoryFilter === "전체" ? "전체" : group;
-  collapsedChecklistGroups.delete(group);
-  collapsedChecklistMiddles.delete(getChecklistMiddleCollapseKey(group, middle || "기타"));
-  if (sub) collapsedChecklistSubs.delete(getChecklistSubCollapseKey(group, middle || "기타", sub));
-  closeChecklistQuickAddModal();
-  renderChecklistGrid();
-  requestAnimationFrame(() => focusChecklistCell(insertAt, "trade"));
-  showToast(`${group}${middle ? ` / ${middle}` : ""}${sub ? ` / ${sub}` : ""} 분류에 새 행을 추가했습니다.`);
-}
-
-function makeBlankChecklistRow(group) {
-  const normalizedGroup = normalizeChecklistGroupName(group || selectedChecklistCategoryFilter || firstCategoryName);
-  const middle = getChecklistMiddleOptions(normalizedGroup)[0] || "";
-  const sub = getChecklistSubOptions(normalizedGroup, middle)[0] || "";
+function makeBlankChecklistRow(group, referenceRow = null) {
+  const normalizedGroup = normalizeChecklistGroupName(referenceRow?.group || group || selectedChecklistCategoryFilter || firstCategoryName);
+  const middle = referenceRow ? (referenceRow.middleCategory || "") : (currentChecklistFocus?.middleCategory || getChecklistMiddleOptions(normalizedGroup)[0] || "");
+  const sub = referenceRow ? (referenceRow.subCategory || "") : (currentChecklistFocus?.subCategory || getChecklistSubOptions(normalizedGroup, middle)[0] || "");
   const tempRow = { group: normalizedGroup, middleCategory: middle, subCategory: sub };
   const targets = getChecklistTargetsByGroup(normalizedGroup, tempRow) || ["PM"];
   const now = getChecklistTimeText();
@@ -10374,33 +10218,63 @@ function renumberChecklistGroup(group) {
   });
 }
 
+function ensureChecklistScopeExpanded(row) {
+  if (!row) return;
+  normalizeChecklistClassification(row);
+  const group = normalizeChecklistGroupName(row.group);
+  collapsedChecklistGroups.delete(group);
+  if (row.middleCategory) collapsedChecklistMiddles.delete(getChecklistMiddleKey(group, row.middleCategory));
+  if (row.subCategory) collapsedChecklistSubs.delete(getChecklistSubKey(group, row.middleCategory || "", row.subCategory));
+}
+
 function insertChecklistRowInGroup(group = "") {
   const normalizedGroup = normalizeChecklistGroupName(group || currentChecklistFocus?.group || selectedChecklistCategoryFilter || firstCategoryName);
   if (isChecklistCategoryLocked(normalizedGroup)) {
     showToast("송부 완료된 질의차수는 행을 추가할 수 없습니다.");
     return;
   }
-  const row = makeBlankChecklistRow(normalizedGroup);
-  const focusedIndex = Number(currentChecklistFocus?.row);
-  const insertAfterFocused = Number.isInteger(focusedIndex) && checklistRows[focusedIndex] && normalizeChecklistGroupName(checklistRows[focusedIndex].group) === normalizedGroup;
+  const reference = currentChecklistFocus?.group && normalizeChecklistGroupName(currentChecklistFocus.group) === normalizedGroup
+    ? { group: normalizedGroup, middleCategory: currentChecklistFocus.middleCategory || "", subCategory: currentChecklistFocus.subCategory || "" }
+    : null;
+  const row = makeBlankChecklistRow(normalizedGroup, reference);
   let insertAt = checklistRows.length;
-  if (insertAfterFocused) {
-    insertAt = focusedIndex + 1;
-  } else {
+  const sameScopeIndexes = checklistRows
+    .map((item, index) => {
+      normalizeChecklistClassification(item);
+      return getChecklistNoScopeKey(item) === getChecklistNoScopeKey(row) ? index : -1;
+    })
+    .filter(index => index >= 0);
+  if (sameScopeIndexes.length) insertAt = Math.max(...sameScopeIndexes) + 1;
+  else {
     const sameGroupIndexes = checklistRows.map((item, index) => normalizeChecklistGroupName(item.group) === normalizedGroup ? index : -1).filter(index => index >= 0);
     if (sameGroupIndexes.length) insertAt = Math.max(...sameGroupIndexes) + 1;
   }
   checklistRows.splice(insertAt, 0, row);
   renumberChecklistGroup(normalizedGroup);
   selectedChecklistCategoryFilter = selectedChecklistCategoryFilter === "전체" ? "전체" : normalizedGroup;
-  collapsedChecklistGroups.delete(normalizedGroup);
+  ensureChecklistScopeExpanded(row);
   renderChecklistGrid();
   requestAnimationFrame(() => focusChecklistCell(insertAt, "trade"));
   showToast(`${normalizedGroup} 구분에 새 행을 추가했습니다.`);
 }
 
 function addChecklistRow() { insertChecklistRowInGroup(selectedChecklistCategoryFilter === "전체" ? firstCategoryName : selectedChecklistCategoryFilter); }
-function insertChecklistRowAfter(index) { insertChecklistRowInGroup(checklistRows[index]?.group || firstCategoryName); }
+function insertChecklistRowAfter(index) {
+  const reference = checklistRows[index] ? normalizeChecklistRow(checklistRows[index]) : null;
+  const normalizedGroup = normalizeChecklistGroupName(reference?.group || firstCategoryName);
+  if (isChecklistCategoryLocked(normalizedGroup)) {
+    showToast("송부 완료된 질의차수는 행을 추가할 수 없습니다.");
+    return;
+  }
+  const row = makeBlankChecklistRow(normalizedGroup, reference);
+  checklistRows.splice(index + 1, 0, row);
+  renumberChecklistGroup(normalizedGroup);
+  selectedChecklistCategoryFilter = selectedChecklistCategoryFilter === "전체" ? "전체" : normalizedGroup;
+  ensureChecklistScopeExpanded(row);
+  renderChecklistGrid();
+  requestAnimationFrame(() => focusChecklistCell(index + 1, "trade"));
+  showToast("선택한 행 바로 아래에 새 행을 추가했습니다.");
+}
 function deleteChecklistRow(index) { 
   if (!checklistRows[index]) return;
   normalizeChecklistRow(checklistRows[index]);
@@ -10468,57 +10342,6 @@ function buildChecklistCsv(rows, fileName) {
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-
-function buildChecklistJsonPayload() {
-  renumberAllChecklistRowsByClassification();
-  const rows = checklistRows.map((row, index) => {
-    normalizeChecklistRow(row);
-    return {
-      id: row.id || `QC-${String(index + 1).padStart(4, "0")}`,
-      group: normalizeChecklistGroupName(row.group),
-      middleCategory: row.middleCategory || "",
-      subCategory: row.subCategory || "",
-      trade: row.trade || "",
-      no: normalizeChecklistNo(row.no),
-      item: row.item || "",
-      method: row.method || "",
-      targets: getChecklistTargets(row),
-      manualTargets: !!row.manualTargets,
-      checks: Array.isArray(row.checks) ? row.checks : [],
-      status: getChecklistDoneState(row),
-      comment: row.comment || "",
-      attachments: Array.isArray(row.attachments) ? row.attachments : [],
-      history: Array.isArray(row.history) ? row.history : [],
-      objection: row.objection || null,
-      objectionFiles: Array.isArray(row.objectionFiles) ? row.objectionFiles : [],
-      eliminated: !!row.eliminated,
-      showObjection: !!row.showObjection,
-      creator: row.creator || "",
-      createdAt: row.createdAt || ""
-    };
-  });
-  return {
-    schema: "CON-COST_QC_CHECKLIST_DUMMY_DATA",
-    version: "1.0",
-    exportedAt: new Date().toISOString(),
-    rowCount: rows.length,
-    categoryOptions: checklistCategoryOptions,
-    rows
-  };
-}
-
-function downloadChecklistJson() {
-  const payload = buildChecklistJsonPayload();
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `QC_CHECKLIST_DUMMY_DATA_${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast("현재 체크리스트 데이터를 JSON으로 내보냈습니다.");
 }
 
 function downloadChecklistCsv() {
