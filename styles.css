@@ -9300,29 +9300,52 @@ body.checklist-target-modal-open{
 }
 
 
-/* QC quick add modal and keyboard navigation refinements */
-.checklist-quick-add-modal {
-  width: min(760px, calc(100vw - 48px));
-  max-height: min(640px, calc(100vh - 64px));
+/* =========================================================
+   QC 체크리스트 컬럼 폭 최종 조정
+   - 코멘트 열을 약 1/3 수준으로 축소
+   - 줄어든 폭을 검토항목/검토방법에 동일하게 재분배
+   ========================================================= */
+.excel-grid col.qc-col-item{
+  width:24% !important;
 }
 
-.checklist-quick-add-modal .modal-body {
-  overflow: visible;
+.excel-grid col.qc-col-method{
+  width:28% !important;
 }
 
-.checklist-quick-add-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.excel-grid col.qc-col-comment{
+  width:4% !important;
 }
 
-.excel-editable-cell:focus {
-  outline: 2px solid #2563eb;
-  outline-offset: -2px;
-  background: #fffef7;
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.18);
+.excel-grid th:nth-child(4),
+.excel-grid td:nth-child(4),
+.excel-grid th:nth-child(5),
+.excel-grid td:nth-child(5){
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  text-align:left !important;
+  padding-left:18px !important;
+  padding-right:18px !important;
 }
 
-@media (max-width: 860px) {
-  .checklist-quick-add-grid {
-    grid-template-columns: 1fr;
-  }
+.excel-grid th:nth-child(8),
+.excel-grid td:nth-child(8){
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:anywhere !important;
+  text-align:left !important;
+  padding-left:8px !important;
+  padding-right:8px !important;
+}
+
+.excel-grid td:nth-child(8) .cell,
+.excel-grid td:nth-child(8) .comment-cell,
+.excel-grid td:nth-child(8) [contenteditable="true"]{
+  min-width:0 !important;
+  width:100% !important;
+  max-width:100% !important;
 }
