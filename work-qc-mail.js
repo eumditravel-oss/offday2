@@ -11301,14 +11301,29 @@ function addQcTeamTemplateRowAfterActive() {
 }
 
 function handleQcTemplateModalWheel(event) {
-  if (!document.getElementById("qcTeamTemplateModal")?.classList.contains("active")) return;
-  const scrollable = event.target.closest(".qc-template-table-wrap, .qc-template-body-wrap, .qc-template-modal, textarea, select");
-  if (!scrollable) {
+  const modal = document.getElementById("qcTeamTemplateModal");
+  if (!modal?.classList.contains("active")) return;
+
+  const modalBox = modal.querySelector(".qc-template-modal");
+  if (!modalBox?.contains(event.target)) {
     event.preventDefault();
     return;
   }
-  const wrap = event.target.closest(".qc-template-table-wrap, .qc-template-body-wrap");
-  if (!wrap) return;
+
+  if (event.target.closest("textarea, select")) return;
+
+  const scrollCandidates = Array.from(
+    event.target.closest(".qc-template-table-wrap, .qc-template-body-wrap")
+      ? [event.target.closest(".qc-template-table-wrap, .qc-template-body-wrap"), event.target.closest(".qc-template-body-wrap")]
+      : [event.target.closest(".qc-template-body-wrap")]
+  ).filter(Boolean);
+
+  const wrap = scrollCandidates.find(el => el.scrollHeight > el.clientHeight + 1);
+  if (!wrap) {
+    event.preventDefault();
+    return;
+  }
+
   const delta = event.deltaY || 0;
   const atTop = wrap.scrollTop <= 0;
   const atBottom = wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 1;
