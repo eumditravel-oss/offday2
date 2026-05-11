@@ -8808,3 +8808,98 @@ body.checklist-target-modal-open{
     padding:20px 18px 32px;
   }
 }
+
+/* === QC 대상 선택 조직도: 대형 캔버스 + 확대/축소/휠클릭 이동 === */
+#checklistTargetModal .org-target-modal-card{
+  width:min(1720px, calc(100vw - 36px)) !important;
+  max-height:calc(100vh - 34px) !important;
+}
+#checklistTargetModal .org-target-modal-body{
+  max-height:calc(100vh - 315px) !important;
+  padding:14px 18px 18px !important;
+}
+#checklistTargetModal .checklist-org-chart-selector-section{
+  width:100% !important;
+  max-height:calc(100vh - 365px) !important;
+  min-height:520px !important;
+}
+#checklistTargetModal .checklist-org-chart-head{
+  align-items:flex-start !important;
+}
+#checklistTargetModal .checklist-org-search{
+  width:min(340px, 30vw) !important;
+}
+#checklistTargetModal .checklist-org-chart-panel{
+  min-height:460px !important;
+  width:100% !important;
+}
+#checklistTargetModal .checklist-org-chart-scroll{
+  position:relative !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:460px !important;
+  overflow:auto !important;
+  padding:42px 54px 58px !important;
+  cursor:grab !important;
+  overscroll-behavior:contain !important;
+  touch-action:none !important;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(148,163,184,.26) 1px, transparent 0) 0 0/22px 22px,
+    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%) !important;
+}
+#checklistTargetModal .checklist-org-chart-scroll.is-panning{
+  cursor:grabbing !important;
+  user-select:none !important;
+}
+#checklistTargetModal .checklist-org-chart-canvas{
+  position:relative !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  min-width:2200px !important;
+  min-height:1300px !important;
+  transform-origin:0 0 !important;
+  will-change:transform !important;
+}
+#checklistTargetModal .checklist-org-chart{
+  min-width:max-content !important;
+  padding:26px 90px 80px !important;
+}
+#checklistTargetModal .checklist-org-chart-node{
+  min-width:150px !important;
+}
+#checklistTargetModal .checklist-org-chart-node.depth-0,
+#checklistTargetModal .checklist-org-chart-node.depth-1{
+  min-width:180px !important;
+}
+#checklistTargetModal .checklist-org-chart-card-btn{
+  z-index:20 !important;
+}
+#checklistTargetModal .checklist-org-chart-scroll::after{
+  content:"휠: 확대·축소 / 휠 클릭 후 드래그: 시점 이동";
+  position:sticky;
+  left:16px;
+  bottom:12px;
+  display:inline-flex;
+  padding:7px 12px;
+  border:1px solid #dbe6f5;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  color:#64748b;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:0 8px 18px rgba(15,23,42,.08);
+  pointer-events:none;
+}
+@media (max-width: 1200px){
+  #checklistTargetModal .org-target-modal-card{
+    width:calc(100vw - 20px) !important;
+  }
+  #checklistTargetModal .checklist-org-chart-selector-section{
+    min-height:440px !important;
+  }
+  #checklistTargetModal .checklist-org-chart-panel,
+  #checklistTargetModal .checklist-org-chart-scroll{
+    min-height:400px !important;
+  }
+}
