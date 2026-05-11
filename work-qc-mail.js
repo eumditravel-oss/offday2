@@ -9624,13 +9624,15 @@ function renderChecklistTargetChecks(row, realIndex) {
   const doneCount = checks.filter(check => check.done || check.na).length;
   const totalCount = checks.length || 0;
   const state = getChecklistDoneState(row);
-  const stateClass = state === "확인완료" ? "complete" : (state === "부분확인" ? "partial" : "pending");
+  const stateClass = state === "확인완료" ? "complete" : (state === "부분완료" ? "partial" : "pending");
+
+  // 체크여부 열은 처리이력과 동일하게 “보기” 버튼만 표시한다.
+  // 담당자별 확인/해당없음 처리는 버튼 클릭 후 열리는 모달에서 수행한다.
   return `
     <div class="done-cell-view-only">
-      <button type="button" class="history-view-btn checklist-check-view-btn ${stateClass}" onclick="openChecklistCheckWindow(${realIndex})">
+      <button type="button" class="history-view-btn checklist-check-view-btn ${stateClass}" onclick="openChecklistCheckWindow(${realIndex})" title="담당자별 체크 여부 보기">
         보기 <span>${doneCount}/${totalCount}</span>
       </button>
-      ${renderObjectionArea(row, realIndex)}
     </div>
   `;
 }
