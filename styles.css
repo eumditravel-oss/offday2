@@ -9728,26 +9728,49 @@ body.checklist-target-modal-open{
 }
 
 
-/* ===============================
-   코멘트 헤더 셀 내부 중앙 정렬
-=============================== */
-.excel-grid thead th.comment-col,
-.excel-grid thead th:nth-child(8){
-    text-align: center !important;
-}
-
-.excel-grid thead th.comment-col > *,
-.excel-grid thead th:nth-child(8) > *{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:100% !important;
-    height:100% !important;
-    text-align:center !important;
-}
-
 /* 내용 셀은 좌측 정렬 유지 */
 .excel-grid tbody td.comment-col,
 .excel-grid tbody td:nth-child(8){
     text-align:left !important;
+}
+
+/* =========================================================
+   코멘트 헤더 셀 최종 중앙 정렬 보정
+   - 기존 하단부 nth-child(8) 좌측정렬 규칙보다 뒤에서 적용
+   - 헤더(th)만 중앙 정렬
+   - 본문(td) 코멘트 내용은 좌측 정렬 유지
+   ========================================================= */
+#workModule table.excel-grid thead tr th.comment-col,
+#workModule table.excel-grid thead tr th:nth-child(8),
+.module-view#workModule table.excel-grid thead tr th.comment-col,
+.module-view#workModule table.excel-grid thead tr th:nth-child(8),
+table.excel-grid thead tr th.comment-col,
+table.excel-grid thead tr th:nth-child(8){
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding-left:0 !important;
+  padding-right:0 !important;
+}
+
+#workModule table.excel-grid thead tr th.comment-col::before,
+#workModule table.excel-grid thead tr th:nth-child(8)::before,
+.module-view#workModule table.excel-grid thead tr th.comment-col::before,
+.module-view#workModule table.excel-grid thead tr th:nth-child(8)::before,
+table.excel-grid thead tr th.comment-col::before,
+table.excel-grid thead tr th:nth-child(8)::before{
+  content:"";
+  display:inline-block;
+  width:0;
+}
+
+/* 코멘트 본문 셀은 좌측 정렬 유지 */
+#workModule table.excel-grid tbody tr:not(.group-row) td:nth-child(8),
+#workModule table.excel-grid tbody tr:not(.group-row) td.comment-col,
+.module-view#workModule table.excel-grid tbody tr:not(.group-row) td:nth-child(8),
+.module-view#workModule table.excel-grid tbody tr:not(.group-row) td.comment-col,
+table.excel-grid tbody tr:not(.group-row) td:nth-child(8),
+table.excel-grid tbody tr:not(.group-row) td.comment-col{
+  text-align:left !important;
+  padding-left:8px !important;
+  padding-right:8px !important;
 }
