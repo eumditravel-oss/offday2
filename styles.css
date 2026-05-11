@@ -9726,3 +9726,28 @@ body.checklist-target-modal-open{
   word-break:keep-all !important;
   overflow-wrap:anywhere !important;
 }
+
+
+/* ===============================
+   코멘트 헤더 셀 내부 중앙 정렬
+=============================== */
+.excel-grid thead th.comment-col,
+.excel-grid thead th:nth-child(8){
+    text-align: center !important;
+}
+
+.excel-grid thead th.comment-col > *,
+.excel-grid thead th:nth-child(8) > *{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    height:100% !important;
+    text-align:center !important;
+}
+
+/* 내용 셀은 좌측 정렬 유지 */
+.excel-grid tbody td.comment-col,
+.excel-grid tbody td:nth-child(8){
+    text-align:left !important;
+}
