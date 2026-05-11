@@ -7751,3 +7751,227 @@ body{
 .target-stack-center > .target-route-chip{
   min-width:42px !important;
 }
+
+/* =========================================================
+   요청 대상 선택 개선
+   - 중분류 지정은 구조/마감/토목 등 작업 구분 전용
+   - 대상 선택은 조직도/인사카드 기준 부서 또는 개인 지정 전용
+   ========================================================= */
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-assignee-chip,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-assignee-chip,
+.target-assignee-chip{
+  max-width:112px !important;
+  padding:4px 9px !important;
+  border-color:#bfdbfe !important;
+  background:#eff6ff !important;
+  color:#0b63ce !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-empty-guide,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-empty-guide,
+.target-empty-guide{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  height:22px !important;
+  min-width:46px !important;
+  padding:0 8px !important;
+  border:1px dashed #cbd5e1 !important;
+  border-radius:999px !important;
+  background:#f8fafc !important;
+  color:#94a3b8 !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+}
+
+.people-target-modal-card{
+  width:min(980px,calc(100vw - 48px)) !important;
+  max-height:min(760px,calc(100vh - 48px)) !important;
+}
+
+.target-modal-guide{
+  padding:12px 20px;
+  border-bottom:1px solid #edf2f7;
+  background:#f8fbff;
+  color:#475569;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.5;
+}
+
+.target-selected-area{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px 20px;
+  border-bottom:1px solid #edf2f7;
+  background:#fff;
+}
+
+.target-selected-area > strong{
+  flex:0 0 auto;
+  padding-top:4px;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:950;
+}
+
+.target-selected-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  min-width:0;
+}
+
+.target-selected-empty{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  color:#94a3b8;
+  font-size:12px;
+  font-weight:900;
+}
+
+.target-selected-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:26px;
+  padding:3px 8px 3px 10px;
+  border:1px solid #bfdbfe;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#0b63ce;
+  font-size:12px;
+  font-weight:950;
+}
+
+.target-selected-chip button{
+  width:18px;
+  height:18px;
+  border:0;
+  border-radius:999px;
+  background:#dbeafe;
+  color:#1d4ed8;
+  font-size:13px;
+  font-weight:950;
+  cursor:pointer;
+}
+
+.people-target-modal-body{
+  display:grid !important;
+  grid-template-columns:minmax(260px,.8fr) minmax(360px,1.2fr) !important;
+  gap:14px !important;
+  max-height:470px !important;
+  padding:16px 20px !important;
+}
+
+.target-selector-section{
+  min-width:0;
+  border:1px solid #e2e8f0;
+  border-radius:16px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.target-selector-title{
+  padding:11px 13px;
+  border-bottom:1px solid #e2e8f0;
+  background:#f8fafc;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:950;
+}
+
+.target-selector-list{
+  display:grid;
+  gap:6px;
+  max-height:390px;
+  overflow:auto;
+  padding:10px;
+}
+
+.target-modal-option.target-dept-option{
+  align-items:flex-start;
+  padding:10px 11px;
+}
+
+.target-modal-option.target-dept-option.selected,
+.target-person-option.selected{
+  border-color:#93c5fd;
+  background:#eff6ff;
+}
+
+.target-modal-option span,
+.target-person-option span{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+
+.target-modal-option b,
+.target-person-option b{
+  color:#0f172a;
+  font-size:13px;
+  font-weight:950;
+}
+
+.target-modal-option small,
+.target-person-option small{
+  color:#64748b;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.35;
+}
+
+.target-person-option{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px 10px;
+  border:1px solid #dbe3ef;
+  border-radius:14px;
+  background:#fff;
+}
+
+.target-person-option label{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-width:0;
+  flex:1;
+  cursor:pointer;
+}
+
+.target-person-option input,
+.target-dept-option input{
+  flex:0 0 auto;
+  margin-top:2px !important;
+}
+
+.mini-card-open-btn{
+  flex:0 0 auto;
+  min-width:58px;
+  height:28px;
+  padding:0 9px;
+  border:1px solid #bfdbfe;
+  border-radius:999px;
+  background:#fff;
+  color:#0b63ce;
+  font-size:11px;
+  font-weight:950;
+  cursor:pointer;
+}
+
+.mini-card-open-btn:hover{
+  background:#eff6ff;
+}
+
+@media (max-width: 860px){
+  .people-target-modal-body{
+    grid-template-columns:1fr !important;
+  }
+}
