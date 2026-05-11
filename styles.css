@@ -8442,3 +8442,204 @@ body.checklist-target-modal-open{
   text-overflow: clip !important;
   box-sizing: border-box !important;
 }
+
+/* QC 대상 선택 조직도 선택 UI */
+.org-target-modal-card {
+  width: min(1320px, calc(100vw - 96px));
+  max-height: calc(100vh - 96px);
+}
+
+.org-target-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.checklist-org-selector-section {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.checklist-org-selector-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.checklist-org-selector-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checklist-org-selector-head small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checklist-org-search {
+  width: 280px;
+  flex: 0 0 auto;
+}
+
+.checklist-org-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #dbe6f5;
+  background: #f8fbff;
+}
+
+.checklist-org-tab {
+  border: 1px solid #cfe0f7;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-org-tab.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #fff;
+}
+
+.checklist-org-tree-panel {
+  display: none;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.checklist-org-tree-panel.active {
+  display: flex;
+}
+
+.checklist-org-tree-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  overscroll-behavior: contain;
+}
+
+.checklist-org-tree-root,
+.checklist-org-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checklist-org-children {
+  margin-left: 24px;
+  padding-left: 18px;
+  border-left: 1px dashed #cbdcf2;
+}
+
+.checklist-org-node-wrap {
+  margin: 8px 0;
+}
+
+.checklist-org-node {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d5e2f3;
+  border-radius: 16px;
+  background: #fff;
+  padding: 10px 12px 10px calc(12px + min(var(--depth, 0) * 3px, 18px));
+  cursor: pointer;
+  transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
+}
+
+.checklist-org-node:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, .08);
+}
+
+.checklist-org-node.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .2);
+}
+
+.checklist-org-node.dept {
+  background: #f8fbff;
+}
+
+.checklist-org-node-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.checklist-org-node-check {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 1px solid #9ca3af;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 1000;
+  color: #2563eb;
+  background: #fff;
+}
+
+.checklist-org-node.selected .checklist-org-node-check {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.checklist-org-node-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.checklist-org-node-text b {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 1000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checklist-org-node-text small {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.checklist-org-dept-badge,
+.checklist-org-card-btn {
+  flex: 0 0 auto;
+}
+
+.checklist-org-dept-badge {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 1000;
+}
