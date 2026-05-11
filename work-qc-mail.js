@@ -9949,6 +9949,10 @@ document.addEventListener("keydown", event => {
 
   if (event.ctrlKey && key === "f9") {
     event.preventDefault();
+    if (document.getElementById("qcTeamTemplateModal")?.classList.contains("active")) {
+      addQcTeamTemplateRowAfterActive();
+      return;
+    }
     const group = currentChecklistFocus?.group || (selectedChecklistCategoryFilter !== "전체" ? selectedChecklistCategoryFilter : firstCategoryName);
     insertChecklistRowInGroup(group);
     return;
@@ -11085,6 +11089,8 @@ function applyChecklistDisplayOverrides() {
    ========================================================= */
 const QC_TEMPLATE_STORAGE_KEY = "qcTeamCommonTemplateRows";
 let qcTeamTemplateRows = [];
+let qcTemplateFocusedRowId = null;
+let qcTemplateScrollLockY = 0;
 
 function cloneChecklistPlainRow(row) {
   return JSON.parse(JSON.stringify(row || {}));
@@ -11105,20 +11111,101 @@ function makeQcTemplateRowFromChecklist(row, index = 0) {
   };
 }
 
+
+function getDefaultStructureQcTeamTemplateRows() {
+  const now = "2026-05-08 09:00";
+  const rows = [
+    {
+      subCategory: "QC팀",
+      trade: "계약방식",
+      item: "프로젝트 업무 특성 파악 (구조선수행, 입찰, 본실행, 설계내역 등)",
+      method: "접수자료 확인. (특이사항 작성 후 프로젝트 PM 전달)",
+      comment: ""
+    },
+    {
+      subCategory: "QC팀",
+      trade: "접수자료",
+      item: "입찰 내역서, 산출기준서, 공사 특기사항 접수 파악",
+      method: "접수자료 확인. (특이사항 작성 후 프로젝트 PM 전달)",
+      comment: ""
+    },
+    {
+      subCategory: "QC팀",
+      trade: "도면검토",
+      item: "도면 접수 여부 확인",
+      method: "도면목록표와 접수 도면상 일치 확인",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "합벽",
+      item: "1. 합벽유무 확인\n2. 합벽구간일 경우 옹벽 및 기둥에 추가이음 발생하는지 확인",
+      method: "토목도면 흙막이 or 가시설계획도 확인",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "끊어치기",
+      item: "끊어치기(C.J Jont) 구간 확인",
+      method: "발주처 및 건설사에 질의사항 작성 [Zoning 및 분할타설 계획도 요청]",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "커플러",
+      item: "커플러 산출기준 확인",
+      method: "건설사별 견적지침서 [별도 표현없을시 담당자에게 확인 후 진행]",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "철근강도",
+      item: "철근 강도에 따른 정착/이음값 오류 확인",
+      method: "구조일반사항 및 구조계산서",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "내진철근",
+      item: "내진철근 적용 유무 확인",
+      method: "구조일반사항 및 구조계산서 [SD400S, SD500S, SD600S 등의 표현유무]",
+      comment: ""
+    }
+  ];
+
+  return rows.map((row, index) => ({
+    id: `qctpl_structure_${String(index + 1).padStart(3, "0")}`,
+    group: "QC팀 전달사항",
+    middleCategory: "구조팀",
+    subCategory: row.subCategory,
+    trade: row.trade,
+    no: `QC-S${String(index + 1).padStart(3, "0")}`,
+    item: row.item,
+    method: row.method,
+    owner: "QC TEAM",
+    targets: [`구조팀 · ${row.subCategory}`],
+    creator: "QC TEAM",
+    createdAt: now,
+    status: "미확인",
+    objectionEnabled: false,
+    comment: row.comment,
+    attachments: [],
+    history: [{ action: "구조팀 QC팀 전달사항 기본자료 등록", worker: "QC TEAM", time: now }]
+  }));
+}
+
+function applyStructureQcTemplateDefaults(rows = []) {
+  const otherRows = rows.filter(row => (row.middleCategory || "") !== "구조팀");
+  return [
+    ...getDefaultStructureQcTeamTemplateRows().map((row, index) => makeQcTemplateRowFromChecklist(row, index)),
+    ...otherRows
+  ];
+}
+
 function getDefaultQcTeamTemplateRows() {
   const seedRows = Array.isArray(qcTeamTemplateSeedRows) ? qcTeamTemplateSeedRows : [];
   const rows = seedRows.map((row, index) => makeQcTemplateRowFromChecklist(row, index));
-  return rows.length ? rows : [{
-    id: `qctpl_${Date.now()}_base`,
-    group: "QC팀 전달사항",
-    middleCategory: "구조팀",
-    subCategory: "",
-    trade: "공통",
-    item: "QC팀 전달사항을 입력하세요.",
-    method: "검토방법 또는 전달 기준을 입력하세요.",
-    targets: ["구조팀"],
-    comment: ""
-  }];
+  return applyStructureQcTemplateDefaults(rows);
 }
 
 function loadQcTeamTemplateRows() {
@@ -11126,7 +11213,8 @@ function loadQcTeamTemplateRows() {
   try {
     const saved = JSON.parse(localStorage.getItem(QC_TEMPLATE_STORAGE_KEY) || "[]");
     if (Array.isArray(saved) && saved.length) {
-      qcTeamTemplateRows = saved.map((row, index) => makeQcTemplateRowFromChecklist(row, index));
+      qcTeamTemplateRows = applyStructureQcTemplateDefaults(saved.map((row, index) => makeQcTemplateRowFromChecklist(row, index)));
+      saveQcTeamTemplateRows(false);
       return qcTeamTemplateRows;
     }
   } catch (e) {}
@@ -11145,6 +11233,89 @@ function saveQcTeamTemplateRows(showMessage = true) {
 function getQcTemplateSelectedIds() {
   return Array.from(document.querySelectorAll('#qcTemplateBody input[data-qc-template-select]:checked')).map(input => input.value);
 }
+
+
+function lockQcTemplateBackgroundScroll() {
+  if (document.body.classList.contains("qc-template-scroll-locked")) return;
+  qcTemplateScrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.body.classList.add("qc-template-scroll-locked");
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${qcTemplateScrollLockY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
+  document.body.style.overflow = "hidden";
+}
+
+function unlockQcTemplateBackgroundScroll() {
+  if (!document.body.classList.contains("qc-template-scroll-locked")) return;
+  document.body.classList.remove("qc-template-scroll-locked");
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.left = "";
+  document.body.style.right = "";
+  document.body.style.width = "";
+  document.body.style.overflow = "";
+  window.scrollTo(0, qcTemplateScrollLockY || 0);
+}
+
+function setQcTemplateRowFocus(id) {
+  qcTemplateFocusedRowId = id || null;
+}
+
+function getActiveQcTemplateRowId() {
+  const active = document.activeElement;
+  const tr = active?.closest?.("#qcTemplateBody tr[data-qc-template-id]");
+  return tr?.dataset?.qcTemplateId || qcTemplateFocusedRowId;
+}
+
+function addQcTeamTemplateRowAfterActive() {
+  const rows = loadQcTeamTemplateRows();
+  const activeId = getActiveQcTemplateRowId();
+  const activeIndex = rows.findIndex(row => row.id === activeId);
+  const baseRow = activeIndex >= 0 ? rows[activeIndex] : null;
+  const filterMid = document.getElementById("qcTemplateMiddleFilter")?.value || "구조팀";
+  const middle = baseRow?.middleCategory || (filterMid === "전체" ? "구조팀" : filterMid);
+  const subOptions = getChecklistSubOptions("QC팀 전달사항", middle);
+  const filterSub = document.getElementById("qcTemplateSubFilter")?.value || "전체";
+  const sub = baseRow?.subCategory || (filterSub !== "전체" && subOptions.includes(filterSub) ? filterSub : (subOptions[0] || ""));
+  const newRow = {
+    id: `qctpl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    group: "QC팀 전달사항",
+    middleCategory: middle,
+    subCategory: sub,
+    trade: "",
+    item: "",
+    method: "",
+    targets: sub ? [`${middle} · ${sub}`] : [middle],
+    comment: ""
+  };
+  const insertIndex = activeIndex >= 0 ? activeIndex + 1 : rows.length;
+  rows.splice(insertIndex, 0, newRow);
+  qcTemplateFocusedRowId = newRow.id;
+  renderQcTeamTemplateModal();
+  requestAnimationFrame(() => {
+    const input = document.querySelector(`#qcTemplateBody tr[data-qc-template-id="${CSS.escape(newRow.id)}"] input[data-qc-template-field="trade"]`);
+    input?.focus();
+  });
+}
+
+function handleQcTemplateModalWheel(event) {
+  if (!document.getElementById("qcTeamTemplateModal")?.classList.contains("active")) return;
+  const scrollable = event.target.closest(".qc-template-table-wrap, .qc-template-body-wrap, .qc-template-modal, textarea, select");
+  if (!scrollable) {
+    event.preventDefault();
+    return;
+  }
+  const wrap = event.target.closest(".qc-template-table-wrap, .qc-template-body-wrap");
+  if (!wrap) return;
+  const delta = event.deltaY || 0;
+  const atTop = wrap.scrollTop <= 0;
+  const atBottom = wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 1;
+  if ((delta < 0 && atTop) || (delta > 0 && atBottom)) event.preventDefault();
+}
+
+document.addEventListener("wheel", handleQcTemplateModalWheel, { passive: false, capture: true });
 
 function openQcTeamTemplateModal() {
   loadQcTeamTemplateRows();
@@ -11197,11 +11368,13 @@ function openQcTeamTemplateModal() {
     document.body.appendChild(modal);
   }
   modal.classList.add("active");
+  lockQcTemplateBackgroundScroll();
   renderQcTeamTemplateModal();
 }
 
 function closeQcTeamTemplateModal() {
   document.getElementById("qcTeamTemplateModal")?.classList.remove("active");
+  unlockQcTemplateBackgroundScroll();
 }
 
 function renderQcTemplateFilterOptions() {
@@ -11242,14 +11415,14 @@ function renderQcTeamTemplateModal() {
   body.innerHTML = rows.length ? rows.map(row => {
     const subOptions = getChecklistSubOptions("QC팀 전달사항", row.middleCategory || "");
     return `
-      <tr data-qc-template-id="${escapeHtml(row.id)}">
-        <td><input type="checkbox" data-qc-template-select value="${escapeHtml(row.id)}" ${selectedIds.has(row.id) ? "checked" : ""}></td>
-        <td><select onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'middleCategory', this.value)">${getChecklistMiddleOptions("QC팀 전달사항").map(mid => `<option value="${escapeHtml(mid)}" ${mid === row.middleCategory ? "selected" : ""}>${escapeHtml(mid)}</option>`).join("")}</select></td>
-        <td><select onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'subCategory', this.value)"><option value="">소분류 없음</option>${subOptions.map(sub => `<option value="${escapeHtml(sub)}" ${sub === row.subCategory ? "selected" : ""}>${escapeHtml(sub)}</option>`).join("")}</select></td>
-        <td><input value="${escapeHtml(row.trade || "")}" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'trade', this.value)"></td>
-        <td><textarea rows="2" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'item', this.value)">${escapeHtml(row.item || "")}</textarea></td>
-        <td><textarea rows="2" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'method', this.value)">${escapeHtml(row.method || "")}</textarea></td>
-        <td><textarea rows="2" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'comment', this.value)">${escapeHtml(row.comment || "")}</textarea></td>
+      <tr data-qc-template-id="${escapeHtml(row.id)}" onclick="setQcTemplateRowFocus('${escapeJs(row.id)}')">
+        <td><input type="checkbox" data-qc-template-select value="${escapeHtml(row.id)}" ${selectedIds.has(row.id) ? "checked" : ""} onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')"></td>
+        <td><select onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')" onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'middleCategory', this.value)">${getChecklistMiddleOptions("QC팀 전달사항").map(mid => `<option value="${escapeHtml(mid)}" ${mid === row.middleCategory ? "selected" : ""}>${escapeHtml(mid)}</option>`).join("")}</select></td>
+        <td><select onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')" onchange="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'subCategory', this.value)"><option value="">소분류 없음</option>${subOptions.map(sub => `<option value="${escapeHtml(sub)}" ${sub === row.subCategory ? "selected" : ""}>${escapeHtml(sub)}</option>`).join("")}</select></td>
+        <td><input data-qc-template-field="trade" value="${escapeHtml(row.trade || "")}" onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'trade', this.value)"></td>
+        <td><textarea rows="2" onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'item', this.value)">${escapeHtml(row.item || "")}</textarea></td>
+        <td><textarea rows="2" onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'method', this.value)">${escapeHtml(row.method || "")}</textarea></td>
+        <td><textarea rows="2" onfocus="setQcTemplateRowFocus('${escapeJs(row.id)}')" oninput="updateQcTeamTemplateRow('${escapeJs(row.id)}', 'comment', this.value)">${escapeHtml(row.comment || "")}</textarea></td>
       </tr>`;
   }).join("") : `<tr><td colspan="7" class="qc-template-empty">조건에 맞는 저장 자료가 없습니다.</td></tr>`;
   const guide = document.getElementById("qcTemplateImportGuide");
