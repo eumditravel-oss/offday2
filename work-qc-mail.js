@@ -9056,20 +9056,109 @@ function renderChecklistSelectedAssignees(row) {
   `).join("");
 }
 
+function getChecklistOrgCompanyList() {
+  return Object.keys(typeof orgStructures !== "undefined" ? orgStructures : {}).filter(company => orgStructures[company]?.root);
+}
+
+function getChecklistOrgNodeLabel(node) {
+  if (!node) return "";
+  if (node.displayName) return String(node.displayName);
+  if (node.employeeId) {
+    const emp = employees.find(item => item.empNo === node.employeeId);
+    if (emp) return displayName(emp);
+  }
+  return String(node.title || "조직");
+}
+
+function isChecklistOrgDepartmentNode(node) {
+  return node?.nodeType === "department" || (!node?.employeeId && Array.isArray(node?.children));
+}
+
+function makeChecklistOrgNodeSearchText(node, company) {
+  const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+  return [
+    company,
+    node?.title,
+    node?.displayName,
+    node?.nodeType,
+    emp?.empNo,
+    emp ? displayName(emp) : "",
+    emp?.company,
+    emp?.dept,
+    emp?.grade,
+    emp?.position
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function renderChecklistOrgSelectorNode(node, index, company, depth = 0, path = "0") {
+  if (!node) return "";
+  const isDept = isChecklistOrgDepartmentNode(node);
+  const emp = node.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+  const label = isDept ? getChecklistOrgNodeLabel(node) : (emp ? displayName(emp) : getChecklistOrgNodeLabel(node));
+  const subLabel = isDept
+    ? "부서 전체 지정"
+    : `${emp?.company || company} · ${emp?.dept || "소속 미지정"} · ${emp?.grade || emp?.position || node.title || ""}`;
+  const target = isDept ? makeChecklistDepartmentTarget(label) : (emp ? makeChecklistEmployeeTarget(emp) : makeChecklistDepartmentTarget(label));
+  const row = checklistRows[index];
+  const checked = isChecklistTargetSelected(row, target);
+  const children = Array.isArray(node.children) ? node.children : [];
+  const searchText = makeChecklistOrgNodeSearchText(node, company);
+  const typeClass = isDept ? "dept" : "person";
+  return `
+    <li class="checklist-org-node-wrap depth-${depth}" data-org-search="${escapeHtml(searchText)}">
+      <div class="checklist-org-node ${typeClass} ${checked ? "selected" : ""}" style="--depth:${depth};" onclick="handleChecklistOrgTargetClick(${index}, '${escapeJs(target)}', event)">
+        <div class="checklist-org-node-main">
+          <span class="checklist-org-node-check">${checked ? "✓" : ""}</span>
+          <span class="checklist-org-node-text">
+            <b>${escapeHtml(label)}</b>
+            <small>${escapeHtml(subLabel)}</small>
+          </span>
+        </div>
+        ${!isDept && emp ? `<button type="button" class="mini-card-open-btn checklist-org-card-btn" onclick="event.stopPropagation(); openMiniCardPopup('${escapeJs(emp.empNo)}')">인사카드</button>` : `<span class="checklist-org-dept-badge">부서</span>`}
+      </div>
+      ${children.length ? `<ul class="checklist-org-children">${children.map((child, childIndex) => renderChecklistOrgSelectorNode(child, index, company, depth + 1, `${path}-${childIndex}`)).join("")}</ul>` : ""}
+    </li>
+  `;
+}
+
+function renderChecklistOrgSelectorTree(index) {
+  const companies = getChecklistOrgCompanyList();
+  const companyTabs = companies.map(company => `<button type="button" class="checklist-org-tab ${company === "CON-COST" ? "active" : ""}" data-org-company-tab="${escapeHtml(company)}" onclick="switchChecklistTargetOrgCompany('${escapeJs(company)}')">${escapeHtml(company)}</button>`).join("");
+  return `
+    <div class="target-selector-section checklist-org-selector-section">
+      <div class="target-selector-title checklist-org-selector-head">
+        <div>
+          <strong>조직도 대상 선택</strong>
+          <small>좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 부서 클릭: 부서 전체 지정</small>
+        </div>
+        <input type="search" class="person-card-search checklist-org-search" placeholder="조직/부서/이름/직위 검색" oninput="filterChecklistOrgOptions(this.value)">
+      </div>
+      <div class="checklist-org-tabs">${companyTabs}</div>
+      ${companies.map(company => `
+        <div class="checklist-org-tree-panel ${company === "CON-COST" ? "active" : ""}" data-org-company-panel="${escapeHtml(company)}">
+          <div class="checklist-org-tree-scroll">
+            <ul class="checklist-org-tree-root">
+              ${renderChecklistOrgSelectorNode(orgStructures[company].root, index, company, 0, "0")}
+            </ul>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderChecklistTargetModal(index) {
   const row = checklistRows[index];
   if (!row) return "";
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  const departments = getChecklistAssigneeDepartments();
-  const people = getChecklistActiveEmployees();
   const routeLabel = getChecklistRouteLabel(row);
   const clientSendTarget = makeChecklistClientSendTarget();
   const showClientSendTarget = shouldShowChecklistClientSendTarget(row);
   const clientSendChecked = isChecklistTargetSelected(row, clientSendTarget);
 
   return `
-    <div class="target-modal-card people-target-modal-card" onclick="event.stopPropagation();" data-row-index="${index}">
+    <div class="target-modal-card people-target-modal-card org-target-modal-card" onclick="event.stopPropagation();" data-row-index="${index}">
       <div class="target-modal-head">
         <div>
           <strong>대상 선택</strong>
@@ -9078,60 +9167,24 @@ function renderChecklistTargetModal(index) {
         <button type="button" class="close" onclick="closeChecklistTargetModal()">×</button>
       </div>
       <div class="target-modal-guide">
-        중분류는 작업 구분용입니다. 대상 선택에서는 조직도/인사카드 기준으로 실제 확인할 부서 또는 개인을 지정합니다.
+        중분류는 작업 구분용입니다. 실제 확인 대상은 조직도에서 부서 또는 개인을 직접 선택합니다.
       </div>
       <div class="target-selected-area">
         <strong>선택된 대상</strong>
         <div class="target-selected-list">${renderChecklistSelectedAssignees(row)}</div>
       </div>
-      <div class="target-modal-body people-target-modal-body">
+      <div class="target-modal-body people-target-modal-body org-target-modal-body">
         ${showClientSendTarget ? `
         <div class="target-selector-section client-send-selector-section">
           <div class="target-selector-title">발주처 송부 선택</div>
           <div class="target-selector-list client-send-selector-list">
             <label class="target-modal-option target-client-send-option ${clientSendChecked ? "selected" : ""}">
               <input type="checkbox" ${clientSendChecked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(clientSendTarget)}', this.checked, true)">
-              <span><b>발주처 송부 필요</b><small>해당 검토항목을 발주처에게 메일로 송부해야 할 때 선택</small></span>
+              <span><b>발주처 송부 필요</b><small>PM이 확인 후 발주처에게 메일로 송부해야 할 때 선택</small></span>
             </label>
           </div>
         </div>` : ""}
-        <div class="target-selector-section">
-          <div class="target-selector-title">부서 선택</div>
-          <div class="target-selector-list dept-selector-list">
-            ${departments.map(dept => {
-              const target = makeChecklistDepartmentTarget(dept);
-              const checked = isChecklistTargetSelected(row, target);
-              return `
-                <label class="target-modal-option target-dept-option ${checked ? "selected" : ""}">
-                  <input type="checkbox" ${checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
-                  <span><b>${escapeHtml(dept)}</b><small>부서 전체 지정</small></span>
-                </label>
-              `;
-            }).join("")}
-          </div>
-        </div>
-        <div class="target-selector-section person-target-selector-section">
-          <div class="target-selector-title person-selector-title-row">
-            <span>개인 선택 · 인사카드</span>
-            <input type="search" class="person-card-search" placeholder="이름/부서/직위 검색" oninput="filterChecklistPeopleOptions(this.value)">
-          </div>
-          <div class="target-selector-list person-selector-list">
-            ${people.map(emp => {
-              const target = makeChecklistEmployeeTarget(emp);
-              const checked = isChecklistTargetSelected(row, target);
-              const searchText = `${displayName(emp)} ${emp.company || ""} ${emp.dept || ""} ${emp.grade || emp.position || ""} ${emp.empNo || ""}`;
-              return `
-                <div class="target-person-option ${checked ? "selected" : ""}" data-search="${escapeHtml(searchText.toLowerCase())}">
-                  <label>
-                    <input type="checkbox" ${checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
-                    <span class="employee-info"><b>${escapeHtml(displayName(emp))}</b><small>${escapeHtml(emp.company)} · ${escapeHtml(emp.dept)} · ${escapeHtml(emp.grade || emp.position || "")}</small></span>
-                  </label>
-                  <button type="button" class="mini-card-open-btn" onclick="event.stopPropagation(); openMiniCardPopup('${escapeJs(emp.empNo)}')">인사카드</button>
-                </div>
-              `;
-            }).join("")}
-          </div>
-        </div>
+        ${renderChecklistOrgSelectorTree(index)}
       </div>
       <div class="target-modal-foot">
         <button type="button" class="btn btn-line" onclick="clearChecklistAssignees(${index})" ${locked ? "disabled" : ""}>선택 초기화</button>
@@ -9140,6 +9193,35 @@ function renderChecklistTargetModal(index) {
       </div>
     </div>
   `;
+}
+
+function switchChecklistTargetOrgCompany(company) {
+  document.querySelectorAll("#checklistTargetModal [data-org-company-tab]").forEach(btn => btn.classList.toggle("active", btn.dataset.orgCompanyTab === company));
+  document.querySelectorAll("#checklistTargetModal [data-org-company-panel]").forEach(panel => panel.classList.toggle("active", panel.dataset.orgCompanyPanel === company));
+}
+
+function filterChecklistOrgOptions(keyword) {
+  const term = String(keyword || "").trim().toLowerCase();
+  document.querySelectorAll("#checklistTargetModal .checklist-org-node-wrap").forEach(node => {
+    const text = node.dataset.orgSearch || node.textContent.toLowerCase();
+    const directMatch = !term || text.includes(term);
+    const childMatch = term && Array.from(node.querySelectorAll(":scope .checklist-org-node-wrap")).some(child => (child.dataset.orgSearch || child.textContent.toLowerCase()).includes(term));
+    node.style.display = directMatch || childMatch ? "block" : "none";
+  });
+}
+
+function handleChecklistOrgTargetClick(index, target, event) {
+  event.preventDefault();
+  event.stopPropagation();
+  const row = checklistRows[index];
+  if (!row || isChecklistCategoryLocked(row.group)) return;
+  const multi = event.ctrlKey || event.metaKey;
+  if (!multi) {
+    row.manualTargets = false;
+    row.targets = [];
+  }
+  const already = isChecklistTargetSelected(row, target);
+  setChecklistTargetSelected(index, target, multi ? !already : true, true);
 }
 
 function filterChecklistPeopleOptions(keyword) {
