@@ -8941,6 +8941,7 @@ function openChecklistClassifyModal(index) {
   layer.innerHTML = renderChecklistClassifyModal(index);
   layer.addEventListener("click", closeChecklistClassifyModal);
   document.body.appendChild(layer);
+  requestAnimationFrame(() => resetChecklistOrgChartView());
 }
 
 function closeChecklistClassifyModal() {
@@ -9162,16 +9163,18 @@ function renderChecklistOrgSelectorTree(index) {
       <div class="target-selector-title checklist-org-selector-head checklist-org-chart-head">
         <div>
           <strong>조직도 대상 선택</strong>
-          <small>좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 부서 클릭: 부서 전체 지정 / 인사카드: 직원 상세 보기</small>
+          <small>좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 부서 클릭: 부서 전체 지정 / 휠: 확대·축소 / 휠 클릭 드래그: 시점 이동</small>
         </div>
         <input type="search" class="person-card-search checklist-org-search" placeholder="조직/부서/이름/직위 검색" oninput="filterChecklistOrgOptions(this.value)">
       </div>
       <div class="checklist-org-tabs">${companyTabs}</div>
       ${companies.map(company => `
         <div class="checklist-org-tree-panel checklist-org-chart-panel ${company === defaultCompany ? "active" : ""}" data-org-company-panel="${escapeHtml(company)}">
-          <div class="checklist-org-chart-scroll">
-            <div class="actual-view-tree checklist-org-chart ${company === "CON-COST" ? "concost-tree" : "vietqs-tree"}">
+          <div class="checklist-org-chart-scroll" data-checklist-org-viewport onwheel="handleChecklistOrgChartWheel(event)" onmousedown="startChecklistOrgChartPan(event)">
+            <div class="checklist-org-chart-canvas" data-checklist-org-canvas>
+              <div class="actual-view-tree checklist-org-chart ${company === "CON-COST" ? "concost-tree" : "vietqs-tree"}">
               ${renderChecklistSelectableOrgNode(orgStructures[company].root, index, company, 0, "0")}
+              </div>
             </div>
           </div>
         </div>
@@ -9231,6 +9234,112 @@ function renderChecklistTargetModal(index) {
 function switchChecklistTargetOrgCompany(company) {
   document.querySelectorAll("#checklistTargetModal [data-org-company-tab]").forEach(btn => btn.classList.toggle("active", btn.dataset.orgCompanyTab === company));
   document.querySelectorAll("#checklistTargetModal [data-org-company-panel]").forEach(panel => panel.classList.toggle("active", panel.dataset.orgCompanyPanel === company));
+  requestAnimationFrame(() => resetChecklistOrgChartView());
+}
+
+
+const CHECKLIST_ORG_CHART_MIN_ZOOM = 0.35;
+const CHECKLIST_ORG_CHART_MAX_ZOOM = 1.8;
+const CHECKLIST_ORG_CHART_ZOOM_STEP = 0.0018;
+let checklistOrgPanState = null;
+
+function getActiveChecklistOrgViewport() {
+  return document.querySelector("#checklistTargetModal .checklist-org-chart-panel.active [data-checklist-org-viewport]");
+}
+
+function getChecklistOrgCanvas(viewport) {
+  return viewport?.querySelector("[data-checklist-org-canvas]") || null;
+}
+
+function getChecklistOrgZoom(viewport) {
+  const value = Number(viewport?.dataset.zoom || "1");
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function setChecklistOrgZoom(viewport, nextZoom, originX = null, originY = null) {
+  if (!viewport) return;
+  const canvas = getChecklistOrgCanvas(viewport);
+  if (!canvas) return;
+
+  const previousZoom = getChecklistOrgZoom(viewport);
+  const zoom = Math.min(CHECKLIST_ORG_CHART_MAX_ZOOM, Math.max(CHECKLIST_ORG_CHART_MIN_ZOOM, nextZoom));
+  if (Math.abs(previousZoom - zoom) < 0.001) return;
+
+  const rect = viewport.getBoundingClientRect();
+  const x = originX == null ? rect.width / 2 : originX - rect.left;
+  const y = originY == null ? rect.height / 2 : originY - rect.top;
+  const beforeLeft = (viewport.scrollLeft + x) / previousZoom;
+  const beforeTop = (viewport.scrollTop + y) / previousZoom;
+
+  viewport.dataset.zoom = String(zoom);
+  canvas.style.transform = `scale(${zoom})`;
+  canvas.style.width = `${100 / zoom}%`;
+  canvas.style.height = `${100 / zoom}%`;
+
+  requestAnimationFrame(() => {
+    viewport.scrollLeft = Math.max(0, beforeLeft * zoom - x);
+    viewport.scrollTop = Math.max(0, beforeTop * zoom - y);
+  });
+}
+
+function resetChecklistOrgChartView() {
+  const viewport = getActiveChecklistOrgViewport();
+  if (!viewport) return;
+  const canvas = getChecklistOrgCanvas(viewport);
+  viewport.dataset.zoom = "1";
+  if (canvas) {
+    canvas.style.transform = "scale(1)";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+  }
+  requestAnimationFrame(() => {
+    const horizontalCenter = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2);
+    viewport.scrollLeft = horizontalCenter;
+    viewport.scrollTop = 0;
+  });
+}
+
+function handleChecklistOrgChartWheel(event) {
+  const viewport = event.currentTarget;
+  if (!viewport?.matches("[data-checklist-org-viewport]")) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const currentZoom = getChecklistOrgZoom(viewport);
+  const nextZoom = currentZoom * (1 - event.deltaY * CHECKLIST_ORG_CHART_ZOOM_STEP);
+  setChecklistOrgZoom(viewport, nextZoom, event.clientX, event.clientY);
+}
+
+function startChecklistOrgChartPan(event) {
+  const viewport = event.currentTarget;
+  if (!viewport?.matches("[data-checklist-org-viewport]")) return;
+  if (event.button !== 1) return;
+  event.preventDefault();
+  event.stopPropagation();
+  checklistOrgPanState = {
+    viewport,
+    startX: event.clientX,
+    startY: event.clientY,
+    startScrollLeft: viewport.scrollLeft,
+    startScrollTop: viewport.scrollTop
+  };
+  viewport.classList.add("is-panning");
+  window.addEventListener("mousemove", moveChecklistOrgChartPan, { passive: false });
+  window.addEventListener("mouseup", stopChecklistOrgChartPan, { passive: false });
+}
+
+function moveChecklistOrgChartPan(event) {
+  if (!checklistOrgPanState) return;
+  event.preventDefault();
+  const { viewport, startX, startY, startScrollLeft, startScrollTop } = checklistOrgPanState;
+  viewport.scrollLeft = startScrollLeft - (event.clientX - startX);
+  viewport.scrollTop = startScrollTop - (event.clientY - startY);
+}
+
+function stopChecklistOrgChartPan() {
+  if (checklistOrgPanState?.viewport) checklistOrgPanState.viewport.classList.remove("is-panning");
+  checklistOrgPanState = null;
+  window.removeEventListener("mousemove", moveChecklistOrgChartPan);
+  window.removeEventListener("mouseup", stopChecklistOrgChartPan);
 }
 
 function filterChecklistOrgOptions(keyword) {
@@ -9294,6 +9403,7 @@ function openChecklistTargetModal(index) {
   layer.addEventListener("wheel", trapChecklistTargetModalWheel, { passive: false });
   document.body.classList.add("checklist-target-modal-open");
   document.body.appendChild(layer);
+  requestAnimationFrame(() => resetChecklistOrgChartView());
 }
 
 function closeChecklistTargetModal() {
@@ -9305,7 +9415,7 @@ function trapChecklistTargetModalWheel(event) {
   const modal = document.querySelector("#checklistTargetModal .people-target-modal-card");
   if (!modal) return;
 
-  const scrollHost = event.target.closest(".checklist-org-chart-scroll, .target-selector-list, .people-target-modal-body");
+  const scrollHost = event.target.closest(".checklist-org-chart-scroll, [data-checklist-org-viewport], .target-selector-list, .people-target-modal-body");
   if (!scrollHost || !modal.contains(scrollHost)) {
     event.preventDefault();
     return;
