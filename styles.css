@@ -8984,3 +8984,161 @@ body.checklist-target-modal-open{
     min-height: 430px !important;
   }
 }
+
+/* === QC 대상선택 조직도: 부사장 하위조직 드롭다운 + 하단 버튼 노출 보정 === */
+#checklistTargetModal .org-target-modal-card,
+#checklistTargetModal .target-modal-card.org-target-modal-card{
+  display:flex !important;
+  flex-direction:column !important;
+  width:min(1840px, calc(100vw - 28px)) !important;
+  height:calc(100vh - 40px) !important;
+  max-height:calc(100vh - 40px) !important;
+  overflow:hidden !important;
+}
+
+#checklistTargetModal .target-modal-head,
+#checklistTargetModal .target-modal-guide,
+#checklistTargetModal .target-selected-area{
+  flex:0 0 auto !important;
+}
+
+#checklistTargetModal .target-modal-body.people-target-modal-body.org-target-modal-body,
+#checklistTargetModal .org-target-modal-body{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  height:auto !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding:14px 18px 18px !important;
+  box-sizing:border-box !important;
+}
+
+#checklistTargetModal .target-modal-foot{
+  flex:0 0 auto !important;
+  position:sticky !important;
+  bottom:0 !important;
+  z-index:50 !important;
+  min-height:72px !important;
+  padding:14px 18px !important;
+  background:rgba(255,255,255,.96) !important;
+  border-top:1px solid #dbe6f5 !important;
+  box-shadow:0 -10px 24px rgba(15,23,42,.06) !important;
+}
+
+#checklistTargetModal .checklist-org-chart-selector-section{
+  flex:0 0 auto !important;
+  width:100% !important;
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+}
+
+#checklistTargetModal .checklist-org-chart-panel{
+  display:none !important;
+  flex-direction:column !important;
+  width:100% !important;
+  min-height:0 !important;
+  height:auto !important;
+  overflow:hidden !important;
+}
+
+#checklistTargetModal .checklist-org-chart-panel.active{
+  display:flex !important;
+}
+
+#checklistTargetModal .checklist-org-branch-toolbar{
+  flex:0 0 auto !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding:12px 14px !important;
+  border-bottom:1px solid #dbe6f5 !important;
+  background:#f8fbff !important;
+}
+
+#checklistTargetModal .checklist-org-branch-toolbar label{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  margin:0 !important;
+  font-size:12px !important;
+  font-weight:1000 !important;
+  color:#0f172a !important;
+}
+
+#checklistTargetModal .checklist-org-branch-select{
+  min-width:260px !important;
+  height:38px !important;
+  border:1px solid #cfe0f7 !important;
+  border-radius:12px !important;
+  background:#fff !important;
+  color:#0f172a !important;
+  padding:0 38px 0 12px !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  outline:none !important;
+}
+
+#checklistTargetModal .checklist-org-branch-select:focus{
+  border-color:#2563eb !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12) !important;
+}
+
+#checklistTargetModal .checklist-org-chart-scroll{
+  flex:0 0 auto !important;
+  width:100% !important;
+  height:clamp(380px, 48vh, 620px) !important;
+  min-height:380px !important;
+  max-height:620px !important;
+  overflow:auto !important;
+  box-sizing:border-box !important;
+}
+
+#checklistTargetModal .checklist-org-chart-canvas{
+  min-width:2600px !important;
+  min-height:1100px !important;
+  justify-content:flex-start !important;
+  align-items:flex-start !important;
+  padding-left:220px !important;
+  box-sizing:border-box !important;
+}
+
+#checklistTargetModal .checklist-org-chart{
+  min-width:max-content !important;
+  width:max-content !important;
+}
+
+#checklistTargetModal .checklist-org-empty{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:620px;
+  min-height:220px;
+  border:1px dashed #cbdcf2;
+  border-radius:18px;
+  background:#fff;
+  color:#64748b;
+  font-size:13px;
+  font-weight:900;
+}
+
+@media (max-width: 1100px){
+  #checklistTargetModal .org-target-modal-card,
+  #checklistTargetModal .target-modal-card.org-target-modal-card{
+    width:calc(100vw - 16px) !important;
+    height:calc(100vh - 18px) !important;
+    max-height:calc(100vh - 18px) !important;
+  }
+  #checklistTargetModal .checklist-org-chart-scroll{
+    height:420px !important;
+  }
+  #checklistTargetModal .checklist-org-branch-toolbar label{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+  }
+  #checklistTargetModal .checklist-org-branch-select{
+    width:100% !important;
+    min-width:0 !important;
+  }
+}
