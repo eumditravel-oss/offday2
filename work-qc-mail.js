@@ -9620,24 +9620,108 @@ function setChecklistTargetSelected(index, target, checked, keepModalOpen = fals
 
 function renderChecklistTargetChecks(row, realIndex) {
   normalizeChecklistRow(row);
+  const checks = Array.isArray(row.checks) ? row.checks : [];
+  const doneCount = checks.filter(check => check.done || check.na).length;
+  const totalCount = checks.length || 0;
+  const state = getChecklistDoneState(row);
+  const stateClass = state === "확인완료" ? "complete" : (state === "부분확인" ? "partial" : "pending");
+  return `
+    <div class="done-cell-view-only">
+      <button type="button" class="history-view-btn checklist-check-view-btn ${stateClass}" onclick="openChecklistCheckWindow(${realIndex})">
+        보기 <span>${doneCount}/${totalCount}</span>
+      </button>
+      ${renderObjectionArea(row, realIndex)}
+    </div>
+  `;
+}
+
+function renderChecklistCheckModal(index) {
+  const row = checklistRows[index];
+  if (!row) return "";
+  normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  const checks = row.checks.map((check, checkIndex) => {
+  const checks = Array.isArray(row.checks) ? row.checks : [];
+  const checkRows = checks.length ? checks.map((check, checkIndex) => {
     const isDone = Boolean(check.done);
     const isNa = Boolean(check.na);
     const statusLabel = isNa ? "해당 없음" : (isDone ? "확인완료" : "미확인");
+    const statusClass = isNa ? "na" : (isDone ? "done" : "pending");
+    const workerInfo = check.checkedBy || check.checkedAt
+      ? `<small>${escapeHtml(check.checkedBy || "-")} · ${escapeHtml(check.checkedAt || "-")}</small>`
+      : `<small>아직 처리 이력이 없습니다.</small>`;
     return `
-      <div class="done-check-stack" title="${escapeHtml(formatChecklistAssigneeLabel(check.target))} 확인 또는 해당 없음 처리">
-        <label class="done-check-wrap target-done-wrap">
-          <input type="checkbox" ${isDone ? "checked" : ""} ${locked || isNa ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
-          <span>${escapeHtml(formatChecklistAssigneeLabel(check.target))} · ${escapeHtml(statusLabel)}</span>
-        </label>
-        <button type="button" class="na-check-btn ${isNa ? "active" : ""}" ${locked ? "disabled" : ""} onclick="toggleChecklistNotApplicable(${realIndex}, ${checkIndex})">
-          해당 없음
-        </button>
+      <div class="check-modal-row ${statusClass}">
+        <div class="check-modal-target">
+          <strong>${escapeHtml(formatChecklistAssigneeLabel(check.target))}</strong>
+          <span>${escapeHtml(statusLabel)}</span>
+          ${workerInfo}
+        </div>
+        <div class="check-modal-actions">
+          <button type="button" class="btn ${isDone ? "btn-line" : "btn-primary"}" ${locked || isNa ? "disabled" : ""} onclick="toggleChecklistDoneFromModal(${index}, ${checkIndex}, ${isDone ? "false" : "true"})">
+            ${isDone ? "확인 해제" : "담당자 확인"}
+          </button>
+          <button type="button" class="btn btn-line ${isNa ? "active" : ""}" ${locked ? "disabled" : ""} onclick="toggleChecklistNotApplicableFromModal(${index}, ${checkIndex})">
+            해당 없음
+          </button>
+        </div>
       </div>
     `;
-  }).join("");
-  return `<div class="done-cell-stack">${checks}${renderObjectionArea(row, realIndex)}</div>`;
+  }).join("") : `<div class="check-modal-empty">확인 대상이 없습니다.</div>`;
+
+  return `
+    <div class="check-modal-card" role="dialog" aria-modal="true" aria-label="체크 여부 보기">
+      <div class="check-modal-head">
+        <div>
+          <h3>체크 여부</h3>
+          <p>${escapeHtml(normalizeChecklistNo(row.no))} · ${escapeHtml(row.trade || "-")} · ${escapeHtml(row.item || "-")}</p>
+        </div>
+        <button type="button" class="modal-x" onclick="closeChecklistCheckModal()">×</button>
+      </div>
+      <div class="check-modal-body">
+        ${locked ? `<div class="check-modal-notice">송부 완료된 질의차수는 수정할 수 없습니다.</div>` : ""}
+        ${checkRows}
+      </div>
+      <div class="check-modal-footer">
+        <button type="button" class="btn btn-line" onclick="closeChecklistCheckModal()">닫기</button>
+      </div>
+    </div>
+  `;
+}
+
+function openChecklistCheckWindow(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  const oldLayer = document.getElementById("checklistCheckModalLayer");
+  if (oldLayer) oldLayer.remove();
+  const layer = document.createElement("div");
+  layer.id = "checklistCheckModalLayer";
+  layer.className = "check-modal-layer";
+  layer.innerHTML = renderChecklistCheckModal(index);
+  layer.addEventListener("click", event => {
+    if (event.target === layer) closeChecklistCheckModal();
+  });
+  document.body.appendChild(layer);
+}
+
+function closeChecklistCheckModal() {
+  document.getElementById("checklistCheckModalLayer")?.remove();
+}
+
+function refreshChecklistCheckModal(index) {
+  const layer = document.getElementById("checklistCheckModalLayer");
+  if (!layer) return;
+  layer.innerHTML = renderChecklistCheckModal(index);
+}
+
+function toggleChecklistDoneFromModal(index, checkIndex, checked) {
+  toggleChecklistDone(index, checkIndex, checked);
+  refreshChecklistCheckModal(index);
+}
+
+function toggleChecklistNotApplicableFromModal(index, checkIndex) {
+  toggleChecklistNotApplicable(index, checkIndex);
+  refreshChecklistCheckModal(index);
 }
 
 function escapeHtml(value) {
