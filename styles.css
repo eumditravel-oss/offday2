@@ -7664,50 +7664,38 @@ body{
   color:#1d4ed8 !important;
 }
 
-/* =========================================================
-   QC checklist v15: request target column complete center stack
-   - 요청 대상 셀 내부의 모든 도형을 가로/세로 중앙 정렬
-   - 배치 순서: 중분류 지정 → 대상 선택 → 요청대상 칩(구조/토목 등)
-   ========================================================= */
-#workModule .excel-grid thead th:nth-child(6),
-.excel-grid thead th:nth-child(6){
-  text-align:center !important;
-  vertical-align:middle !important;
-}
 
+/* =========================================================
+   QC checklist v15: request target absolute center stack
+   - 요청 대상 셀 내부 도형 전체를 동일한 중심축에 배치
+   - 중분류 지정 / 대상 선택 / 구조·토목 칩 모두 셀 중앙 정렬
+   ========================================================= */
 #workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
-#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6),
-.excel-grid tbody tr.checklist-detail-row td.target-cell,
-.excel-grid tbody tr.checklist-detail-row td:nth-child(6){
+.excel-grid tbody tr.checklist-detail-row td.target-cell{
   text-align:center !important;
   vertical-align:middle !important;
   padding:8px 4px !important;
-  overflow:visible !important;
 }
 
-#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
-#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap,
-.excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
-.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap,
-.target-cell-wrap{
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-center-wrap,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-center-wrap,
+.target-cell-center-wrap{
   width:100% !important;
   min-width:0 !important;
   max-width:100% !important;
   height:100% !important;
-  min-height:58px !important;
   display:flex !important;
   flex-direction:column !important;
   align-items:center !important;
   justify-content:center !important;
-  justify-items:center !important;
-  align-content:center !important;
   margin:0 auto !important;
   padding:0 !important;
   text-align:center !important;
 }
 
-#workModule .target-stack,
-.target-stack{
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center,
+.target-stack-center{
   width:100% !important;
   min-width:0 !important;
   max-width:100% !important;
@@ -7716,61 +7704,50 @@ body{
   align-items:center !important;
   justify-content:center !important;
   justify-items:center !important;
-  align-content:center !important;
   gap:5px !important;
   margin:0 auto !important;
   padding:0 !important;
   text-align:center !important;
 }
 
-#workModule .target-stack .target-chip-list,
-.target-stack .target-chip-list{
-  width:100% !important;
-  min-width:0 !important;
-  max-width:100% !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:5px !important;
-  margin:0 auto !important;
-  padding:0 !important;
-  text-align:center !important;
-}
-
-#workModule .target-stack .target-select-btn,
-#workModule .target-stack .target-route-chip,
-.target-stack .target-select-btn,
-.target-stack .target-route-chip{
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .target-stack-item,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .target-stack-item,
+.target-stack-center > .target-stack-item{
   position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
   float:none !important;
-  clear:both !important;
+  clear:none !important;
+  align-self:center !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  align-self:center !important;
-  width:fit-content !important;
-  min-width:54px !important;
+  width:max-content !important;
+  min-width:42px !important;
   max-width:118px !important;
-  margin:0 auto !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
   text-align:center !important;
-  transform:none !important;
   white-space:nowrap !important;
 }
 
-#workModule .target-stack .classify-select-btn,
-.target-stack .classify-select-btn{
-  min-width:72px !important;
-}
-
-#workModule .target-stack .target-people-select-btn,
-.target-stack .target-people-select-btn{
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .classify-select-btn,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .classify-select-btn,
+.target-stack-center > .classify-select-btn{
   min-width:66px !important;
 }
 
-#workModule .target-stack .target-route-chip,
-.target-stack .target-route-chip{
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .target-people-select-btn,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .target-people-select-btn,
+.target-stack-center > .target-people-select-btn{
+  min-width:66px !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .target-route-chip,
+.excel-grid tbody tr.checklist-detail-row td.target-cell .target-stack-center > .target-route-chip,
+.target-stack-center > .target-route-chip{
   min-width:42px !important;
-  white-space:normal !important;
-  word-break:keep-all !important;
 }
