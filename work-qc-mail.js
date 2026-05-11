@@ -8758,15 +8758,20 @@ function renderChecklistTargetCell(row, realIndex) {
   const locked = isChecklistCategoryLocked(row.group);
   const targets = getChecklistTargets(row);
   const hasMiddleOptions = getChecklistMiddleOptions(row.group).length > 0;
+  const targetChips = targets.map(t => `<span class="target-chip target-route-chip">${escapeHtml(t)}</span>`).join("");
 
   return `
     <div class="target-cell-wrap">
-      <div class="target-route-area">
-        <div class="target-chip-list">${targets.map(t => `<span class="target-chip target-route-chip">${escapeHtml(t)}</span>`).join("")}</div>
-      </div>
-      <div class="target-action-row">
-        ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
-        <button type="button" class="target-select-btn target-people-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
+      <div class="target-action-grid ${hasMiddleOptions ? "has-classify" : "only-target"}">
+        <div class="target-action-lane target-people-lane">
+          <button type="button" class="target-select-btn target-people-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
+        </div>
+        <div class="target-action-lane target-classify-lane">
+          <div class="target-route-area">
+            <div class="target-chip-list">${targetChips}</div>
+          </div>
+          ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
+        </div>
       </div>
     </div>
   `;
