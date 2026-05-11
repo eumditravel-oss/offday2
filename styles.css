@@ -8321,3 +8321,50 @@ body.checklist-target-modal-open{
   color:#6b7a90;
   font-size:12px;
 }
+
+
+/* =========================================================
+   프로젝트 질의응답 관리 스크롤 버그 보정
+   - 표 영역에 마우스를 올렸을 때도 브라우저/page 스크롤이 정상 작동하도록 내부 스크롤/overscroll 차단 해제
+   - 성능 보정용 contain이 휠 전파를 막는 브라우저 조합을 방지
+   ========================================================= */
+#qcReview,
+#qcReview .checklist-card,
+#qcReview .excel-grid-wrap,
+#qcReviewTableWrap,
+#workModule #qcReviewTableWrap,
+#workModule .work-qc-table-wrap,
+#workModule .qc-review-table-wrap{
+  max-height:none !important;
+  height:auto !important;
+  overflow-x:hidden !important;
+  overflow-y:visible !important;
+  overscroll-behavior:auto !important;
+  contain:none !important;
+  touch-action:auto !important;
+}
+
+#qcReview .excel-grid,
+#qcReview .excel-grid tbody,
+#qcReview .excel-grid tr,
+#qcReview .excel-grid td{
+  contain:none !important;
+}
+
+#qcReview .checklist-detail-row,
+#qcReview .middle-separator-row,
+#qcReview .sub-separator-row{
+  content-visibility:visible !important;
+  contain-intrinsic-size:auto !important;
+}
+
+html,
+body{
+  overflow-y:auto !important;
+  overscroll-behavior:auto !important;
+}
+
+body.checklist-target-modal-open{
+  overflow:hidden !important;
+  overscroll-behavior:none !important;
+}
