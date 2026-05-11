@@ -795,7 +795,7 @@
                   <div class="checklist-toolbar">
                     <div class="field project-search-field">
                       <label>프로젝트</label>
-                      <input id="checklistProject" list="checklistProjectList" value="ㅇㅇ시설 신축공사" oninput="scheduleChecklistGridRender()" onchange="renderChecklistGrid()" placeholder="프로젝트명 검색 또는 선택">
+                      <input id="checklistProject" list="checklistProjectList" value="ㅇㅇ시설 신축공사" oninput="scheduleChecklistGridRender()" onchange="scheduleChecklistGridRender(0)" placeholder="프로젝트명 검색 또는 선택">
                       <datalist id="checklistProjectList">
                         <option value="ㅇㅇ시설 신축공사"></option>
                         <option value="샘플 프로젝트 A"></option>
@@ -804,8 +804,8 @@
                         <option value="업무시설 증축공사"></option>
                       </datalist>
                     </div>
-                    <div class="field"><label>담당자 필터</label><select id="checklistOwnerFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option>구조</option><option>구조 · 수평팀</option><option>구조 · 수직팀</option><option>구조 · 한국</option><option>마감</option><option>마감 · 내부1</option><option>마감 · 내부2</option><option>마감 · 내부3</option><option>마감 · 조적ㆍ창호</option><option>마감 · 외부</option><option>마감 · 한국</option><option>토목</option><option>PM</option><option>QC TEAM</option></select></div>
-                    <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="renderChecklistGrid()"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
+                    <div class="field"><label>담당자 필터</label><select id="checklistOwnerFilter" onchange="scheduleChecklistGridRender(0)"><option value="전체">전체</option><option>구조</option><option>구조 · 수평팀</option><option>구조 · 수직팀</option><option>구조 · 한국</option><option>마감</option><option>마감 · 내부1</option><option>마감 · 내부2</option><option>마감 · 내부3</option><option>마감 · 조적ㆍ창호</option><option>마감 · 외부</option><option>마감 · 한국</option><option>토목</option><option>PM</option><option>QC TEAM</option></select></div>
+                    <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="scheduleChecklistGridRender(0)"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="scheduleChecklistGridRender()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
                   <div class="checklist-category-filter" id="checklistCategoryFilter"></div>
