@@ -8903,3 +8903,84 @@ body.checklist-target-modal-open{
     min-height:400px !important;
   }
 }
+
+/* === QC 대상 선택 조직도: 가로 확장 + 클릭 시 현재 시점 유지 최종 보정 === */
+#checklistTargetModal .org-target-modal-card,
+#checklistTargetModal .target-modal-card.org-target-modal-card {
+  width: min(1840px, calc(100vw - 28px)) !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: calc(100vh - 28px) !important;
+}
+
+#checklistTargetModal .target-modal-body.people-target-modal-body.org-target-modal-body,
+#checklistTargetModal .org-target-modal-body {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+  grid-auto-rows: auto !important;
+  width: 100% !important;
+  max-height: calc(100vh - 300px) !important;
+  min-height: 610px !important;
+  overflow: hidden !important;
+  padding: 14px 18px 18px !important;
+  box-sizing: border-box !important;
+}
+
+#checklistTargetModal .client-send-selector-section {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+}
+
+#checklistTargetModal .checklist-org-chart-selector-section {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 560px !important;
+  max-height: none !important;
+  align-self: stretch !important;
+}
+
+#checklistTargetModal .checklist-org-chart-panel {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-height: 500px !important;
+  max-width: none !important;
+}
+
+#checklistTargetModal .checklist-org-chart-scroll {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 500px !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+#checklistTargetModal .checklist-org-chart-canvas {
+  min-width: 3600px !important;
+  min-height: 1800px !important;
+  justify-content: flex-start !important;
+  padding-left: 260px !important;
+  box-sizing: border-box !important;
+}
+
+#checklistTargetModal .checklist-org-chart {
+  min-width: max-content !important;
+  width: max-content !important;
+}
+
+@media (max-width: 1400px) {
+  #checklistTargetModal .target-modal-body.people-target-modal-body.org-target-modal-body,
+  #checklistTargetModal .org-target-modal-body {
+    min-height: 540px !important;
+  }
+
+  #checklistTargetModal .checklist-org-chart-selector-section {
+    min-height: 490px !important;
+  }
+
+  #checklistTargetModal .checklist-org-chart-panel,
+  #checklistTargetModal .checklist-org-chart-scroll {
+    min-height: 430px !important;
+  }
+}
