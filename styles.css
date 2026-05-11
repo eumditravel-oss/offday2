@@ -7665,86 +7665,49 @@ body{
 }
 
 /* =========================================================
-   QC checklist v15: 요청대상 칩 위치 최종 보정
-   - "구조", "토목" 등 요청대상 칩을 중분류 지정 버튼 바로 위에 고정
-   - 요청대상 셀 내부 전체를 중앙 정렬
-   - 대상 선택 버튼과 중분류 지정 영역을 같은 셀 안에서 안정적으로 정렬
+   QC checklist v15: request target column complete center stack
+   - 요청 대상 셀 내부의 모든 도형을 가로/세로 중앙 정렬
+   - 배치 순서: 중분류 지정 → 대상 선택 → 요청대상 칩(구조/토목 등)
    ========================================================= */
-#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
-.excel-grid tbody tr.checklist-detail-row td.target-cell{
+#workModule .excel-grid thead th:nth-child(6),
+.excel-grid thead th:nth-child(6){
   text-align:center !important;
   vertical-align:middle !important;
-  padding:6px 4px !important;
+}
+
+#workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6),
+.excel-grid tbody tr.checklist-detail-row td.target-cell,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6){
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding:8px 4px !important;
+  overflow:visible !important;
 }
 
 #workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+#workModule .excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap,
 .excel-grid tbody tr.checklist-detail-row td.target-cell .target-cell-wrap,
+.excel-grid tbody tr.checklist-detail-row td:nth-child(6) .target-cell-wrap,
 .target-cell-wrap{
   width:100% !important;
   min-width:0 !important;
+  max-width:100% !important;
   height:100% !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  margin:0 auto !important;
-  padding:0 !important;
-  text-align:center !important;
-}
-
-#workModule .target-action-grid,
-.target-action-grid{
-  width:100% !important;
-  min-width:0 !important;
-  display:grid !important;
-  grid-template-columns:minmax(58px, 1fr) minmax(70px, 1fr) !important;
-  column-gap:6px !important;
-  row-gap:4px !important;
-  align-items:center !important;
-  justify-items:center !important;
-  justify-content:center !important;
-  margin:0 auto !important;
-  padding:0 !important;
-  text-align:center !important;
-}
-
-#workModule .target-action-grid.only-target,
-.target-action-grid.only-target{
-  grid-template-columns:minmax(70px, 1fr) !important;
-}
-
-#workModule .target-action-grid.only-target .target-people-lane,
-.target-action-grid.only-target .target-people-lane{
-  display:none !important;
-}
-
-#workModule .target-action-grid.only-target .target-classify-lane,
-.target-action-grid.only-target .target-classify-lane{
-  grid-column:1 / -1 !important;
-}
-
-#workModule .target-action-lane,
-.target-action-lane{
-  width:100% !important;
-  min-width:0 !important;
+  min-height:58px !important;
   display:flex !important;
   flex-direction:column !important;
   align-items:center !important;
   justify-content:center !important;
   justify-items:center !important;
+  align-content:center !important;
   margin:0 auto !important;
   padding:0 !important;
   text-align:center !important;
 }
 
-#workModule .target-classify-lane,
-.target-classify-lane{
-  gap:4px !important;
-}
-
-#workModule .target-classify-lane .target-route-area,
-#workModule .target-classify-lane .target-chip-list,
-.target-classify-lane .target-route-area,
-.target-classify-lane .target-chip-list{
+#workModule .target-stack,
+.target-stack{
   width:100% !important;
   min-width:0 !important;
   max-width:100% !important;
@@ -7753,54 +7716,61 @@ body{
   align-items:center !important;
   justify-content:center !important;
   justify-items:center !important;
-  gap:3px !important;
+  align-content:center !important;
+  gap:5px !important;
   margin:0 auto !important;
   padding:0 !important;
   text-align:center !important;
 }
 
-#workModule .target-classify-lane .target-route-chip,
-.target-classify-lane .target-route-chip{
-  position:static !important;
-  display:inline-flex !important;
+#workModule .target-stack .target-chip-list,
+.target-stack .target-chip-list{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
   align-items:center !important;
   justify-content:center !important;
-  align-self:center !important;
-  float:none !important;
-  clear:none !important;
-  min-width:38px !important;
-  max-width:66px !important;
-  min-height:20px !important;
-  height:auto !important;
+  gap:5px !important;
   margin:0 auto !important;
-  padding:3px 7px !important;
-  border-radius:999px !important;
-  line-height:1.15 !important;
-  font-size:10px !important;
-  font-weight:900 !important;
+  padding:0 !important;
   text-align:center !important;
-  white-space:normal !important;
-  word-break:keep-all !important;
-  overflow-wrap:break-word !important;
-  transform:none !important;
 }
 
-#workModule .target-action-grid .target-select-btn,
-.target-action-grid .target-select-btn{
+#workModule .target-stack .target-select-btn,
+#workModule .target-stack .target-route-chip,
+.target-stack .target-select-btn,
+.target-stack .target-route-chip{
   position:static !important;
+  float:none !important;
+  clear:both !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   align-self:center !important;
   width:fit-content !important;
-  min-width:58px !important;
-  max-width:74px !important;
-  min-height:22px !important;
+  min-width:54px !important;
+  max-width:118px !important;
   margin:0 auto !important;
-  padding:3px 7px !important;
-  line-height:1.15 !important;
-  font-size:10px !important;
   text-align:center !important;
-  white-space:nowrap !important;
   transform:none !important;
+  white-space:nowrap !important;
+}
+
+#workModule .target-stack .classify-select-btn,
+.target-stack .classify-select-btn{
+  min-width:72px !important;
+}
+
+#workModule .target-stack .target-people-select-btn,
+.target-stack .target-people-select-btn{
+  min-width:66px !important;
+}
+
+#workModule .target-stack .target-route-chip,
+.target-stack .target-route-chip{
+  min-width:42px !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
 }
