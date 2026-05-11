@@ -9784,9 +9784,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .qc-template-modal{
   width:min(1520px, calc(100vw - 72px));
+  height:calc(100vh - 64px);
   max-height:calc(100vh - 64px);
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
 .qc-template-head p{
   margin:4px 0 0;
@@ -9795,7 +9797,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   font-weight:700;
 }
 .qc-template-body-wrap{
+  flex:1 1 auto;
+  min-height:0;
   overflow:auto;
+  overscroll-behavior:contain;
 }
 .qc-template-toolbar,
 .qc-template-filter-row,
@@ -9843,7 +9848,8 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .qc-template-table-wrap{
   border:1px solid #d6e1f2;
   border-radius:14px;
-  overflow:auto;
+  overflow-x:auto;
+  overflow-y:visible;
   background:#fff;
 }
 .qc-template-table{
