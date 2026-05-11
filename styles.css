@@ -9642,3 +9642,81 @@ body.checklist-target-modal-open{
   .check-modal-row{align-items:stretch !important; flex-direction:column !important;}
   .check-modal-actions{justify-content:flex-start !important; flex-wrap:wrap !important;}
 }
+
+/* =========================================================
+   요청 반영 최종 패치: 체크 여부 열 1/2 축소 + 코멘트 열 확대
+   기준 파일: styles_css_FULL_check_modal_layout_fixed(1).md
+   - 기존 체크 여부 10% 기준 → 5%
+   - 줄어든 5%를 코멘트 열에 추가 → 15%
+   - colgroup, th/td, 기존 nth-child 강제 폭을 모두 최종 override
+   ========================================================= */
+#workModule .excel-grid col.qc-col-check,
+.excel-grid col.qc-col-check{
+  width:5% !important;
+}
+
+#workModule .excel-grid col.qc-col-comment,
+.excel-grid col.qc-col-comment{
+  width:15% !important;
+}
+
+#workModule .excel-grid th:nth-child(7),
+#workModule .excel-grid td:nth-child(7),
+.excel-grid th:nth-child(7),
+.excel-grid td:nth-child(7){
+  width:5% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding-left:4px !important;
+  padding-right:4px !important;
+}
+
+#workModule .excel-grid th:nth-child(8),
+#workModule .excel-grid td:nth-child(8),
+.excel-grid th:nth-child(8),
+.excel-grid td:nth-child(8){
+  width:15% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  text-align:left !important;
+  vertical-align:middle !important;
+  padding-left:12px !important;
+  padding-right:12px !important;
+}
+
+/* 체크 여부 셀은 보기 버튼만 중앙 배치 */
+#workModule .excel-grid td:nth-child(7) .done-cell-view-only,
+.excel-grid td:nth-child(7) .done-cell-view-only{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+#workModule .excel-grid td:nth-child(7) .checklist-check-view-btn,
+.excel-grid td:nth-child(7) .checklist-check-view-btn{
+  width:auto !important;
+  min-width:52px !important;
+  max-width:100% !important;
+  height:30px !important;
+  padding:0 9px !important;
+  white-space:nowrap !important;
+}
+
+/* 코멘트 입력/표시 영역은 늘어난 폭을 전부 사용 */
+#workModule .excel-grid td:nth-child(8) .cell,
+#workModule .excel-grid td:nth-child(8) .comment-cell,
+#workModule .excel-grid td:nth-child(8) [contenteditable="true"],
+.excel-grid td:nth-child(8) .cell,
+.excel-grid td:nth-child(8) .comment-cell,
+.excel-grid td:nth-child(8) [contenteditable="true"]{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  white-space:pre-wrap !important;
+  word-break:keep-all !important;
+  overflow-wrap:anywhere !important;
+}
