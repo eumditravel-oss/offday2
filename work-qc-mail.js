@@ -9978,6 +9978,37 @@ document.addEventListener("DOMContentLoaded", removeInternalChecklistScroll);
 window.addEventListener("resize", removeInternalChecklistScroll);
 
 
+/* =========================================================
+   프로젝트 질의응답 관리 휠 스크롤 보정
+   - 테이블 영역 위에서 마우스 휠을 움직여도 페이지가 정상적으로 위/아래 이동되도록 처리
+   - 대량 행 최적화용 contain/content-visibility가 휠 이벤트 전달을 막는 환경을 보정
+   ========================================================= */
+function setupChecklistPageWheelBridge() {
+  if (window.__checklistPageWheelBridgeReady) return;
+  window.__checklistPageWheelBridgeReady = true;
+
+  document.addEventListener("wheel", event => {
+    if (document.body.classList.contains("checklist-target-modal-open")) return;
+    if (event.target.closest(".modal-backdrop, .target-modal-backdrop, .modal, .people-target-modal-card")) return;
+
+    const workArea = event.target.closest("#qcReview, #workQcPanel, .qc-review-card, .checklist-card, #qcReviewTableWrap, .work-qc-table-wrap, .qc-review-table-wrap");
+    if (!workArea) return;
+
+    const scrollable = event.target.closest(".target-selector-list, .people-target-modal-body, .modal-body, textarea, select");
+    if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) return;
+
+    const deltaY = event.deltaY || 0;
+    const deltaX = event.deltaX || 0;
+    if (!deltaY && !deltaX) return;
+
+    event.preventDefault();
+    window.scrollBy({ top: deltaY, left: deltaX, behavior: "auto" });
+  }, { passive: false, capture: true });
+}
+
+setupChecklistPageWheelBridge();
+
+
 function renderAttachmentCell(row, rowIndex) {
   const attachments = Array.isArray(row.attachments) ? row.attachments : [];
   if (!attachments.length) {
