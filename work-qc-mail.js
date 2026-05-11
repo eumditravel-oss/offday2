@@ -9161,7 +9161,14 @@ function getChecklistOrgViceRoot(company) {
   while (stack.length) {
     const node = stack.shift();
     const title = String(node?.title || node?.displayName || "").trim();
-    if (title === "부사장") return node;
+    const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+    const empGrade = String(emp?.grade || "").trim();
+    const empPosition = String(emp?.position || "").trim();
+    const empName = emp ? displayName(emp) : "";
+
+    if (title === "부사장" || empGrade === "부사장" || empPosition === "부사장") return node;
+    if (company === "Viet QS" && (node?.employeeId === "VQS-002" || /Vice President/i.test(`${empGrade} ${empPosition}`) || empName.includes("Lee Won Hee") || empName.includes("이원희"))) return node;
+
     (node?.children || []).forEach(child => stack.push(child));
   }
   return root;
@@ -9170,7 +9177,17 @@ function getChecklistOrgViceRoot(company) {
 function getChecklistOrgBranchNodes(company) {
   const base = getChecklistOrgViceRoot(company);
   const children = Array.isArray(base?.children) ? base.children : [];
-  return children.length ? children : [];
+  if (!children.length) return [];
+
+  // 대상 선택용 드롭박스는 대표/부사장 같은 경영진 노드가 아니라
+  // 실제 업무 참여가 가능한 부사장 하위 조직 단위만 표시한다.
+  return children.filter(node => {
+    const label = String(getChecklistOrgNodeLabel(node) || node?.title || node?.displayName || "").trim();
+    const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+    const roleText = `${node?.title || ""} ${node?.displayName || ""} ${emp?.grade || ""} ${emp?.position || ""}`;
+    if (label.includes("대표") || label.includes("부사장") || /CEO|Vice President/i.test(roleText)) return false;
+    return true;
+  });
 }
 
 function getChecklistOrgBranchKey(node, index) {
