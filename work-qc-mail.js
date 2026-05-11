@@ -9090,56 +9090,89 @@ function makeChecklistOrgNodeSearchText(node, company) {
   ].filter(Boolean).join(" ").toLowerCase();
 }
 
-function renderChecklistOrgSelectorNode(node, index, company, depth = 0, path = "0") {
-  if (!node) return "";
+function getChecklistOrgNodeTarget(node, company) {
   const isDept = isChecklistOrgDepartmentNode(node);
+  const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+  const label = getChecklistOrgNodeLabel(node) || node?.title || company || "조직";
+  return isDept ? makeChecklistDepartmentTarget(label) : (emp ? makeChecklistEmployeeTarget(emp) : makeChecklistDepartmentTarget(label));
+}
+
+function getChecklistOrgNodeMeta(node, company) {
+  const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+  if (emp) return `${emp.company || company} · ${emp.dept || "소속 미지정"}`;
+  return "부서 전체 지정";
+}
+
+function getChecklistOrgNodeTitleText(node, depth = 0) {
+  const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+  if (node?.nodeType === "department" || !node?.employeeId) return node?.title || node?.displayName || "부서";
+  return node?.title || emp?.position || emp?.grade || "직원";
+}
+
+function getChecklistOrgNodeClass(node, depth = 0) {
+  const base = typeof getOrgPopupNodeClass === "function" ? getOrgPopupNodeClass(node, depth).replaceAll("org-popup-", "actual-view-") : "";
+  const title = String(node?.displayName || node?.title || "").trim().toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return [base, title ? `actual-view-${title}` : ""].filter(Boolean).join(" ");
+}
+
+function renderChecklistSelectableOrgNode(node, index, company, depth = 0, path = "0") {
+  if (!node) return "";
+  const children = Array.isArray(node.children) ? node.children : [];
   const emp = node.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
+  const isDept = isChecklistOrgDepartmentNode(node);
   const label = isDept ? getChecklistOrgNodeLabel(node) : (emp ? displayName(emp) : getChecklistOrgNodeLabel(node));
-  const subLabel = isDept
-    ? "부서 전체 지정"
-    : `${emp?.company || company} · ${emp?.dept || "소속 미지정"} · ${emp?.grade || emp?.position || node.title || ""}`;
-  const target = isDept ? makeChecklistDepartmentTarget(label) : (emp ? makeChecklistEmployeeTarget(emp) : makeChecklistDepartmentTarget(label));
+  const title = getChecklistOrgNodeTitleText(node, depth);
+  const meta = getChecklistOrgNodeMeta(node, company);
+  const target = getChecklistOrgNodeTarget(node, company);
   const row = checklistRows[index];
   const checked = isChecklistTargetSelected(row, target);
-  const children = Array.isArray(node.children) ? node.children : [];
   const searchText = makeChecklistOrgNodeSearchText(node, company);
-  const typeClass = isDept ? "dept" : "person";
+  const typeClass = node.className || "";
+  const layoutClass = getChecklistOrgNodeClass(node, depth);
+  const childCount = children.length;
+  const columnCount = childCount ? Math.min(childCount, typeof getOrgMemberColumnCount === "function" ? getOrgMemberColumnCount(node) : childCount) : 1;
   return `
-    <li class="checklist-org-node-wrap depth-${depth}" data-org-search="${escapeHtml(searchText)}">
-      <div class="checklist-org-node ${typeClass} ${checked ? "selected" : ""}" style="--depth:${depth};" onclick="handleChecklistOrgTargetClick(${index}, '${escapeJs(target)}', event)">
-        <div class="checklist-org-node-main">
-          <span class="checklist-org-node-check">${checked ? "✓" : ""}</span>
-          <span class="checklist-org-node-text">
-            <b>${escapeHtml(label)}</b>
-            <small>${escapeHtml(subLabel)}</small>
-          </span>
+    <div class="actual-view-node-wrap checklist-org-chart-node-wrap ${layoutClass} depth-${depth}" data-path="${escapeHtml(path)}" data-org-search="${escapeHtml(searchText)}">
+      <button type="button" class="actual-view-node checklist-org-chart-node ${typeClass} depth-${depth} ${isDept ? "department" : "person"} ${checked ? "selected" : ""}"
+        onclick="handleChecklistOrgTargetClick(${index}, '${escapeJs(target)}', event)"
+        title="${escapeHtml(label)} 선택">
+        <span>${escapeHtml(title)}</span>
+        <strong>${escapeHtml(label)}</strong>
+        <em>${escapeHtml(meta)}</em>
+        <i class="checklist-org-chart-check">${checked ? "✓" : ""}</i>
+      </button>
+      ${emp ? `<button type="button" class="checklist-org-chart-card-btn" onclick="event.stopPropagation(); openMiniCardPopup('${escapeJs(emp.empNo)}')">인사카드</button>` : ""}
+      ${childCount ? `
+        <div class="actual-view-unified-children checklist-org-chart-children depth-${depth} count-${childCount} cols-${columnCount}" style="--org-child-count:${childCount};--org-child-cols:${columnCount};grid-template-columns:repeat(${columnCount}, max-content) !important;">
+          ${children.map((child, childIndex) => renderChecklistSelectableOrgNode(child, index, company, depth + 1, `${path}-${childIndex}`)).join("")}
         </div>
-        ${!isDept && emp ? `<button type="button" class="mini-card-open-btn checklist-org-card-btn" onclick="event.stopPropagation(); openMiniCardPopup('${escapeJs(emp.empNo)}')">인사카드</button>` : `<span class="checklist-org-dept-badge">부서</span>`}
-      </div>
-      ${children.length ? `<ul class="checklist-org-children">${children.map((child, childIndex) => renderChecklistOrgSelectorNode(child, index, company, depth + 1, `${path}-${childIndex}`)).join("")}</ul>` : ""}
-    </li>
+      ` : ""}
+    </div>
   `;
 }
 
 function renderChecklistOrgSelectorTree(index) {
   const companies = getChecklistOrgCompanyList();
-  const companyTabs = companies.map(company => `<button type="button" class="checklist-org-tab ${company === "CON-COST" ? "active" : ""}" data-org-company-tab="${escapeHtml(company)}" onclick="switchChecklistTargetOrgCompany('${escapeJs(company)}')">${escapeHtml(company)}</button>`).join("");
+  const defaultCompany = companies.includes("CON-COST") ? "CON-COST" : companies[0];
+  const companyTabs = companies.map(company => `<button type="button" class="checklist-org-tab ${company === defaultCompany ? "active" : ""}" data-org-company-tab="${escapeHtml(company)}" onclick="switchChecklistTargetOrgCompany('${escapeJs(company)}')">${escapeHtml(company)}</button>`).join("");
   return `
-    <div class="target-selector-section checklist-org-selector-section">
-      <div class="target-selector-title checklist-org-selector-head">
+    <div class="target-selector-section checklist-org-selector-section checklist-org-chart-selector-section">
+      <div class="target-selector-title checklist-org-selector-head checklist-org-chart-head">
         <div>
           <strong>조직도 대상 선택</strong>
-          <small>좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 부서 클릭: 부서 전체 지정</small>
+          <small>좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 부서 클릭: 부서 전체 지정 / 인사카드: 직원 상세 보기</small>
         </div>
         <input type="search" class="person-card-search checklist-org-search" placeholder="조직/부서/이름/직위 검색" oninput="filterChecklistOrgOptions(this.value)">
       </div>
       <div class="checklist-org-tabs">${companyTabs}</div>
       ${companies.map(company => `
-        <div class="checklist-org-tree-panel ${company === "CON-COST" ? "active" : ""}" data-org-company-panel="${escapeHtml(company)}">
-          <div class="checklist-org-tree-scroll">
-            <ul class="checklist-org-tree-root">
-              ${renderChecklistOrgSelectorNode(orgStructures[company].root, index, company, 0, "0")}
-            </ul>
+        <div class="checklist-org-tree-panel checklist-org-chart-panel ${company === defaultCompany ? "active" : ""}" data-org-company-panel="${escapeHtml(company)}">
+          <div class="checklist-org-chart-scroll">
+            <div class="actual-view-tree checklist-org-chart ${company === "CON-COST" ? "concost-tree" : "vietqs-tree"}">
+              ${renderChecklistSelectableOrgNode(orgStructures[company].root, index, company, 0, "0")}
+            </div>
           </div>
         </div>
       `).join("")}
@@ -9202,11 +9235,21 @@ function switchChecklistTargetOrgCompany(company) {
 
 function filterChecklistOrgOptions(keyword) {
   const term = String(keyword || "").trim().toLowerCase();
-  document.querySelectorAll("#checklistTargetModal .checklist-org-node-wrap").forEach(node => {
+  document.querySelectorAll("#checklistTargetModal .checklist-org-chart-node-wrap").forEach(node => {
+    node.classList.remove("search-hidden", "search-self-match", "search-child-match");
+  });
+  if (!term) return;
+
+  document.querySelectorAll("#checklistTargetModal .checklist-org-chart-node-wrap").forEach(node => {
     const text = node.dataset.orgSearch || node.textContent.toLowerCase();
-    const directMatch = !term || text.includes(term);
-    const childMatch = term && Array.from(node.querySelectorAll(":scope .checklist-org-node-wrap")).some(child => (child.dataset.orgSearch || child.textContent.toLowerCase()).includes(term));
-    node.style.display = directMatch || childMatch ? "block" : "none";
+    const selfMatch = text.includes(term);
+    const childMatch = Array.from(node.querySelectorAll(":scope .checklist-org-chart-node-wrap")).some(child => {
+      const childText = child.dataset.orgSearch || child.textContent.toLowerCase();
+      return childText.includes(term);
+    });
+    node.classList.toggle("search-self-match", selfMatch);
+    node.classList.toggle("search-child-match", !selfMatch && childMatch);
+    node.classList.toggle("search-hidden", !selfMatch && !childMatch);
   });
 }
 
@@ -9262,7 +9305,7 @@ function trapChecklistTargetModalWheel(event) {
   const modal = document.querySelector("#checklistTargetModal .people-target-modal-card");
   if (!modal) return;
 
-  const scrollHost = event.target.closest(".target-selector-list, .people-target-modal-body");
+  const scrollHost = event.target.closest(".checklist-org-chart-scroll, .target-selector-list, .people-target-modal-body");
   if (!scrollHost || !modal.contains(scrollHost)) {
     event.preventDefault();
     return;
