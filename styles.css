@@ -7975,3 +7975,131 @@ body{
     grid-template-columns:1fr !important;
   }
 }
+
+/* =========================================================
+   QC 요청 대상 선택 보정
+   - 대상 선택 모달 인사카드 리스트 깨짐 방지
+   - 프로젝트 초기 발주처 송부 선택지 추가 영역 정렬
+   - 소분류 없는 중분류 지정 모달은 중분류만 표시
+   ========================================================= */
+.people-target-modal-card{
+  width:min(1040px,calc(100vw - 48px)) !important;
+  max-height:min(760px,calc(100vh - 48px)) !important;
+  overflow:hidden !important;
+}
+
+.people-target-modal-card .target-modal-body.people-target-modal-body{
+  display:grid !important;
+  grid-template-columns:minmax(260px,.72fr) minmax(420px,1.28fr) !important;
+  gap:14px !important;
+  max-height:470px !important;
+  overflow:hidden !important;
+  padding:16px 20px !important;
+}
+
+.people-target-modal-card .client-send-selector-section{
+  grid-column:1 / -1 !important;
+}
+
+.people-target-modal-card .client-send-selector-list{
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+.people-target-modal-card .target-client-send-option{
+  min-height:54px !important;
+  align-items:center !important;
+}
+
+.people-target-modal-card .target-selector-section{
+  min-width:0 !important;
+  overflow:hidden !important;
+}
+
+.people-target-modal-card .target-selector-list{
+  max-height:390px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+.people-target-modal-card .target-person-option{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  min-height:58px !important;
+  padding:10px 12px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+
+.people-target-modal-card .target-person-option label{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  max-width:calc(100% - 74px) !important;
+  margin:0 !important;
+}
+
+.people-target-modal-card .target-person-option input,
+.people-target-modal-card .target-dept-option input,
+.people-target-modal-card .target-client-send-option input{
+  flex:0 0 auto !important;
+  width:15px !important;
+  height:15px !important;
+  margin:0 !important;
+  position:static !important;
+}
+
+.people-target-modal-card .target-person-option .employee-info,
+.people-target-modal-card .target-person-option label > span,
+.people-target-modal-card .target-modal-option span{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  gap:3px !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  text-align:left !important;
+  white-space:normal !important;
+}
+
+.people-target-modal-card .target-person-option b,
+.people-target-modal-card .target-person-option small,
+.people-target-modal-card .target-modal-option b,
+.people-target-modal-card .target-modal-option small{
+  display:block !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  line-height:1.35 !important;
+}
+
+.people-target-modal-card .mini-card-open-btn{
+  flex:0 0 auto !important;
+  width:62px !important;
+  min-width:62px !important;
+  height:30px !important;
+  margin:0 !important;
+}
+
+.classify-modal-card .classify-modal-body{
+  grid-template-columns:1fr !important;
+}
+
+.classify-modal-card .field:only-child{
+  margin-bottom:0 !important;
+}
+
+@media (max-width: 860px){
+  .people-target-modal-card .target-modal-body.people-target-modal-body{
+    grid-template-columns:1fr !important;
+    overflow-y:auto !important;
+  }
+}
