@@ -9154,6 +9154,60 @@ function renderChecklistSelectableOrgNode(node, index, company, depth = 0, path 
   `;
 }
 
+function getChecklistOrgViceRoot(company) {
+  const root = (typeof orgStructures !== "undefined" ? orgStructures : {})?.[company]?.root;
+  if (!root) return null;
+  const stack = [root];
+  while (stack.length) {
+    const node = stack.shift();
+    const title = String(node?.title || node?.displayName || "").trim();
+    if (title === "부사장") return node;
+    (node?.children || []).forEach(child => stack.push(child));
+  }
+  return root;
+}
+
+function getChecklistOrgBranchNodes(company) {
+  const base = getChecklistOrgViceRoot(company);
+  const children = Array.isArray(base?.children) ? base.children : [];
+  return children.length ? children : [];
+}
+
+function getChecklistOrgBranchKey(node, index) {
+  const label = getChecklistOrgNodeLabel(node) || node?.title || node?.displayName || "조직";
+  return `${index}:${label}`;
+}
+
+function getChecklistDefaultOrgBranchKey(company) {
+  const branches = getChecklistOrgBranchNodes(company);
+  return branches.length ? getChecklistOrgBranchKey(branches[0], 0) : "";
+}
+
+function renderChecklistOrgBranchOptions(company) {
+  const branches = getChecklistOrgBranchNodes(company);
+  if (!branches.length) return `<option value="">선택 가능한 하위 조직 없음</option>`;
+  return branches.map((node, idx) => {
+    const label = getChecklistOrgNodeLabel(node) || node?.title || `하위 조직 ${idx + 1}`;
+    return `<option value="${escapeHtml(getChecklistOrgBranchKey(node, idx))}">${escapeHtml(label)}</option>`;
+  }).join("");
+}
+
+function getChecklistOrgBranchNodeByKey(company, key) {
+  const branches = getChecklistOrgBranchNodes(company);
+  if (!branches.length) return null;
+  if (!key) return branches[0];
+  const index = Number(String(key).split(":")[0]);
+  if (Number.isInteger(index) && branches[index]) return branches[index];
+  return branches[0];
+}
+
+function renderChecklistOrgSelectedBranch(company, index) {
+  const branchKey = getChecklistDefaultOrgBranchKey(company);
+  const node = getChecklistOrgBranchNodeByKey(company, branchKey);
+  if (!node) return `<div class="checklist-org-empty">표시할 하위 조직이 없습니다.</div>`;
+  return renderChecklistSelectableOrgNode(node, index, company, 0, `branch-${branchKey}`);
+}
+
 function renderChecklistOrgSelectorTree(index) {
   const companies = getChecklistOrgCompanyList();
   const defaultCompany = companies.includes("CON-COST") ? "CON-COST" : companies[0];
@@ -9163,24 +9217,48 @@ function renderChecklistOrgSelectorTree(index) {
       <div class="target-selector-title checklist-org-selector-head checklist-org-chart-head">
         <div>
           <strong>조직도 대상 선택</strong>
-          <small>좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 부서 클릭: 부서 전체 지정 / 휠: 확대·축소 / 휠 클릭 드래그: 시점 이동</small>
+          <small>부사장 하위 조직을 선택한 뒤 좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 휠: 확대·축소 / 휠 클릭 드래그: 시점 이동</small>
         </div>
         <input type="search" class="person-card-search checklist-org-search" placeholder="조직/부서/이름/직위 검색" oninput="filterChecklistOrgOptions(this.value)">
       </div>
       <div class="checklist-org-tabs">${companyTabs}</div>
-      ${companies.map(company => `
+      ${companies.map(company => {
+        const branchKey = getChecklistDefaultOrgBranchKey(company);
+        return `
         <div class="checklist-org-tree-panel checklist-org-chart-panel ${company === defaultCompany ? "active" : ""}" data-org-company-panel="${escapeHtml(company)}">
+          <div class="checklist-org-branch-toolbar">
+            <label>
+              <span>하위 조직 선택</span>
+              <select class="checklist-org-branch-select" data-org-branch-select="${escapeHtml(company)}" onchange="switchChecklistTargetOrgBranch('${escapeJs(company)}', this.value)">
+                ${renderChecklistOrgBranchOptions(company)}
+              </select>
+            </label>
+          </div>
           <div class="checklist-org-chart-scroll" data-checklist-org-viewport onwheel="handleChecklistOrgChartWheel(event)" onmousedown="startChecklistOrgChartPan(event)">
             <div class="checklist-org-chart-canvas" data-checklist-org-canvas>
-              <div class="actual-view-tree checklist-org-chart ${company === "CON-COST" ? "concost-tree" : "vietqs-tree"}">
-              ${renderChecklistSelectableOrgNode(orgStructures[company].root, index, company, 0, "0")}
+              <div class="actual-view-tree checklist-org-chart ${company === "CON-COST" ? "concost-tree" : "vietqs-tree"}" data-org-branch-chart="${escapeHtml(company)}" data-current-branch="${escapeHtml(branchKey)}">
+                ${renderChecklistOrgSelectedBranch(company, index)}
               </div>
             </div>
           </div>
-        </div>
-      `).join("")}
+        </div>`;
+      }).join("")}
     </div>
   `;
+}
+
+function switchChecklistTargetOrgBranch(company, branchKey) {
+  const modal = document.getElementById("checklistTargetModal");
+  const rowIndex = Number(modal?.querySelector(".org-target-modal-card")?.dataset.rowIndex);
+  const panel = Array.from(modal?.querySelectorAll("[data-org-company-panel]") || []).find(item => item.dataset.orgCompanyPanel === company);
+  const chart = panel?.querySelector("[data-org-branch-chart]");
+  if (!modal || !chart || !Number.isInteger(rowIndex)) return;
+  const node = getChecklistOrgBranchNodeByKey(company, branchKey);
+  chart.dataset.currentBranch = branchKey || getChecklistDefaultOrgBranchKey(company);
+  chart.innerHTML = node ? renderChecklistSelectableOrgNode(node, rowIndex, company, 0, `branch-${branchKey || "0"}`) : `<div class="checklist-org-empty">표시할 하위 조직이 없습니다.</div>`;
+  const search = modal.querySelector(".checklist-org-search");
+  if (search?.value) filterChecklistOrgOptions(search.value);
+  requestAnimationFrame(() => resetChecklistOrgChartView());
 }
 
 function renderChecklistTargetModal(index) {
