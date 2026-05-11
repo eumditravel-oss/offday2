@@ -9774,3 +9774,125 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   padding-left:8px !important;
   padding-right:8px !important;
 }
+
+/* =========================================================
+   QC팀 전달사항 공통 템플릿 편집 모달
+   ========================================================= */
+.qc-template-edit-btn{
+  min-width:170px;
+  font-weight:800;
+}
+.qc-template-modal{
+  width:min(1180px, calc(100vw - 48px));
+  max-height:calc(100vh - 64px);
+  display:flex;
+  flex-direction:column;
+}
+.qc-template-head p{
+  margin:4px 0 0;
+  color:#6b7890;
+  font-size:12px;
+  font-weight:700;
+}
+.qc-template-body-wrap{
+  overflow:auto;
+}
+.qc-template-toolbar,
+.qc-template-filter-row,
+.qc-template-foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.qc-template-select-tools,
+.qc-template-edit-tools{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.qc-template-filter-row{
+  margin:12px 0;
+  justify-content:flex-start;
+}
+.qc-template-filter-row label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:180px;
+  font-size:12px;
+  font-weight:800;
+  color:#13233f;
+}
+.qc-template-filter-row select,
+.qc-template-filter-row input,
+.qc-template-table select,
+.qc-template-table input,
+.qc-template-table textarea{
+  width:100%;
+  border:1px solid #d6e1f2;
+  border-radius:10px;
+  padding:8px 10px;
+  font:inherit;
+  font-size:12px;
+  background:#fff;
+  color:#13233f;
+  box-sizing:border-box;
+}
+.qc-template-table-wrap{
+  border:1px solid #d6e1f2;
+  border-radius:14px;
+  overflow:auto;
+  background:#fff;
+}
+.qc-template-table{
+  width:100%;
+  min-width:1080px;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+.qc-template-table th,
+.qc-template-table td{
+  border-bottom:1px solid #e6edf7;
+  border-right:1px solid #e6edf7;
+  padding:8px;
+  vertical-align:middle;
+}
+.qc-template-table th{
+  background:#edf5ff;
+  color:#13233f;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+.qc-template-table th:first-child,
+.qc-template-table td:first-child{
+  width:44px;
+  text-align:center;
+}
+.qc-template-table th:nth-child(2),
+.qc-template-table td:nth-child(2){width:120px;}
+.qc-template-table th:nth-child(3),
+.qc-template-table td:nth-child(3){width:130px;}
+.qc-template-table th:nth-child(4),
+.qc-template-table td:nth-child(4){width:110px;}
+.qc-template-table textarea{
+  min-height:52px;
+  resize:vertical;
+  line-height:1.45;
+}
+.qc-template-empty{
+  height:120px;
+  text-align:center !important;
+  color:#7a879b;
+  font-weight:800;
+}
+#qcTemplateImportGuide{
+  color:#5f6f89;
+  font-size:12px;
+  font-weight:800;
+}
