@@ -7663,3 +7663,160 @@ body{
   border:1px solid #bfdbfe !important;
   color:#1d4ed8 !important;
 }
+
+
+
+/* =========================================================
+   QC 체크리스트 - 요청 대상 배지 위치/중앙정렬 보정
+   요청사항:
+   1) '구조', '토목' 등 요청 대상 글씨가 중분류지정 버튼 위에 오도록 배치
+   2) 요청 대상 셀 내부에서 가로/세로 중앙정렬
+   3) 배지/버튼이 셀 안에서 어긋나지 않도록 고정
+   ========================================================= */
+
+/* 요청 대상 열 자체 정렬 */
+#workQcTable td:nth-child(5),
+#workQcTable th:nth-child(5),
+#qcTable td:nth-child(5),
+#qcTable th:nth-child(5),
+#checklistTable td:nth-child(5),
+#checklistTable th:nth-child(5),
+.work-qc-table td:nth-child(5),
+.work-qc-table th:nth-child(5),
+.qc-check-table td:nth-child(5),
+.qc-check-table th:nth-child(5),
+.checklist-table td:nth-child(5),
+.checklist-table th:nth-child(5),
+.quantity-checklist-table td:nth-child(5),
+.quantity-checklist-table th:nth-child(5) {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* 요청 대상 셀 내부 요소를 세로 방향으로 쌓기 */
+#workQcTable td:nth-child(5),
+#qcTable td:nth-child(5),
+#checklistTable td:nth-child(5),
+.work-qc-table td:nth-child(5),
+.qc-check-table td:nth-child(5),
+.checklist-table td:nth-child(5),
+.quantity-checklist-table td:nth-child(5) {
+  min-width: 86px;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+/* 셀 안의 실제 컨테이너가 있는 경우 중앙 배치 */
+#workQcTable td:nth-child(5) > *,
+#qcTable td:nth-child(5) > *,
+#checklistTable td:nth-child(5) > *,
+.work-qc-table td:nth-child(5) > *,
+.qc-check-table td:nth-child(5) > *,
+.checklist-table td:nth-child(5) > *,
+.quantity-checklist-table td:nth-child(5) > * {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 요청 대상 배지와 중분류지정 버튼을 한 줄 흐름이 아니라 위/아래 구조로 강제 */
+#workQcTable td:nth-child(5),
+#qcTable td:nth-child(5),
+#checklistTable td:nth-child(5),
+.work-qc-table td:nth-child(5),
+.qc-check-table td:nth-child(5),
+.checklist-table td:nth-child(5),
+.quantity-checklist-table td:nth-child(5) {
+  white-space: normal !important;
+}
+
+/* 구조/토목/마감 등 요청 대상 배지 */
+#workQcTable td:nth-child(5) .badge,
+#workQcTable td:nth-child(5) .chip,
+#workQcTable td:nth-child(5) .target-badge,
+#workQcTable td:nth-child(5) .request-target,
+#qcTable td:nth-child(5) .badge,
+#qcTable td:nth-child(5) .chip,
+#qcTable td:nth-child(5) .target-badge,
+#qcTable td:nth-child(5) .request-target,
+#checklistTable td:nth-child(5) .badge,
+#checklistTable td:nth-child(5) .chip,
+#checklistTable td:nth-child(5) .target-badge,
+#checklistTable td:nth-child(5) .request-target,
+.work-qc-table td:nth-child(5) .badge,
+.work-qc-table td:nth-child(5) .chip,
+.work-qc-table td:nth-child(5) .target-badge,
+.work-qc-table td:nth-child(5) .request-target,
+.qc-check-table td:nth-child(5) .badge,
+.qc-check-table td:nth-child(5) .chip,
+.qc-check-table td:nth-child(5) .target-badge,
+.qc-check-table td:nth-child(5) .request-target,
+.checklist-table td:nth-child(5) .badge,
+.checklist-table td:nth-child(5) .chip,
+.checklist-table td:nth-child(5) .target-badge,
+.checklist-table td:nth-child(5) .request-target,
+.quantity-checklist-table td:nth-child(5) .badge,
+.quantity-checklist-table td:nth-child(5) .chip,
+.quantity-checklist-table td:nth-child(5) .target-badge,
+.quantity-checklist-table td:nth-child(5) .request-target {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  min-width: 34px;
+  max-width: 70px;
+  margin: 0 auto 6px auto !important;
+  float: none !important;
+  position: static !important;
+  transform: none !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+}
+
+/* 중분류지정 버튼 */
+#workQcTable td:nth-child(5) button,
+#workQcTable td:nth-child(5) .btn,
+#workQcTable td:nth-child(5) .btn-line,
+#workQcTable td:nth-child(5) .middle-btn,
+#workQcTable td:nth-child(5) .category-button,
+#qcTable td:nth-child(5) button,
+#qcTable td:nth-child(5) .btn,
+#qcTable td:nth-child(5) .btn-line,
+#qcTable td:nth-child(5) .middle-btn,
+#qcTable td:nth-child(5) .category-button,
+#checklistTable td:nth-child(5) button,
+#checklistTable td:nth-child(5) .btn,
+#checklistTable td:nth-child(5) .btn-line,
+#checklistTable td:nth-child(5) .middle-btn,
+#checklistTable td:nth-child(5) .category-button,
+.work-qc-table td:nth-child(5) button,
+.work-qc-table td:nth-child(5) .btn,
+.work-qc-table td:nth-child(5) .btn-line,
+.work-qc-table td:nth-child(5) .middle-btn,
+.work-qc-table td:nth-child(5) .category-button,
+.qc-check-table td:nth-child(5) button,
+.qc-check-table td:nth-child(5) .btn,
+.qc-check-table td:nth-child(5) .btn-line,
+.qc-check-table td:nth-child(5) .middle-btn,
+.qc-check-table td:nth-child(5) .category-button,
+.checklist-table td:nth-child(5) button,
+.checklist-table td:nth-child(5) .btn,
+.checklist-table td:nth-child(5) .btn-line,
+.checklist-table td:nth-child(5) .middle-btn,
+.checklist-table td:nth-child(5) .category-button,
+.quantity-checklist-table td:nth-child(5) button,
+.quantity-checklist-table td:nth-child(5) .btn,
+.quantity-checklist-table td:nth-child(5) .btn-line,
+.quantity-checklist-table td:nth-child(5) .middle-btn,
+.quantity-checklist-table td:nth-child(5) .category-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  min-width: 54px;
+  margin: 0 auto !important;
+  float: none !important;
+  position: static !important;
+  transform: none !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
