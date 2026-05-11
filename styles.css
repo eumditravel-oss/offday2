@@ -8103,3 +8103,119 @@ body{
     overflow-y:auto !important;
   }
 }
+
+
+/* =========================================================
+   QC 대상 선택 모달 재배치 + 인사카드 검색 + PM 확인 대상 보정
+   ========================================================= */
+.people-target-modal-card{
+  width:min(1120px,calc(100vw - 40px)) !important;
+  height:min(820px,calc(100vh - 36px)) !important;
+  max-height:min(820px,calc(100vh - 36px)) !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+
+.people-target-modal-card .target-modal-head,
+.people-target-modal-card .target-modal-guide,
+.people-target-modal-card .target-selected-area,
+.people-target-modal-card .target-modal-foot{
+  flex:0 0 auto !important;
+}
+
+.people-target-modal-card .target-modal-body.people-target-modal-body{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(300px,.82fr) minmax(460px,1.18fr) !important;
+  grid-auto-rows:auto minmax(0,1fr) !important;
+  gap:14px !important;
+  max-height:none !important;
+  overflow:hidden !important;
+  padding:14px 20px 16px !important;
+}
+
+.people-target-modal-card .client-send-selector-section{
+  grid-column:1 / -1 !important;
+  min-height:auto !important;
+}
+
+.people-target-modal-card .target-selector-section{
+  display:flex !important;
+  flex-direction:column !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+.people-target-modal-card .target-selector-title{
+  flex:0 0 auto !important;
+}
+
+.people-target-modal-card .target-selector-list{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+}
+
+.people-target-modal-card .client-send-selector-list{
+  flex:0 0 auto !important;
+  min-height:auto !important;
+  overflow:visible !important;
+}
+
+.people-target-modal-card .person-selector-title-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+}
+
+.person-card-search{
+  flex:0 1 220px !important;
+  height:30px !important;
+  padding:0 10px !important;
+  border:1px solid #cfe0f5 !important;
+  border-radius:999px !important;
+  background:#fff !important;
+  color:#0f172a !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  outline:none !important;
+}
+
+.person-card-search:focus{
+  border-color:#60a5fa !important;
+  box-shadow:0 0 0 3px rgba(96,165,250,.18) !important;
+}
+
+.people-target-modal-card .target-person-option{
+  min-height:60px !important;
+}
+
+.people-target-modal-card .target-modal-foot{
+  position:relative !important;
+  z-index:2 !important;
+  background:#fff !important;
+  border-top:1px solid #e5edf7 !important;
+}
+
+@media (max-width: 860px){
+  .people-target-modal-card{
+    height:min(820px,calc(100vh - 28px)) !important;
+  }
+  .people-target-modal-card .target-modal-body.people-target-modal-body{
+    grid-template-columns:1fr !important;
+    grid-auto-rows:auto !important;
+    overflow:auto !important;
+  }
+  .person-selector-title-row{
+    align-items:flex-start !important;
+    flex-direction:column !important;
+  }
+  .person-card-search{
+    width:100% !important;
+    flex:0 0 auto !important;
+  }
+}
