@@ -9236,7 +9236,6 @@ function renderChecklistOrgSelectorTree(index) {
           <strong>조직도 대상 선택</strong>
           <small>부사장 하위 조직을 선택한 뒤 좌클릭: 단일 선택 / Ctrl+좌클릭: 다중 선택 / 휠: 확대·축소 / 휠 클릭 드래그: 시점 이동</small>
         </div>
-        <input type="search" class="person-card-search checklist-org-search" placeholder="조직/부서/이름/직위 검색" oninput="filterChecklistOrgOptions(this.value)">
       </div>
       <div class="checklist-org-tabs">${companyTabs}</div>
       ${companies.map(company => {
@@ -9367,9 +9366,15 @@ function setChecklistOrgZoom(viewport, nextZoom, originX = null, originY = null)
   const beforeTop = (viewport.scrollTop + y) / previousZoom;
 
   viewport.dataset.zoom = String(zoom);
-  canvas.style.transform = `scale(${zoom})`;
-  canvas.style.width = `${100 / zoom}%`;
-  canvas.style.height = `${100 / zoom}%`;
+  if (Math.abs(zoom - 1) < 0.001) {
+    canvas.style.transform = "";
+    canvas.style.width = "";
+    canvas.style.height = "";
+  } else {
+    canvas.style.transform = `scale(${zoom})`;
+    canvas.style.width = `${100 / zoom}%`;
+    canvas.style.height = `${100 / zoom}%`;
+  }
 
   requestAnimationFrame(() => {
     viewport.scrollLeft = Math.max(0, beforeLeft * zoom - x);
@@ -9383,9 +9388,9 @@ function resetChecklistOrgChartView() {
   const canvas = getChecklistOrgCanvas(viewport);
   viewport.dataset.zoom = "1";
   if (canvas) {
-    canvas.style.transform = "scale(1)";
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
+    canvas.style.transform = "";
+    canvas.style.width = "";
+    canvas.style.height = "";
   }
   requestAnimationFrame(() => {
     const horizontalCenter = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2);
