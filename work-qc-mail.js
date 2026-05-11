@@ -8438,14 +8438,15 @@ function normalizeChecklistRow(row) {
   row.history.push({ action: "최초작성", worker: row.creator, time: row.createdAt });
 
   const groupTargets = getChecklistTargetsByGroup(row.group, row);
-  const validTargetPool = new Set(getChecklistTargetPool(row));
-  if (groupTargets && !row.manualTargets) {
+  if (row.manualTargets) {
+    row.targets = Array.isArray(row.targets) && row.targets.length ? row.targets : [];
+  } else if (groupTargets) {
     row.targets = [...groupTargets];
   } else if (!Array.isArray(row.targets) || !row.targets.length) {
-    row.targets = groupTargets ? [...groupTargets] : String(row.owner || getChecklistRouteLabel(row) || "PM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
+    row.targets = String(row.owner || getChecklistRouteLabel(row) || "PM").split(/[,/]/).map(v => v.trim()).filter(Boolean);
   }
-  row.targets = row.targets.map(target => validTargetPool.has(target) ? target : getChecklistRouteLabel(row)).filter(Boolean);
-  row.targets = Array.from(new Set(row.targets));
+  row.targets = Array.from(new Set((row.targets || []).map(target => String(target || "").trim()).filter(Boolean)));
+  if (!row.targets.length) row.targets = [getChecklistRouteLabel(row) || "PM"];
 
   if (!Array.isArray(row.checks)) row.checks = [];
   row.targets.forEach(target => {
@@ -8756,16 +8757,16 @@ function renderChecklistGroupBand(group) {
 function renderChecklistTargetCell(row, realIndex) {
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  const targets = getChecklistTargets(row);
   const hasMiddleOptions = getChecklistMiddleOptions(row.group).length > 0;
-  const targetChips = targets.map(t => `<span class="target-chip target-route-chip target-stack-item">${escapeHtml(t)}</span>`).join("");
+  const manualTargets = row.manualTargets ? getChecklistTargets(row) : [];
+  const targetChips = manualTargets.map(t => `<span class="target-chip target-assignee-chip target-stack-item">${escapeHtml(formatChecklistAssigneeLabel(t))}</span>`).join("");
 
   return `
     <div class="target-cell-wrap target-cell-center-wrap">
       <div class="target-stack-center">
         ${hasMiddleOptions ? `<button type="button" class="target-select-btn classify-select-btn target-stack-item" ${locked ? "disabled" : ""} onclick="openChecklistClassifyModal(${realIndex})">중분류 지정</button>` : ""}
         <button type="button" class="target-select-btn target-people-select-btn target-stack-item" ${locked ? "disabled" : ""} onclick="openChecklistTargetModal(${realIndex})">대상 선택</button>
-        ${targetChips}
+        ${targetChips || `<span class="target-empty-guide target-stack-item">미지정</span>`}
       </div>
     </div>
   `;
@@ -8867,32 +8868,120 @@ function applyChecklistClassifyModal(index) {
   showToast("중분류가 반영되었습니다.");
 }
 
+function getChecklistAssigneeDepartments() {
+  const deptSet = new Set();
+  (employees || []).forEach(emp => {
+    if (emp?.dept) deptSet.add(emp.dept);
+  });
+  return Array.from(deptSet).sort((a, b) => a.localeCompare(b, "ko"));
+}
+
+function getChecklistActiveEmployees() {
+  return (employees || [])
+    .filter(emp => emp && emp.status !== "퇴사" && emp.status !== "계약만료" && emp.status !== "입사취소")
+    .sort((a, b) => {
+      const deptCompare = String(a.dept || "").localeCompare(String(b.dept || ""), "ko");
+      if (deptCompare) return deptCompare;
+      return displayName(a).localeCompare(displayName(b), "ko");
+    });
+}
+
+function makeChecklistDepartmentTarget(dept) {
+  return `부서:${dept}`;
+}
+
+function makeChecklistEmployeeTarget(emp) {
+  return `개인:${emp.empNo}`;
+}
+
+function formatChecklistAssigneeLabel(target) {
+  const value = String(target || "");
+  if (value.startsWith("부서:")) return value.replace("부서:", "부서 · ");
+  if (value.startsWith("개인:")) {
+    const empNo = value.replace("개인:", "");
+    const emp = employees.find(e => e.empNo === empNo);
+    return emp ? `개인 · ${displayName(emp)}` : `개인 · ${empNo}`;
+  }
+  return value;
+}
+
+function isChecklistTargetSelected(row, target) {
+  return Array.isArray(row?.targets) && row.targets.includes(target);
+}
+
+function renderChecklistSelectedAssignees(row) {
+  const targets = row.manualTargets ? getChecklistTargets(row) : [];
+  if (!targets.length) return `<span class="target-selected-empty">선택된 부서/개인이 없습니다.</span>`;
+  return targets.map(target => `
+    <span class="target-selected-chip">
+      ${escapeHtml(formatChecklistAssigneeLabel(target))}
+      <button type="button" onclick="removeChecklistAssignee('${escapeJs(target)}')">×</button>
+    </span>
+  `).join("");
+}
+
 function renderChecklistTargetModal(index) {
   const row = checklistRows[index];
   if (!row) return "";
   normalizeChecklistRow(row);
   const locked = isChecklistCategoryLocked(row.group);
-  const targets = getChecklistTargets(row);
-  const pool = getChecklistTargetPool(row);
+  const departments = getChecklistAssigneeDepartments();
+  const people = getChecklistActiveEmployees();
+  const routeLabel = getChecklistRouteLabel(row);
 
   return `
-    <div class="target-modal-card" onclick="event.stopPropagation();">
+    <div class="target-modal-card people-target-modal-card" onclick="event.stopPropagation();" data-row-index="${index}">
       <div class="target-modal-head">
         <div>
-          <strong>요청 대상 선택</strong>
-          <span>${escapeHtml(row.no || "-")} · ${escapeHtml(row.group || "")}</span>
+          <strong>대상 선택</strong>
+          <span>${escapeHtml(row.no || "-")} · ${escapeHtml(row.group || "")} · ${escapeHtml(routeLabel || "중분류 미지정")}</span>
         </div>
         <button type="button" class="close" onclick="closeChecklistTargetModal()">×</button>
       </div>
-      <div class="target-modal-body">
-        ${pool.map(target => `
-          <label class="target-modal-option">
-            <input type="checkbox" ${targets.includes(target) ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
-            <span>${escapeHtml(target)}</span>
-          </label>
-        `).join("")}
+      <div class="target-modal-guide">
+        중분류는 작업 구분용입니다. 대상 선택에서는 조직도/인사카드 기준으로 실제 확인할 부서 또는 개인을 지정합니다.
+      </div>
+      <div class="target-selected-area">
+        <strong>선택된 대상</strong>
+        <div class="target-selected-list">${renderChecklistSelectedAssignees(row)}</div>
+      </div>
+      <div class="target-modal-body people-target-modal-body">
+        <div class="target-selector-section">
+          <div class="target-selector-title">부서 선택</div>
+          <div class="target-selector-list dept-selector-list">
+            ${departments.map(dept => {
+              const target = makeChecklistDepartmentTarget(dept);
+              const checked = isChecklistTargetSelected(row, target);
+              return `
+                <label class="target-modal-option target-dept-option ${checked ? "selected" : ""}">
+                  <input type="checkbox" ${checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
+                  <span><b>${escapeHtml(dept)}</b><small>부서 전체 지정</small></span>
+                </label>
+              `;
+            }).join("")}
+          </div>
+        </div>
+        <div class="target-selector-section">
+          <div class="target-selector-title">개인 선택 · 인사카드</div>
+          <div class="target-selector-list person-selector-list">
+            ${people.map(emp => {
+              const target = makeChecklistEmployeeTarget(emp);
+              const checked = isChecklistTargetSelected(row, target);
+              return `
+                <div class="target-person-option ${checked ? "selected" : ""}">
+                  <label>
+                    <input type="checkbox" ${checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="setChecklistTargetSelected(${index}, '${escapeJs(target)}', this.checked, true)">
+                    <span><b>${escapeHtml(displayName(emp))}</b><small>${escapeHtml(emp.company)} · ${escapeHtml(emp.dept)} · ${escapeHtml(emp.grade || emp.position || "")}</small></span>
+                  </label>
+                  <button type="button" class="mini-card-open-btn" onclick="event.stopPropagation(); openMiniCardPopup('${escapeJs(emp.empNo)}')">인사카드</button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
       </div>
       <div class="target-modal-foot">
+        <button type="button" class="btn btn-line" onclick="clearChecklistAssignees(${index})" ${locked ? "disabled" : ""}>선택 초기화</button>
         <button type="button" class="btn btn-line" onclick="closeChecklistTargetModal()">닫기</button>
         <button type="button" class="btn btn-primary" onclick="closeChecklistTargetModal(); renderChecklistGrid();">적용</button>
       </div>
@@ -8910,6 +8999,7 @@ function openChecklistTargetModal(index) {
   }
 
   closeChecklistTargetModal();
+  closeChecklistClassifyModal();
   const layer = document.createElement("div");
   layer.id = "checklistTargetModal";
   layer.className = "target-modal-backdrop active";
@@ -8922,43 +9012,53 @@ function closeChecklistTargetModal() {
   document.getElementById("checklistTargetModal")?.remove();
 }
 
+function refreshChecklistTargetModal(index) {
+  const box = document.getElementById("checklistTargetModal");
+  if (box) box.innerHTML = renderChecklistTargetModal(index);
+}
+
+function clearChecklistAssignees(index) {
+  const row = checklistRows[index];
+  if (!row) return;
+  normalizeChecklistRow(row);
+  row.manualTargets = false;
+  row.targets = [getChecklistRouteLabel(row) || "PM"];
+  row.checks = [];
+  row.history = Array.isArray(row.history) ? row.history : [];
+  row.history.push({ action: "요청대상 초기화", worker: getCurrentWorkerName(), time: getChecklistTimeText() });
+  refreshChecklistTargetModal(index);
+}
+
+function removeChecklistAssignee(target) {
+  const card = document.querySelector("#checklistTargetModal .people-target-modal-card");
+  const index = Number(card?.dataset?.rowIndex);
+  if (!Number.isFinite(index)) return;
+  setChecklistTargetSelected(index, target, false, true);
+}
+
 function setChecklistTargetSelected(index, target, checked, keepModalOpen = false) {
   const row = checklistRows[index];
   if (!row) return;
   normalizeChecklistRow(row);
   if (isChecklistCategoryLocked(row.group)) return;
 
-  const targets = new Set(row.targets || []);
+  const currentTargets = row.manualTargets ? row.targets : [];
+  const targets = new Set(currentTargets || []);
   if (checked) targets.add(target);
   else targets.delete(target);
 
-  if (!targets.size) {
-    showToast("요청 대상은 최소 1명 이상 선택해야 합니다.");
-    if (keepModalOpen) {
-      const box = document.getElementById("checklistTargetModal");
-      if (box) box.innerHTML = renderChecklistTargetModal(index);
-    } else {
-      renderChecklistGrid();
-    }
-    return;
-  }
-
-  row.manualTargets = true;
-  row.targets = Array.from(targets);
+  row.manualTargets = targets.size > 0;
+  row.targets = targets.size ? Array.from(targets) : [getChecklistRouteLabel(row) || "PM"];
   row.owner = row.targets.join(", ");
   row.checks = row.targets.map(name => {
     const old = row.checks?.find(check => check.target === name);
     return old ? { ...old } : { target: name, done: false, na: false, checkedBy: "", checkedAt: "" };
   });
   row.history = Array.isArray(row.history) ? row.history : [];
-  row.history.push({ action: "요청대상 변경", worker: getCurrentWorkerName(), time: getChecklistTimeText() });
+  row.history.push({ action: "요청대상 변경", target: row.targets.map(formatChecklistAssigneeLabel).join(", "), worker: getCurrentWorkerName(), time: getChecklistTimeText() });
 
-  if (keepModalOpen) {
-    const box = document.getElementById("checklistTargetModal");
-    if (box) box.innerHTML = renderChecklistTargetModal(index);
-  } else {
-    renderChecklistGrid();
-  }
+  if (keepModalOpen) refreshChecklistTargetModal(index);
+  else renderChecklistGrid();
 }
 
 function renderChecklistTargetChecks(row, realIndex) {
@@ -8969,10 +9069,10 @@ function renderChecklistTargetChecks(row, realIndex) {
     const isNa = Boolean(check.na);
     const statusLabel = isNa ? "해당 없음" : (isDone ? "확인완료" : "미확인");
     return `
-      <div class="done-check-stack" title="${escapeHtml(check.target)} 확인 또는 해당 없음 처리">
+      <div class="done-check-stack" title="${escapeHtml(formatChecklistAssigneeLabel(check.target))} 확인 또는 해당 없음 처리">
         <label class="done-check-wrap target-done-wrap">
           <input type="checkbox" ${isDone ? "checked" : ""} ${locked || isNa ? "disabled" : ""} onchange="toggleChecklistDone(${realIndex}, ${checkIndex}, this.checked)">
-          <span>${escapeHtml(check.target)} · ${escapeHtml(statusLabel)}</span>
+          <span>${escapeHtml(formatChecklistAssigneeLabel(check.target))} · ${escapeHtml(statusLabel)}</span>
         </label>
         <button type="button" class="na-check-btn ${isNa ? "active" : ""}" ${locked ? "disabled" : ""} onclick="toggleChecklistNotApplicable(${realIndex}, ${checkIndex})">
           해당 없음
