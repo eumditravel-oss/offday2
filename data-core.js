@@ -367,22 +367,16 @@ const orgStructures = {
               "memberColumns": 1,
               "children": [
                 {
-                  "title": "파트 담당",
+                  "title": "개발",
                   "memberColumns": 3,
                   "children": [],
-                  "employeeId": "EMP-2018-001"
+                  "employeeId": "VQS-052"
                 },
                 {
                   "title": "개발",
                   "memberColumns": 3,
                   "children": [],
-                  "employeeId": "CC-006"
-                },
-                {
-                  "title": "개발",
-                  "memberColumns": 3,
-                  "children": [],
-                  "employeeId": "CC-007"
+                  "employeeId": "VQS-054"
                 }
               ],
               "displayName": "개발 T/F",
