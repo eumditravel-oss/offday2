@@ -9918,6 +9918,8 @@ function getChecklistFilteredRows() {
   });
 }
 
+let openedChecklistTranslationPanel = null;
+
 function showChecklistTranslationPending(event) {
   if (event) {
     event.preventDefault();
@@ -9930,12 +9932,52 @@ function showChecklistTranslationPending(event) {
   }
 }
 
+function toggleChecklistTranslationPanel(event, realIndex, field) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  showChecklistTranslationPending(event);
+  const key = `${realIndex}::${field}`;
+  openedChecklistTranslationPanel = openedChecklistTranslationPanel === key ? null : key;
+  renderChecklistGrid();
+}
+
+function buildChecklistGoogleTranslateUrl(realIndex, field) {
+  const row = checklistRows[realIndex] || {};
+  const text = String(row[field] || "").trim();
+  const base = "https://translate.google.com/?sl=ko&tl=en&op=translate";
+  return text ? `${base}&text=${encodeURIComponent(text)}` : base;
+}
+
 function renderChecklistTranslateCell(realIndex, field, value, locked = false) {
   return `
     <div class="checklist-translate-cell">
       <div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="${field}" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, '${field}', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(value || "")}</div>
-      <button type="button" class="checklist-translate-btn" onclick="showChecklistTranslationPending(event)" title="현재 셀의 한글 내용을 베트남어로 번역">번역</button>
+      <button type="button" class="checklist-translate-btn" onclick="toggleChecklistTranslationPanel(event, ${realIndex}, '${field}')" title="현재 셀의 한글 내용을 베트남어로 번역">번역</button>
     </div>`;
+}
+
+function renderChecklistTranslationPanel(realIndex) {
+  if (!openedChecklistTranslationPanel) return "";
+  const [rowKey, field] = openedChecklistTranslationPanel.split("::");
+  if (String(realIndex) !== rowKey) return "";
+  const fieldLabels = { item: "검토항목", method: "검토방법", comment: "코멘트" };
+  const url = buildChecklistGoogleTranslateUrl(realIndex, field);
+  return `
+    <tr class="checklist-translation-row" data-translate-row="${realIndex}">
+      <td colspan="11">
+        <div class="checklist-translation-panel">
+          <div class="checklist-translation-head">
+            <strong>구글번역</strong>
+            <span>${escapeHtml(fieldLabels[field] || field)} 셀 번역 영역</span>
+            <a class="checklist-translation-open" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            <button type="button" class="checklist-translation-close" onclick="openedChecklistTranslationPanel=null; renderChecklistGrid();">닫기</button>
+          </div>
+          <iframe class="checklist-translation-frame" src="${escapeHtml(url)}" title="Google Translate"></iframe>
+        </div>
+      </td>
+    </tr>`;
 }
 
 function renderChecklistGrid() {
@@ -10028,6 +10070,7 @@ function renderChecklistGrid() {
         <td><div class="history-cell">${renderChecklistHistoryButton(row, realIndex)}</div></td>
         <td class="manage-cell"><div class="row-actions row-actions-center"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
       </tr>`);
+    html.push(renderChecklistTranslationPanel(realIndex));
   });
 
   if (skippedDetailCount > 0) {
