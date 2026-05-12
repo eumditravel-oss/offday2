@@ -9905,10 +9905,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 /* QC 체크리스트 셀 번역 버튼 */
 .checklist-translate-cell{
-  position:relative;
-  display:block;
-  min-height:42px;
-  padding-right:52px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:6px;
+  min-height:58px;
 }
 
 .checklist-translate-cell .excel-editable-cell{
@@ -9916,10 +9917,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 .checklist-translate-btn{
-  position:absolute;
-  right:6px;
-  top:50%;
-  transform:translateY(-50%);
+  align-self:flex-end;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -9944,4 +9942,69 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 .locked-row .checklist-translate-btn{
   opacity:.72;
+}
+
+.checklist-translation-row td{
+  padding:0 !important;
+  background:#f8fbff !important;
+  border-top:1px solid #bfdbfe !important;
+  border-bottom:1px solid #bfdbfe !important;
+}
+
+.checklist-translation-panel{
+  margin:10px 14px 14px;
+  border:1px solid #bfdbfe;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 8px 22px rgba(15,23,42,.08);
+  overflow:hidden;
+}
+
+.checklist-translation-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:42px;
+  padding:8px 12px;
+  border-bottom:1px solid #dbeafe;
+  background:#eff6ff;
+  color:#1e3a8a;
+  font-size:12px;
+  font-weight:800;
+}
+
+.checklist-translation-head span{
+  color:#64748b;
+  font-weight:700;
+}
+
+.checklist-translation-open,
+.checklist-translation-close{
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:28px;
+  padding:0 10px;
+  border:1px solid #bfdbfe;
+  border-radius:999px;
+  background:#fff;
+  color:#2563eb;
+  font-size:12px;
+  font-weight:800;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.checklist-translation-close{
+  margin-left:0;
+  color:#475569;
+}
+
+.checklist-translation-frame{
+  display:block;
+  width:100%;
+  height:430px;
+  border:0;
+  background:#fff;
 }
