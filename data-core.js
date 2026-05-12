@@ -313,338 +313,768 @@ const assetLedger = [
 
 const orgStructures = {
   "CON-COST": {
-    title: "㈜컨코스트 조직도",
-    date: "",
-    root: {
-    "title": "대표이사",
-    "employeeId": "VQS-001",
-    "className": "primary",
-    "memberColumns": 1,
-    "children": [
+    "title": "㈜컨코스트 조직도",
+    "date": "2026. 05.12",
+    "root": {
+      "title": "대표이사",
+      "memberColumns": 1,
+      "children": [
         {
-            "title": "부사장",
-            "employeeId": "VQS-002",
-            "className": "secondary",
-            "memberColumns": 6,
-            "children": [
+          "title": "부사장",
+          "memberColumns": 6,
+          "children": [
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
                 {
-                    "title": "경영지원본부",
-                    "displayName": "경영지원본부",
-                    "nodeType": "department",
-                    "className": "secondary",
-                    "memberColumns": 1,
-                    "children": [
-                        {
-                            "title": "상무",
-                            "employeeId": "CC-001",
-                            "memberColumns": 1,
-                            "children": []
-                        },
-                        {
-                            "title": "실장",
-                            "employeeId": "CC-002",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "책임",
-                            "employeeId": "CC-003",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "선임",
-                            "employeeId": "CC-004",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "선임",
-                            "employeeId": "CC-005",
-                            "memberColumns": 3,
-                            "children": []
-                        }
-                    ]
+                  "title": "상무",
+                  "memberColumns": 1,
+                  "children": [],
+                  "employeeId": "CC-001"
                 },
                 {
-                    "title": "개발 T/F",
-                    "displayName": "개발 T/F",
-                    "nodeType": "department",
-                    "className": "secondary",
-                    "memberColumns": 1,
-                    "children": [
-                        {
-                            "title": "파트 담당",
-                            "employeeId": "EMP-2018-001",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "개발",
-                            "employeeId": "CC-006",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "개발",
-                            "employeeId": "CC-007",
-                            "memberColumns": 3,
-                            "children": []
-                        }
-                    ]
+                  "title": "실장",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-002"
                 },
                 {
-                    "title": "QC",
-                    "displayName": "QC",
-                    "nodeType": "department",
-                    "className": "secondary",
-                    "memberColumns": 1,
-                    "children": [
-                        {
-                            "title": "실장",
-                            "employeeId": "CC-008",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "실장",
-                            "employeeId": "CC-009",
-                            "memberColumns": 3,
-                            "children": []
-                        }
-                    ]
+                  "title": "책임",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-003"
                 },
                 {
-                    "title": "기술본부",
-                    "displayName": "기술본부",
-                    "nodeType": "department",
-                    "className": "secondary",
-                    "memberColumns": 1,
-                    "children": [
+                  "title": "선임",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-004"
+                },
+                {
+                  "title": "선임",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-005"
+                }
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            },
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
+                {
+                  "title": "파트 담당",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "EMP-2018-001"
+                },
+                {
+                  "title": "개발",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-006"
+                },
+                {
+                  "title": "개발",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-007"
+                }
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            },
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
+                {
+                  "title": "실장",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-008"
+                },
+                {
+                  "title": "실장",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-009"
+                }
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            },
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
+                {
+                  "title": "본부장",
+                  "memberColumns": 2,
+                  "children": [
+                    {
+                      "title": "부서명",
+                      "memberColumns": 3,
+                      "children": [
                         {
-                            "title": "본부장",
-                            "employeeId": "CC-010",
-                            "memberColumns": 2,
-                            "children": [
+                          "title": "팀장",
+                          "memberColumns": 3,
+                          "children": [
+                            {
+                              "title": "수석",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-011"
+                            },
+                            {
+                              "title": "수석",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-012"
+                            },
+                            {
+                              "title": "수석",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-013"
+                            },
+                            {
+                              "title": "수석",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-014"
+                            },
+                            {
+                              "title": "수석",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-015"
+                            },
+                            {
+                              "title": "책임",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-016"
+                            },
+                            {
+                              "title": "책임",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-017"
+                            },
+                            {
+                              "title": "책임",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-018"
+                            },
+                            {
+                              "title": "선임",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-019"
+                            },
+                            {
+                              "title": "선임",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-020"
+                            },
+                            {
+                              "title": "선임",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-021"
+                            },
+                            {
+                              "title": "프로",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-022"
+                            }
+                          ],
+                          "employeeId": "CC-009"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 3,
+                      "children": [
+                        {
+                          "title": "구조/토목 조경",
+                          "memberColumns": 3,
+                          "children": [
+                            {
+                              "title": "BIM 파트",
+                              "memberColumns": 3,
+                              "children": [
                                 {
-                                    "title": "마감",
-                                    "employeeId": "CC-009",
-                                    "memberColumns": 3,
-                                    "children": [
-                                        {
-                                            "title": "수석",
-                                            "employeeId": "CC-011",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "수석",
-                                            "employeeId": "CC-012",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "수석",
-                                            "employeeId": "CC-013",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "수석",
-                                            "employeeId": "CC-014",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "수석",
-                                            "employeeId": "CC-015",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "책임",
-                                            "employeeId": "CC-016",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "책임",
-                                            "employeeId": "CC-017",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "책임",
-                                            "employeeId": "CC-018",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "선임",
-                                            "employeeId": "CC-019",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "선임",
-                                            "employeeId": "CC-020",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "선임",
-                                            "employeeId": "CC-021",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        },
-                                        {
-                                            "title": "프로",
-                                            "employeeId": "CC-022",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        }
-                                    ]
+                                  "title": "파트 담당",
+                                  "memberColumns": 3,
+                                  "children": [],
+                                  "employeeId": "EMP-2018-001"
+                                }
+                              ],
+                              "employeeId": "CC-029"
+                            },
+                            {
+                              "title": "구조 파트",
+                              "memberColumns": 1,
+                              "children": [
+                                {
+                                  "title": "수석",
+                                  "memberColumns": 1,
+                                  "children": [],
+                                  "employeeId": "CC-024"
                                 },
                                 {
-                                    "title": "구조/토목 조경",
-                                    "employeeId": "CC-008",
-                                    "memberColumns": 3,
-                                    "children": [
-                                        {
-                                            "title": "BIM 파트",
-                                            "employeeId": "CC-029",
-                                            "memberColumns": 3,
-                                            "children": [
-                                                {
-                                                    "title": "파트 담당",
-                                                    "employeeId": "EMP-2018-001",
-                                                    "memberColumns": 3,
-                                                    "children": []
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "title": "구조 파트",
-                                            "employeeId": "CC-023",
-                                            "memberColumns": 1,
-                                            "children": [
-                                                {
-                                                    "title": "수석",
-                                                    "employeeId": "CC-024",
-                                                    "memberColumns": 1,
-                                                    "children": []
-                                                },
-                                                {
-                                                    "title": "수석",
-                                                    "employeeId": "CC-025",
-                                                    "memberColumns": 1,
-                                                    "children": []
-                                                },
-                                                {
-                                                    "title": "책임",
-                                                    "employeeId": "CC-026",
-                                                    "memberColumns": 3,
-                                                    "children": []
-                                                },
-                                                {
-                                                    "title": "책임",
-                                                    "employeeId": "CC-027",
-                                                    "memberColumns": 3,
-                                                    "children": []
-                                                },
-                                                {
-                                                    "title": "프로",
-                                                    "employeeId": "CC-028",
-                                                    "memberColumns": 3,
-                                                    "children": []
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "title": "토목·조경파트",
-                                            "employeeId": "CC-030",
-                                            "memberColumns": 3,
-                                            "children": []
-                                        }
-                                    ]
+                                  "title": "수석",
+                                  "memberColumns": 1,
+                                  "children": [],
+                                  "employeeId": "CC-025"
+                                },
+                                {
+                                  "title": "책임",
+                                  "memberColumns": 3,
+                                  "children": [],
+                                  "employeeId": "CC-026"
+                                },
+                                {
+                                  "title": "책임",
+                                  "memberColumns": 3,
+                                  "children": [],
+                                  "employeeId": "CC-027"
+                                },
+                                {
+                                  "title": "프로",
+                                  "memberColumns": 3,
+                                  "children": [],
+                                  "employeeId": "CC-028"
                                 }
-                            ]
+                              ],
+                              "employeeId": "CC-023"
+                            },
+                            {
+                              "title": "토목·조경파트",
+                              "memberColumns": 3,
+                              "children": [],
+                              "employeeId": "CC-030"
+                            }
+                          ],
+                          "employeeId": "CC-008"
                         }
-                    ]
-                },
-                {
-                    "title": "클레임센터",
-                    "displayName": "클레임센터",
-                    "nodeType": "department",
-                    "className": "secondary",
-                    "memberColumns": 1,
-                    "children": [
-                        {
-                            "title": "센터장",
-                            "employeeId": "CC-031",
-                            "memberColumns": 1,
-                            "children": []
-                        },
-                        {
-                            "title": "본부장",
-                            "employeeId": "CC-010",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "실장",
-                            "employeeId": "CC-008",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "기술이사",
-                            "employeeId": "CC-032",
-                            "memberColumns": 3,
-                            "children": []
-                        },
-                        {
-                            "title": "기술이사",
-                            "employeeId": "CC-033",
-                            "memberColumns": 3,
-                            "children": []
-                        }
-                    ]
-                },
-                {
-                    "title": "공사비닷컴",
-                    "displayName": "공사비닷컴",
-                    "nodeType": "department",
-                    "className": "dotted",
-                    "memberColumns": 3,
-                    "children": []
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    }
+                  ],
+                  "employeeId": "CC-010"
                 }
-            ]
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            },
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
+                {
+                  "title": "센터장",
+                  "memberColumns": 1,
+                  "children": [],
+                  "employeeId": "CC-031"
+                },
+                {
+                  "title": "본부장",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-010"
+                },
+                {
+                  "title": "실장",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-008"
+                },
+                {
+                  "title": "기술이사",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-032"
+                },
+                {
+                  "title": "기술이사",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "CC-033"
+                }
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            },
+            {
+              "title": "부서명",
+              "memberColumns": 3,
+              "children": [],
+              "displayName": "부서명",
+              "nodeType": "department"
+            }
+          ],
+          "employeeId": "VQS-002",
+          "className": "secondary"
         }
-    ]
-}
+      ],
+      "employeeId": "VQS-001",
+      "className": "primary"
+    }
   },
   "Viet QS": {
-    title: "Viet QS Organization Chart",
-    date: "2026. 04.07",
-    root: { employeeId: "VQS-001", className: "primary", children: [
-      { employeeId: "VQS-002", className: "secondary", memberColumns: 6, children: [
-        { title: "Management Support", employeeId: "VQS-003", children: [{ employeeId: "VQS-004" }, { employeeId: "VQS-005" }] },
-        { title: "Director", employeeId: "CC-010" },
-        { title: "Finish", employeeId: "CC-009", children: [
-          { title: "Internal 1", children: [{ employeeId: "VQS-006" }, { employeeId: "VQS-007" }, { employeeId: "VQS-008" }, { employeeId: "VQS-009" }, { employeeId: "VQS-010" }, { employeeId: "VQS-011" }] },
-          { title: "Internal 2", children: [{ employeeId: "VQS-012" }, { employeeId: "VQS-013" }, { employeeId: "VQS-014" }, { employeeId: "VQS-015" }, { employeeId: "VQS-016" }] },
-          { title: "Internal 3", children: [{ employeeId: "VQS-017" }, { employeeId: "VQS-018" }, { employeeId: "VQS-019" }, { employeeId: "VQS-020" }, { employeeId: "VQS-021" }] },
-          { title: "Partition&Opening", children: [{ employeeId: "VQS-022" }, { employeeId: "VQS-023" }, { employeeId: "VQS-024" }, { employeeId: "VQS-025" }, { employeeId: "VQS-026" }] },
-          { title: "External", children: [{ employeeId: "VQS-027" }, { employeeId: "VQS-028" }, { employeeId: "VQS-029" }, { employeeId: "VQS-030" }, { employeeId: "VQS-031" }] }
-        ] },
-        { title: "Structure/Civil", children: [
-          { title: "Vertical", children: [{ employeeId: "VQS-032" }, { employeeId: "VQS-033" }, { employeeId: "VQS-034" }, { employeeId: "VQS-035" }, { employeeId: "VQS-036" }, { employeeId: "VQS-037" }, { employeeId: "VQS-038" }, { employeeId: "VQS-039" }, { employeeId: "VQS-040" }, { employeeId: "VQS-041" }, { employeeId: "VQS-042" }, { employeeId: "VQS-043" }, { employeeId: "VQS-044" }, { employeeId: "VQS-045" }, { employeeId: "VQS-046" }, { employeeId: "VQS-047" }, { employeeId: "VQS-048" }] },
-          { title: "Horizon / Foundation", children: [{ employeeId: "VQS-049" }, { employeeId: "VQS-050" }, { employeeId: "VQS-051" }, { employeeId: "VQS-052" }] },
-          { title: "Civil", employeeId: "CC-008", children: [{ employeeId: "VQS-053" }, { employeeId: "VQS-054" }] }
-        ] }
-      ] }
-    ] }
+    "title": "Viet QS Organization Chart",
+    "date": "2026. 05.12",
+    "root": {
+      "title": "CEO",
+      "memberColumns": 3,
+      "children": [
+        {
+          "title": "Executive Vice President",
+          "memberColumns": 6,
+          "children": [
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
+                {
+                  "title": "Management Support",
+                  "memberColumns": 1,
+                  "children": [
+                    {
+                      "title": "Staff",
+                      "memberColumns": 3,
+                      "children": [],
+                      "employeeId": "VQS-004"
+                    },
+                    {
+                      "title": "Staff",
+                      "memberColumns": 3,
+                      "children": [],
+                      "employeeId": "VQS-005"
+                    }
+                  ],
+                  "employeeId": "VQS-003"
+                }
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            },
+            {
+              "title": "Director",
+              "memberColumns": 3,
+              "children": [
+                {
+                  "title": "부서명",
+                  "memberColumns": 5,
+                  "children": [
+                    {
+                      "title": "부서명",
+                      "memberColumns": 1,
+                      "children": [
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-006"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-007"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-008"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-009"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-010"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-011"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 1,
+                      "children": [
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-012"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-013"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-014"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-015"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-016"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 1,
+                      "children": [
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-017"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-018"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-019"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-020"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-021"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 1,
+                      "children": [
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-022"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-023"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-024"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-025"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-026"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 1,
+                      "children": [
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-027"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-028"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-029"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-030"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-031"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    }
+                  ],
+                  "displayName": "부서명",
+                  "nodeType": "department"
+                },
+                {
+                  "title": "부서명",
+                  "memberColumns": 3,
+                  "children": [
+                    {
+                      "title": "부서명",
+                      "memberColumns": 3,
+                      "children": [
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-032"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-033"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-034"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-035"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-036"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-037"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-038"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-039"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-040"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-041"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-042"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-043"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-044"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-045"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-046"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-047"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-048"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 3,
+                      "children": [
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-049"
+                        },
+                        {
+                          "title": "Asst. Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-050"
+                        },
+                        {
+                          "title": "Team Leader",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-051"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    },
+                    {
+                      "title": "부서명",
+                      "memberColumns": 1,
+                      "children": [
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-053"
+                        },
+                        {
+                          "title": "Staff",
+                          "memberColumns": 3,
+                          "children": [],
+                          "employeeId": "VQS-054"
+                        }
+                      ],
+                      "displayName": "부서명",
+                      "nodeType": "department"
+                    }
+                  ],
+                  "displayName": "부서명",
+                  "nodeType": "department"
+                }
+              ],
+              "employeeId": "CC-010"
+            },
+            {
+              "title": "부서명",
+              "memberColumns": 1,
+              "children": [
+                {
+                  "title": "Team Leader",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "VQS-052"
+                },
+                {
+                  "title": "Staff",
+                  "memberColumns": 3,
+                  "children": [],
+                  "employeeId": "VQS-054"
+                }
+              ],
+              "displayName": "부서명",
+              "nodeType": "department"
+            }
+          ],
+          "employeeId": "VQS-002",
+          "className": "secondary"
+        }
+      ],
+      "employeeId": "VQS-001",
+      "className": "primary"
+    }
   }
 };
 
