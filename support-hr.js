@@ -857,6 +857,7 @@ const permissionRoleOptions = [
   "실장",
   "팀장",
   "파트장",
+  "T/F팀",
   "PM",
   "Leader",
   "Asst.Leader",
