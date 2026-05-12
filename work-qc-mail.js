@@ -9918,6 +9918,26 @@ function getChecklistFilteredRows() {
   });
 }
 
+function showChecklistTranslationPending(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (typeof showToast === "function") {
+    showToast("번역기능이 활성화 될 예정입니다");
+  } else {
+    alert("번역기능이 활성화 될 예정입니다");
+  }
+}
+
+function renderChecklistTranslateCell(realIndex, field, value, locked = false) {
+  return `
+    <div class="checklist-translate-cell">
+      <div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="${field}" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, '${field}', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(value || "")}</div>
+      <button type="button" class="checklist-translate-btn" onclick="showChecklistTranslationPending(event)" title="현재 셀의 한글 내용을 베트남어로 번역">번역</button>
+    </div>`;
+}
+
 function renderChecklistGrid() {
   if (checklistRenderFrame) {
     window.cancelAnimationFrame(checklistRenderFrame);
@@ -9999,11 +10019,11 @@ function renderChecklistGrid() {
         <td><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
         <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="trade" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.trade)}</div></td>
         <td class="serial-no-cell"><div class="cell excel-editable-cell serial-no-value" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(normalizeChecklistNo(row.no))}</div></td>
-        <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="item" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'item', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.item)}</div></td>
-        <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="method" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'method', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.method)}</div></td>
+        <td>${renderChecklistTranslateCell(realIndex, "item", row.item, locked)}</td>
+        <td>${renderChecklistTranslateCell(realIndex, "method", row.method, locked)}</td>
         <td class="target-cell">${renderChecklistTargetCell(row, realIndex)}</td>
         <td class="done-cell">${renderChecklistTargetChecks(row, realIndex)}</td>
-        <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="comment" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'comment', this.innerText)" onkeydown="moveChecklistCell(event, this)">${escapeHtml(row.comment)}</div></td>
+        <td>${renderChecklistTranslateCell(realIndex, "comment", row.comment, locked)}</td>
         <td>${renderChecklistAttachmentCell(row, realIndex)}</td>
         <td><div class="history-cell">${renderChecklistHistoryButton(row, realIndex)}</div></td>
         <td class="manage-cell"><div class="row-actions row-actions-center"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
