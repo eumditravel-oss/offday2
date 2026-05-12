@@ -324,7 +324,7 @@ const orgStructures = {
           "memberColumns": 6,
           "children": [
             {
-              "title": "부서명",
+              "title": "경영지원본부",
               "memberColumns": 1,
               "children": [
                 {
@@ -358,11 +358,12 @@ const orgStructures = {
                   "employeeId": "CC-005"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "경영지원본부",
+              "nodeType": "department",
+              "className": "secondary"
             },
             {
-              "title": "부서명",
+              "title": "개발 T/F",
               "memberColumns": 1,
               "children": [
                 {
@@ -384,11 +385,12 @@ const orgStructures = {
                   "employeeId": "CC-007"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "개발 T/F",
+              "nodeType": "department",
+              "className": "secondary"
             },
             {
-              "title": "부서명",
+              "title": "QC팀",
               "memberColumns": 1,
               "children": [
                 {
@@ -404,11 +406,12 @@ const orgStructures = {
                   "employeeId": "CC-009"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "QC팀",
+              "nodeType": "department",
+              "className": "secondary"
             },
             {
-              "title": "부서명",
+              "title": "기술본부",
               "memberColumns": 1,
               "children": [
                 {
@@ -577,11 +580,12 @@ const orgStructures = {
                   "employeeId": "CC-010"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "기술본부",
+              "nodeType": "department",
+              "className": "secondary"
             },
             {
-              "title": "부서명",
+              "title": "클레임센터",
               "memberColumns": 1,
               "children": [
                 {
@@ -615,15 +619,17 @@ const orgStructures = {
                   "employeeId": "CC-033"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "클레임센터",
+              "nodeType": "department",
+              "className": "secondary"
             },
             {
-              "title": "부서명",
+              "title": "공사비닷컴",
               "memberColumns": 3,
               "children": [],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "공사비닷컴",
+              "nodeType": "department",
+              "className": "secondary"
             }
           ],
           "employeeId": "VQS-002",
@@ -646,7 +652,7 @@ const orgStructures = {
           "memberColumns": 6,
           "children": [
             {
-              "title": "부서명",
+              "title": "Management Support",
               "memberColumns": 1,
               "children": [
                 {
@@ -669,19 +675,20 @@ const orgStructures = {
                   "employeeId": "VQS-003"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "Management Support",
+              "nodeType": "department",
+              "className": "secondary"
             },
             {
               "title": "Director",
               "memberColumns": 3,
               "children": [
                 {
-                  "title": "부서명",
+                  "title": "Finish",
                   "memberColumns": 5,
                   "children": [
                     {
-                      "title": "부서명",
+                      "title": "Internal 1",
                       "memberColumns": 1,
                       "children": [
                         {
@@ -721,11 +728,12 @@ const orgStructures = {
                           "employeeId": "VQS-011"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Internal 1",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "Internal 2",
                       "memberColumns": 1,
                       "children": [
                         {
@@ -759,11 +767,12 @@ const orgStructures = {
                           "employeeId": "VQS-016"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Internal 2",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "Internal 3",
                       "memberColumns": 1,
                       "children": [
                         {
@@ -797,11 +806,12 @@ const orgStructures = {
                           "employeeId": "VQS-021"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Internal 3",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "Partition&Opening",
                       "memberColumns": 1,
                       "children": [
                         {
@@ -835,11 +845,12 @@ const orgStructures = {
                           "employeeId": "VQS-026"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Partition&Opening",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "External",
                       "memberColumns": 1,
                       "children": [
                         {
@@ -873,19 +884,21 @@ const orgStructures = {
                           "employeeId": "VQS-031"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "External",
+                      "nodeType": "department",
+                      "className": "secondary"
                     }
                   ],
-                  "displayName": "부서명",
-                  "nodeType": "department"
+                  "displayName": "Finish",
+                  "nodeType": "department",
+                  "className": "secondary"
                 },
                 {
-                  "title": "부서명",
+                  "title": "Structure",
                   "memberColumns": 3,
                   "children": [
                     {
-                      "title": "부서명",
+                      "title": "Vertical",
                       "memberColumns": 3,
                       "children": [
                         {
@@ -991,11 +1004,12 @@ const orgStructures = {
                           "employeeId": "VQS-048"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Vertical",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "Horizontal/Foundation",
                       "memberColumns": 3,
                       "children": [
                         {
@@ -1017,11 +1031,12 @@ const orgStructures = {
                           "employeeId": "VQS-051"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Horizontal/Foundation",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "Civil",
                       "memberColumns": 1,
                       "children": [
                         {
@@ -1037,18 +1052,20 @@ const orgStructures = {
                           "employeeId": "VQS-054"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "Civil",
+                      "nodeType": "department",
+                      "className": "secondary"
                     }
                   ],
-                  "displayName": "부서명",
-                  "nodeType": "department"
+                  "displayName": "Structure",
+                  "nodeType": "department",
+                  "className": "secondary"
                 }
               ],
               "employeeId": "CC-010"
             },
             {
-              "title": "부서명",
+              "title": "Development",
               "memberColumns": 1,
               "children": [
                 {
@@ -1064,8 +1081,9 @@ const orgStructures = {
                   "employeeId": "VQS-054"
                 }
               ],
-              "displayName": "부서명",
-              "nodeType": "department"
+              "displayName": "Development",
+              "nodeType": "department",
+              "className": "secondary"
             }
           ],
           "employeeId": "VQS-002",
