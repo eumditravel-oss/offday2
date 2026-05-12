@@ -419,7 +419,7 @@ const orgStructures = {
                   "memberColumns": 2,
                   "children": [
                     {
-                      "title": "부서명",
+                      "title": "마감팀",
                       "memberColumns": 3,
                       "children": [
                         {
@@ -502,11 +502,12 @@ const orgStructures = {
                           "employeeId": "CC-009"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "마감팀",
+                      "nodeType": "department",
+                      "className": "secondary"
                     },
                     {
-                      "title": "부서명",
+                      "title": "구조팀",
                       "memberColumns": 3,
                       "children": [
                         {
@@ -573,8 +574,9 @@ const orgStructures = {
                           "employeeId": "CC-008"
                         }
                       ],
-                      "displayName": "부서명",
-                      "nodeType": "department"
+                      "displayName": "구조팀",
+                      "nodeType": "department",
+                      "className": "secondary"
                     }
                   ],
                   "employeeId": "CC-010"
