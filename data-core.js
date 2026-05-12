@@ -515,7 +515,7 @@ const orgStructures = {
                           "memberColumns": 3,
                           "children": [
                             {
-                              "title": "BIM 파트",
+                              "title": "BIM 파트장",
                               "memberColumns": 3,
                               "children": [
                                 {
@@ -528,7 +528,7 @@ const orgStructures = {
                               "employeeId": "CC-029"
                             },
                             {
-                              "title": "구조 파트",
+                              "title": "구조 팀장",
                               "memberColumns": 1,
                               "children": [
                                 {
@@ -565,7 +565,7 @@ const orgStructures = {
                               "employeeId": "CC-023"
                             },
                             {
-                              "title": "토목·조경파트",
+                              "title": "토목·조경파트장",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-030"
