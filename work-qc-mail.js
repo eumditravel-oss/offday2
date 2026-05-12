@@ -12316,6 +12316,62 @@ function getDefaultStructureQcTeamTemplateRows() {
   const now = "2026-05-08 09:00";
   const rows = [
     {
+      subCategory: "QC팀",
+      trade: "계약방식",
+      item: "프로젝트 업무 특성 파악 (구조선수행, 입찰, 본실행, 설계내역 등)",
+      method: "접수자료 확인. (특이사항 작성 후 프로젝트 PM 전달)",
+      comment: ""
+    },
+    {
+      subCategory: "QC팀",
+      trade: "접수자료",
+      item: "입찰 내역서, 산출기준서, 공사 특기사항 접수 파악",
+      method: "접수자료 확인. (특이사항 작성 후 프로젝트 PM 전달)",
+      comment: ""
+    },
+    {
+      subCategory: "QC팀",
+      trade: "도면검토",
+      item: "도면 접수 여부 확인",
+      method: "도면목록표와 접수 도면상 일치 확인",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "합벽",
+      item: "1. 합벽유무 확인\n2. 합벽구간일 경우 옹벽 및 기둥에 추가이음 발생하는지 확인",
+      method: "토목도면 흙막이 or 가시설계획도 확인",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "끊어치기",
+      item: "끊어치기(C.J Jont) 구간 확인",
+      method: "발주처 및 건설사에 질의사항 작성 [Zoning 및 분할타설 계획도 요청]",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "커플러",
+      item: "커플러 산출기준 확인",
+      method: "건설사별 견적지침서 [별도 표현없을시 담당자에게 확인 후 진행]",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "철근강도",
+      item: "철근 강도에 따른 정착/이음값 오류 확인",
+      method: "구조일반사항 및 구조계산서",
+      comment: ""
+    },
+    {
+      subCategory: "PM",
+      trade: "내진철근",
+      item: "내진철근 적용 유무 확인",
+      method: "구조일반사항 및 구조계산서 [SD400S, SD500S, SD600S 등의 표현유무]",
+      comment: ""
+    },
+    {
       subCategory: "공통",
       trade: "기준서",
       item: "프로젝트 건설사별 기준서 숙지",
