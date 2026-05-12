@@ -9919,10 +9919,59 @@ function getChecklistFilteredRows() {
 }
 
 let openedChecklistTranslationPanel = null;
-const CHECKLIST_TRANSLATION_API_ENDPOINT = ""; // 예: "/api/translate" 또는 사내 번역 API 엔드포인트
+
+/* =========================================================
+   Papago 번역 + 전문용어 강제 치환 설정
+   - 보안이 필요 없는 테스트 기준으로 Client ID/Secret을 프론트에 직접 입력할 수 있게 구성
+   - 운영 전환 시에는 반드시 서버 프록시 방식으로 이동 권장
+   ========================================================= */
 const CHECKLIST_TRANSLATION_SOURCE_LANG = "ko";
 const CHECKLIST_TRANSLATION_TARGET_LANG = "vi";
+const PAPAGO_TRANSLATION_ENDPOINT = "https://openapi.naver.com/v1/papago/n2mt";
+const PAPAGO_CLIENT_ID = "YOUR_NAVER_CLIENT_ID";
+const PAPAGO_CLIENT_SECRET = "YOUR_NAVER_CLIENT_SECRET";
+const CHECKLIST_TERM_DICTIONARY_STORAGE_KEY = "checklistTermDictionaryRows";
 const checklistTranslationState = {};
+let checklistTermDictionaryRows = [];
+
+const defaultChecklistTermDictionaryRows = [
+  { ko: "프로젝트", vi: "Dự án", enabled: true },
+  { ko: "구조팀", vi: "Đội kết cấu", enabled: true },
+  { ko: "수평팀", vi: "Đội kết cấu ngang", enabled: true },
+  { ko: "수직팀", vi: "Đội kết cấu đứng", enabled: true },
+  { ko: "한국팀", vi: "Đội Hàn Quốc", enabled: true },
+  { ko: "QC팀", vi: "Đội QC", enabled: true },
+  { ko: "PM", vi: "PM", enabled: true },
+  { ko: "기준서", vi: "Tài liệu tiêu chuẩn", enabled: true },
+  { ko: "검토항목", vi: "Hạng mục kiểm tra", enabled: true },
+  { ko: "검토방법", vi: "Phương pháp kiểm tra", enabled: true },
+  { ko: "수량산출", vi: "Bóc tách khối lượng", enabled: true },
+  { ko: "산출", vi: "Bóc tách", enabled: true },
+  { ko: "도면", vi: "Bản vẽ", enabled: true },
+  { ko: "도면목록표", vi: "Danh mục bản vẽ", enabled: true },
+  { ko: "구조도면", vi: "Bản vẽ kết cấu", enabled: true },
+  { ko: "건축도면", vi: "Bản vẽ kiến trúc", enabled: true },
+  { ko: "슬라브", vi: "Sàn", enabled: true },
+  { ko: "보", vi: "Dầm", enabled: true },
+  { ko: "기둥", vi: "Cột", enabled: true },
+  { ko: "옹벽", vi: "Tường chắn", enabled: true },
+  { ko: "기초", vi: "Móng", enabled: true },
+  { ko: "철근", vi: "Cốt thép", enabled: true },
+  { ko: "배근", vi: "Bố trí thép", enabled: true },
+  { ko: "콘크리트", vi: "Bê tông", enabled: true },
+  { ko: "레미콘", vi: "Bê tông thương phẩm", enabled: true },
+  { ko: "동바리", vi: "Giàn giáo chống", enabled: true },
+  { ko: "시스템동바리", vi: "Giàn giáo chống hệ thống", enabled: true },
+  { ko: "거푸집", vi: "Ván khuôn", enabled: true },
+  { ko: "우마철근", vi: "Thép kê mũ ngựa", enabled: true },
+  { ko: "내진철근", vi: "Thép kháng chấn", enabled: true },
+  { ko: "커플러", vi: "Coupler", enabled: true },
+  { ko: "정착", vi: "Neo thép", enabled: true },
+  { ko: "이음", vi: "Nối thép", enabled: true },
+  { ko: "HOOK", vi: "HOOK", enabled: true },
+  { ko: "데크", vi: "Deck", enabled: true },
+  { ko: "데크슬라브", vi: "Sàn Deck", enabled: true }
+];
 
 function getChecklistTranslationKey(realIndex, field) {
   return `${realIndex}::${field}`;
@@ -9932,6 +9981,152 @@ function getChecklistTranslationText(realIndex, field) {
   const row = checklistRows[realIndex] || {};
   return String(row[field] || "").trim();
 }
+
+function loadChecklistTermDictionaryRows() {
+  if (checklistTermDictionaryRows.length) return checklistTermDictionaryRows;
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHECKLIST_TERM_DICTIONARY_STORAGE_KEY) || "[]");
+    if (Array.isArray(saved) && saved.length) {
+      checklistTermDictionaryRows = saved.map(row => ({
+        ko: String(row.ko || "").trim(),
+        vi: String(row.vi || "").trim(),
+        enabled: row.enabled !== false
+      })).filter(row => row.ko && row.vi);
+      return checklistTermDictionaryRows;
+    }
+  } catch (error) {}
+  checklistTermDictionaryRows = defaultChecklistTermDictionaryRows.map(row => ({ ...row }));
+  saveChecklistTermDictionaryRows(false);
+  return checklistTermDictionaryRows;
+}
+
+function saveChecklistTermDictionaryRows(showMessage = true) {
+  try {
+    localStorage.setItem(CHECKLIST_TERM_DICTIONARY_STORAGE_KEY, JSON.stringify(checklistTermDictionaryRows));
+  } catch (error) {}
+  if (showMessage) showToast("전문용어 사전을 저장했습니다.");
+}
+
+function resetChecklistTermDictionaryRows() {
+  if (!confirm("전문용어 사전을 기본값으로 되돌릴까요?")) return;
+  checklistTermDictionaryRows = defaultChecklistTermDictionaryRows.map(row => ({ ...row }));
+  saveChecklistTermDictionaryRows(false);
+  renderChecklistTermDictionaryModal();
+  showToast("전문용어 사전을 기본값으로 복원했습니다.");
+}
+
+function addChecklistTermDictionaryRow() {
+  loadChecklistTermDictionaryRows();
+  checklistTermDictionaryRows.push({ ko: "", vi: "", enabled: true });
+  renderChecklistTermDictionaryModal();
+}
+
+function updateChecklistTermDictionaryCell(index, field, value) {
+  loadChecklistTermDictionaryRows();
+  const row = checklistTermDictionaryRows[index];
+  if (!row) return;
+  if (field === "enabled") row.enabled = !!value;
+  else row[field] = String(value || "").trim();
+}
+
+function deleteChecklistTermDictionaryRow(index) {
+  loadChecklistTermDictionaryRows();
+  checklistTermDictionaryRows.splice(index, 1);
+  saveChecklistTermDictionaryRows(false);
+  renderChecklistTermDictionaryModal();
+}
+
+function closeChecklistTermDictionaryModal() {
+  document.getElementById("checklistTermDictionaryBackdrop")?.remove();
+}
+
+function openChecklistTermDictionaryModal() {
+  loadChecklistTermDictionaryRows();
+  let layer = document.getElementById("checklistTermDictionaryBackdrop");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "checklistTermDictionaryBackdrop";
+    layer.className = "modal-backdrop checklist-term-dictionary-backdrop";
+    document.body.appendChild(layer);
+  }
+  renderChecklistTermDictionaryModal();
+}
+
+function renderChecklistTermDictionaryModal() {
+  const layer = document.getElementById("checklistTermDictionaryBackdrop");
+  if (!layer) return;
+  loadChecklistTermDictionaryRows();
+  const rows = checklistTermDictionaryRows.map((row, index) => `
+    <tr>
+      <td><input type="checkbox" ${row.enabled !== false ? "checked" : ""} onchange="updateChecklistTermDictionaryCell(${index}, 'enabled', this.checked)"></td>
+      <td><input type="text" value="${escapeHtml(row.ko)}" placeholder="한글 전문용어" oninput="updateChecklistTermDictionaryCell(${index}, 'ko', this.value)"></td>
+      <td><input type="text" value="${escapeHtml(row.vi)}" placeholder="베트남어 고정 번역" oninput="updateChecklistTermDictionaryCell(${index}, 'vi', this.value)"></td>
+      <td><button type="button" class="btn btn-danger" onclick="deleteChecklistTermDictionaryRow(${index})">삭제</button></td>
+    </tr>
+  `).join("");
+  layer.innerHTML = `
+    <div class="checklist-term-dictionary-modal" onclick="event.stopPropagation()">
+      <div class="checklist-term-dictionary-head">
+        <div>
+          <h2>전문용어 고정번역 사전</h2>
+          <p>Papago 번역 전 전문용어를 보호 토큰으로 치환하고, 번역 후 지정한 베트남어로 복원합니다.</p>
+        </div>
+        <button type="button" class="modal-close" onclick="closeChecklistTermDictionaryModal()">×</button>
+      </div>
+      <div class="checklist-term-dictionary-toolbar">
+        <button type="button" class="btn btn-line" onclick="addChecklistTermDictionaryRow()">+ 용어 추가</button>
+        <button type="button" class="btn btn-line" onclick="resetChecklistTermDictionaryRows()">기본값 복원</button>
+        <button type="button" class="btn btn-primary" onclick="saveChecklistTermDictionaryRows(true); closeChecklistTermDictionaryModal();">사전 저장</button>
+      </div>
+      <div class="checklist-term-api-guide">
+        <strong>Papago API 직접 연결값</strong>
+        <span>work-qc-mail.js 상단의 <code>PAPAGO_CLIENT_ID</code>, <code>PAPAGO_CLIENT_SECRET</code> 값을 발급받은 값으로 교체하세요.</span>
+      </div>
+      <div class="checklist-term-dictionary-body">
+        <table>
+          <thead><tr><th>사용</th><th>한글 전문용어</th><th>베트남어 고정 번역</th><th>관리</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="4" class="empty">등록된 전문용어가 없습니다.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+  layer.onclick = closeChecklistTermDictionaryModal;
+}
+
+function applyChecklistTermTokenProtection(text) {
+  const source = String(text || "");
+  const terms = loadChecklistTermDictionaryRows()
+    .filter(row => row.enabled !== false && row.ko && row.vi)
+    .sort((a, b) => b.ko.length - a.ko.length);
+  let protectedText = source;
+  const tokenMap = [];
+  terms.forEach((row, index) => {
+    const token = `__CC_TERM_${index}__`;
+    if (protectedText.includes(row.ko)) {
+      protectedText = protectedText.split(row.ko).join(token);
+      tokenMap.push({ token, ko: row.ko, vi: row.vi });
+    }
+  });
+  return { protectedText, tokenMap };
+}
+
+function restoreChecklistTermTokens(text, tokenMap = []) {
+  let output = String(text || "");
+  tokenMap.forEach(({ token, vi }) => {
+    const variants = [
+      token,
+      token.replaceAll("_", " ").trim(),
+      token.replaceAll("_", ""),
+      token.toLowerCase(),
+      token.toLowerCase().replaceAll("_", " ").trim(),
+      token.toLowerCase().replaceAll("_", "")
+    ];
+    variants.forEach(variant => {
+      if (variant) output = output.split(variant).join(vi);
+    });
+  });
+  return output;
+}
+
 
 function normalizeChecklistTranslationResponse(data) {
   if (!data) return "";
@@ -9957,39 +10152,43 @@ async function requestChecklistTranslation(text, field = "") {
     };
   }
 
-  if (!CHECKLIST_TRANSLATION_API_ENDPOINT) {
+  if (!PAPAGO_CLIENT_ID || !PAPAGO_CLIENT_SECRET || PAPAGO_CLIENT_ID === "YOUR_NAVER_CLIENT_ID" || PAPAGO_CLIENT_SECRET === "YOUR_NAVER_CLIENT_SECRET") {
     return {
-      translatedText: "번역 API가 아직 연결되지 않았습니다. 서버 API 엔드포인트와 API Key 연결 후 이 영역에 베트남어 번역 결과가 표시됩니다.",
+      translatedText: "Papago API 키가 아직 입력되지 않았습니다. work-qc-mail.js의 PAPAGO_CLIENT_ID / PAPAGO_CLIENT_SECRET 값을 입력하면 번역이 실행됩니다.",
       source: "mock"
     };
   }
 
-  const response = await fetch(CHECKLIST_TRANSLATION_API_ENDPOINT, {
+  const { protectedText, tokenMap } = applyChecklistTermTokenProtection(originalText);
+
+  const response = await fetch(PAPAGO_TRANSLATION_ENDPOINT, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "X-Naver-Client-Id": PAPAGO_CLIENT_ID,
+      "X-Naver-Client-Secret": PAPAGO_CLIENT_SECRET
     },
-    body: JSON.stringify({
-      text: originalText,
+    body: new URLSearchParams({
       source: CHECKLIST_TRANSLATION_SOURCE_LANG,
       target: CHECKLIST_TRANSLATION_TARGET_LANG,
-      field
+      text: protectedText
     })
   });
 
   if (!response.ok) {
-    throw new Error(`번역 API 오류: ${response.status}`);
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`Papago API 오류: ${response.status}${errorText ? " / " + errorText.slice(0, 160) : ""}`);
   }
 
   const data = await response.json();
   const translatedText = normalizeChecklistTranslationResponse(data);
   if (!translatedText) {
-    throw new Error("번역 API 응답에서 번역문을 찾지 못했습니다.");
+    throw new Error("Papago API 응답에서 번역문을 찾지 못했습니다.");
   }
 
   return {
-    translatedText,
-    source: "api",
+    translatedText: restoreChecklistTermTokens(translatedText, tokenMap),
+    source: "papago",
     raw: data
   };
 }
@@ -10073,7 +10272,7 @@ function renderChecklistTranslationPanel(realIndex) {
   }[state.status] || "대기";
 
   const resultHtml = state.status === "loading"
-    ? `<div class="checklist-translation-loading">번역 API에 요청 중입니다.</div>`
+    ? `<div class="checklist-translation-loading">Papago API에 요청 중입니다.</div>`
     : state.status === "error"
       ? `<div class="checklist-translation-error">${escapeHtml(state.error || "번역 중 오류가 발생했습니다.")}</div>`
       : `<div class="checklist-translation-result">${escapeHtml(state.translatedText || "번역 결과가 여기에 표시됩니다.")}</div>`;
@@ -10083,8 +10282,8 @@ function renderChecklistTranslationPanel(realIndex) {
       <td colspan="11">
         <div class="checklist-translation-panel checklist-translation-panel-api">
           <div class="checklist-translation-head">
-            <strong>API 번역</strong>
-            <span>${escapeHtml(fieldLabels[field] || field)} 셀 · 한국어 → 베트남어</span>
+            <strong>Papago API 번역</strong>
+            <span>${escapeHtml(fieldLabels[field] || field)} 셀 · 한국어 → 베트남어 · 전문용어 고정번역 적용</span>
             <span class="checklist-translation-status">${escapeHtml(statusText)}</span>
             <button type="button" class="checklist-translation-open" onclick="runChecklistTranslation(${realIndex}, '${field}')">다시 번역</button>
             <button type="button" class="checklist-translation-close" onclick="openedChecklistTranslationPanel=null; renderChecklistGrid();">닫기</button>
