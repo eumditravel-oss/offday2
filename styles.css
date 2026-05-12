@@ -10181,3 +10181,231 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   color:#dc2626;
   background:#fff1f2;
 }
+
+
+/* Google Translate 스타일 번역 미리보기 템플릿 */
+.google-style-translate-panel{
+  margin:12px 14px 16px;
+  border:1px solid #dadce0;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 10px 26px rgba(60,64,67,.14);
+  overflow:hidden;
+  font-family:Arial, "Noto Sans KR", sans-serif;
+}
+
+.google-style-translate-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  border-bottom:1px solid #edf0f4;
+  background:#fff;
+}
+
+.google-style-translate-brand{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#202124;
+  font-size:14px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.google-style-translate-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  display:inline-block;
+}
+
+.google-style-translate-dot.blue{background:#4285f4;}
+.google-style-translate-dot.red{background:#ea4335;}
+.google-style-translate-dot.yellow{background:#fbbc04;}
+.google-style-translate-dot.green{background:#34a853;}
+
+.google-style-translate-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.google-style-translate-provider,
+.google-style-translate-status{
+  display:inline-flex;
+  align-items:center;
+  height:26px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#f1f3f4;
+  color:#5f6368;
+  font-size:11px;
+  font-weight:800;
+}
+
+.google-style-translate-status{
+  background:#e8f0fe;
+  color:#1967d2;
+}
+
+.google-style-translate-action{
+  height:28px;
+  padding:0 11px;
+  border:1px solid #dadce0;
+  border-radius:999px;
+  background:#fff;
+  color:#1a73e8;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.google-style-translate-action:hover{
+  background:#f8fbff;
+  border-color:#a8c7fa;
+}
+
+.google-style-translate-action.close{
+  color:#5f6368;
+}
+
+.google-style-translate-langbar{
+  display:grid;
+  grid-template-columns:1fr 42px 1fr auto;
+  align-items:center;
+  min-height:44px;
+  border-bottom:1px solid #edf0f4;
+  background:#f8fafd;
+}
+
+.google-style-translate-lang{
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#1a73e8;
+  font-size:13px;
+  font-weight:900;
+  border-bottom:3px solid transparent;
+}
+
+.google-style-translate-lang.active{
+  border-bottom-color:#1a73e8;
+  background:#fff;
+}
+
+.google-style-translate-swap{
+  text-align:center;
+  color:#5f6368;
+  font-size:18px;
+  font-weight:900;
+}
+
+.google-style-translate-field{
+  padding:0 14px;
+  color:#5f6368;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.google-style-translate-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  min-height:180px;
+}
+
+.google-style-translate-box{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  background:#fff;
+}
+
+.google-style-translate-box.source{
+  border-right:1px solid #edf0f4;
+}
+
+.google-style-translate-box-head{
+  height:36px;
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  color:#5f6368;
+  font-size:12px;
+  font-weight:900;
+  border-bottom:1px solid #f1f3f4;
+}
+
+.google-style-translate-source-text,
+.google-style-translate-text,
+.google-style-translate-loading,
+.google-style-translate-error{
+  flex:1;
+  min-height:120px;
+  padding:18px 18px 22px;
+  white-space:pre-wrap;
+  line-height:1.65;
+  word-break:break-word;
+}
+
+.google-style-translate-source-text{
+  color:#202124;
+  font-size:16px;
+  font-weight:600;
+}
+
+.google-style-translate-text{
+  color:#1a73e8;
+  font-size:18px;
+  font-weight:800;
+}
+
+.google-style-translate-loading{
+  color:#5f6368;
+  font-size:15px;
+  font-weight:800;
+  background:linear-gradient(90deg,#fff,#f8fbff,#fff);
+}
+
+.google-style-translate-error{
+  color:#b3261e;
+  font-size:15px;
+  font-weight:900;
+  background:#fce8e6;
+}
+
+.google-style-translate-note{
+  padding:10px 16px;
+  border-top:1px solid #edf0f4;
+  background:#f8fafd;
+  color:#5f6368;
+  font-size:11px;
+  font-weight:700;
+}
+
+@media (max-width: 900px){
+  .google-style-translate-topbar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .google-style-translate-langbar{
+    grid-template-columns:1fr 34px 1fr;
+  }
+  .google-style-translate-field{
+    grid-column:1 / -1;
+    padding:10px 14px;
+    border-top:1px solid #edf0f4;
+  }
+  .google-style-translate-grid{
+    grid-template-columns:1fr;
+  }
+  .google-style-translate-box.source{
+    border-right:0;
+    border-bottom:1px solid #edf0f4;
+  }
+}
