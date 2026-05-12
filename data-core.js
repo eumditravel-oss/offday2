@@ -303,6 +303,76 @@ orgEmployeeSeed.forEach(row => {
   if (!employees.some(emp => emp.empNo === row[0])) employees.push(createOrgEmployee(...row));
 });
 
+const vietQsOrgDeptCorrections = {
+  "VQS-001": "경영진",
+  "VQS-002": "경영진",
+  "VQS-003": "Management Support",
+  "VQS-004": "Management Support",
+  "VQS-005": "Management Support",
+  "VQS-006": "Internal 1",
+  "VQS-055": "Internal 1",
+  "VQS-009": "Internal 1",
+  "VQS-010": "Internal 1",
+  "VQS-007": "Internal 2",
+  "VQS-013": "Internal 2",
+  "VQS-014": "Internal 2",
+  "VQS-015": "Internal 2",
+  "VQS-016": "Internal 2",
+  "VQS-017": "Internal 3",
+  "VQS-018": "Internal 3",
+  "VQS-019": "Internal 3",
+  "VQS-020": "Internal 3",
+  "VQS-021": "Internal 3",
+  "VQS-022": "Partition&Opening",
+  "VQS-026": "Partition&Opening",
+  "VQS-023": "Partition&Opening",
+  "VQS-057": "Partition&Opening",
+  "VQS-056": "Partition&Opening",
+  "VQS-058": "Partition&Opening",
+  "VQS-024": "Partition&Opening",
+  "VQS-059": "Partition&Opening",
+  "VQS-060": "Partition&Opening",
+  "VQS-027": "External",
+  "VQS-028": "External",
+  "VQS-029": "External",
+  "VQS-061": "External",
+  "VQS-030": "External",
+  "VQS-053": "External",
+  "VQS-062": "External",
+  "VQS-032": "Vertical",
+  "VQS-033": "Vertical",
+  "VQS-034": "Vertical",
+  "VQS-036": "Vertical",
+  "VQS-037": "Vertical",
+  "VQS-012": "Vertical",
+  "VQS-040": "Vertical",
+  "VQS-042": "Vertical",
+  "VQS-043": "Vertical",
+  "VQS-045": "Vertical",
+  "VQS-035": "Horizontal/Foundation",
+  "VQS-038": "Horizontal/Foundation",
+  "VQS-049": "Horizontal/Foundation",
+  "VQS-025": "Horizontal/Foundation",
+  "VQS-050": "Horizontal/Foundation",
+  "VQS-051": "Horizontal/Foundation",
+  "VQS-039": "Horizontal/Foundation",
+  "VQS-065": "Horizontal/Foundation",
+  "VQS-047": "Horizontal/Foundation",
+  "VQS-044": "Horizontal/Foundation",
+  "VQS-046": "Horizontal/Foundation",
+  "VQS-063": "Civil",
+  "VQS-064": "Civil",
+  "VQS-052": "Development",
+  "VQS-054": "Development"
+};
+employees.forEach(emp => {
+  if (vietQsOrgDeptCorrections[emp.empNo]) {
+    emp.dept = vietQsOrgDeptCorrections[emp.empNo];
+    emp.orgPath = `Viet QS > ${emp.dept}`;
+  }
+});
+
+
 const assetLedger = [
   { category: "노트북", name: "LG Gram", code: "AS-2026-001", owner: "박용진", date: "2026-01-05", status: "사용중" },
   { category: "라이선스", name: "AutoCAD", code: "LIC-2026-018", owner: "박용진", date: "2026-01-01", status: "사용중" },
@@ -643,519 +713,503 @@ const orgStructures = {
     }
   },
   "Viet QS": {
-    "title": "Viet QS Organization Chart",
-    "date": "2026. 05.12",
-    "root": {
-      "title": "CEO",
-      "memberColumns": 3,
-      "children": [
-        {
-          "title": "Executive Vice President",
-          "memberColumns": 6,
-          "children": [
-            {
-              "title": "Management Support",
-              "memberColumns": 1,
-              "children": [
-                {
-                  "title": "Management Support",
-                  "memberColumns": 1,
-                  "children": [
-                    {
-                      "title": "Staff",
-                      "memberColumns": 3,
-                      "children": [],
-                      "employeeId": "VQS-004"
-                    },
-                    {
-                      "title": "Staff",
-                      "memberColumns": 3,
-                      "children": [],
-                      "employeeId": "VQS-005"
-                    }
-                  ],
-                  "employeeId": "VQS-003"
-                }
-              ],
-              "displayName": "Management Support",
-              "nodeType": "department",
-              "className": "secondary"
-            },
-            {
-              "title": "Director",
-              "memberColumns": 3,
-              "children": [
-                {
-                  "title": "Finish",
-                  "memberColumns": 5,
-                  "children": [
-                    {
-                      "title": "Internal 1",
-                      "memberColumns": 1,
-                      "children": [
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-006"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-007"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-055"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-008"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-009"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-010"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-011"
-                        }
-                      ],
-                      "displayName": "Internal 1",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    },
-                    {
-                      "title": "Internal 2",
-                      "memberColumns": 1,
-                      "children": [
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-012"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-013"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-014"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-015"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-016"
-                        }
-                      ],
-                      "displayName": "Internal 2",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    },
-                    {
-                      "title": "Internal 3",
-                      "memberColumns": 1,
-                      "children": [
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-017"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-018"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-019"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-020"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-021"
-                        }
-                      ],
-                      "displayName": "Internal 3",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    },
-                    {
-                      "title": "Partition&Opening",
-                      "memberColumns": 1,
-                      "children": [
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-022"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-023"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-024"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-056"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-025"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-026"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-057"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-058"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-059"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-060"
-                        }
-                      ],
-                      "displayName": "Partition&Opening",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    },
-                    {
-                      "title": "External",
-                      "memberColumns": 1,
-                      "children": [
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-027"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-028"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-029"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-030"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-031"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-061"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-053"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-062"
-                        }
-                      ],
-                      "displayName": "External",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    }
-                  ],
-                  "displayName": "Finish",
-                  "nodeType": "department",
-                  "className": "secondary"
-                },
-                {
-                  "title": "Structure",
-                  "memberColumns": 3,
-                  "children": [
-                    {
-                      "title": "Vertical",
-                      "memberColumns": 3,
-                      "children": [
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-032"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-033"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-034"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-035"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-036"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-037"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-038"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-039"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-040"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-041"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-042"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-043"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-044"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-045"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-046"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-047"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-048"
-                        }
-                      ],
-                      "displayName": "Vertical",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    },
-                    {
-                      "title": "Horizontal/Foundation",
-                      "memberColumns": 3,
-                      "children": [
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-049"
-                        },
-                        {
-                          "title": "Asst. Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-050"
-                        },
-                        {
-                          "title": "Team Leader",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-051"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-065"
-                        }
-                      ],
-                      "displayName": "Horizontal/Foundation",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    },
-                    {
-                      "title": "Civil",
-                      "memberColumns": 1,
-                      "children": [
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-063"
-                        },
-                        {
-                          "title": "Staff",
-                          "memberColumns": 3,
-                          "children": [],
-                          "employeeId": "VQS-064"
-                        }
-                      ],
-                      "displayName": "Civil",
-                      "nodeType": "department",
-                      "className": "secondary"
-                    }
-                  ],
-                  "displayName": "Structure",
-                  "nodeType": "department",
-                  "className": "secondary"
-                }
-              ],
-              "employeeId": "CC-010"
-            },
-            {
-              "title": "Development",
-              "memberColumns": 1,
-              "children": [
-                {
-                  "title": "Team Leader",
-                  "memberColumns": 3,
-                  "children": [],
-                  "employeeId": "VQS-052"
-                },
-                {
-                  "title": "Staff",
-                  "memberColumns": 3,
-                  "children": [],
-                  "employeeId": "VQS-054"
-                }
-              ],
-              "displayName": "Development",
-              "nodeType": "department",
-              "className": "secondary"
-            }
-          ],
-          "employeeId": "VQS-002",
-          "className": "secondary"
-        }
-      ],
-      "employeeId": "VQS-001",
-      "className": "primary"
-    }
+  "title": "Viet QS Organization Chart",
+  "date": "2026. 05.12",
+  "root": {
+    "title": "CEO",
+    "memberColumns": 3,
+    "children": [
+      {
+        "title": "Executive Vice President",
+        "memberColumns": 6,
+        "children": [
+          {
+            "title": "부서명",
+            "memberColumns": 1,
+            "children": [
+              {
+                "title": "General Manager",
+                "memberColumns": 1,
+                "children": [
+                  {
+                    "title": "Staff",
+                    "memberColumns": 3,
+                    "children": [],
+                    "employeeId": "VQS-004"
+                  },
+                  {
+                    "title": "Staff",
+                    "memberColumns": 3,
+                    "children": [],
+                    "employeeId": "VQS-005"
+                  }
+                ],
+                "employeeId": "VQS-003"
+              }
+            ],
+            "displayName": "Management Support",
+            "nodeType": "department",
+            "className": "secondary"
+          },
+          {
+            "title": "Director",
+            "memberColumns": 3,
+            "children": [
+              {
+                "title": "부서명",
+                "memberColumns": 1,
+                "children": [
+                  {
+                    "title": "General Manager",
+                    "memberColumns": 5,
+                    "children": [
+                      {
+                        "title": "부서명",
+                        "memberColumns": 1,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-006"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-055"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-009"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-010"
+                          }
+                        ],
+                        "displayName": "Internal 1",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      },
+                      {
+                        "title": "부서명",
+                        "memberColumns": 1,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-007"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-013"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-014"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-015"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-016"
+                          }
+                        ],
+                        "displayName": "Internal 2",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      },
+                      {
+                        "title": "부서명",
+                        "memberColumns": 1,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-017"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-018"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-019"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-020"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-021"
+                          }
+                        ],
+                        "displayName": "Internal 3",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      },
+                      {
+                        "title": "부서명",
+                        "memberColumns": 2,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-022"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-026"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-023"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-057"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-056"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-058"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-024"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-059"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-060"
+                          }
+                        ],
+                        "displayName": "Partition&Opening",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      },
+                      {
+                        "title": "부서명",
+                        "memberColumns": 1,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-027"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-028"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-029"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-061"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-030"
+                          },
+                          {
+                            "title": "staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-053"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-062"
+                          }
+                        ],
+                        "displayName": "External",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      }
+                    ],
+                    "employeeId": "CC-009"
+                  }
+                ],
+                "displayName": "Finish",
+                "nodeType": "department",
+                "className": "secondary"
+              },
+              {
+                "title": "부서명",
+                "memberColumns": 1,
+                "children": [
+                  {
+                    "title": "General Manager",
+                    "memberColumns": 3,
+                    "children": [
+                      {
+                        "title": "부서명",
+                        "memberColumns": 3,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-032"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-033"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-034"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-036"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-037"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-012"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-040"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-042"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-043"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-045"
+                          }
+                        ],
+                        "displayName": "Vertical",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      },
+                      {
+                        "title": "부서명",
+                        "memberColumns": 3,
+                        "children": [
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-035"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-038"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-049"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-025"
+                          },
+                          {
+                            "title": "Asst. Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-050"
+                          },
+                          {
+                            "title": "Team Leader",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-051"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-039"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-065"
+                          },
+                          {
+                            "title": "신규 조직",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-047"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-044"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-046"
+                          }
+                        ],
+                        "displayName": "Horizontal/Foundation",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      },
+                      {
+                        "title": "부서명",
+                        "memberColumns": 1,
+                        "children": [
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-063"
+                          },
+                          {
+                            "title": "Staff",
+                            "memberColumns": 3,
+                            "children": [],
+                            "employeeId": "VQS-064"
+                          }
+                        ],
+                        "displayName": "Civil",
+                        "nodeType": "department",
+                        "className": "secondary"
+                      }
+                    ],
+                    "employeeId": "CC-008"
+                  }
+                ],
+                "displayName": "Structure",
+                "nodeType": "department",
+                "className": "secondary"
+              }
+            ],
+            "employeeId": "CC-010"
+          },
+          {
+            "title": "부서명",
+            "memberColumns": 1,
+            "children": [
+              {
+                "title": "Team Leader",
+                "memberColumns": 3,
+                "children": [],
+                "employeeId": "VQS-052"
+              },
+              {
+                "title": "Staff",
+                "memberColumns": 3,
+                "children": [],
+                "employeeId": "VQS-054"
+              }
+            ],
+            "displayName": "Development",
+            "nodeType": "department",
+            "className": "secondary"
+          }
+        ],
+        "employeeId": "VQS-002",
+        "className": "secondary"
+      }
+    ],
+    "employeeId": "VQS-001",
+    "className": "primary"
   }
+}
 };
 
 let currentOrgCompany = "CON-COST";
