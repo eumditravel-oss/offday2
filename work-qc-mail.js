@@ -9970,7 +9970,8 @@ const defaultChecklistTermDictionaryRows = [
   { ko: "이음", vi: "Nối thép", enabled: true },
   { ko: "HOOK", vi: "HOOK", enabled: true },
   { ko: "데크", vi: "Deck", enabled: true },
-  { ko: "데크슬라브", vi: "Sàn Deck", enabled: true }
+  { ko: "데크슬라브", vi: "Sàn Deck", enabled: true },
+  { ko: "끊어치기", vi: "Riblath", enabled: true }
 ];
 
 function getChecklistTranslationKey(realIndex, field) {
@@ -10100,7 +10101,7 @@ function applyChecklistTermTokenProtection(text) {
   let protectedText = source;
   const tokenMap = [];
   terms.forEach((row, index) => {
-    const token = `__CC_TERM_${index}__`;
+    const token = `CCTERM${String(index).padStart(3, "0")}TOKEN`;
     if (protectedText.includes(row.ko)) {
       protectedText = protectedText.split(row.ko).join(token);
       tokenMap.push({ token, ko: row.ko, vi: row.vi });
@@ -10109,20 +10110,34 @@ function applyChecklistTermTokenProtection(text) {
   return { protectedText, tokenMap };
 }
 
+function escapeRegExpForChecklistTerm(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildFlexibleTokenPattern(token) {
+  const compact = String(token || "").replace(/[^A-Za-z0-9]/g, "");
+  if (!compact) return null;
+  const chars = compact.split("").map(ch => escapeRegExpForChecklistTerm(ch)).join("[\\s_\-]*");
+  return new RegExp(chars, "gi");
+}
+
 function restoreChecklistTermTokens(text, tokenMap = []) {
   let output = String(text || "");
   tokenMap.forEach(({ token, vi }) => {
-    const variants = [
+    const directVariants = [
       token,
-      token.replaceAll("_", " ").trim(),
-      token.replaceAll("_", ""),
       token.toLowerCase(),
-      token.toLowerCase().replaceAll("_", " ").trim(),
-      token.toLowerCase().replaceAll("_", "")
+      token.toUpperCase(),
+      token.replaceAll("_", " "),
+      token.replaceAll("_", ""),
+      `__ ${token.replaceAll("_", " ")} __`,
+      `__${token}__`
     ];
-    variants.forEach(variant => {
+    directVariants.forEach(variant => {
       if (variant) output = output.split(variant).join(vi);
     });
+    const flexiblePattern = buildFlexibleTokenPattern(token);
+    if (flexiblePattern) output = output.replace(flexiblePattern, vi);
   });
   return output;
 }
@@ -10155,6 +10170,12 @@ function buildFreeTranslationUrl(text) {
 
 function makeDictionaryOnlyTranslation(text, tokenMap = []) {
   let output = String(text || "");
+  const terms = loadChecklistTermDictionaryRows()
+    .filter(row => row.enabled !== false && row.ko && row.vi)
+    .sort((a, b) => b.ko.length - a.ko.length);
+  terms.forEach(({ ko, vi }) => {
+    output = output.split(ko).join(vi);
+  });
   tokenMap.forEach(({ ko, vi }) => {
     output = output.split(ko).join(vi);
   });
@@ -10336,7 +10357,26 @@ function renderChecklistTranslationPanel(realIndex) {
 }
 
 function ensureChecklistTermDictionaryButton() {
+  const existingButtons = Array.from(document.querySelectorAll("button"))
+    .filter(btn => btn.textContent.trim() === "전문용어 사전" || btn.classList.contains("term-dictionary-open-btn") || btn.id === "checklistTermDictionaryOpenBtn");
+
+  existingButtons.forEach((btn, index) => {
+    if (index === 0) {
+      btn.id = "checklistTermDictionaryOpenBtn";
+      btn.type = "button";
+      btn.classList.add("term-dictionary-open-btn");
+      btn.onclick = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        openChecklistTermDictionaryModal();
+      };
+    } else {
+      btn.remove();
+    }
+  });
+
   if (document.getElementById("checklistTermDictionaryOpenBtn")) return;
+
   const buttons = Array.from(document.querySelectorAll("button"));
   const qcTemplateButton = buttons.find(btn => btn.textContent.trim() === "QC팀 전달사항 편집하기");
   if (!qcTemplateButton || !qcTemplateButton.parentElement) return;
@@ -10344,7 +10384,7 @@ function ensureChecklistTermDictionaryButton() {
   const button = document.createElement("button");
   button.id = "checklistTermDictionaryOpenBtn";
   button.type = "button";
-  button.className = "btn btn-line checklist-term-open-btn";
+  button.className = "btn btn-line term-dictionary-open-btn";
   button.textContent = "전문용어 사전";
   button.onclick = function(event) {
     event.preventDefault();
