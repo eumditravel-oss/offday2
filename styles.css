@@ -10409,3 +10409,111 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     border-bottom:1px solid #edf0f4;
   }
 }
+
+
+/* === Topbar 권한 등급 드롭다운 === */
+.permission-user-wrap{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.permission-user-btn{
+  min-width:128px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  line-height:1.15;
+  cursor:pointer;
+}
+.permission-user-btn small{
+  font-size:10px;
+  font-weight:900;
+  color:#64748b;
+}
+.permission-user-btn:hover{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+.permission-dropdown{
+  position:absolute;
+  top:calc(100% + 10px);
+  right:0;
+  width:280px;
+  max-height:520px;
+  overflow:auto;
+  background:#fff;
+  border:1px solid #d8e3f4;
+  border-radius:18px;
+  box-shadow:0 24px 60px rgba(15,23,42,.18);
+  z-index:2000;
+  padding:10px;
+  display:none;
+}
+.permission-dropdown.open{
+  display:block;
+}
+.permission-dropdown::before{
+  content:"";
+  position:absolute;
+  top:-7px;
+  right:34px;
+  width:12px;
+  height:12px;
+  background:#fff;
+  border-left:1px solid #d8e3f4;
+  border-top:1px solid #d8e3f4;
+  transform:rotate(45deg);
+}
+.permission-dropdown-head{
+  padding:10px 10px 12px;
+  border-bottom:1px solid #eef2f7;
+  margin-bottom:8px;
+}
+.permission-dropdown-head strong{
+  display:block;
+  font-size:14px;
+  font-weight:900;
+  color:#0f172a;
+}
+.permission-dropdown-head span{
+  display:block;
+  margin-top:4px;
+  font-size:11px;
+  font-weight:800;
+  color:#64748b;
+}
+.permission-role-list{
+  display:grid;
+  gap:6px;
+}
+.permission-role-btn{
+  width:100%;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  color:#0f172a;
+  border-radius:12px;
+  padding:10px 12px;
+  text-align:left;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.12s;
+}
+.permission-role-btn:hover{
+  border-color:#2563eb;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+.permission-role-btn.active{
+  border-color:#2563eb;
+  background:#2563eb;
+  color:#fff;
+}
+@media (max-width:900px){
+  .permission-dropdown{
+    right:-20px;
+    width:260px;
+  }
+}
