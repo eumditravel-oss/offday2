@@ -30,7 +30,19 @@
         <button class="btn btn-line org-btn" onclick="openOrgChart()">조직도</button>
         <div class="lang">한국어</div>
         <button class="bell" type="button" onclick="openReviewNotificationPanel()" title="검토 요청 알림">🔔</button>
-        <div class="user">박용진 수석</div>
+        <div class="permission-user-wrap" id="permissionUserWrap">
+          <button class="user permission-user-btn" type="button" onclick="togglePermissionDropdown(event)" aria-haspopup="true" aria-expanded="false">
+            <span id="currentUserName">박용진 수석</span>
+            <small id="currentPermissionRole">권한: PM</small>
+          </button>
+          <div class="permission-dropdown" id="permissionDropdown" aria-label="권한 등급 선택">
+            <div class="permission-dropdown-head">
+              <strong>권한 등급 설정</strong>
+              <span>시연용 권한 전환 메뉴</span>
+            </div>
+            <div class="permission-role-list" id="permissionRoleList"></div>
+          </div>
+        </div>
       </div>
     </header>
 
