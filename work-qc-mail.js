@@ -747,8 +747,7 @@ let checklistRows = [
         "addedAt": "2026-04-30 10:01"
       }
     ]
-  }
-,,
+  },
 
   /* =========================================
      QC팀 전달사항 · 구조팀 이미지 추가 데이터
@@ -12317,59 +12316,325 @@ function getDefaultStructureQcTeamTemplateRows() {
   const now = "2026-05-08 09:00";
   const rows = [
     {
-      subCategory: "QC팀",
-      trade: "계약방식",
-      item: "프로젝트 업무 특성 파악 (구조선수행, 입찰, 본실행, 설계내역 등)",
-      method: "접수자료 확인. (특이사항 작성 후 프로젝트 PM 전달)",
+      subCategory: "공통",
+      trade: "기준서",
+      item: "프로젝트 건설사별 기준서 숙지",
+      method: "각 건설사별 기준서 숙지 특이한 내용이 있다면 별도로 체크후 수량산출시 반영",
       comment: ""
     },
     {
-      subCategory: "QC팀",
-      trade: "접수자료",
-      item: "입찰 내역서, 산출기준서, 공사 특기사항 접수 파악",
-      method: "접수자료 확인. (특이사항 작성 후 프로젝트 PM 전달)",
+      subCategory: "수평팀",
+      trade: "기초",
+      item: "버림두께 확인",
+      method: "건축단면도 기준적용 [미표시 60mm 적용]",
       comment: ""
     },
     {
-      subCategory: "QC팀",
-      trade: "도면검토",
-      item: "도면 접수 여부 확인",
-      method: "도면목록표와 접수 도면상 일치 확인",
+      subCategory: "수평팀",
+      trade: "기초",
+      item: "버림면적 대비 기초면적과 크게 차이 없는지 확인",
+      method: "\"버림수량/버림두께\"의 면적과 기초 산출의 면적 비교",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "기초",
+      item: "우마철근 기준 확인",
+      method: "건설사별 견적지침서 적용 [별도 표현없을시 기초주철근 2단계 아래, 최소철근 HD13적용]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "기초",
+      item: "내수압과 독립기초의 바닥 레벨이 같은경우 우마철근 추가분 반영확인",
+      method: "내수압과 독립기초의 기초형태일 경우, \"독립두께 - 내수압두께\" 차이만큼의 우마철근 다리보강 추가산출",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "기초",
+      item: "독립기초 및 단차구간 첫배움(현재Con'c) 산출기준 확인",
+      method: "산출 유무 확인 산출시 타설되는 콘크리트 재료강도 확인 [구체, 무근, C급 Con'c]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "기초",
+      item: "외부계단 및 주출입구 옹벽 및 기둥하부 줄기초 또는 독립기초 도면미표시 임의 산출 적용확인",
+      method: "옹벽 또는 기둥 하부에 기초 표현이 없더라도 임의적용하여 산출 [견적조건작성]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "각 층별 슬라브 두께별 공제확인",
+      method: "산출내역 재 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "보 연결보에 대한 오류검토",
+      method: "산출내용 재 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "데크+RC슬라브 일경우 경계부에 대한 보 밑면 거푸집 오류검토",
+      method: "슬라브 면적 산정 기준 확인 보 밑면 거푸집 유무 검토.",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "상세도에 보 덧침구간이 없는지 확인",
+      method: "구조 및 건축도면 전체적으로 검토 [참상세도 확인]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "인방보 산출시 보조근 정착값 누락확인",
+      method: "산식 확인 후 보조근 정착 누락시 산식 수정(PM에게 내용 전달)",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "인방보 산출시 창호 Open 높이값의 오류검토 확인",
+      method: "건축도면의 창호평면도와 개구부 OPEN 공제 비교 검토",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "지중보 산출시 버림(버림내민)산출오류검토 확인",
+      method: "보강 인력 재 확인.",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "보",
+      item: "산출 완료후 보 배근 재검토",
+      method: "배근입력 오류 재 확인.",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "슬라브",
+      item: "부호별 데크라인 오류 확인",
+      method: "산출완료후 RC 평면자료를 Excel로 변환하여 필터를 사용해 데크부호별 코드입력체크",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "슬라브",
+      item: "데크 연결근 및 보강근 산식 재확인.\n(RC 프로그램에 따라 산식 차이 존재)",
+      method: "RC 프로그램 산식 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "슬라브",
+      item: "데크 슬라브 공제시 하부 보 공제 여부 확인.",
+      method: "RC 프로그램 산식 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "슬라브",
+      item: "산출 완료후 슬라브 배근 재검토",
+      method: "배근입력 오류 재 확인.",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "기둥",
+      item: "기초두께 입력시 이음 산출 유무 확인",
+      method: "산출식 확인후 기초두께 입력시 주근 이음 산출유무 확인후 산출진행",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "기둥",
+      item: "연결기둥 입력시 주근의 이음개소 또는 정착 오류체크",
+      method: "산출식 확인후 연결기둥에 대한 산식 이해후 산출진행",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "기둥",
+      item: "기둥주근 중간이음과 최상층 HOOK 정착의 누락이 없는지 확인",
+      method: "산출 완료 후 기둥 주근의 중간 이음 및 HOOK 정착 누락 중복 여부 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "기둥",
+      item: "층고가 높은 건물에 대한 주근 추가이음에 누락이 없는지 확인",
+      method: "(층고+기둥이음길이) = 80m 이상시 추가이음 1EA 산출적용",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "기둥",
+      item: "원형기둥일경우 원형거푸집 구분확인",
+      method: "원형기둥은 거푸집 별도 구분하여 산출적용. 아이템 누락 여부확인.",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "기둥",
+      item: "산출 완료후 기둥배근 재검토",
+      method: "배근입력 오류 재 확인.",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "옹벽",
+      item: "기초두께 입력시 이음의 산출 유무 확인",
+      method: "RC 프로그램 산식 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "옹벽",
+      item: "옹벽 평면과 아파트Unit 산식을 확인후 산출진행",
+      method: "RC 프로그램 산식 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "옹벽",
+      item: "옹벽 상부에 슬라브or보 공제값에 오류체크",
+      method: "RC 프로그램 산식 확인",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "옹벽",
+      item: "산출 완료후 옹벽 배근 재검토",
+      method: "배근입력 오류 재 확인.",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "동바리(시스템동바리) 단위를 확인 (m2, m3, 10공m3?)",
+      method: "FIN DATA 산출근거 집계표 검토",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "동바리 수량 데크 면적을 제외확인",
+      method: "RC DATA [부재/층별집계], FIN DATA [수량] 비교검토",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "동바리 수량 데크+RC보하부 동바리 누락체크",
+      method: "RC DATA [부재/층별집계], FIN DATA [수량] 비교검토",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "2중 SLAB 구간 확인 [정화조관리층 ELEV PIT 등 재검토]",
+      method: "RC DATA [부재/층별집계], FIN DATA [수량] 비교검토",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "동바리 수량에 계단면적 누락이 없는지 확인",
+      method: "RC DATA [부재/층별집계], FIN DATA [수량] 비교검토",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "시스템동바리가 필요구간 재확인 [최상층 계단실]",
+      method: "건축단면도 확인후 필요시 시스템동바리 적용",
+      comment: ""
+    },
+    {
+      subCategory: "한국팀",
+      trade: "동바리",
+      item: "시스템동바리가 필요구간 재확인 [기계실 및 Open구간]",
+      method: "건축단면도 확인후 필요시 시스템동바리 적용",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "자가검토",
+      item: "기초면적 확인",
+      method: "[CAD 도면과 RC DATA의 수량 검토 완료시 체크]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "자가검토",
+      item: "독립기초 개소, 줄기초(지중보) 길이확인",
+      method: "[CAD 도면과 RC DATA의 수량 검토 완료시 체크]",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "자가검토",
+      item: "층별 기둥 개소 확인",
+      method: "[CAD 도면과 RC DATA의 수량 검토 완료시 체크]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "자가검토",
+      item: "층별 보 길이 확인",
+      method: "[CAD 도면과 RC DATA의 수량 검토 완료시 체크]",
+      comment: ""
+    },
+    {
+      subCategory: "수평팀",
+      trade: "자가검토",
+      item: "층별 슬라브 면적 확인",
+      method: "[CAD 도면과 RC DATA의 수량 검토 완료시 체크]",
+      comment: ""
+    },
+    {
+      subCategory: "수직팀",
+      trade: "자가검토",
+      item: "층별 옹벽 평면길이와 CAD 길이가 동일한지 확인",
+      method: "[CAD 도면과 RC DATA의 수량 검토 완료시 체크]",
       comment: ""
     },
     {
       subCategory: "PM",
-      trade: "합벽",
-      item: "1. 합벽유무 확인\n2. 합벽구간일 경우 옹벽 및 기둥에 추가이음 발생하는지 확인",
-      method: "토목도면 흙막이 or 가시설계획도 확인",
+      trade: "콘크리트",
+      item: "층별 및 부재별 콘크리트 강도확인",
+      method: "자가검토시 층별집계 조회 확인 필수",
       comment: ""
     },
     {
       subCategory: "PM",
-      trade: "끊어치기",
-      item: "끊어치기(C.J Jont) 구간 확인",
-      method: "발주처 및 건설사에 질의사항 작성 [Zoning 및 분할타설 계획도 요청]",
+      trade: "장비패드",
+      item: "장비패드 배근도 유무 확인",
+      method: "일반적으로 구조도면에는 표현이 없고 건축참상세도 참고하여 적용",
       comment: ""
     },
     {
       subCategory: "PM",
-      trade: "커플러",
-      item: "커플러 산출기준 확인",
-      method: "건설사별 견적지침서 [별도 표현없을시 담당자에게 확인 후 진행]",
+      trade: "PE필름",
+      item: "PE필름 아이템 산출기준 확인",
+      method: "건축단면도 기준으로 하며 별도 표현없을시 001'2검을 일반적으로 산출한다",
       comment: ""
     },
     {
       subCategory: "PM",
-      trade: "철근강도",
-      item: "철근 강도에 따른 정착/이음값 오류 확인",
-      method: "구조일반사항 및 구조계산서",
-      comment: ""
-    },
-    {
-      subCategory: "PM",
-      trade: "내진철근",
-      item: "내진철근 적용 유무 확인",
-      method: "구조일반사항 및 구조계산서 [SD400S, SD500S, SD600S 등의 표현유무]",
+      trade: "잡석지정",
+      item: "파일기초에 잡석표현이 있는지 확인",
+      method: "파일기초일경우 잡석지정은 산출제외대상이므로 중복으로 산출하지않는다",
       comment: ""
     }
   ];
