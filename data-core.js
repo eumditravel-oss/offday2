@@ -370,6 +370,12 @@ const orgStructures = {
                   "title": "개발",
                   "memberColumns": 3,
                   "children": [],
+                  "employeeId": "EMP-2018-001"
+                },
+                {
+                  "title": "개발",
+                  "memberColumns": 3,
+                  "children": [],
                   "employeeId": "VQS-052"
                 },
                 {
