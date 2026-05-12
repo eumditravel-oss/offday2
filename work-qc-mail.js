@@ -9928,7 +9928,7 @@ let openedChecklistTranslationPanel = null;
    ========================================================= */
 const CHECKLIST_TRANSLATION_SOURCE_LANG = "ko";
 const CHECKLIST_TRANSLATION_TARGET_LANG = "vi";
-const CHECKLIST_TRANSLATION_PROVIDER_NAME = "MyMemory 무료 번역 API";
+const CHECKLIST_TRANSLATION_PROVIDER_NAME = "무료 번역 API · Google Translate 스타일 미리보기";
 const FREE_TRANSLATION_ENDPOINT = "https://api.mymemory.translated.net/get";
 const CHECKLIST_TERM_DICTIONARY_STORAGE_KEY = "checklistTermDictionaryRows";
 const checklistTranslationState = {};
@@ -10080,7 +10080,7 @@ function renderChecklistTermDictionaryModal() {
       </div>
       <div class="checklist-term-api-guide">
         <strong>무료 API 데모 연결</strong>
-        <span>현재는 결제수단/API Key 없이 <code>MyMemory 무료 번역 API</code>를 호출합니다. 전문용어는 아래 사전값으로 강제 치환됩니다.</span>
+        <span>현재는 결제수단/API Key 없이 <code>MyMemory 무료 번역 API</code>를 호출하고, 결과 화면은 Google Translate 스타일 템플릿으로 표시합니다. 전문용어는 아래 사전값으로 강제 치환됩니다.</span>
       </div>
       <div class="checklist-term-dictionary-body">
         <table>
@@ -10285,32 +10285,51 @@ function renderChecklistTranslationPanel(realIndex) {
   }[state.status] || "대기";
 
   const resultHtml = state.status === "loading"
-    ? `<div class="checklist-translation-loading">무료 번역 API에 요청 중입니다.</div>`
+    ? `<div class="google-style-translate-loading">무료 번역 API에 요청 중입니다.</div>`
     : state.status === "error"
-      ? `<div class="checklist-translation-error">${escapeHtml(state.error || "번역 중 오류가 발생했습니다.")}</div>`
-      : `<div class="checklist-translation-result">${escapeHtml(state.translatedText || "번역 결과가 여기에 표시됩니다.")}</div>`;
+      ? `<div class="google-style-translate-error">${escapeHtml(state.error || "번역 중 오류가 발생했습니다.")}</div>`
+      : `<div class="google-style-translate-text">${escapeHtml(state.translatedText || "번역 결과가 여기에 표시됩니다.")}</div>`;
+
+  const providerLabel = state.status === "ready-fallback"
+    ? "전문용어 사전 치환 결과"
+    : CHECKLIST_TRANSLATION_PROVIDER_NAME;
 
   return `
     <tr class="checklist-translation-row" data-translate-row="${realIndex}">
       <td colspan="11">
-        <div class="checklist-translation-panel checklist-translation-panel-api">
-          <div class="checklist-translation-head">
-            <strong>무료 API 번역</strong>
-            <span>${escapeHtml(fieldLabels[field] || field)} 셀 · 한국어 → 베트남어 · 전문용어 고정번역 적용</span>
-            <span class="checklist-translation-status">${escapeHtml(statusText)}</span>
-            <button type="button" class="checklist-translation-open" onclick="runChecklistTranslation(${realIndex}, '${field}')">다시 번역</button>
-            <button type="button" class="checklist-translation-close" onclick="openedChecklistTranslationPanel=null; renderChecklistGrid();">닫기</button>
-          </div>
-          <div class="checklist-translation-api-body">
-            <div class="checklist-translation-source-box">
-              <div class="checklist-translation-label">원문</div>
-              <div class="checklist-translation-source">${escapeHtml(state.originalText || "")}</div>
+        <div class="google-style-translate-panel">
+          <div class="google-style-translate-topbar">
+            <div class="google-style-translate-brand">
+              <span class="google-style-translate-dot blue"></span>
+              <span class="google-style-translate-dot red"></span>
+              <span class="google-style-translate-dot yellow"></span>
+              <span class="google-style-translate-dot green"></span>
+              <strong>Google Translate Style Preview</strong>
             </div>
-            <div class="checklist-translation-result-box">
-              <div class="checklist-translation-label">번역 결과</div>
+            <div class="google-style-translate-actions">
+              <span class="google-style-translate-provider">${escapeHtml(providerLabel)}</span>
+              <span class="google-style-translate-status">${escapeHtml(statusText)}</span>
+              <button type="button" class="google-style-translate-action" onclick="runChecklistTranslation(${realIndex}, '${field}')">다시 번역</button>
+              <button type="button" class="google-style-translate-action close" onclick="openedChecklistTranslationPanel=null; renderChecklistGrid();">닫기</button>
+            </div>
+          </div>
+          <div class="google-style-translate-langbar">
+            <div class="google-style-translate-lang active">한국어</div>
+            <div class="google-style-translate-swap">→</div>
+            <div class="google-style-translate-lang active">베트남어</div>
+            <div class="google-style-translate-field">${escapeHtml(fieldLabels[field] || field)} 셀 · 전문용어 고정번역 적용</div>
+          </div>
+          <div class="google-style-translate-grid">
+            <div class="google-style-translate-box source">
+              <div class="google-style-translate-box-head">원문</div>
+              <div class="google-style-translate-source-text">${escapeHtml(state.originalText || "")}</div>
+            </div>
+            <div class="google-style-translate-box result">
+              <div class="google-style-translate-box-head">번역 결과</div>
               ${resultHtml}
             </div>
           </div>
+          <div class="google-style-translate-note">※ 실제 호출은 무료 번역 API로 처리되며, 화면만 Google Translate 스타일 템플릿으로 표시됩니다.</div>
         </div>
       </td>
     </tr>`;
