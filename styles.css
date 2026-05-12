@@ -10008,3 +10008,176 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   border:0;
   background:#fff;
 }
+
+
+/* Papago 번역 전문용어 사전 관리 */
+.term-dictionary-open-btn{
+  min-width:150px;
+  border-color:#93c5fd !important;
+  background:#eff6ff !important;
+  color:#1d4ed8 !important;
+  font-weight:900 !important;
+}
+
+.checklist-term-dictionary-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:28px;
+  background:rgba(15,23,42,.45);
+  backdrop-filter:blur(3px);
+}
+
+.checklist-term-dictionary-modal{
+  width:min(1040px, calc(100vw - 56px));
+  max-height:calc(100vh - 56px);
+  display:flex;
+  flex-direction:column;
+  background:#fff;
+  border:1px solid #d7e3f5;
+  border-radius:22px;
+  box-shadow:0 26px 80px rgba(15,23,42,.28);
+  overflow:hidden;
+}
+
+.checklist-term-dictionary-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding:22px 24px 16px;
+  border-bottom:1px solid #e5eefb;
+}
+
+.checklist-term-dictionary-head h2{
+  margin:0 0 6px;
+  font-size:22px;
+  font-weight:900;
+  color:#0f172a;
+  letter-spacing:-.4px;
+}
+
+.checklist-term-dictionary-head p{
+  margin:0;
+  font-size:13px;
+  font-weight:700;
+  color:#64748b;
+}
+
+.checklist-term-dictionary-toolbar{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding:14px 24px;
+  border-bottom:1px solid #e5eefb;
+  background:#f8fbff;
+}
+
+.checklist-term-api-guide{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 24px;
+  border-bottom:1px solid #e5eefb;
+  background:#eff6ff;
+  color:#1e3a8a;
+  font-size:12px;
+  font-weight:800;
+}
+
+.checklist-term-api-guide span{
+  color:#475569;
+  font-weight:700;
+}
+
+.checklist-term-api-guide code{
+  padding:2px 6px;
+  border-radius:6px;
+  background:#fff;
+  color:#1d4ed8;
+  font-size:11px;
+}
+
+.checklist-term-dictionary-body{
+  overflow:auto;
+  padding:0 24px 24px;
+}
+
+.checklist-term-dictionary-body table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  margin-top:16px;
+  border:1px solid #dbe7f8;
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.checklist-term-dictionary-body th,
+.checklist-term-dictionary-body td{
+  padding:10px;
+  border-bottom:1px solid #e5eefb;
+  border-right:1px solid #e5eefb;
+  font-size:13px;
+  text-align:center;
+}
+
+.checklist-term-dictionary-body th{
+  background:#eef6ff;
+  color:#0f172a;
+  font-weight:900;
+}
+
+.checklist-term-dictionary-body td:last-child,
+.checklist-term-dictionary-body th:last-child{
+  border-right:0;
+}
+
+.checklist-term-dictionary-body tr:last-child td{
+  border-bottom:0;
+}
+
+.checklist-term-dictionary-body input[type="text"]{
+  width:100%;
+  height:38px;
+  padding:0 11px;
+  border:1px solid #cfe0f5;
+  border-radius:10px;
+  background:#fff;
+  font-size:13px;
+  font-weight:700;
+  color:#0f172a;
+}
+
+.checklist-term-dictionary-body .empty{
+  padding:28px;
+  color:#64748b;
+  font-weight:800;
+}
+
+.checklist-translation-result{
+  min-height:54px;
+  padding:14px 16px;
+  white-space:pre-wrap;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.55;
+}
+
+.checklist-translation-loading,
+.checklist-translation-error{
+  min-height:54px;
+  padding:14px 16px;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.55;
+}
+
+.checklist-translation-error{
+  color:#dc2626;
+  background:#fff1f2;
+}
