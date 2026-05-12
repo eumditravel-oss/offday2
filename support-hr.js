@@ -842,3 +842,70 @@ function renderActualOrgTreeNode(node, depth = 0, path = "0") {
     </div>
   `;
 }
+
+
+/* === Topbar 권한 등급 선택 === */
+const permissionRoleOptions = [
+  "CEO",
+  "COO",
+  "경영지원(등급-상)",
+  "경영지원(등급-중상)",
+  "경영지원(등급-중)",
+  "경영지원(등급-중하)",
+  "경영지원(등급-하)",
+  "본부장",
+  "실장",
+  "팀장",
+  "파트장",
+  "PM",
+  "Leader",
+  "Asst.Leader",
+  "Staff"
+];
+let currentPermissionRoleValue = "PM";
+
+function renderPermissionRoleDropdown() {
+  const list = document.getElementById("permissionRoleList");
+  const label = document.getElementById("currentPermissionRole");
+  if (!list) return;
+  list.innerHTML = permissionRoleOptions.map(role => `
+    <button
+      type="button"
+      class="permission-role-btn ${role === currentPermissionRoleValue ? "active" : ""}"
+      onclick="selectPermissionRole('${role.replace(/'/g, "\'")}')"
+    >${role}</button>
+  `).join("");
+  if (label) label.textContent = `권한: ${currentPermissionRoleValue}`;
+}
+
+function togglePermissionDropdown(event) {
+  event?.stopPropagation?.();
+  const dropdown = document.getElementById("permissionDropdown");
+  const button = document.querySelector(".permission-user-btn");
+  if (!dropdown) return;
+  const willOpen = !dropdown.classList.contains("open");
+  dropdown.classList.toggle("open", willOpen);
+  if (button) button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  if (willOpen) renderPermissionRoleDropdown();
+}
+
+function selectPermissionRole(role) {
+  currentPermissionRoleValue = role;
+  renderPermissionRoleDropdown();
+  const dropdown = document.getElementById("permissionDropdown");
+  const button = document.querySelector(".permission-user-btn");
+  if (dropdown) dropdown.classList.remove("open");
+  if (button) button.setAttribute("aria-expanded", "false");
+  showToast(`현재 권한 등급이 '${role}'로 설정되었습니다.`);
+}
+
+document.addEventListener("click", event => {
+  const wrap = document.getElementById("permissionUserWrap");
+  const dropdown = document.getElementById("permissionDropdown");
+  const button = document.querySelector(".permission-user-btn");
+  if (!wrap || !dropdown || wrap.contains(event.target)) return;
+  dropdown.classList.remove("open");
+  if (button) button.setAttribute("aria-expanded", "false");
+});
+
+document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
