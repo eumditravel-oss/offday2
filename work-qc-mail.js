@@ -9919,17 +9919,110 @@ function getChecklistFilteredRows() {
 }
 
 let openedChecklistTranslationPanel = null;
+const CHECKLIST_TRANSLATION_API_ENDPOINT = ""; // 예: "/api/translate" 또는 사내 번역 API 엔드포인트
+const CHECKLIST_TRANSLATION_SOURCE_LANG = "ko";
+const CHECKLIST_TRANSLATION_TARGET_LANG = "vi";
+const checklistTranslationState = {};
 
-function showChecklistTranslationPending(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
+function getChecklistTranslationKey(realIndex, field) {
+  return `${realIndex}::${field}`;
+}
+
+function getChecklistTranslationText(realIndex, field) {
+  const row = checklistRows[realIndex] || {};
+  return String(row[field] || "").trim();
+}
+
+function normalizeChecklistTranslationResponse(data) {
+  if (!data) return "";
+  if (typeof data === "string") return data;
+  return (
+    data.translatedText ||
+    data.translation ||
+    data.result ||
+    data.message?.result?.translatedText ||
+    data.data?.translatedText ||
+    data.data?.translation ||
+    data.data?.result ||
+    ""
+  );
+}
+
+async function requestChecklistTranslation(text, field = "") {
+  const originalText = String(text || "").trim();
+  if (!originalText) {
+    return {
+      translatedText: "번역할 내용이 없습니다.",
+      source: "empty"
+    };
   }
-  if (typeof showToast === "function") {
-    showToast("번역기능이 활성화 될 예정입니다");
-  } else {
-    alert("번역기능이 활성화 될 예정입니다");
+
+  if (!CHECKLIST_TRANSLATION_API_ENDPOINT) {
+    return {
+      translatedText: "번역 API가 아직 연결되지 않았습니다. 서버 API 엔드포인트와 API Key 연결 후 이 영역에 베트남어 번역 결과가 표시됩니다.",
+      source: "mock"
+    };
   }
+
+  const response = await fetch(CHECKLIST_TRANSLATION_API_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text: originalText,
+      source: CHECKLIST_TRANSLATION_SOURCE_LANG,
+      target: CHECKLIST_TRANSLATION_TARGET_LANG,
+      field
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`번역 API 오류: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const translatedText = normalizeChecklistTranslationResponse(data);
+  if (!translatedText) {
+    throw new Error("번역 API 응답에서 번역문을 찾지 못했습니다.");
+  }
+
+  return {
+    translatedText,
+    source: "api",
+    raw: data
+  };
+}
+
+async function runChecklistTranslation(realIndex, field) {
+  const key = getChecklistTranslationKey(realIndex, field);
+  const text = getChecklistTranslationText(realIndex, field);
+  checklistTranslationState[key] = {
+    status: "loading",
+    originalText: text,
+    translatedText: "",
+    error: ""
+  };
+  renderChecklistGrid();
+
+  try {
+    const result = await requestChecklistTranslation(text, field);
+    checklistTranslationState[key] = {
+      status: result.source === "mock" ? "ready-mock" : "ready",
+      originalText: text,
+      translatedText: result.translatedText,
+      error: ""
+    };
+  } catch (error) {
+    checklistTranslationState[key] = {
+      status: "error",
+      originalText: text,
+      translatedText: "",
+      error: error?.message || "번역 중 오류가 발생했습니다."
+    };
+  }
+
+  if (openedChecklistTranslationPanel === key) renderChecklistGrid();
 }
 
 function toggleChecklistTranslationPanel(event, realIndex, field) {
@@ -9937,17 +10030,17 @@ function toggleChecklistTranslationPanel(event, realIndex, field) {
     event.preventDefault();
     event.stopPropagation();
   }
-  showChecklistTranslationPending(event);
-  const key = `${realIndex}::${field}`;
-  openedChecklistTranslationPanel = openedChecklistTranslationPanel === key ? null : key;
-  renderChecklistGrid();
-}
 
-function buildChecklistGoogleTranslateUrl(realIndex, field) {
-  const row = checklistRows[realIndex] || {};
-  const text = String(row[field] || "").trim();
-  const base = "https://translate.google.com/?sl=ko&tl=en&op=translate";
-  return text ? `${base}&text=${encodeURIComponent(text)}` : base;
+  const key = getChecklistTranslationKey(realIndex, field);
+  if (openedChecklistTranslationPanel === key) {
+    openedChecklistTranslationPanel = null;
+    renderChecklistGrid();
+    return;
+  }
+
+  openedChecklistTranslationPanel = key;
+  renderChecklistGrid();
+  runChecklistTranslation(realIndex, field);
 }
 
 function renderChecklistTranslateCell(realIndex, field, value, locked = false) {
@@ -9962,19 +10055,50 @@ function renderChecklistTranslationPanel(realIndex) {
   if (!openedChecklistTranslationPanel) return "";
   const [rowKey, field] = openedChecklistTranslationPanel.split("::");
   if (String(realIndex) !== rowKey) return "";
+
+  const key = getChecklistTranslationKey(realIndex, field);
+  const state = checklistTranslationState[key] || {
+    status: "idle",
+    originalText: getChecklistTranslationText(realIndex, field),
+    translatedText: "",
+    error: ""
+  };
   const fieldLabels = { item: "검토항목", method: "검토방법", comment: "코멘트" };
-  const url = buildChecklistGoogleTranslateUrl(realIndex, field);
+  const statusText = {
+    idle: "대기",
+    loading: "번역 요청 중",
+    ready: "번역 완료",
+    "ready-mock": "API 연결 대기",
+    error: "오류"
+  }[state.status] || "대기";
+
+  const resultHtml = state.status === "loading"
+    ? `<div class="checklist-translation-loading">번역 API에 요청 중입니다.</div>`
+    : state.status === "error"
+      ? `<div class="checklist-translation-error">${escapeHtml(state.error || "번역 중 오류가 발생했습니다.")}</div>`
+      : `<div class="checklist-translation-result">${escapeHtml(state.translatedText || "번역 결과가 여기에 표시됩니다.")}</div>`;
+
   return `
     <tr class="checklist-translation-row" data-translate-row="${realIndex}">
       <td colspan="11">
-        <div class="checklist-translation-panel">
+        <div class="checklist-translation-panel checklist-translation-panel-api">
           <div class="checklist-translation-head">
-            <strong>구글번역</strong>
-            <span>${escapeHtml(fieldLabels[field] || field)} 셀 번역 영역</span>
-            <a class="checklist-translation-open" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            <strong>API 번역</strong>
+            <span>${escapeHtml(fieldLabels[field] || field)} 셀 · 한국어 → 베트남어</span>
+            <span class="checklist-translation-status">${escapeHtml(statusText)}</span>
+            <button type="button" class="checklist-translation-open" onclick="runChecklistTranslation(${realIndex}, '${field}')">다시 번역</button>
             <button type="button" class="checklist-translation-close" onclick="openedChecklistTranslationPanel=null; renderChecklistGrid();">닫기</button>
           </div>
-          <iframe class="checklist-translation-frame" src="${escapeHtml(url)}" title="Google Translate"></iframe>
+          <div class="checklist-translation-api-body">
+            <div class="checklist-translation-source-box">
+              <div class="checklist-translation-label">원문</div>
+              <div class="checklist-translation-source">${escapeHtml(state.originalText || "")}</div>
+            </div>
+            <div class="checklist-translation-result-box">
+              <div class="checklist-translation-label">번역 결과</div>
+              ${resultHtml}
+            </div>
+          </div>
         </div>
       </td>
     </tr>`;
