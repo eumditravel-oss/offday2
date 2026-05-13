@@ -113,67 +113,294 @@ const projectReceiveSampleData = {
 
 
 
+function createProjectReceiveCompletedProject(config) {
+  const businessTypeLabels = config.businessTypes || inferProjectReceiveBusinessTypes(config.projectName, config.workContent, config.request);
+  const scopeLabels = config.scopes || inferProjectReceiveScopes(config.projectName, config.workContent, config.request);
+  return {
+    sourceFile: config.sourceFile,
+    completedAt: config.completedAt || "2026.05.13 11:47",
+    data: {
+      ...projectReceiveSampleData,
+      projectNo: config.projectNo,
+      projectName: config.projectName,
+      client: config.client,
+      usage: config.usage || "",
+      area: config.area || "",
+      buildings: config.buildings || "",
+      floors: config.floors || "",
+      bidDate: config.bidDate || "",
+      unitPrice: config.unitPrice || "공내역서",
+      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: businessTypeLabels.includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: scopeLabels.includes(item.label) })),
+      contacts: config.contacts || [{ name: "", role: "", dept: "", tel: "", mobile: "", email: "" }],
+      materials: createProjectReceiveDummyMaterials(config.receivedDate),
+      startDate: config.startDate || "",
+      firstDelivery: config.firstDelivery || "담당자 협의 필요",
+      finalDelivery: config.finalDelivery || "",
+      workContent: config.workContent || config.request || config.projectName,
+      notes: config.notes || "엑셀 수주소식 기준 작성완료 더미데이터",
+      request: config.request || `${config.projectName} 접수 건`
+    }
+  };
+}
+
+function inferProjectReceiveBusinessTypes(...texts) {
+  const source = texts.filter(Boolean).join(" ");
+  const labels = new Set();
+  if (/설계변경/.test(source)) labels.add("설계변경");
+  if (/설계가|설계예가/.test(source)) labels.add("설계가");
+  if (/검증|적정공사비|감정|소송|대응/.test(source)) labels.add("공사비 검증");
+  if (/클레임|소송/.test(source)) labels.add("클레임");
+  if (/실행|정산/.test(source)) labels.add("본사 실행");
+  if (/견적|물량산출|공내역|정미/.test(source)) labels.add("정미견적");
+  if (!labels.size) labels.add("정미견적");
+  if (!labels.has("본사 실행")) labels.add("본사 입찰");
+  return Array.from(labels);
+}
+
+function inferProjectReceiveScopes(...texts) {
+  const source = texts.filter(Boolean).join(" ");
+  const labels = new Set();
+  if (/마감|건축|리모델링|내부|외부|철거|창호|골조성마감/.test(source)) labels.add("마감");
+  if (/구조|골조|철근|거푸집|철골|BIM|모델링|물량산출/.test(source)) labels.add("구조팀");
+  if (/BIM|모델링|3D/.test(source)) labels.add("BIM 파트");
+  if (/토목|조경|흙막이|부대토목|Civil/.test(source)) labels.add("토목ㆍ조경파트");
+  if (/인테리어|철거/.test(source)) labels.add("인테리어·철거");
+  if (/단가/.test(source)) labels.add("단가작업");
+  if (/기계|전기/.test(source)) labels.add("기계\/전기");
+  if (!labels.size) labels.add("마감");
+  return Array.from(labels);
+}
+
+function createProjectReceiveDummyMaterials(receivedDate = "2026.05.13") {
+  return [
+    { label: "도면", memo: receivedDate, status: "확인완료", comment: "업로드된 엑셀 수주소식 기준 도면 접수 확인.", confirmedBy: "박용진 수석 / 2026.05.13 13:17" },
+    { label: "시방서", memo: "접수일 또는 메모", status: "미접수", comment: "첨부 엑셀 기준 별도 시방서 접수 여부 확인 필요.", confirmedBy: "" },
+    { label: "현장설명서", memo: "접수일 또는 메모", status: "미접수", comment: "현장설명서 접수 여부 확인 필요.", confirmedBy: "" },
+    { label: "내역서", memo: receivedDate, status: "확인완료", comment: "공내역서 또는 원가자료 접수 확인.", confirmedBy: "박용진 수석 / 2026.05.13 13:17" },
+    { label: "기타자료", memo: "엑셀 수주소식", status: "확인완료", comment: "수주소식 엑셀에서 기본 프로젝트 정보를 불러온 더미데이터.", confirmedBy: "박용진 수석 / 2026.05.13 13:17" }
+  ];
+}
+
 const projectReceiveCompletedProjects = [
-  {
-    sourceFile: "2026041.[한양산업개발(주)]창원 용원물류 골조공사 적정공사비 검증 기술자문 용역.xlsx",
-    completedAt: "2026.05.13 11:47",
-    data: {
-      ...projectReceiveSampleData,
-      projectNo: "2026041",
-      projectName: "창원 용원물류 골조공사 적정공사비 검증 기술자문 용역",
-      client: "한양산업개발㈜",
-      usage: "물류시설",
-      area: "",
-      buildings: "",
-      floors: "",
-      bidDate: "",
-      unitPrice: "공내역서",
-      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["공사비 검증", "본사 입찰"].includes(item.label) })),
-      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["구조팀", "BIM 파트", "토목ㆍ조경파트"].includes(item.label) })),
-      workContent: "구조, BIM, 토목ㆍ조경 / 적정공사비 검증 기술자문",
-      request: "창원 용원물류 골조공사 적정공사비 검증 기술자문 용역 접수 건"
-    }
-  },
-  {
-    sourceFile: "2026042.[IPARK현대산업개발(주)]수원아이파크시티 D1블록 판매시설 신축공사 견적용역.xlsx",
-    completedAt: "2026.05.13 11:47",
-    data: {
-      ...projectReceiveSampleData,
-      projectNo: "2026042",
-      projectName: "수원아이파크시티 D1블록 판매시설 신축공사 견적용역",
-      client: "IPARK현대산업개발㈜",
-      usage: "판매시설",
-      area: "",
-      buildings: "",
-      floors: "",
-      bidDate: "",
-      unitPrice: "공내역서",
-      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["정미견적", "본사 입찰"].includes(item.label) })),
-      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["마감", "구조팀", "BIM 파트"].includes(item.label) })),
-      workContent: "마감, 구조, BIM / 판매시설 신축공사 견적용역",
-      request: "수원아이파크시티 D1블록 판매시설 신축공사 견적용역 접수 건"
-    }
-  },
-  {
-    sourceFile: "2026044.[(주)창조종합건축사사무소]영등포 금융전산센터 개발사업 설계 건축견적용역.xlsx",
-    completedAt: "2026.05.13 11:47",
-    data: {
-      ...projectReceiveSampleData,
-      projectNo: "2026044",
-      projectName: "영등포 금융전산센터 개발사업 설계 건축견적용역",
-      client: "㈜창조종합건축사사무소",
-      usage: "업무시설",
-      area: "",
-      buildings: "",
-      floors: "",
-      bidDate: "",
-      unitPrice: "공내역서",
-      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["설계가", "정미견적"].includes(item.label) })),
-      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["마감", "구조팀", "BIM 파트", "토목ㆍ조경파트"].includes(item.label) })),
-      workContent: "마감, 구조, BIM, 토목ㆍ조경 / 설계 건축견적용역",
-      request: "영등포 금융전산센터 개발사업 설계 건축견적용역 접수 건"
-    }
-  }
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026015.[(주)정림건축종합건축사사무소]미국 한화 필리조선소 합리화 공사 견적용역.xlsx",
+    projectNo: "2026015",
+    projectName: "미국 한화 필리조선소 합리화 공사 견적용역",
+    client: "(주)정림건축종합건축사사무소",
+    usage: "조선소",
+    area: "47,218평",
+    unitPrice: "공내역서",
+    startDate: "2026.02.27(금)",
+    firstDelivery: "도서 접수 후 담당자 협의",
+    workContent: "마감, 구조공사 / 공내역서 작성 / V.E공사 포함 / 우선협상대상자 선정 시 견적 지원",
+    request: "마감, 구조공사 / 공내역서 작성 / V.E공사 포함 / 우선협상대상자 선정 시 견적 지원 업무 포함"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026016.[(주)대광건영]로제비앙 순창GC 클럽하우스 신축공사 견적용역.xlsx",
+    projectNo: "2026016",
+    projectName: "로제비앙 순창GC 클럽하우스 신축공사 견적용역",
+    client: "(주)대광건영",
+    usage: "체육시설",
+    area: "2,823평",
+    floors: "B1/S2",
+    unitPrice: "공내역서",
+    startDate: "2026.03.05(목)",
+    firstDelivery: "2026.03.20(금)",
+    workContent: "구조공사 및 골조성마감 / 공내역서 작성 / 3D 모델링 산출 조건",
+    request: "구조공사 및 골조성마감(가설, 단열재 포함, 견출 제외) / 공내역서 작성"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026017.[예닮건축사사무소(주)]건축설계비 청구소송(2025나12266) 감정인 대응 용역.xlsx",
+    projectNo: "2026017",
+    projectName: "건축설계비 청구소송(2025나12266) 감정인 대응 용역",
+    client: "예닮건축사사무소(주)",
+    usage: "감정·소송 대응",
+    startDate: "2026.03.05(목)",
+    firstDelivery: "담당자 확인 필요",
+    businessTypes: ["클레임", "공사비 검증"],
+    scopes: ["마감"],
+    workContent: "감정 보고서 검토, 감정 신청서 검토 및 대응 방안 작성, 관련 자료 및 도면 검토",
+    request: "1차 감정 보고서 검토 / 감정 신청서 대응 / 감정인 회의 참석 및 협조"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026018.[삼성물산(주)]평택 P4 Ph2 물량산출 용역.xlsx",
+    projectNo: "2026018",
+    projectName: "평택 P4 Ph2 물량산출 용역",
+    client: "삼성물산(주)",
+    usage: "반도체공장",
+    area: "FAB동 44,073평 / 복합동 7,893평",
+    startDate: "미팅 후 작업 착수 예정",
+    firstDelivery: "담당자 협의 필요",
+    businessTypes: ["정미견적", "본사 실행"],
+    scopes: ["마감", "구조팀"],
+    workContent: "건축 공종별 외주 정산 수량 산출 및 확인, 협의",
+    request: "P4 Ph2 마감 공사 공종별 외주 정산 물량 산출 및 확인, 협의"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026019.[SK에코플랜트(주)]노량진2 재정비촉진구역 주택재개발 정비사업 견적용역.xlsx",
+    projectNo: "2026019",
+    projectName: "노량진2 재정비촉진구역 주택재개발 정비사업 견적용역",
+    client: "SK에코플랜트(주)",
+    usage: "공동주택",
+    area: "25,329평",
+    floors: "B4/S45",
+    unitPrice: "공내역서",
+    startDate: "2026.03.09(월)",
+    firstDelivery: "2026.03.27(금)",
+    businessTypes: ["정미견적", "본사 실행"],
+    scopes: ["마감", "구조팀"],
+    workContent: "마감, 구조공사 / 선실행 + 본실행",
+    request: "수량산출 매뉴얼 개정본 확인 / 선실행 및 본실행 견적용역"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026020.[(주)신영씨앤디]성수동2가 322-6번지 외 1필지 업무시설 신축공사 견적용역.xlsx",
+    projectNo: "2026020",
+    projectName: "성수동2가 322-6번지 외 1필지 업무시설 신축공사 견적용역",
+    client: "(주)신영씨앤디",
+    usage: "업무시설, 근린생활시설",
+    area: "2,823평",
+    floors: "B4/S11",
+    unitPrice: "공내역서",
+    startDate: "2026.03.11(수)",
+    firstDelivery: "2026.03.31(화)",
+    scopes: ["마감", "구조팀", "BIM 파트"],
+    workContent: "골조성마감, 구조공사(철골·탑다운 포함) / 공내역서 작성",
+    request: "골조성마감(무근, 단열재), 구조공사(철골·탑다운 포함) / 공내역서 작성"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026021.[(재)21세기경제연구소]강서구 염창동 오피스텔 신축공사 견적용역_수주소식.xlsx",
+    projectNo: "2026021",
+    projectName: "강서구 염창동 오피스텔 신축공사 견적용역",
+    client: "(재)21세기경제연구소",
+    usage: "오피스텔",
+    floors: "B1/S14",
+    startDate: "2026.03.24(화)",
+    firstDelivery: "담당자 협의 필요",
+    businessTypes: ["설계가", "정미견적"],
+    scopes: ["마감", "토목ㆍ조경파트"],
+    workContent: "마감, 토목, 조경공사 / 설계예가 작성",
+    request: "마감, 토목, 조경공사 / 설계예가 작성"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026022.[(주)공간창조]이천 군량리 물류센터(2025가합9652) 부당이득금 감정보고서 대응 용역_수주소식.xlsx",
+    projectNo: "2026022",
+    projectName: "이천 군량리 물류센터(2025가합9652) 부당이득금 감정보고서 대응 용역",
+    client: "(주)공간창조",
+    usage: "물류센터",
+    startDate: "2026.03.27(금)",
+    firstDelivery: "담당자 협의 필요",
+    businessTypes: ["클레임", "공사비 검증"],
+    scopes: ["마감"],
+    workContent: "소송 서류, 도급계약서 및 준공도면 검토",
+    request: "부당이득금 감정보고서 대응을 위한 서류 검토"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026023.[(주)리얼디자인랩건축사사무소]오산세교 상업 589-1,2번지 오피스텔 신축공사 견적용역_수주소식.xlsx",
+    projectNo: "2026023",
+    projectName: "오산세교 상업 589-1,2번지 오피스텔 신축공사 견적용역",
+    client: "(주)리얼디자인랩건축사사무소",
+    usage: "오피스텔",
+    floors: "B7/S19",
+    startDate: "2026.03.31(화)",
+    firstDelivery: "담당자 협의 필요",
+    businessTypes: ["설계가", "정미견적"],
+    scopes: ["마감", "구조팀", "토목ㆍ조경파트", "기계/전기"],
+    workContent: "전공정 작업 / 설계예가 작성",
+    request: "전공정 작업 / 설계예가 작성"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026024.[효성중공업(주)]성남 중1구역 도시환경정비사업 설계변경 견적용역_수주소식.xlsx",
+    projectNo: "2026024",
+    projectName: "성남 중1구역 도시환경정비사업 설계변경 견적용역",
+    client: "효성중공업(주)",
+    usage: "공동주택, 오피스텔",
+    floors: "B4/S35",
+    startDate: "2026.04.03(금)",
+    firstDelivery: "담당자 협의 필요",
+    businessTypes: ["설계변경", "정미견적"],
+    scopes: ["마감", "구조팀"],
+    workContent: "설계변경 LIST 항목 변경 후/변경 전 작업",
+    request: "설계변경 LIST 항목 변경 후/변경 전 견적 작업"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026025.[디자인버그 건축사사무소]남부순환로 리모델링 견적용역.xlsx",
+    projectNo: "2026025",
+    projectName: "남부순환로 리모델링 견적용역",
+    client: "디자인버그 건축사사무소",
+    usage: "교육연구 및 복지시설",
+    floors: "B1/S7",
+    startDate: "2026.04.20(월)",
+    firstDelivery: "담당자 협의 필요",
+    scopes: ["마감", "구조팀", "인테리어·철거"],
+    workContent: "정미물량산출 / 마감, 구조, 인테리어, 철거공사",
+    request: "4월 3주차 확정 도면 기준 1회 작업 조건"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026026.[서진건설(주)]건강보험심사평가원 미래인재개발센터 건립공사 견적용역.xlsx",
+    projectNo: "2026026",
+    projectName: "건강보험심사평가원 미래인재개발센터 건립공사 견적용역",
+    client: "서진건설(주)",
+    usage: "교육연구시설",
+    floors: "B2/S4",
+    startDate: "2026.04.08(수)",
+    firstDelivery: "담당자 협의 필요",
+    scopes: ["구조팀"],
+    workContent: "정미물량산출 / 구조_거푸집",
+    request: "정미물량산출(구조_거푸집)"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026027.[(주)대광건영]양주회천지구 A8블럭 공동주택 신축공사 견적용역.xlsx",
+    projectNo: "2026027",
+    projectName: "양주회천지구 A8블럭 공동주택 신축공사 견적용역",
+    client: "(주)대광건영",
+    usage: "공동주택",
+    floors: "B2/S29",
+    startDate: "대기중",
+    firstDelivery: "담당자 협의 필요",
+    scopes: ["마감", "구조팀"],
+    workContent: "정미물량산출 / 마감, 구조",
+    request: "정미물량산출(마감, 구조)"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026028.[폴스트먼앤코아시아(주)]연희초등학교 신축공사 견적용역.xlsx",
+    projectNo: "2026028",
+    projectName: "연희초등학교 신축공사 견적용역",
+    client: "폴스트먼앤코아시아(주)",
+    usage: "교육연구시설",
+    floors: "B1/S4",
+    startDate: "2026.04.09(목)",
+    firstDelivery: "담당자 협의 필요",
+    businessTypes: ["공사비 검증", "정미견적"],
+    scopes: ["마감", "구조팀"],
+    workContent: "물량산출 및 원가계산서를 기반으로 한 적정공사비 확인",
+    request: "물량산출 및 원가계산서 기반 적정공사비 확인"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026029.[계룡건설산업(주)]서남부 종합스포츠타운 체육시설 건립공사 견적용역.xlsx",
+    projectNo: "2026029",
+    projectName: "서남부 종합스포츠타운 체육시설 건립공사 견적용역",
+    client: "계룡건설산업(주)",
+    usage: "문화 및 집회시설",
+    startDate: "5월 중순경 도면 출도 예정",
+    firstDelivery: "담당자 협의 필요",
+    scopes: ["마감", "구조팀", "토목ㆍ조경파트"],
+    workContent: "턴키공사 기본도서 기준 수량 산출",
+    request: "기본도서 기준이지만 실시도서 수준의 수량 산출 요청"
+  }),
+  createProjectReceiveCompletedProject({
+    sourceFile: "2026030.[(주)티디에이종합건설]기독교 대한성결교회 한성교회 신축공사 견적용역.xlsx",
+    projectNo: "2026030",
+    projectName: "기독교 대한성결교회 한성교회 신축공사 견적용역",
+    client: "(주)티디에이종합건설",
+    usage: "종교시설",
+    floors: "B2/S7",
+    startDate: "2026.04.15(수)",
+    firstDelivery: "담당자 협의 필요",
+    scopes: ["마감", "구조팀", "토목ㆍ조경파트"],
+    workContent: "정미물량산출 / 마감, 구조, 토목, 조경",
+    request: "정미물량산출(마감, 구조, 토목, 조경)"
+  })
 ];
 
 let selectedProjectReceiveCompletedIndex = 0;
