@@ -876,21 +876,17 @@
                 <div class="pm-schedule-hero">
                   <div>
                     <h2>PM 배정 / 일정</h2>
-                    <p>실장 권한 화면 · 신규 접수 프로젝트 PM 지정 및 스케쥴 1·2안 검토</p>
                   </div>
                   <div class="pm-schedule-hero-actions">
                     <button class="btn btn-line" type="button" onclick="renderPmScheduleDashboard()">새로고침</button>
-                    <button class="btn btn-primary" type="button" onclick="requestPmScheduleDrafts()">스케쥴 작성 요청</button>
+                    <button class="btn btn-primary pm-manager-only" type="button" onclick="requestPmScheduleDrafts()">스케쥴 작성 요청</button>
                   </div>
                 </div>
 
-                <div class="pm-schedule-alert" id="pmScheduleAlert">
-                  <strong>신규 프로젝트가 접수 되었습니다.</strong>
-                  <span>작업범위에 체크된 부서의 상위조직 실장에게 PM 배정 대기 건으로 표시됩니다.</span>
-                </div>
+                <div id="pmScheduleRoleMessage" class="pm-schedule-role-message"></div>
 
-                <div class="pm-schedule-layout">
-                  <aside class="pm-schedule-project-card">
+                <div class="pm-schedule-layout" id="pmScheduleManagerView">
+                  <aside class="pm-schedule-project-card pm-schedule-project-wide">
                     <div class="pm-card-head compact">
                       <div><strong>접수 프로젝트 리스트</strong><span>실장 권한 기준 배정 대기</span></div>
                     </div>
@@ -917,9 +913,9 @@
                         <div><strong>PM 지정</strong><span>실장은 조직도 기준 하위 직원 중 PM을 지정합니다.</span></div>
                       </div>
                       <div class="pm-assignment-grid">
-                        <label class="receive-field"><span>총괄 PM</span><select id="pmTotalSelect" onchange="updatePmScheduleAssignment('pmTotal', this.value)"></select></label>
                         <label class="receive-field"><span>마감 PM</span><select id="pmFinishSelect" onchange="updatePmScheduleAssignment('pmFinish', this.value)"></select></label>
-                        <label class="receive-field"><span>구조팀 PM</span><select id="pmStructureSelect" onchange="updatePmScheduleAssignment('pmStructure', this.value)"></select></label>
+                        <label class="receive-field"><span>구조 PM</span><select id="pmStructureSelect" onchange="updatePmScheduleAssignment('pmStructure', this.value)"></select></label>
+                        <label class="receive-field"><span>토목ㆍ조경 PM</span><select id="pmCivilSelect" onchange="updatePmScheduleAssignment('pmCivil', this.value)"></select></label>
                       </div>
                     </section>
 
@@ -935,7 +931,7 @@
                         </div>
                         <div class="pm-request-box">
                           <strong>Viet QS Team Leader 요청</strong>
-                          <p>실장이 지정한 Team Leader에게 스케쥴 작성 권한만 부여합니다.</p>
+                          <p>Team Leader에게 스케쥴 작성 권한만 부여합니다.</p>
                           <div class="pm-check-list pm-teamleader-list" id="pmScheduleTeamLeaderList"></div>
                         </div>
                       </div>
@@ -947,7 +943,6 @@
                     <section class="pm-schedule-card">
                       <div class="pm-card-head">
                         <div><strong>스케쥴 1안 / 2안 검토</strong><span>제출된 안을 비교 후 1개 안을 승인하거나 반려합니다.</span></div>
-                        <button class="btn btn-line" type="button" onclick="completePmScheduleDraftDemo()">작성완료 알림 예시</button>
                       </div>
                       <div class="pm-schedule-proposal-grid" id="pmScheduleProposalGrid"></div>
                       <div class="pm-approval-row">
@@ -959,6 +954,17 @@
                       </div>
                     </section>
                   </main>
+                </div>
+
+                <div class="pm-schedule-editor-view" id="pmScheduleEditorView">
+                  <section class="pm-schedule-card">
+                    <div class="pm-card-head">
+                      <div><strong>스케쥴 1·2안 작성</strong><span>PM 또는 Team Leader 권한 화면입니다. 저장하면 실장 검토 화면에 반영됩니다.</span></div>
+                      <button class="btn btn-primary" type="button" onclick="submitPmScheduleEditor()">스케쥴 작성 완료</button>
+                    </div>
+                    <div id="pmScheduleEditorProjectInfo" class="pm-editor-project-info"></div>
+                    <div class="pm-editor-schedule-grid" id="pmScheduleEditorGrid"></div>
+                  </section>
                 </div>
               </article>
             </section>
