@@ -825,29 +825,20 @@
                 </div>
 
                 <div class="project-receive-grid project-receive-grid-bottom">
-                  <section class="project-receive-card project-receive-card-wide">
-                    <div class="project-receive-card-head">
-                      <div><strong>발주처 담당자</strong><span>연락처와 이메일을 한 카드에서 관리</span></div>
-                      <em>04</em>
-                    </div>
-                    <div class="receive-contact-list" id="receiveContactList"></div>
-                    <button class="receive-add-btn" type="button" onclick="addProjectReceiveContact()">+ 담당자 추가</button>
-                  </section>
-
-                  <section class="project-receive-card">
+                  <section class="project-receive-card project-receive-material-card">
                     <div class="project-receive-card-head">
                       <div><strong>접수자료</strong><span>자료 수령 현황</span></div>
-                      <em>05</em>
+                      <em>04</em>
                     </div>
                     <div class="receive-material-list" id="receiveMaterialList"></div>
                   </section>
 
-                  <section class="project-receive-card">
+                  <section class="project-receive-card project-receive-pm-card">
                     <div class="project-receive-card-head">
                       <div><strong>담당 PM / 일정</strong><span>착수와 납품 기준일</span></div>
-                      <em>06</em>
+                      <em>05</em>
                     </div>
-                    <div class="project-receive-form-grid one-col">
+                    <div class="project-receive-form-grid project-receive-pm-grid">
                       <label class="receive-field"><span>총괄 PM</span><input id="receivePmTotal" /></label>
                       <label class="receive-field"><span>마감 PM</span><input id="receivePmFinish" /></label>
                       <label class="receive-field"><span>구조팀 PM</span><input id="receivePmStructure" /></label>
@@ -855,6 +846,15 @@
                       <label class="receive-field"><span>1차 납품일</span><input id="receiveFirstDelivery" /></label>
                       <label class="receive-field"><span>최종 납품일</span><input id="receiveFinalDelivery" /></label>
                     </div>
+                  </section>
+
+                  <section class="project-receive-card project-receive-contact-card-wrap">
+                    <div class="project-receive-card-head">
+                      <div><strong>발주처 담당자</strong><span>연락처와 이메일을 한 카드에서 관리</span></div>
+                      <em>06</em>
+                    </div>
+                    <div class="receive-contact-list" id="receiveContactList"></div>
+                    <button class="receive-add-btn" type="button" onclick="addProjectReceiveContact()">+ 담당자 추가</button>
                   </section>
                 </div>
 
