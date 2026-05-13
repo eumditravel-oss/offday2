@@ -12404,3 +12404,241 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-schedule-project-list{grid-template-columns:1fr !important;}
   .pm-assignment-grid,.pm-editor-project-info{grid-template-columns:1fr !important;}
 }
+
+/* === PM 스케쥴 1·2안 모달형 가로 비교/편집 패치 === */
+.pm-plan-open-card{
+  border:1px solid var(--line2);
+  background:#fbfdff;
+  border-radius:18px;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.pm-plan-open-card strong{
+  display:block;
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+
+.pm-plan-open-card span{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.45;
+}
+
+.pm-plan-modal-backdrop{
+  z-index:90;
+}
+
+.pm-plan-modal{
+  width:calc(100vw - 28px) !important;
+  max-width:calc(100vw - 28px) !important;
+  height:calc(100vh - 28px) !important;
+  max-height:calc(100vh - 28px) !important;
+  border-radius:24px;
+  display:flex;
+  flex-direction:column;
+}
+
+.pm-plan-modal .modal-head{
+  flex:0 0 auto;
+}
+
+.pm-plan-modal-body{
+  flex:1 1 auto;
+  max-height:none !important;
+  overflow:hidden !important;
+  padding:16px !important;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.pm-plan-modal .modal-foot{
+  flex:0 0 auto;
+}
+
+.pm-plan-guide{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.pm-plan-guide span{
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:7px 12px;
+  border:1px solid var(--line2);
+  border-radius:999px;
+  background:#fbfdff;
+  color:#334155;
+  font-weight:900;
+  font-size:12px;
+}
+
+.pm-plan-guide b{
+  color:var(--blue);
+  margin-left:4px;
+}
+
+.pm-combined-sheet-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto !important;
+  border:1px solid #0f172a !important;
+  border-radius:12px !important;
+  background:#fff;
+}
+
+.pm-combined-sheet-table{
+  width:100%;
+  min-width:1420px !important;
+  table-layout:fixed !important;
+  border-collapse:collapse !important;
+}
+
+.pm-combined-sheet-table .pm-col-group{width:92px;}
+.pm-combined-sheet-table .pm-col-name{width:170px;}
+.pm-combined-sheet-table .pm-col-check{width:38px;}
+.pm-combined-sheet-table .pm-col-people{width:88px;}
+.pm-combined-sheet-table .pm-col-days{width:88px;}
+.pm-combined-sheet-table .pm-col-total{width:92px;}
+.pm-combined-sheet-table .pm-col-scope{width:360px;}
+
+.pm-combined-sheet-table th,
+.pm-combined-sheet-table td{
+  padding:5px 6px !important;
+  font-size:12px !important;
+  line-height:1.25 !important;
+  border:1px solid #0f172a !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+  word-break:keep-all !important;
+  white-space:normal !important;
+}
+
+.pm-combined-sheet-table thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#aef0eb !important;
+  color:#0f172a !important;
+  font-weight:900 !important;
+}
+
+.pm-combined-sheet-table .pm-sheet-group{
+  background:#fff2c7 !important;
+  color:#0f172a !important;
+  font-weight:900 !important;
+}
+
+.pm-combined-sheet-table .pm-sheet-name{
+  background:#fff !important;
+  text-align:center !important;
+}
+
+.pm-combined-sheet-table .pm-sheet-name strong,
+.pm-combined-sheet-table .pm-sheet-name small{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-combined-sheet-table .pm-sheet-name strong{
+  font-size:12px;
+  color:#0f172a;
+}
+
+.pm-combined-sheet-table .pm-sheet-name small{
+  margin-top:2px;
+  font-size:10px;
+  color:#64748b;
+  font-weight:800;
+}
+
+.pm-combined-sheet-table td:nth-child(13){
+  background:#eaf5ff !important;
+  text-align:left !important;
+}
+
+.pm-combined-sheet-table input[type="checkbox"]{
+  width:12px !important;
+  height:12px !important;
+  accent-color:var(--blue);
+  margin:0 auto;
+  display:block;
+}
+
+.pm-combined-sheet-table .pm-sheet-input{
+  height:26px !important;
+  min-height:26px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  padding:3px 4px !important;
+  background:#edf7ff !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  box-shadow:none !important;
+}
+
+.pm-combined-sheet-table .pm-sheet-input.center{
+  text-align:center !important;
+}
+
+.pm-sheet-calculated{
+  display:block;
+  min-height:24px;
+  line-height:24px;
+  background:#f8fafc;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.pm-combined-sheet-table .pm-sheet-total-row th,
+.pm-combined-sheet-table .pm-sheet-total-row td{
+  background:#cbd5e1 !important;
+  font-weight:900 !important;
+}
+
+.pm-schedule-proposal-grid,
+.pm-editor-schedule-grid{
+  grid-template-columns:1fr !important;
+}
+
+@media(max-width:900px){
+  .pm-plan-modal{
+    width:100vw !important;
+    max-width:100vw !important;
+    height:100vh !important;
+    max-height:100vh !important;
+    border-radius:0;
+  }
+  .pm-plan-open-card{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
+.pm-combined-sheet-table td{
+  background:#fff !important;
+}
+.pm-combined-sheet-table td:nth-child(13){
+  background:#eaf5ff !important;
+}
+.pm-combined-sheet-table .pm-sheet-total-row td,
+.pm-combined-sheet-table .pm-sheet-total-row th{
+  background:#cbd5e1 !important;
+}
