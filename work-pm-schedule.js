@@ -609,13 +609,13 @@ function setPmScheduleModalApprovalPlan(planId) {
 }
 
 function renderPmScheduleCombinedSheet(item, editable) {
-  const visibleRows = getPmScheduleVisibleRows(item);
-  const plan1Total = getPmSchedulePlanTotal(item, "plan1");
-  const plan2Total = getPmSchedulePlanTotal(item, "plan2");
   const activeCategory = editable ? pmScheduleModalCategory : (item.submittedCategory || pmScheduleModalCategory || "Structure");
   const oldCategory = pmScheduleModalCategory;
   pmScheduleModalCategory = activeCategory;
-  const showScope = activeCategory === "Structure";
+  const visibleRows = getPmScheduleVisibleRows(item, activeCategory);
+  const plan1Total = getPmSchedulePlanTotal(item, "plan1");
+  const plan2Total = getPmSchedulePlanTotal(item, "plan2");
+  const showScopeColumns = activeCategory === "Structure";
   const categoryControl = editable ? `
       <label class="pm-plan-category-select">
         <b>대분류 부서</b>
@@ -623,18 +623,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           ${["Structure", "Finish", "Civil"].map(category => `<option value="${category}" ${activeCategory === category ? "selected" : ""}>${category}</option>`).join("")}
         </select>
       </label>` : `<span>검토 대분류: <b>${escapePmScheduleHtml(activeCategory)}</b></span>`;
-  const html = `
-    <div class="pm-plan-guide">
-      <div class="pm-plan-guide-left">
-        <span>계산식: 투입인원 × 작업일수 = 전체일수</span>
-        <span>1안 합계: <b data-pm-total="plan1">${plan1Total}</b></span>
-        <span>2안 합계: <b data-pm-total="plan2">${plan2Total}</b></span>
-      </div>
-      ${categoryControl}
-    </div>
-    <div class="pm-schedule-sheet-wrap pm-combined-sheet-wrap">
-      <table class="pm-schedule-sheet-table pm-combined-sheet-table ${showScope ? "has-scope" : "no-scope"}">
-        <colgroup>
+  const structureColgroup = `
           <col class="pm-col-group" />
           <col class="pm-col-name" />
           <col class="pm-col-check" />
@@ -647,25 +636,42 @@ function renderPmScheduleCombinedSheet(item, editable) {
           <col class="pm-col-people" />
           <col class="pm-col-days" />
           <col class="pm-col-total" />
-          ${showScope ? `<col class="pm-col-scope" />` : ""}
-        </colgroup>
-        <thead>
+          <col class="pm-col-scope" />`;
+  const simpleColgroup = `
+          <col class="pm-col-group" />
+          <col class="pm-col-name" />
+          <col class="pm-col-people" />
+          <col class="pm-col-days" />
+          <col class="pm-col-total" />
+          <col class="pm-col-people" />
+          <col class="pm-col-days" />
+          <col class="pm-col-total" />`;
+  const structureHeader = `
           <tr>
             <th rowspan="2">구분</th>
             <th rowspan="2">성명</th>
-            <th colspan="2">작업범위</th>
+            <th colspan="2" class="pm-scope-header">작업범위</th>
             <th colspan="3">1안 (전체 투입)</th>
-            <th colspan="2">작업범위</th>
+            <th colspan="2" class="pm-scope-header">작업범위</th>
             <th colspan="3">2안 (최적화 배치)</th>
-            ${showScope ? `<th rowspan="2">작업범위</th>` : ""}
+            <th rowspan="2">작업범위</th>
           </tr>
           <tr>
-            <th>RC</th><th>SC</th><th>투입인원</th><th>작업일수</th><th>전체일수</th>
-            <th>RC</th><th>SC</th><th>투입인원</th><th>작업일수</th><th>전체일수</th>
+            <th class="pm-scope-cell">RC</th><th class="pm-scope-cell">SC</th><th>투입인원</th><th>작업일수</th><th>전체일수</th>
+            <th class="pm-scope-cell">RC</th><th class="pm-scope-cell">SC</th><th>투입인원</th><th>작업일수</th><th>전체일수</th>
+          </tr>`;
+  const simpleHeader = `
+          <tr>
+            <th rowspan="2">구분</th>
+            <th rowspan="2">성명</th>
+            <th colspan="3">1안 (전체 투입)</th>
+            <th colspan="3">2안 (최적화 배치)</th>
           </tr>
-        </thead>
-        <tbody>
-          ${visibleRows.map(({ row, index }, visibleIndex) => renderPmScheduleCombinedRow(item, row, index, editable, showScope, visibleIndex)).join("")}
+          <tr>
+            <th>투입인원</th><th>작업일수</th><th>전체일수</th>
+            <th>투입인원</th><th>작업일수</th><th>전체일수</th>
+          </tr>`;
+  const structureTotal = `
           <tr class="pm-sheet-total-row">
             <th colspan="2">전체일수</th>
             <td colspan="2"></td>
@@ -674,8 +680,36 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <td colspan="2"></td>
             <th colspan="2">2안 합계</th>
             <td data-pm-total="plan2">${plan2Total}</td>
-            ${showScope ? `<td></td>` : ""}
-          </tr>
+            <td></td>
+          </tr>`;
+  const simpleTotal = `
+          <tr class="pm-sheet-total-row">
+            <th colspan="2">전체일수</th>
+            <th colspan="2">1안 합계</th>
+            <td data-pm-total="plan1">${plan1Total}</td>
+            <th colspan="2">2안 합계</th>
+            <td data-pm-total="plan2">${plan2Total}</td>
+          </tr>`;
+  const html = `
+    <div class="pm-plan-guide">
+      <div class="pm-plan-guide-left">
+        <span>계산식: 투입인원 × 작업일수 = 전체일수</span>
+        <span>1안 합계: <b data-pm-total="plan1">${plan1Total}</b></span>
+        <span>2안 합계: <b data-pm-total="plan2">${plan2Total}</b></span>
+      </div>
+      ${categoryControl}
+    </div>
+    <div class="pm-schedule-sheet-wrap pm-combined-sheet-wrap pm-schedule-soft-table-wrap">
+      <table class="pm-schedule-sheet-table pm-combined-sheet-table pm-schedule-soft-table ${showScopeColumns ? "has-scope" : "no-scope"}">
+        <colgroup>
+          ${showScopeColumns ? structureColgroup : simpleColgroup}
+        </colgroup>
+        <thead>
+          ${showScopeColumns ? structureHeader : simpleHeader}
+        </thead>
+        <tbody>
+          ${visibleRows.map(({ row, index }, visibleIndex) => renderPmScheduleCombinedRow(item, row, index, editable, showScopeColumns, visibleIndex)).join("")}
+          ${showScopeColumns ? structureTotal : simpleTotal}
         </tbody>
       </table>
     </div>
@@ -684,7 +718,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
   return html;
 }
 
-function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScope = true, visibleIndex = rowIndex) {
+function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeColumns = true, visibleIndex = rowIndex) {
   const plan1 = row.plan1 || {};
   const plan2 = item.proposals.plan2.rows[rowIndex]?.plan2 || row.plan2 || {};
   let navCol = 0;
@@ -704,17 +738,15 @@ function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScope = 
     <tr>
       <th class="pm-sheet-group">${escapePmScheduleHtml(row.group)}</th>
       <td class="pm-sheet-name"><strong>${escapePmScheduleHtml(row.name)}</strong>${row.koreanName ? `<small>${escapePmScheduleHtml(row.koreanName)}</small>` : ""}</td>
-      <td>${checkbox("plan1", "rc", plan1.rc)}</td>
-      <td>${checkbox("plan1", "sc", plan1.sc)}</td>
+      ${showScopeColumns ? `<td class="pm-scope-cell">${checkbox("plan1", "rc", plan1.rc)}</td><td class="pm-scope-cell">${checkbox("plan1", "sc", plan1.sc)}</td>` : ""}
       <td>${input("plan1", "people", plan1.people, "center")}</td>
       <td>${input("plan1", "workDays", plan1.workDays, "center")}</td>
       <td>${total("plan1", calculatePmScheduleRowTotal(plan1))}</td>
-      <td>${checkbox("plan2", "rc", plan2.rc)}</td>
-      <td>${checkbox("plan2", "sc", plan2.sc)}</td>
+      ${showScopeColumns ? `<td class="pm-scope-cell">${checkbox("plan2", "rc", plan2.rc)}</td><td class="pm-scope-cell">${checkbox("plan2", "sc", plan2.sc)}</td>` : ""}
       <td>${input("plan2", "people", plan2.people, "center")}</td>
       <td>${input("plan2", "workDays", plan2.workDays, "center")}</td>
       <td>${total("plan2", calculatePmScheduleRowTotal(plan2))}</td>
-      ${showScope ? `<td>${scopeInput}</td>` : ""}
+      ${showScopeColumns ? `<td class="pm-scope-text-cell">${scopeInput}</td>` : ""}
     </tr>
   `;
 }
