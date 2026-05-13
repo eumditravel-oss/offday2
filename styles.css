@@ -13134,3 +13134,95 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-combined-sheet-table td{
   border-spacing:0 !important;
 }
+
+
+/* === PM 스케쥴표 최종 보정: 비고 칼럼 + 헤더 틀고정 ===
+   - 우측 '작업범위' 명칭을 '비고'로 사용
+   - Finish/Civil에서도 비고 칼럼 유지
+   - 표 헤더 영역은 스크롤되지 않고 본문만 아래에서 스크롤되도록 보정 */
+.pm-schedule-soft-table.no-scope .pm-scope-text-cell{
+  display:table-cell !important;
+}
+
+.pm-schedule-soft-table.no-scope .pm-col-scope{
+  display:table-column !important;
+  width:360px !important;
+}
+
+.pm-schedule-soft-table.no-scope{
+  min-width:1180px !important;
+}
+
+.pm-schedule-soft-table-wrap,
+.pm-combined-sheet-wrap{
+  max-height:calc(100vh - 270px) !important;
+  overflow:auto !important;
+  position:relative !important;
+}
+
+.pm-schedule-soft-table,
+.pm-combined-sheet-table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+  table-layout:fixed !important;
+}
+
+.pm-schedule-soft-table thead,
+.pm-combined-sheet-table thead{
+  position:sticky !important;
+  top:0 !important;
+  z-index:120 !important;
+}
+
+.pm-schedule-soft-table thead th,
+.pm-combined-sheet-table thead th{
+  position:sticky !important;
+  background:#eef6ff !important;
+  background-clip:padding-box !important;
+  z-index:121 !important;
+  box-shadow:0 1px 0 #cfe0f7, inset 0 -1px 0 #cfe0f7 !important;
+}
+
+.pm-schedule-soft-table thead tr:first-child th,
+.pm-combined-sheet-table thead tr:first-child th{
+  top:0 !important;
+  height:38px !important;
+  z-index:123 !important;
+}
+
+.pm-schedule-soft-table thead tr:nth-child(2) th,
+.pm-combined-sheet-table thead tr:nth-child(2) th{
+  top:38px !important;
+  height:34px !important;
+  z-index:122 !important;
+}
+
+.pm-schedule-soft-table thead th[rowspan="2"],
+.pm-combined-sheet-table thead th[rowspan="2"]{
+  top:0 !important;
+  height:72px !important;
+  vertical-align:middle !important;
+  z-index:124 !important;
+}
+
+.pm-schedule-soft-table thead th.pm-scope-header,
+.pm-combined-sheet-table thead th.pm-scope-header{
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  padding-left:6px !important;
+  padding-right:6px !important;
+  text-align:center !important;
+}
+
+.pm-schedule-soft-table thead tr:nth-child(2) th.pm-scope-cell,
+.pm-schedule-soft-table tbody td.pm-scope-cell,
+.pm-combined-sheet-table thead tr:nth-child(2) th.pm-scope-cell,
+.pm-combined-sheet-table tbody td.pm-scope-cell{
+  width:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  padding-left:3px !important;
+  padding-right:3px !important;
+  text-align:center !important;
+}
