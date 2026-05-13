@@ -10605,32 +10605,48 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 .project-receive-grid{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);
+  grid-template-columns:minmax(420px,.85fr) minmax(0,1.15fr);
   grid-template-rows:repeat(2,minmax(0,1fr));
   gap:18px;
   align-items:stretch;
 }
 
-.project-receive-grid > .project-receive-card-wide{
+.project-receive-grid > .project-receive-card:nth-child(1){
+  grid-column:1;
   grid-row:1 / span 2;
 }
 
-.project-receive-grid > .project-receive-card:not(.project-receive-card-wide){
-  min-height:0;
+.project-receive-grid > .project-receive-card:nth-child(2){
+  grid-column:2;
+  grid-row:1;
+}
+
+.project-receive-grid > .project-receive-card:nth-child(3){
+  grid-column:2;
+  grid-row:2;
 }
 
 .project-receive-grid-bottom{
   grid-template-columns:1.3fr .85fr .9fr;
+  grid-template-rows:auto;
+  align-items:start;
+}
+
+.project-receive-grid-bottom > .project-receive-card:nth-child(1),
+.project-receive-grid-bottom > .project-receive-card:nth-child(2),
+.project-receive-grid-bottom > .project-receive-card:nth-child(3){
+  grid-row:auto;
+  grid-column:auto;
 }
 
 .project-receive-card{
   padding:20px;
   min-width:0;
-  height:100%;
+  min-height:0;
 }
 
 .project-receive-card-wide{
-  min-height:100%;
+  min-height:0;
 }
 
 .project-receive-card-head{
@@ -10850,14 +10866,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 @media (max-width:1280px){
   .project-receive-grid,
-  .project-receive-grid-bottom{
-    grid-template-columns:1fr;
-    grid-template-rows:auto;
-  }
-
-  .project-receive-grid > .project-receive-card-wide{
-    grid-row:auto;
-  }
+  .project-receive-grid-bottom{grid-template-columns:1fr;grid-template-rows:auto}
+  .project-receive-grid > .project-receive-card:nth-child(1),
+  .project-receive-grid > .project-receive-card:nth-child(2),
+  .project-receive-grid > .project-receive-card:nth-child(3){grid-column:auto;grid-row:auto}
   .project-receive-status{grid-template-columns:repeat(2,minmax(0,1fr))}
   .project-receive-status div:nth-child(2){border-right:0}
   .project-receive-status div:nth-child(-n+2){border-bottom:1px solid var(--line2)}
