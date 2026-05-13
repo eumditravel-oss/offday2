@@ -94,8 +94,8 @@ const projectReceiveSampleData = {
     { name: "남종현", role: "매니저", dept: "건축국내견적팀", tel: "02-746-5363", mobile: "010-2080-1933", email: "surnam@hdec.co.kr" }
   ],
   materials: [
-    { label: "도면", checked: true, memo: "2026.05.11 접수", confirmed: true, confirmedBy: "장병선 / 2026.05.11 09:30" },
-    { label: "시방서", checked: true, memo: "접수", confirmed: true, confirmedBy: "장병선 / 2026.05.11 09:35" },
+    { label: "도면", checked: true, memo: "2026.05.11 접수", confirmed: true, confirmedBy: getProjectReceiveConfirmStamp() },
+    { label: "시방서", checked: true, memo: "접수", confirmed: true, confirmedBy: getProjectReceiveConfirmStamp() },
     { label: "현장설명서", checked: true, memo: "접수", confirmed: false, confirmedBy: "" },
     { label: "내역서", checked: true, memo: "접수", confirmed: false, confirmedBy: "" },
     { label: "기타자료", checked: false, memo: "", confirmed: false, confirmedBy: "" }
@@ -249,7 +249,7 @@ function confirmProjectReceiveMaterial(index) {
   if (!projectReceiveState.materials[index]) return;
   const item = projectReceiveState.materials[index];
   item.confirmed = !item.confirmed;
-  item.confirmedBy = item.confirmed ? "장병선 / 방금 확인" : "";
+  item.confirmedBy = item.confirmed ? getProjectReceiveConfirmStamp() : "";
   renderProjectReceiveMaterials();
 }
 
@@ -290,6 +290,18 @@ function loadProjectReceiveSample() {
   projectReceiveState = JSON.parse(JSON.stringify(projectReceiveSampleData));
   renderProjectReceiveDashboard();
   showToast("견적용역 예시 데이터를 불러왔습니다.");
+}
+
+
+function getProjectReceiveConfirmStamp() {
+  const now = new Date();
+  const pad = value => String(value).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const mm = pad(now.getMonth() + 1);
+  const dd = pad(now.getDate());
+  const hh = pad(now.getHours());
+  const mi = pad(now.getMinutes());
+  return `박용진 수석 / ${yyyy}.${mm}.${dd} ${hh}:${mi}`;
 }
 
 function escapeProjectReceiveHtml(value) {
