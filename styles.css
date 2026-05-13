@@ -10983,21 +10983,20 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 
 /* =========================================================
-   프로젝트 접수 v5: 헤더 축소 + 상단 카드 높이 재정렬
-   - PROJECT INTAKE/설명 제거 후 프로젝트 접수 타이틀만 사용
-   - 업무의 성격/작업범위 사이 간격 확대
-   - 프로젝트 기본정보 하단 높이에 맞춰 우측 카드 2개를 균등 배분
+   프로젝트 접수 v6: 상단 카드 높이 정렬 수정
+   - 프로젝트 기본정보 카드의 실제 세로폭을 기준으로 우측 영역 높이 맞춤
+   - 업무의 성격 / 작업범위는 기본정보 높이를 1/2씩 균등 분배
+   - 헤더는 프로젝트 접수 제목만 남기고 세로폭 축소
    ========================================================= */
 .project-receive-hero{
-  min-height:74px !important;
-  padding:14px 24px !important;
   align-items:center !important;
+  padding:16px 24px !important;
+  min-height:74px !important;
 }
 
 .project-receive-hero h2{
   margin:0 !important;
-  font-size:24px !important;
-  line-height:1.2 !important;
+  font-size:26px !important;
 }
 
 .project-receive-eyebrow,
@@ -11006,56 +11005,53 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 .project-receive-top-grid{
-  --receive-main-block-height:420px !important;
   display:grid !important;
-  grid-template-columns:minmax(420px,.82fr) minmax(0,1.18fr) !important;
-  grid-template-rows:var(--receive-main-block-height) !important;
-  gap:20px !important;
+  grid-template-columns:minmax(420px,.78fr) minmax(0,1.22fr) !important;
+  grid-template-rows:auto !important;
+  gap:18px !important;
   align-items:stretch !important;
+  --receive-main-block-height:auto !important;
 }
 
 .project-receive-top-grid > .project-receive-info-card{
   grid-column:1 !important;
   grid-row:1 !important;
-  height:var(--receive-main-block-height) !important;
-  align-self:stretch !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
 }
 
-.project-receive-side-stack{
+.project-receive-top-grid > .project-receive-side-stack{
   grid-column:2 !important;
   grid-row:1 !important;
   display:grid !important;
-  grid-template-rows:repeat(2,minmax(0,1fr)) !important;
-  gap:24px !important;
-  min-width:0 !important;
-  height:var(--receive-main-block-height) !important;
-  align-self:stretch !important;
-}
-
-.project-receive-side-stack > .project-receive-card{
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:18px !important;
+  height:100% !important;
   min-height:0 !important;
+}
+
+.project-receive-top-grid .project-receive-horizontal-card{
   height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
 }
 
-.project-receive-horizontal-card{
-  display:flex !important;
-  flex-direction:column !important;
-  justify-content:flex-start !important;
-}
-
-.project-receive-horizontal-card .receive-chip-group{
+.project-receive-top-grid .receive-chip-group{
   align-content:flex-start !important;
 }
 
 @media (max-width:1280px){
   .project-receive-top-grid{
     grid-template-columns:1fr !important;
-    grid-template-rows:auto !important;
   }
   .project-receive-top-grid > .project-receive-info-card,
-  .project-receive-side-stack{
+  .project-receive-top-grid > .project-receive-side-stack{
     grid-column:1 !important;
     grid-row:auto !important;
+  }
+  .project-receive-top-grid > .project-receive-side-stack{
     height:auto !important;
+    grid-template-rows:auto auto !important;
   }
 }
