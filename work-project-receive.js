@@ -416,7 +416,11 @@ function syncProjectReceiveInputsToState() {
 function saveProjectReceiveDraft() {
   syncProjectReceiveInputsToState();
   renderProjectReceiveStatus();
-  showToast("프로젝트 접수 내용이 임시 저장되었습니다.");
+  if (typeof registerPmScheduleProjectFromReceive === "function") {
+    registerPmScheduleProjectFromReceive(projectReceiveState);
+  } else {
+    showToast("프로젝트 접수 내용이 임시 저장되었습니다.");
+  }
 }
 
 function resetProjectReceiveForm() {
