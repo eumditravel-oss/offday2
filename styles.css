@@ -11055,3 +11055,171 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-template-rows:auto auto !important;
   }
 }
+
+/* =========================================================
+   프로젝트 접수 v7: 발주처 담당자 1줄 입력 + 접수자료 확인 이력
+   - 발주처 담당자: 한 담당자당 6개 항목을 1줄로 배치
+   - 담당자 추가 시 아래로 1줄씩 추가
+   - 접수자료: 우측 확인 버튼과 확인자/확인시간 이력 표시
+   ========================================================= */
+.project-receive-contact-card-wrap .receive-contact-list{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:10px !important;
+}
+
+.receive-contact-row{
+  display:grid !important;
+  grid-template-columns:72px minmax(90px,.8fr) minmax(90px,.8fr) minmax(130px,1fr) minmax(120px,.95fr) minmax(120px,.95fr) minmax(170px,1.25fr) 48px;
+  gap:10px;
+  align-items:end;
+  border:1px solid var(--line2);
+  border-radius:18px;
+  background:#fbfdff;
+  padding:12px;
+  min-width:0;
+}
+
+.receive-contact-row-index{
+  align-self:center;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.receive-contact-row .receive-field{
+  gap:6px;
+  min-width:0;
+}
+
+.receive-contact-row .receive-field span{
+  font-size:11px;
+}
+
+.receive-contact-row .receive-field input{
+  height:40px;
+  padding:9px 10px;
+  border-radius:12px;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+.receive-contact-delete{
+  height:36px;
+  border:0;
+  border-radius:999px;
+  padding:0 9px;
+  background:#fee2e2;
+  color:#b91c1c;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.project-receive-material-card .receive-material-list{
+  gap:10px !important;
+}
+
+.project-receive-material-card .receive-material-item{
+  display:grid !important;
+  grid-template-columns:minmax(86px,.55fr) minmax(150px,1fr) 84px minmax(150px,1.05fr) !important;
+  gap:9px !important;
+  align-items:center !important;
+  padding:10px !important;
+}
+
+.receive-material-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.receive-material-check span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.receive-material-memo{
+  min-width:0 !important;
+  width:100% !important;
+  border:1px solid #dbe3ef !important;
+  border-radius:12px !important;
+  padding:9px 10px !important;
+  background:#fff !important;
+  font-weight:800 !important;
+  box-sizing:border-box !important;
+}
+
+.receive-material-confirm{
+  height:36px;
+  border:1px solid #dbe3ef;
+  border-radius:999px;
+  background:#fff;
+  color:#1d4ed8;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.receive-material-confirm.confirmed{
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+  color:#fff;
+}
+
+.receive-material-history{
+  min-width:0;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+@media (max-width:1500px){
+  .receive-contact-row{
+    grid-template-columns:64px repeat(3,minmax(110px,1fr)) 44px;
+  }
+  .receive-contact-row .receive-field:nth-of-type(4),
+  .receive-contact-row .receive-field:nth-of-type(5),
+  .receive-contact-row .receive-field:nth-of-type(6){
+    grid-row:2;
+  }
+  .receive-contact-delete{
+    grid-column:5;
+    grid-row:1 / span 2;
+    align-self:center;
+  }
+}
+
+@media (max-width:1280px){
+  .receive-contact-row{
+    grid-template-columns:1fr 1fr !important;
+  }
+  .receive-contact-row-index,
+  .receive-contact-delete{
+    grid-column:auto !important;
+    grid-row:auto !important;
+  }
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:auto minmax(0,1fr) 80px !important;
+  }
+  .receive-material-history{
+    grid-column:1 / -1;
+  }
+}
+
+@media (max-width:760px){
+  .receive-contact-row,
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:1fr !important;
+  }
+  .receive-material-history{
+    grid-column:auto;
+  }
+}
