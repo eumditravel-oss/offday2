@@ -10980,3 +10980,82 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-template-columns:1fr !important;
   }
 }
+
+
+/* =========================================================
+   프로젝트 접수 v5: 헤더 축소 + 상단 카드 높이 재정렬
+   - PROJECT INTAKE/설명 제거 후 프로젝트 접수 타이틀만 사용
+   - 업무의 성격/작업범위 사이 간격 확대
+   - 프로젝트 기본정보 하단 높이에 맞춰 우측 카드 2개를 균등 배분
+   ========================================================= */
+.project-receive-hero{
+  min-height:74px !important;
+  padding:14px 24px !important;
+  align-items:center !important;
+}
+
+.project-receive-hero h2{
+  margin:0 !important;
+  font-size:24px !important;
+  line-height:1.2 !important;
+}
+
+.project-receive-eyebrow,
+.project-receive-hero p{
+  display:none !important;
+}
+
+.project-receive-top-grid{
+  --receive-main-block-height:420px !important;
+  display:grid !important;
+  grid-template-columns:minmax(420px,.82fr) minmax(0,1.18fr) !important;
+  grid-template-rows:var(--receive-main-block-height) !important;
+  gap:20px !important;
+  align-items:stretch !important;
+}
+
+.project-receive-top-grid > .project-receive-info-card{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  height:var(--receive-main-block-height) !important;
+  align-self:stretch !important;
+}
+
+.project-receive-side-stack{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  display:grid !important;
+  grid-template-rows:repeat(2,minmax(0,1fr)) !important;
+  gap:24px !important;
+  min-width:0 !important;
+  height:var(--receive-main-block-height) !important;
+  align-self:stretch !important;
+}
+
+.project-receive-side-stack > .project-receive-card{
+  min-height:0 !important;
+  height:auto !important;
+}
+
+.project-receive-horizontal-card{
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:flex-start !important;
+}
+
+.project-receive-horizontal-card .receive-chip-group{
+  align-content:flex-start !important;
+}
+
+@media (max-width:1280px){
+  .project-receive-top-grid{
+    grid-template-columns:1fr !important;
+    grid-template-rows:auto !important;
+  }
+  .project-receive-top-grid > .project-receive-info-card,
+  .project-receive-side-stack{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    height:auto !important;
+  }
+}
