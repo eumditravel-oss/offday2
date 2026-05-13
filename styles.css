@@ -11223,3 +11223,54 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-column:auto;
   }
 }
+
+
+/* =========================================================
+   프로젝트 접수 v8: 요청 반영 폭 조정 + PM 배치 + 확인 이력 정리
+   - 상단: 프로젝트 기본정보 가로폭 확대, 우측 업무/작업범위 가로폭 축소
+   - 하단: 접수자료 가로폭 확대, 담당 PM/일정 가로폭 축소
+   - 담당 PM/일정: 2열 기준으로 작업착수일/1차납품일 → 최종납품일/총괄PM → 마감PM/구조PM 순서
+   - 발주처 담당자: 1280px 초과 화면에서는 담당자 1명당 1줄 유지
+   ========================================================= */
+.project-receive-top-grid{
+  grid-template-columns:minmax(520px,1.1fr) minmax(0,.9fr) !important;
+}
+
+.project-receive-grid-bottom{
+  grid-template-columns:minmax(620px,1.27fr) minmax(380px,.73fr) !important;
+}
+
+.project-receive-pm-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+
+.project-receive-material-card .receive-material-item{
+  grid-template-columns:minmax(92px,.5fr) minmax(180px,1fr) 92px minmax(190px,1.05fr) !important;
+}
+
+.project-receive-material-card .receive-material-history{
+  white-space:nowrap !important;
+}
+
+@media (min-width:1281px){
+  .receive-contact-row{
+    grid-template-columns:72px minmax(90px,.7fr) minmax(90px,.7fr) minmax(130px,.95fr) minmax(120px,.85fr) minmax(120px,.85fr) minmax(170px,1.2fr) 48px !important;
+  }
+  .receive-contact-row .receive-field:nth-of-type(4),
+  .receive-contact-row .receive-field:nth-of-type(5),
+  .receive-contact-row .receive-field:nth-of-type(6){
+    grid-row:auto !important;
+  }
+  .receive-contact-delete{
+    grid-column:auto !important;
+    grid-row:auto !important;
+    align-self:end !important;
+  }
+}
+
+@media (max-width:1280px){
+  .project-receive-top-grid,
+  .project-receive-grid-bottom{
+    grid-template-columns:1fr !important;
+  }
+}
