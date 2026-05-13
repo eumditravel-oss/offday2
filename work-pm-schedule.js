@@ -6,14 +6,14 @@
 ========================================================= */
 
 const pmScheduleDeptManagerMap = {
-  "마감": "장범선 실장",
+  "마감": "조한빈 실장",
   "구조팀": "장범선 실장",
-  "BIM 파트": "장범선 실장",
+  "BIM 파트": "장범 실장",
   "토목ㆍ조경 파트": "장범선 실장",
-  "인테리어·철거": "장범선 실장",
-  "비교내역서": "장범선 실장",
-  "단가작업": "장범선 실장",
-  "기계/전기": "장범선 실장"
+  "인테리어·철거": "조한빈 실장",
+  "비교내역서": "조한빈 실장",
+  "단가작업": "조한빈 실장",
+  "기계/전기": "조한빈 실장"
 };
 
 let pmScheduleFilter = "all";
@@ -71,13 +71,29 @@ function comparePmScheduleEmployees(a, b) {
   return String(a.name || "").localeCompare(String(b.name || ""));
 }
 
+function getPmScheduleTenureText(joinDate) {
+  const raw = String(joinDate || "").trim();
+  const parsed = Date.parse(raw);
+  if (!Number.isFinite(parsed)) return "입사연차 미등록";
+  const join = new Date(parsed);
+  const now = new Date();
+  let years = now.getFullYear() - join.getFullYear() + 1;
+  if (years < 1) years = 1;
+  return `입사 ${years}년차`;
+}
+
 function formatPmSchedulePersonName(emp) {
+  const name = emp.name || "";
+  const koreanName = emp.koreanName || "";
+  const combinedName = koreanName ? `${name}(${koreanName})` : name;
   return {
     empNo: emp.empNo,
-    name: emp.name || "",
+    name,
+    combinedName,
     grade: emp.grade || "",
-    koreanName: emp.koreanName || "",
-    join: emp.join || ""
+    koreanName,
+    join: emp.join || "",
+    tenureText: getPmScheduleTenureText(emp.join)
   };
 }
 
@@ -202,9 +218,11 @@ function createPmSchedulePlanRows() {
       dept,
       group: firstInDept ? dept : "",
       name: person.name,
+      displayName: person.combinedName,
       grade: person.grade,
       koreanName: person.koreanName,
       join: person.join,
+      tenureText: person.tenureText,
       plan1: { rc: true, sc: false, people: "1", workDays: "", totalDays: "" },
       plan2: { rc: false, sc: false, people: "", workDays: "", totalDays: "" },
       scope: ""
@@ -828,7 +846,7 @@ function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeCol
   return `
     <tr>
       ${showGroupColumn ? `<th class="pm-sheet-group">${escapePmScheduleHtml(row.group)}</th>` : ""}
-      <td class="pm-sheet-name"><div class="pm-person-name-wrap"><strong class="pm-person-name">${escapePmScheduleHtml(row.name)}</strong>${row.grade ? `<em class="pm-person-grade">${escapePmScheduleHtml(row.grade)}</em>` : ""}${row.koreanName ? `<small class="pm-person-korean">${escapePmScheduleHtml(row.koreanName)}</small>` : ""}${row.join ? `<small class="pm-person-join">입사 ${escapePmScheduleHtml(row.join)}</small>` : ""}</div></td>
+      <td class="pm-sheet-name"><div class="pm-person-name-wrap"><strong class="pm-person-name">${escapePmScheduleHtml(row.displayName || row.name)}</strong><small class="pm-person-tenure">${escapePmScheduleHtml(row.tenureText || getPmScheduleTenureText(row.join))}</small>${row.grade ? `<em class="pm-person-grade">${escapePmScheduleHtml(row.grade)}</em>` : ""}</div></td>
       ${showScopeColumns ? `<td class="pm-scope-cell">${checkbox("plan1", "rc", plan1.rc)}</td><td class="pm-scope-cell">${checkbox("plan1", "sc", plan1.sc)}</td>` : ""}
       <td>${input("plan1", "people", plan1.people, "center")}</td>
       <td>${input("plan1", "workDays", plan1.workDays, "center")}</td>
