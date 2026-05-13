@@ -111,7 +111,11 @@ function isPmScheduleManagerRole() {
 
 function isPmScheduleEditorRole() {
   const role = getPmScheduleRole();
-  return role === "PM" || role === "Leader" || role === "Asst.Leader" || role.includes("Team Leader");
+  return role === "PM" || role === "Staff" || role === "Leader" || role === "Asst.Leader" || role.includes("Team Leader");
+}
+
+function isPmScheduleStaffRole() {
+  return getPmScheduleRole() === "Staff" || getPmScheduleRole() === "사원" || getPmScheduleRole() === "수석" || getPmScheduleRole() === "선임" || getPmScheduleRole() === "책임";
 }
 
 function getPmScheduleScopeText(project) {
@@ -254,6 +258,40 @@ function createPmScheduleProposals() {
   };
 }
 
+function applyPmScheduleSuwonApprovedDummy(item) {
+  const name = item?.project?.projectName || "";
+  const no = item?.project?.projectNo || "";
+  if (!name.includes("수원아이파크시티") && no !== "2026042") return;
+  normalizeExistingPmScheduleRows(item);
+  item.status = "approved";
+  item.selectedProposal = "plan1";
+  item.submittedCategory = "Structure";
+  item.approvedPlan = "plan1";
+  item.scheduleStartDate = "2026.05.11";
+  item.scheduleApprovedAt = "2026.05.11 17:30";
+  item.proposals.plan1.author = "한국 PM 작성안";
+  item.proposals.plan1.submittedAt = "2026.05.11 16:41";
+  item.proposals.plan2.author = "한국 PM 작성안";
+  item.proposals.plan2.submittedAt = "2026.05.11 16:41";
+  item.proposals.plan1.rows.forEach((row, idx) => {
+    if (getPmScheduleCategoryForDept(row.dept) === "Structure") {
+      row.plan1 = { rc:true, sc:false, people:"1", workDays:"5", totalDays:"5" };
+      row.scope = row.scope || "";
+    }
+    const p2 = item.proposals.plan2.rows[idx];
+    if (p2 && getPmScheduleCategoryForDept(p2.dept) === "Structure") {
+      const usePlan2 = idx % 3 !== 1;
+      p2.plan2 = { rc:usePlan2, sc:false, people:usePlan2 ? "1" : "", workDays:usePlan2 ? "7" : "", totalDays:usePlan2 ? "7" : "" };
+      p2.scope = row.scope || "";
+    }
+  });
+  item.history = [
+    "2026.05.11 17:30 · 실장 승인: 1안이 선택되어 프로젝트 일정으로 확정되었습니다.",
+    "2026.05.11 16:41 · 한국 PM: 스케쥴 1ㆍ2안 작성 완료 결재를 올렸습니다.",
+    ...(item.history || []).filter(line => !String(line).includes("스케쥴"))
+  ];
+}
+
 function normalizeExistingPmScheduleRows(item) {
   if (!item?.proposals?.plan1?.rows?.length) return;
   const freshRows = createPmSchedulePlanRows();
@@ -323,14 +361,14 @@ function buildPmScheduleSeedProjects() {
 
 function initPmScheduleProjects() {
   if (pmScheduleProjects.length) {
-    pmScheduleProjects.forEach(normalizeExistingPmScheduleRows);
+    pmScheduleProjects.forEach(item => { normalizeExistingPmScheduleRows(item); applyPmScheduleSuwonApprovedDummy(item); });
     return;
   }
   pmScheduleProjects = buildPmScheduleSeedProjects();
   if (!pmScheduleProjects.length && typeof projectReceiveState !== "undefined") {
     pmScheduleProjects = [makePmScheduleProject(projectReceiveState, "프로젝트 접수", "pending")];
   }
-  pmScheduleProjects.forEach(normalizeExistingPmScheduleRows);
+  pmScheduleProjects.forEach(item => { normalizeExistingPmScheduleRows(item); applyPmScheduleSuwonApprovedDummy(item); });
 }
 
 function registerPmScheduleProjectFromReceive(data) {
@@ -936,6 +974,7 @@ function renderPmScheduleEditorView() {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
   normalizeExistingPmScheduleRows(item);
+  applyPmScheduleSuwonApprovedDummy(item);
   const info = document.getElementById("pmScheduleEditorProjectInfo");
   if (info) {
     info.innerHTML = `
@@ -944,8 +983,13 @@ function renderPmScheduleEditorView() {
       <div><span>요청 메모</span><strong>${escapePmScheduleHtml(item.requestMemo || "요청 메모 없음")}</strong></div>
     `;
   }
-  renderPmScheduleProposals(item, true);
+  if (isPmScheduleStaffRole()) {
+    renderPmScheduleStaffView(item);
+  } else {
+    renderPmScheduleProposals(item, true);
+  }
   renderPmAssignedProjectButton();
+  renderPmScheduleApprovedBoard(item);
 }
 
 function getPmScheduleEditorStatus(item) {
@@ -1006,10 +1050,85 @@ function selectPmAssignedProject(index) {
   renderPmScheduleDashboard();
 }
 
+
+function getPmScheduleApprovedRows(item) {
+  const planId = item?.approvedPlan || item?.selectedProposal || "plan1";
+  const category = item?.submittedCategory || "Structure";
+  return getPmScheduleVisibleRows(item, category, "").map(({ row, index }) => {
+    const planData = planId === "plan1" ? row.plan1 : item.proposals.plan2.rows[index]?.plan2;
+    const days = Number(calculatePmScheduleRowTotal(planData));
+    if (!Number.isFinite(days) || days <= 0) return null;
+    return { row, index, planData, totalDays: days };
+  }).filter(Boolean);
+}
+
+function getPmScheduleDateAddText(startText, addDays) {
+  const raw = String(startText || "2026.05.11").replaceAll(".", "-");
+  const date = new Date(raw);
+  if (!Number.isFinite(date.getTime())) return startText || "-";
+  date.setDate(date.getDate() + Math.max(0, Number(addDays || 0) - 1));
+  const pad = n => String(n).padStart(2, "0");
+  return `${date.getFullYear()}.${pad(date.getMonth()+1)}.${pad(date.getDate())}`;
+}
+
+function renderPmScheduleApprovedBoard(item) {
+  const grid = document.getElementById("pmScheduleEditorGrid");
+  if (!grid) return;
+  let board = document.getElementById("pmScheduleApprovedBoard");
+  if (!board) {
+    board = document.createElement("section");
+    board.id = "pmScheduleApprovedBoard";
+    board.className = "pm-approved-board";
+    grid.insertAdjacentElement("afterend", board);
+  }
+  if (item.status !== "approved") {
+    board.innerHTML = "";
+    board.style.display = "none";
+    return;
+  }
+  board.style.display = "block";
+  const rows = getPmScheduleApprovedRows(item);
+  const maxDays = Math.max(...rows.map(r => r.totalDays), 1);
+  const start = item.scheduleStartDate || "2026.05.11";
+  const role = getPmScheduleRole();
+  const isStaff = isPmScheduleStaffRole();
+  const visibleRows = isStaff ? rows.slice(0, 1) : rows;
+  board.innerHTML = `
+    <div class="pm-approved-head">
+      <div><strong>승인 일정 진행 현황</strong><span>${escapePmScheduleHtml(item.project.projectName || "프로젝트")} · ${escapePmScheduleHtml(item.approvedPlan === "plan2" ? "2안" : "1안")} 승인 · 시작일 ${escapePmScheduleHtml(start)}</span></div>
+      <em>${escapePmScheduleHtml(item.scheduleApprovedAt || "2026.05.11")}</em>
+    </div>
+    <div class="pm-approved-history"><b>처리 이력</b><span>${escapePmScheduleHtml((item.history || [])[0] || "2026.05.11 · 1안 승인")}</span></div>
+    <div class="pm-approved-chart">
+      ${visibleRows.map((entry, idx) => {
+        const width = Math.max(8, Math.round(entry.totalDays / maxDays * 100));
+        const progress = Math.min(100, Math.max(12, idx % 4 === 0 ? 70 : idx % 4 === 1 ? 52 : idx % 4 === 2 ? 35 : 18));
+        const end = getPmScheduleDateAddText(start, entry.totalDays);
+        return `<div class="pm-approved-row">
+          <div class="pm-approved-person"><strong>${escapePmScheduleHtml(entry.row.displayName || entry.row.name)}</strong><span>${escapePmScheduleHtml(entry.row.grade || "")} · ${escapePmScheduleHtml(entry.row.dept || "")}</span></div>
+          <div class="pm-approved-timeline"><div class="pm-approved-bar" style="width:${width}%"><i style="width:${progress}%"></i></div><small>${escapePmScheduleHtml(start)} ~ ${escapePmScheduleHtml(end)} / ${entry.totalDays}일 / 진행 ${progress}%</small></div>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderPmScheduleStaffView(item) {
+  const grid = document.getElementById("pmScheduleEditorGrid");
+  if (!grid) return;
+  const state = getPmScheduleEditorStatus(item);
+  grid.innerHTML = `
+    <div class="pm-staff-schedule-card">
+      <div><strong>본인 스케쥴</strong><span>배정받은 프로젝트의 승인 일정만 표시됩니다.</span></div>
+      <em class="pm-editor-status ${state.className}">${state.label}</em>
+    </div>
+  `;
+}
+
 function submitPmScheduleEditor() {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
-  const now = getPmScheduleNowText();
+  const now = (item.project.projectName || "").includes("수원아이파크시티") ? "2026.05.11 16:41" : getPmScheduleNowText();
   const role = getPmScheduleRole();
   Object.values(item.proposals).forEach(plan => {
     plan.author = role === "PM" ? "한국 PM 작성안" : "Viet QS Team Leader 작성안";
@@ -1032,7 +1151,10 @@ function approvePmScheduleProposal() {
   }
   const plan = item.proposals[item.selectedProposal];
   item.status = "approved";
-  item.history.unshift(`${plan?.title || "선택안"}이 승인되어 프로젝트 일정으로 확정되었습니다.`);
+  item.approvedPlan = item.selectedProposal;
+  item.scheduleStartDate = item.scheduleStartDate || "2026.05.11";
+  item.scheduleApprovedAt = item.scheduleApprovedAt || getPmScheduleNowText();
+  item.history.unshift(`${item.scheduleApprovedAt} · ${plan?.title || "선택안"}이 승인되어 프로젝트 일정으로 확정되었습니다.`);
   closePmSchedulePlanModal();
   renderPmScheduleDashboard();
   showToast("선택한 스케쥴 안을 승인하고 일정화했습니다.");
