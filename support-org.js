@@ -803,7 +803,9 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree>.popup-node-wrap>.popup-unified-children.depth-0::before{display:none;}
   .popup-tree-inner.concost-tree .org-popup-부사장>.popup-unified-children.depth-1{grid-template-columns:300px 190px 190px 820px 260px 190px!important;gap:40px;align-items:start;}
   .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-unified-children{grid-template-columns:190px 540px 430px!important;gap:54px;align-items:start;}
-  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children{grid-template-columns:190px 190px 190px!important;gap:24px;align-items:start;}
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경파트>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경파트>.popup-unified-children{grid-template-columns:190px 190px 190px!important;gap:24px;align-items:start;}
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-unified-children{grid-template-columns:repeat(3,176px)!important;gap:12px 16px;}
   .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-unified-children,
@@ -818,7 +820,8 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-member-children,.popup-tree-inner.concost-tree .org-popup-qc>.popup-member-children{grid-template-columns:176px;}
   .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-branch-children{grid-template-columns:360px 430px;gap:54px;}
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-member-children{grid-template-columns:repeat(3,176px);gap:12px 16px;}
-  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-branch-children{grid-template-columns:repeat(3,190px);gap:24px;}
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-branch-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경파트>.popup-branch-children{grid-template-columns:repeat(3,190px);gap:24px;}
   .popup-tree-inner.concost-tree .org-popup-구조팀>.popup-member-children,.popup-tree-inner.concost-tree .org-popup-bim-파트>.popup-member-children,.popup-tree-inner.concost-tree .org-popup-토목-조경파트>.popup-member-children{grid-template-columns:176px;}
   .popup-tree-inner.concost-tree .org-popup-클레임센터>.popup-member-children{grid-template-columns:176px;}
   .popup-tree-inner.concost-tree .org-popup-공사비닷컴{padding-top:44px;}
@@ -926,6 +929,7 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree .org-popup-부사장>.popup-unified-children.depth-1,
   .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경파트>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-unified-children,
@@ -958,6 +962,7 @@ function buildOrgPopupHtml() {
   .popup-tree-inner.concost-tree .org-popup-부사장>.popup-unified-children.depth-1,
   .popup-tree-inner.concost-tree .org-popup-기술본부>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-구조-토목-조경>.popup-unified-children,
+  .popup-tree-inner.concost-tree .org-popup-구조-토목-조경파트>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-마감>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-경영지원본부>.popup-unified-children,
   .popup-tree-inner.concost-tree .org-popup-개발-t-f>.popup-unified-children,
