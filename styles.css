@@ -11813,3 +11813,425 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     justify-self:start !important;
   }
 }
+
+/* =========================================================
+   업무관리 > PM 배정 / 일정
+========================================================= */
+.pm-schedule-shell{
+  display:grid;
+  gap:18px;
+}
+
+.pm-schedule-hero,
+.pm-schedule-card,
+.pm-schedule-project-card,
+.pm-schedule-alert{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+}
+
+.pm-schedule-hero{
+  min-height:96px;
+  padding:24px 26px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.pm-schedule-hero h2{
+  font-size:28px;
+  letter-spacing:-.8px;
+  margin-bottom:8px;
+}
+
+.pm-schedule-hero p{
+  color:var(--muted);
+  font-weight:800;
+}
+
+.pm-schedule-hero-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.pm-schedule-alert{
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-color:#bfdbfe;
+  background:#eef6ff;
+}
+
+.pm-schedule-alert strong{
+  color:var(--blue);
+  font-weight:900;
+}
+
+.pm-schedule-alert span{
+  color:#334155;
+  font-weight:800;
+}
+
+.pm-schedule-layout{
+  display:grid;
+  grid-template-columns:360px minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+
+.pm-schedule-project-card{
+  padding:18px;
+  position:sticky;
+  top:92px;
+}
+
+.pm-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.pm-card-head.compact{
+  margin-bottom:12px;
+}
+
+.pm-card-head strong{
+  display:block;
+  font-size:19px;
+  font-weight:900;
+  letter-spacing:-.35px;
+  margin-bottom:6px;
+}
+
+.pm-card-head span{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+}
+
+.pm-card-head em,
+.pm-project-state{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  font-style:normal;
+  font-size:12px;
+  font-weight:900;
+  padding:7px 10px;
+  background:#eef6ff;
+  color:var(--blue);
+  white-space:nowrap;
+}
+
+.pm-project-state.pending{background:#fff7ed;color:#d97706}
+.pm-project-state.requested{background:#eff6ff;color:#2563eb}
+.pm-project-state.submitted{background:#f0fdf4;color:#16a34a}
+.pm-project-state.approved{background:#dcfce7;color:#15803d}
+.pm-project-state.rejected{background:#fee2e2;color:#dc2626}
+
+.pm-project-filter-row{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.pm-filter-chip{
+  border:1px solid var(--line2);
+  background:#fff;
+  color:#334155;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.pm-filter-chip.active{
+  background:#0f172a;
+  border-color:#0f172a;
+  color:#fff;
+}
+
+.pm-schedule-project-list{
+  display:grid;
+  gap:10px;
+  max-height:680px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.pm-project-card{
+  width:100%;
+  border:1px solid var(--line2);
+  background:#fbfdff;
+  border-radius:18px;
+  padding:13px;
+  text-align:left;
+  display:grid;
+  gap:8px;
+  cursor:pointer;
+}
+
+.pm-project-card.active{
+  background:#f8fbff;
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+}
+
+.pm-project-card strong{
+  font-size:14px;
+  line-height:1.4;
+}
+
+.pm-project-card em,
+.pm-project-card small{
+  display:block;
+  font-style:normal;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.4;
+}
+
+.pm-schedule-detail{
+  display:grid;
+  gap:18px;
+  min-width:0;
+}
+
+.pm-schedule-card{
+  padding:20px;
+  overflow:hidden;
+}
+
+.pm-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  border:1px solid var(--line2);
+  border-radius:18px;
+  overflow:hidden;
+}
+
+.pm-summary-grid div{
+  padding:14px 16px;
+  border-right:1px solid var(--line2);
+  background:#fbfdff;
+  min-width:0;
+}
+
+.pm-summary-grid div:last-child{border-right:0}
+.pm-summary-grid span{display:block;color:var(--muted);font-size:12px;font-weight:900;margin-bottom:8px}
+.pm-summary-grid strong{display:block;font-size:14px;line-height:1.45;word-break:keep-all}
+
+.pm-assignment-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+
+.pm-request-grid{
+  display:grid;
+  grid-template-columns:1fr 1.35fr;
+  gap:14px;
+}
+
+.pm-request-box{
+  border:1px solid var(--line2);
+  border-radius:18px;
+  background:#fbfdff;
+  padding:15px;
+  min-width:0;
+}
+
+.pm-request-box strong{
+  display:block;
+  font-size:15px;
+  margin-bottom:6px;
+}
+
+.pm-request-box p{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  line-height:1.5;
+  margin-bottom:10px;
+}
+
+.pm-check-list{
+  display:grid;
+  gap:8px;
+}
+
+.pm-teamleader-list{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  max-height:250px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.pm-check-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid var(--line2);
+  background:#fff;
+  border-radius:13px;
+  padding:10px;
+  font-weight:900;
+  color:#334155;
+  min-width:0;
+}
+
+.pm-check-item input{
+  width:16px;
+  height:16px;
+  accent-color:var(--blue);
+  flex:0 0 auto;
+}
+
+.pm-check-item span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-request-note-row{
+  margin-top:14px;
+}
+
+.pm-schedule-proposal-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.pm-proposal-card{
+  border:1px solid var(--line2);
+  background:#fbfdff;
+  border-radius:18px;
+  padding:15px;
+  cursor:pointer;
+  min-width:0;
+}
+
+.pm-proposal-card.active{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+  background:#f8fbff;
+}
+
+.pm-proposal-card > input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.pm-proposal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.pm-proposal-head strong{
+  font-size:18px;
+  color:var(--blue);
+}
+
+.pm-proposal-head span{
+  color:#64748b;
+  font-size:12px;
+  font-weight:900;
+}
+
+.pm-proposal-card em{
+  display:block;
+  font-style:normal;
+  color:#0f172a;
+  font-weight:900;
+  margin-bottom:12px;
+}
+
+.pm-mini-table{
+  min-width:0;
+  width:100%;
+  border-collapse:collapse;
+}
+
+.pm-mini-table th,
+.pm-mini-table td{
+  padding:9px 8px;
+  border:1px solid #edf2f7;
+  font-size:12px;
+  line-height:1.35;
+  vertical-align:middle;
+}
+
+.pm-mini-table th{
+  width:92px;
+  background:#eef6ff;
+  color:#1d4ed8;
+  text-align:center;
+}
+
+.pm-approval-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:12px;
+  align-items:end;
+  margin-top:14px;
+}
+
+.pm-approval-actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  padding-bottom:2px;
+}
+
+.pm-empty-box{
+  border:1px dashed var(--line2);
+  border-radius:16px;
+  background:#fbfdff;
+  color:#64748b;
+  font-weight:900;
+  padding:18px;
+  text-align:center;
+}
+
+.pm-empty-box.small{
+  padding:12px;
+  font-size:12px;
+}
+
+@media(max-width:1280px){
+  .pm-schedule-layout{grid-template-columns:1fr}
+  .pm-schedule-project-card{position:static}
+  .pm-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pm-summary-grid div:nth-child(2){border-right:0}
+  .pm-summary-grid div:nth-child(-n+2){border-bottom:1px solid var(--line2)}
+  .pm-assignment-grid,.pm-request-grid,.pm-schedule-proposal-grid{grid-template-columns:1fr}
+  .pm-teamleader-list{grid-template-columns:1fr}
+  .pm-approval-row{grid-template-columns:1fr}
+  .pm-approval-actions{justify-content:flex-start}
+}
+
+@media(max-width:760px){
+  .pm-schedule-hero{align-items:flex-start;flex-direction:column}
+  .pm-summary-grid{grid-template-columns:1fr}
+  .pm-summary-grid div{border-right:0;border-bottom:1px solid var(--line2)}
+  .pm-summary-grid div:last-child{border-bottom:0}
+}
