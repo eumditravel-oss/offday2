@@ -12642,3 +12642,195 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-combined-sheet-table .pm-sheet-total-row th{
   background:#cbd5e1 !important;
 }
+
+/* === 2026-05-13 PM 스케쥴 모달/검토 보정 === */
+/* 메인 화면의 반려/승인 영역은 1·2안 한꺼번에 보기 모달 안에서만 사용 */
+#pmSchedule .pm-approval-row{
+  display:none !important;
+}
+
+.pm-plan-guide{
+  justify-content:space-between !important;
+  align-items:flex-end !important;
+  gap:12px !important;
+}
+
+.pm-plan-guide-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  min-width:0;
+}
+
+.pm-plan-category-select{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+  border:1px solid var(--line2);
+  border-radius:14px;
+  background:#fff;
+  padding:7px 10px;
+}
+
+.pm-plan-category-select b{
+  font-size:12px;
+  color:#334155;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.pm-plan-category-select select{
+  width:150px;
+  height:34px;
+  padding:6px 10px;
+  border-radius:11px;
+  font-weight:900;
+}
+
+.pm-combined-sheet-wrap{
+  position:relative;
+  overflow:auto !important;
+}
+
+.pm-combined-sheet-table thead th{
+  position:sticky !important;
+  z-index:6 !important;
+  background:#aef0eb !important;
+}
+
+.pm-combined-sheet-table thead tr:first-child th{
+  top:0 !important;
+}
+
+.pm-combined-sheet-table thead tr:nth-child(2) th{
+  top:31px !important;
+  z-index:5 !important;
+}
+
+.pm-combined-sheet-table .pm-col-check{
+  width:26px !important;
+}
+
+.pm-combined-sheet-table .pm-col-people,
+.pm-combined-sheet-table .pm-col-days{
+  width:84px !important;
+}
+
+.pm-combined-sheet-table .pm-col-total{
+  width:86px !important;
+}
+
+.pm-combined-sheet-table .pm-col-scope{
+  width:360px !important;
+}
+
+.pm-combined-sheet-table.no-scope{
+  min-width:1040px !important;
+}
+
+.pm-combined-sheet-table.has-scope{
+  min-width:1360px !important;
+}
+
+.pm-combined-sheet-table.no-scope td:nth-child(13),
+.pm-combined-sheet-table.no-scope th:nth-child(13){
+  display:none !important;
+}
+
+.pm-combined-sheet-table td:nth-child(13){
+  background:#eaf5ff !important;
+  text-align:left !important;
+}
+
+.pm-combined-sheet-table input[type="checkbox"].pm-nav-cell{
+  width:12px !important;
+  height:12px !important;
+}
+
+.pm-combined-sheet-table .pm-sheet-input:focus,
+.pm-combined-sheet-table input[type="checkbox"].pm-nav-cell:focus{
+  outline:2px solid rgba(37,99,235,.45) !important;
+  outline-offset:1px !important;
+}
+
+.pm-plan-modal .modal-foot{
+  display:block !important;
+  padding:12px 16px !important;
+}
+
+.pm-modal-approval-panel{
+  display:grid;
+  grid-template-columns:auto minmax(420px,1fr) auto;
+  gap:12px;
+  align-items:end;
+  width:100%;
+}
+
+.pm-modal-approval-choice{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.pm-modal-approval-choice label{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:38px;
+  border:1px solid var(--line2);
+  background:#fbfdff;
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.pm-modal-approval-choice input{
+  width:15px;
+  height:15px;
+  accent-color:var(--blue);
+}
+
+.pm-modal-reject-reason{
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+
+.pm-modal-reject-reason span{
+  font-size:12px;
+  font-weight:900;
+  color:#334155;
+}
+
+.pm-modal-reject-reason textarea{
+  min-height:58px;
+  resize:vertical;
+  font-weight:800;
+}
+
+.pm-modal-approval-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.pm-modal-approval-actions .btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+@media(max-width:1100px){
+  .pm-modal-approval-panel{
+    grid-template-columns:1fr;
+  }
+  .pm-modal-approval-actions{
+    justify-content:flex-start;
+  }
+}
