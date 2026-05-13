@@ -10604,9 +10604,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 .project-receive-grid{
+  --receive-main-block-height:488px;
   display:grid;
   grid-template-columns:minmax(420px,.85fr) minmax(0,1.15fr);
-  grid-template-rows:repeat(2,minmax(0,1fr));
+  grid-template-rows:repeat(2,minmax(0,calc((var(--receive-main-block-height) - 18px) / 2)));
   gap:18px;
   align-items:stretch;
 }
@@ -10614,16 +10615,19 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .project-receive-grid > .project-receive-card:nth-child(1){
   grid-column:1;
   grid-row:1 / span 2;
+  height:var(--receive-main-block-height);
 }
 
 .project-receive-grid > .project-receive-card:nth-child(2){
   grid-column:2;
   grid-row:1;
+  height:calc((var(--receive-main-block-height) - 18px) / 2);
 }
 
 .project-receive-grid > .project-receive-card:nth-child(3){
   grid-column:2;
   grid-row:2;
+  height:calc((var(--receive-main-block-height) - 18px) / 2);
 }
 
 .project-receive-grid-bottom{
@@ -10869,7 +10873,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .project-receive-grid-bottom{grid-template-columns:1fr;grid-template-rows:auto}
   .project-receive-grid > .project-receive-card:nth-child(1),
   .project-receive-grid > .project-receive-card:nth-child(2),
-  .project-receive-grid > .project-receive-card:nth-child(3){grid-column:auto;grid-row:auto}
+  .project-receive-grid > .project-receive-card:nth-child(3){grid-column:auto;grid-row:auto;height:auto}
   .project-receive-status{grid-template-columns:repeat(2,minmax(0,1fr))}
   .project-receive-status div:nth-child(2){border-right:0}
   .project-receive-status div:nth-child(-n+2){border-bottom:1px solid var(--line2)}
