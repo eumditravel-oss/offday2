@@ -433,7 +433,26 @@ const orgStructures = {
                                     {
                                       "title": "수석",
                                       "memberColumns": 1,
-                                      "children": [],
+                                      "children": [
+                                        {
+                                          "title": "책임",
+                                          "memberColumns": 1,
+                                          "children": [],
+                                          "employeeId": "CC-026"
+                                        },
+                                        {
+                                          "title": "책임",
+                                          "memberColumns": 1,
+                                          "children": [],
+                                          "employeeId": "CC-027"
+                                        },
+                                        {
+                                          "title": "프로",
+                                          "memberColumns": 1,
+                                          "children": [],
+                                          "employeeId": "CC-028"
+                                        }
+                                      ],
                                       "employeeId": "CC-025"
                                     }
                                   ],
