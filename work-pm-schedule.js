@@ -24,6 +24,7 @@ let pmScheduleModalPlanScope = "current";
 let pmScheduleModalCategory = "Structure";
 let pmSchedulePmRequestDeptFilter = "구조팀";
 let pmScheduleTlRequestDeptFilter = "Structure";
+let pmScheduleModalMiddleDept = "";
 
 const pmScheduleDeptOrder = [
   "Internal 1",
@@ -106,13 +107,39 @@ function getPmScheduleVietEmployeesByCategory(category = pmScheduleModalCategory
   return getPmScheduleVietEmployees().filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)));
 }
 
-function getPmScheduleVisibleRows(item, category = pmScheduleModalCategory) {
+function getPmScheduleMiddleDeptOptions(category = pmScheduleModalCategory) {
+  return getPmScheduleCategoryDeptMap()[category] || [];
+}
+
+function getPmScheduleEffectiveMiddleDept(category = pmScheduleModalCategory) {
+  const options = getPmScheduleMiddleDeptOptions(category);
+  if (!isPmScheduleLeaderRole()) return "";
+  if (options.includes(pmScheduleModalMiddleDept)) return pmScheduleModalMiddleDept;
+  return options[0] || "";
+}
+
+function isPmScheduleLeaderRole() {
+  const role = getPmScheduleRole();
+  return role === "Leader" || role === "Asst.Leader" || role.includes("Team Leader");
+}
+
+function setPmScheduleModalMiddleDept(value) {
+  pmScheduleModalMiddleDept = value || "";
+  renderPmSchedulePlanModal();
+}
+
+function getPmScheduleVisibleRows(item, category = pmScheduleModalCategory, middleDept = "") {
   const allowed = getPmScheduleCategoryDeptMap()[category] || [];
+  const targetMiddle = middleDept ? normalizePmScheduleVietDeptName(middleDept) : "";
   const rows = item?.proposals?.plan1?.rows || [];
   let prevDept = "";
   return rows
     .map((row, index) => ({ row, index }))
-    .filter(({ row }) => allowed.includes(normalizePmScheduleVietDeptName(row.dept)))
+    .filter(({ row }) => {
+      const dept = normalizePmScheduleVietDeptName(row.dept);
+      if (!allowed.includes(dept)) return false;
+      return !targetMiddle || dept === targetMiddle;
+    })
     .map(({ row, index }) => {
       const dept = normalizePmScheduleVietDeptName(row.dept);
       const group = dept !== prevDept ? dept : "";
@@ -123,6 +150,7 @@ function getPmScheduleVisibleRows(item, category = pmScheduleModalCategory) {
 
 function setPmScheduleModalCategory(value) {
   pmScheduleModalCategory = value || "Structure";
+  pmScheduleModalMiddleDept = getPmScheduleMiddleDeptOptions(pmScheduleModalCategory)[0] || "";
   renderPmSchedulePlanModal();
 }
 
@@ -610,22 +638,30 @@ function setPmScheduleModalApprovalPlan(planId) {
 
 function renderPmScheduleCombinedSheet(item, editable) {
   const activeCategory = editable ? pmScheduleModalCategory : (item.submittedCategory || pmScheduleModalCategory || "Structure");
+  const isLeaderEditor = editable && isPmScheduleLeaderRole();
+  const effectiveMiddle = isLeaderEditor ? getPmScheduleEffectiveMiddleDept(activeCategory) : "";
+  if (isLeaderEditor && !pmScheduleModalMiddleDept) pmScheduleModalMiddleDept = effectiveMiddle;
   const oldCategory = pmScheduleModalCategory;
   pmScheduleModalCategory = activeCategory;
-  const visibleRows = getPmScheduleVisibleRows(item, activeCategory);
-  const plan1Total = getPmSchedulePlanTotal(item, "plan1");
-  const plan2Total = getPmSchedulePlanTotal(item, "plan2");
+  const visibleRows = getPmScheduleVisibleRows(item, activeCategory, effectiveMiddle);
+  const plan1Total = getPmSchedulePlanTotal(item, "plan1", activeCategory, effectiveMiddle);
+  const plan2Total = getPmSchedulePlanTotal(item, "plan2", activeCategory, effectiveMiddle);
   const showScopeColumns = activeCategory === "Structure";
+  const showGroupColumn = !isLeaderEditor;
+  const middleOptions = getPmScheduleMiddleDeptOptions(activeCategory);
   const categoryControl = editable ? `
-      <label class="pm-plan-category-select">
-        <b>대분류 부서</b>
-        <select onchange="setPmScheduleModalCategory(this.value)">
-          ${["Structure", "Finish", "Civil"].map(category => `<option value="${category}" ${activeCategory === category ? "selected" : ""}>${category}</option>`).join("")}
-        </select>
-      </label>` : `<span>검토 대분류: <b>${escapePmScheduleHtml(activeCategory)}</b></span>`;
+      <div class="pm-plan-category-controls">
+        <label class="pm-plan-category-select">
+          <b>대분류 부서</b>
+          <select onchange="setPmScheduleModalCategory(this.value)">
+            ${["Structure", "Finish", "Civil"].map(category => `<option value="${category}" ${activeCategory === category ? "selected" : ""}>${category}</option>`).join("")}
+          </select>
+        </label>
+        ${isLeaderEditor ? `<label class="pm-plan-category-select"><b>중분류 부서</b><select onchange="setPmScheduleModalMiddleDept(this.value)">${middleOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${effectiveMiddle === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}</select></label>` : ""}
+      </div>` : `<span>검토 대분류: <b>${escapePmScheduleHtml(activeCategory)}</b></span>`;
+  const baseColgroup = `${showGroupColumn ? '<col class="pm-col-group" />' : ''}<col class="pm-col-name" />`;
   const structureColgroup = `
-          <col class="pm-col-group" />
-          <col class="pm-col-name" />
+          ${baseColgroup}
           <col class="pm-col-check" />
           <col class="pm-col-check" />
           <col class="pm-col-people" />
@@ -638,8 +674,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           <col class="pm-col-total" />
           <col class="pm-col-scope" />`;
   const simpleColgroup = `
-          <col class="pm-col-group" />
-          <col class="pm-col-name" />
+          ${baseColgroup}
           <col class="pm-col-people" />
           <col class="pm-col-days" />
           <col class="pm-col-total" />
@@ -647,10 +682,10 @@ function renderPmScheduleCombinedSheet(item, editable) {
           <col class="pm-col-days" />
           <col class="pm-col-total" />
           <col class="pm-col-scope" />`;
+  const firstColumns = `${showGroupColumn ? '<th rowspan="2">구분</th>' : ''}<th rowspan="2">성명</th>`;
   const structureHeader = `
           <tr>
-            <th rowspan="2">구분</th>
-            <th rowspan="2">성명</th>
+            ${firstColumns}
             <th colspan="2" class="pm-scope-header">작업범위</th>
             <th colspan="3">1안 (전체 투입)</th>
             <th colspan="2" class="pm-scope-header">작업범위</th>
@@ -663,8 +698,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           </tr>`;
   const simpleHeader = `
           <tr>
-            <th rowspan="2">구분</th>
-            <th rowspan="2">성명</th>
+            ${firstColumns}
             <th colspan="3">1안 (전체 투입)</th>
             <th colspan="3">2안 (최적화 배치)</th>
             <th rowspan="2">비고</th>
@@ -673,9 +707,10 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <th>투입인원</th><th>작업일수</th><th>전체일수</th>
             <th>투입인원</th><th>작업일수</th><th>전체일수</th>
           </tr>`;
+  const groupSpan = showGroupColumn ? 2 : 1;
   const structureTotal = `
           <tr class="pm-sheet-total-row">
-            <th colspan="2">전체일수</th>
+            <th colspan="${groupSpan}">전체일수</th>
             <td colspan="2"></td>
             <th colspan="2">1안 합계</th>
             <td data-pm-total="plan1">${plan1Total}</td>
@@ -686,7 +721,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           </tr>`;
   const simpleTotal = `
           <tr class="pm-sheet-total-row">
-            <th colspan="2">전체일수</th>
+            <th colspan="${groupSpan}">전체일수</th>
             <th colspan="2">1안 합계</th>
             <td data-pm-total="plan1">${plan1Total}</td>
             <th colspan="2">2안 합계</th>
@@ -703,7 +738,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
       ${categoryControl}
     </div>
     <div class="pm-schedule-sheet-wrap pm-combined-sheet-wrap pm-schedule-soft-table-wrap">
-      <table class="pm-schedule-sheet-table pm-combined-sheet-table pm-schedule-soft-table ${showScopeColumns ? "has-scope" : "no-scope"}">
+      <table class="pm-schedule-sheet-table pm-combined-sheet-table pm-schedule-soft-table ${showScopeColumns ? "has-scope" : "no-scope"} ${showGroupColumn ? "with-group" : "without-group"}">
         <colgroup>
           ${showScopeColumns ? structureColgroup : simpleColgroup}
         </colgroup>
@@ -711,7 +746,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           ${showScopeColumns ? structureHeader : simpleHeader}
         </thead>
         <tbody>
-          ${visibleRows.map(({ row, index }, visibleIndex) => renderPmScheduleCombinedRow(item, row, index, editable, showScopeColumns, visibleIndex)).join("")}
+          ${visibleRows.map(({ row, index }, visibleIndex) => renderPmScheduleCombinedRow(item, row, index, editable, showScopeColumns, showGroupColumn, visibleIndex)).join("")}
           ${showScopeColumns ? structureTotal : simpleTotal}
         </tbody>
       </table>
@@ -721,7 +756,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
   return html;
 }
 
-function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeColumns = true, visibleIndex = rowIndex) {
+function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeColumns = true, showGroupColumn = true, visibleIndex = rowIndex) {
   const plan1 = row.plan1 || {};
   const plan2 = item.proposals.plan2.rows[rowIndex]?.plan2 || row.plan2 || {};
   let navCol = 0;
@@ -739,7 +774,7 @@ function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeCol
 
   return `
     <tr>
-      <th class="pm-sheet-group">${escapePmScheduleHtml(row.group)}</th>
+      ${showGroupColumn ? `<th class="pm-sheet-group">${escapePmScheduleHtml(row.group)}</th>` : ""}
       <td class="pm-sheet-name"><strong>${escapePmScheduleHtml(row.name)}</strong>${row.koreanName ? `<small>${escapePmScheduleHtml(row.koreanName)}</small>` : ""}</td>
       ${showScopeColumns ? `<td class="pm-scope-cell">${checkbox("plan1", "rc", plan1.rc)}</td><td class="pm-scope-cell">${checkbox("plan1", "sc", plan1.sc)}</td>` : ""}
       <td>${input("plan1", "people", plan1.people, "center")}</td>
@@ -762,8 +797,8 @@ function calculatePmScheduleRowTotal(data) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.00$/, "");
 }
 
-function getPmSchedulePlanTotal(item, planId) {
-  const visible = getPmScheduleVisibleRows(item);
+function getPmSchedulePlanTotal(item, planId, category = pmScheduleModalCategory, middleDept = "") {
+  const visible = getPmScheduleVisibleRows(item, category, middleDept);
   const sum = visible.reduce((acc, { row, index }) => {
     const data = planId === "plan1" ? row.plan1 : item.proposals.plan2.rows[index]?.plan2;
     const value = Number(calculatePmScheduleRowTotal(data));
