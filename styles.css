@@ -11518,3 +11518,187 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     text-align:left;
   }
 }
+
+/* =========================================================
+   프로젝트 접수 v11: 접수자료 상태 버튼 + 코멘트 구조
+   - 좌측 체크박스 제거
+   - 도면/시방서 등 자료명은 고정 텍스트로 표시
+   - 접수일/메모 입력칸은 좌측으로 이동하고 폭을 축소
+   - 상태는 확인완료 / 미접수 / 일부접수 3버튼으로 관리
+   - 미접수/일부접수 코멘트 및 확인자/확인시간 이력 표시
+   ========================================================= */
+.project-receive-material-card .receive-material-list{
+  gap:10px !important;
+}
+
+.project-receive-material-card .receive-material-item{
+  display:grid !important;
+  grid-template-columns:minmax(92px,.42fr) minmax(150px,.82fr) minmax(250px,1.06fr) minmax(230px,1fr) !important;
+  grid-template-areas:
+    "name memo status history"
+    "comment comment comment comment" !important;
+  column-gap:10px !important;
+  row-gap:8px !important;
+  align-items:center !important;
+  padding:10px !important;
+  border-radius:16px !important;
+}
+
+.project-receive-material-card .receive-material-item.status-complete{
+  border-color:#93c5fd !important;
+  background:#eff6ff !important;
+}
+
+.project-receive-material-card .receive-material-item.status-partial{
+  border-color:#fbbf24 !important;
+  background:#fff7ed !important;
+}
+
+.project-receive-material-card .receive-material-item.status-missing{
+  border-color:#e2e8f0 !important;
+  background:#f8fafc !important;
+}
+
+.receive-material-name{
+  grid-area:name !important;
+  color:#0f172a !important;
+  font-weight:900 !important;
+  font-size:14px !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:keep-all !important;
+  padding-left:2px !important;
+}
+
+.project-receive-material-card .receive-material-memo{
+  grid-area:memo !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  border:1px solid #dbe3ef !important;
+  border-radius:12px !important;
+  padding:9px 10px !important;
+  background:#fff !important;
+  font-weight:800 !important;
+  box-sizing:border-box !important;
+}
+
+.receive-material-status-actions{
+  grid-area:status !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:6px !important;
+  min-width:0 !important;
+  flex-wrap:nowrap !important;
+}
+
+.receive-material-status-btn{
+  height:36px !important;
+  min-width:72px !important;
+  border:1px solid #dbe3ef !important;
+  border-radius:999px !important;
+  background:#fff !important;
+  color:#1d4ed8 !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+  padding:0 10px !important;
+  white-space:nowrap !important;
+}
+
+.receive-material-status-btn.active{
+  border-color:#1d4ed8 !important;
+  background:#1d4ed8 !important;
+  color:#fff !important;
+}
+
+.status-missing .receive-material-status-btn.active{
+  border-color:#dc2626 !important;
+  background:#dc2626 !important;
+  color:#fff !important;
+}
+
+.status-partial .receive-material-status-btn.active{
+  border-color:#d97706 !important;
+  background:#d97706 !important;
+  color:#fff !important;
+}
+
+.project-receive-material-card .receive-material-history{
+  grid-area:history !important;
+  min-width:0 !important;
+  color:#475569 !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.receive-material-comment{
+  grid-area:comment !important;
+  width:100% !important;
+  min-height:44px !important;
+  border:1px solid #dbe3ef !important;
+  border-radius:13px !important;
+  background:#fff !important;
+  color:#0f172a !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  line-height:1.45 !important;
+  padding:9px 10px !important;
+  resize:vertical !important;
+  outline:none !important;
+}
+
+.receive-material-comment:focus{
+  border-color:var(--blue) !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08) !important;
+}
+
+/* 기존 체크박스 기반 스타일 무력화 */
+.project-receive-material-card .receive-material-check,
+.project-receive-material-card .receive-material-confirm{
+  display:none !important;
+}
+
+@media (max-width:1500px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:minmax(90px,.42fr) minmax(145px,.78fr) minmax(238px,1fr) minmax(190px,.9fr) !important;
+  }
+  .receive-material-status-btn{
+    min-width:68px !important;
+    padding:0 8px !important;
+  }
+}
+
+@media (max-width:1280px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:minmax(90px,.45fr) minmax(0,1fr) !important;
+    grid-template-areas:
+      "name memo"
+      "status status"
+      "history history"
+      "comment comment" !important;
+  }
+  .receive-material-status-actions{
+    flex-wrap:wrap !important;
+  }
+  .project-receive-material-card .receive-material-history{
+    white-space:normal !important;
+  }
+}
+
+@media (max-width:760px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "name"
+      "memo"
+      "status"
+      "history"
+      "comment" !important;
+  }
+}
