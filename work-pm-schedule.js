@@ -38,6 +38,49 @@ const pmScheduleDeptOrder = [
   "Development"
 ];
 
+
+function getPmScheduleGradeRank(grade) {
+  const text = String(grade || "");
+  if (text.includes("Asst. Team Leader")) return 2;
+  if (text.includes("Team Leader")) return 1;
+  if (text.includes("Staff")) return 3;
+  return 9;
+}
+
+function getPmScheduleJoinValue(emp) {
+  const join = String(emp?.join || "9999-12-31");
+  const time = Date.parse(join);
+  return Number.isFinite(time) ? time : Date.parse("9999-12-31");
+}
+
+function comparePmScheduleEmployees(a, b) {
+  const deptA = pmScheduleDeptOrder.indexOf(normalizePmScheduleVietDeptName(a.dept));
+  const deptB = pmScheduleDeptOrder.indexOf(normalizePmScheduleVietDeptName(b.dept));
+  const orderA = deptA >= 0 ? deptA : 999;
+  const orderB = deptB >= 0 ? deptB : 999;
+  if (orderA !== orderB) return orderA - orderB;
+
+  const gradeA = getPmScheduleGradeRank(a.grade);
+  const gradeB = getPmScheduleGradeRank(b.grade);
+  if (gradeA !== gradeB) return gradeA - gradeB;
+
+  const joinA = getPmScheduleJoinValue(a);
+  const joinB = getPmScheduleJoinValue(b);
+  if (joinA !== joinB) return joinA - joinB;
+
+  return String(a.name || "").localeCompare(String(b.name || ""));
+}
+
+function formatPmSchedulePersonName(emp) {
+  return {
+    empNo: emp.empNo,
+    name: emp.name || "",
+    grade: emp.grade || "",
+    koreanName: emp.koreanName || "",
+    join: emp.join || ""
+  };
+}
+
 function clonePmScheduleData(data) {
   return JSON.parse(JSON.stringify(data || {}));
 }
@@ -72,14 +115,7 @@ function getPmScheduleVietEmployees() {
     .filter(emp => emp.company === "Viet QS" && emp.status === "재직")
     .filter(emp => !["경영진", "Management Support"].includes(emp.dept));
 
-  return list.sort((a, b) => {
-    const deptA = pmScheduleDeptOrder.indexOf(a.dept);
-    const deptB = pmScheduleDeptOrder.indexOf(b.dept);
-    const orderA = deptA >= 0 ? deptA : 999;
-    const orderB = deptB >= 0 ? deptB : 999;
-    if (orderA !== orderB) return orderA - orderB;
-    return String(a.name).localeCompare(String(b.name));
-  });
+  return list.sort(comparePmScheduleEmployees);
 }
 
 function getPmScheduleCategoryDeptMap() {
@@ -157,13 +193,18 @@ function setPmScheduleModalCategory(value) {
 function createPmSchedulePlanRows() {
   const staff = getPmScheduleVietEmployees();
   return staff.map((emp, index, array) => {
-    const firstInDept = index === 0 || array[index - 1].dept !== emp.dept;
+    const dept = normalizePmScheduleVietDeptName(emp.dept);
+    const prevDept = index > 0 ? normalizePmScheduleVietDeptName(array[index - 1].dept) : "";
+    const firstInDept = index === 0 || prevDept !== dept;
+    const person = formatPmSchedulePersonName(emp);
     return {
-      empNo: emp.empNo,
-      dept: emp.dept,
-      group: firstInDept ? emp.dept : "",
-      name: `${emp.name} ${emp.grade}`,
-      koreanName: emp.koreanName || "",
+      empNo: person.empNo,
+      dept,
+      group: firstInDept ? dept : "",
+      name: person.name,
+      grade: person.grade,
+      koreanName: person.koreanName,
+      join: person.join,
       plan1: { rc: true, sc: false, people: "1", workDays: "", totalDays: "" },
       plan2: { rc: false, sc: false, people: "", workDays: "", totalDays: "" },
       scope: ""
@@ -200,18 +241,28 @@ function normalizeExistingPmScheduleRows(item) {
   const freshRows = createPmSchedulePlanRows();
   const oldPlan1 = item.proposals.plan1.rows || [];
   const oldPlan2 = item.proposals.plan2?.rows || [];
-  item.proposals.plan1.rows = freshRows.map((row, index) => ({
-    ...row,
-    plan1: clonePmScheduleData(oldPlan1[index]?.plan1 || row.plan1),
-    plan2: clonePmScheduleData(oldPlan1[index]?.plan2 || row.plan2),
-    scope: oldPlan1[index]?.scope || row.scope
-  }));
-  item.proposals.plan2.rows = freshRows.map((row, index) => ({
-    ...row,
-    plan1: clonePmScheduleData(oldPlan2[index]?.plan1 || row.plan1),
-    plan2: clonePmScheduleData(oldPlan2[index]?.plan2 || row.plan2),
-    scope: oldPlan2[index]?.scope || row.scope
-  }));
+  const oldPlan1Map = new Map(oldPlan1.map(row => [row.empNo, row]));
+  const oldPlan2Map = new Map(oldPlan2.map(row => [row.empNo, row]));
+
+  item.proposals.plan1.rows = freshRows.map(row => {
+    const oldRow = oldPlan1Map.get(row.empNo) || {};
+    return {
+      ...row,
+      plan1: clonePmScheduleData(oldRow.plan1 || row.plan1),
+      plan2: clonePmScheduleData(oldRow.plan2 || row.plan2),
+      scope: oldRow.scope || row.scope
+    };
+  });
+
+  item.proposals.plan2.rows = freshRows.map(row => {
+    const oldRow = oldPlan2Map.get(row.empNo) || oldPlan1Map.get(row.empNo) || {};
+    return {
+      ...row,
+      plan1: clonePmScheduleData(oldRow.plan1 || row.plan1),
+      plan2: clonePmScheduleData(oldRow.plan2 || row.plan2),
+      scope: oldRow.scope || row.scope
+    };
+  });
 }
 
 function makePmScheduleProject(data, source = "프로젝트 접수", status = "pending") {
@@ -421,6 +472,7 @@ function getConCostPmCandidates(project) {
 function getVietTeamLeaderCandidates() {
   return (typeof employees !== "undefined" ? employees : [])
     .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && String(emp.grade).includes("Team Leader"))
+    .sort(comparePmScheduleEmployees)
     .slice(0, 24);
 }
 
@@ -501,7 +553,8 @@ function getVietTeamLeaderCandidatesByCategory(category) {
   const allowed = getPmScheduleCategoryDeptMap()[category] || [];
   return (typeof employees !== "undefined" ? employees : [])
     .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && String(emp.grade).includes("Team Leader"))
-    .filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)));
+    .filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)))
+    .sort(comparePmScheduleEmployees);
 }
 
 function togglePmScheduleRequestTarget(group, value, checked) {
@@ -775,7 +828,7 @@ function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeCol
   return `
     <tr>
       ${showGroupColumn ? `<th class="pm-sheet-group">${escapePmScheduleHtml(row.group)}</th>` : ""}
-      <td class="pm-sheet-name"><strong>${escapePmScheduleHtml(row.name)}</strong>${row.koreanName ? `<small>${escapePmScheduleHtml(row.koreanName)}</small>` : ""}</td>
+      <td class="pm-sheet-name"><div class="pm-person-name-wrap"><strong class="pm-person-name">${escapePmScheduleHtml(row.name)}</strong>${row.grade ? `<em class="pm-person-grade">${escapePmScheduleHtml(row.grade)}</em>` : ""}${row.koreanName ? `<small class="pm-person-korean">${escapePmScheduleHtml(row.koreanName)}</small>` : ""}${row.join ? `<small class="pm-person-join">입사 ${escapePmScheduleHtml(row.join)}</small>` : ""}</div></td>
       ${showScopeColumns ? `<td class="pm-scope-cell">${checkbox("plan1", "rc", plan1.rc)}</td><td class="pm-scope-cell">${checkbox("plan1", "sc", plan1.sc)}</td>` : ""}
       <td>${input("plan1", "people", plan1.people, "center")}</td>
       <td>${input("plan1", "workDays", plan1.workDays, "center")}</td>
