@@ -13031,3 +13031,106 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   height:12px !important;
   accent-color:var(--blue) !important;
 }
+
+
+/* === PM 스케쥴 1ㆍ2안 표 틀고정 / 헤더 간격 보정 ===
+   - 모달 내부에서 표 본문만 세로 스크롤
+   - 구분/성명/작업범위/1안/2안/우측 작업범위 헤더 고정
+   - colspan 작업범위 헤더 폭 강제값 제거로 칸 벌어짐/깨짐 방지 */
+.pm-schedule-soft-table-wrap,
+.pm-combined-sheet-wrap{
+  max-height:calc(100vh - 270px) !important;
+  overflow:auto !important;
+  position:relative !important;
+  border:1px solid #dbeafe !important;
+  border-radius:18px !important;
+  background:#fff !important;
+}
+
+.pm-schedule-soft-table,
+.pm-combined-sheet-table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+  width:100% !important;
+  margin:0 !important;
+}
+
+.pm-schedule-soft-table thead,
+.pm-combined-sheet-table thead{
+  position:sticky !important;
+  top:0 !important;
+  z-index:80 !important;
+}
+
+.pm-schedule-soft-table thead th,
+.pm-combined-sheet-table thead th{
+  position:sticky !important;
+  background:#eef6ff !important;
+  background-clip:padding-box !important;
+  z-index:81 !important;
+  border-top:0 !important;
+  border-right:1px solid #cfe0f7 !important;
+  border-bottom:1px solid #cfe0f7 !important;
+  box-shadow:0 1px 0 #cfe0f7 !important;
+}
+
+.pm-schedule-soft-table thead tr:first-child th,
+.pm-combined-sheet-table thead tr:first-child th{
+  top:0 !important;
+  height:38px !important;
+  z-index:83 !important;
+}
+
+.pm-schedule-soft-table thead tr:nth-child(2) th,
+.pm-combined-sheet-table thead tr:nth-child(2) th{
+  top:38px !important;
+  height:34px !important;
+  z-index:82 !important;
+}
+
+.pm-schedule-soft-table thead th[rowspan="2"],
+.pm-combined-sheet-table thead th[rowspan="2"]{
+  top:0 !important;
+  height:72px !important;
+  vertical-align:middle !important;
+  z-index:84 !important;
+}
+
+/* colspan이 적용된 '작업범위' 헤더에는 좁은 폭을 강제하지 않음 */
+.pm-schedule-soft-table thead th.pm-scope-header,
+.pm-combined-sheet-table thead th.pm-scope-header{
+  width:auto !important;
+  max-width:none !important;
+  min-width:0 !important;
+  padding-left:6px !important;
+  padding-right:6px !important;
+  text-align:center !important;
+}
+
+/* 실제 RC/SC 칸만 좁게 유지 */
+.pm-schedule-soft-table thead tr:nth-child(2) th.pm-scope-cell,
+.pm-schedule-soft-table tbody td.pm-scope-cell,
+.pm-combined-sheet-table thead tr:nth-child(2) th.pm-scope-cell,
+.pm-combined-sheet-table tbody td.pm-scope-cell{
+  width:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  padding-left:3px !important;
+  padding-right:3px !important;
+  text-align:center !important;
+}
+
+.pm-schedule-soft-table input[type="checkbox"],
+.pm-combined-sheet-table input[type="checkbox"]{
+  width:12px !important;
+  height:12px !important;
+  margin:0 auto !important;
+  display:block !important;
+}
+
+.pm-schedule-soft-table th,
+.pm-schedule-soft-table td,
+.pm-combined-sheet-table th,
+.pm-combined-sheet-table td{
+  border-spacing:0 !important;
+}
