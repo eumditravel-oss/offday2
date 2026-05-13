@@ -645,7 +645,8 @@ function renderPmScheduleCombinedSheet(item, editable) {
           <col class="pm-col-total" />
           <col class="pm-col-people" />
           <col class="pm-col-days" />
-          <col class="pm-col-total" />`;
+          <col class="pm-col-total" />
+          <col class="pm-col-scope" />`;
   const structureHeader = `
           <tr>
             <th rowspan="2">구분</th>
@@ -654,7 +655,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <th colspan="3">1안 (전체 투입)</th>
             <th colspan="2" class="pm-scope-header">작업범위</th>
             <th colspan="3">2안 (최적화 배치)</th>
-            <th rowspan="2">작업범위</th>
+            <th rowspan="2">비고</th>
           </tr>
           <tr>
             <th class="pm-scope-cell">RC</th><th class="pm-scope-cell">SC</th><th>투입인원</th><th>작업일수</th><th>전체일수</th>
@@ -666,6 +667,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <th rowspan="2">성명</th>
             <th colspan="3">1안 (전체 투입)</th>
             <th colspan="3">2안 (최적화 배치)</th>
+            <th rowspan="2">비고</th>
           </tr>
           <tr>
             <th>투입인원</th><th>작업일수</th><th>전체일수</th>
@@ -689,6 +691,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <td data-pm-total="plan1">${plan1Total}</td>
             <th colspan="2">2안 합계</th>
             <td data-pm-total="plan2">${plan2Total}</td>
+            <td></td>
           </tr>`;
   const html = `
     <div class="pm-plan-guide">
@@ -746,7 +749,7 @@ function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScopeCol
       <td>${input("plan2", "people", plan2.people, "center")}</td>
       <td>${input("plan2", "workDays", plan2.workDays, "center")}</td>
       <td>${total("plan2", calculatePmScheduleRowTotal(plan2))}</td>
-      ${showScopeColumns ? `<td class="pm-scope-text-cell">${scopeInput}</td>` : ""}
+      <td class="pm-scope-text-cell">${scopeInput}</td>
     </tr>
   `;
 }
