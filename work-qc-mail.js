@@ -2,7 +2,7 @@
    업무관리 탭 / QC 체크리스트
    ========================= */
 const workPageMeta = {
-  projectReceive: ["프로젝트 접수", "해당 업무관리 카테고리는 화면 준비 영역입니다."],
+  projectReceive: ["프로젝트 접수", "수주소식, 프로젝트 개요, 접수자료, 담당 PM, 납품일정을 카드형 화면으로 관리합니다."],
   pmSchedule: ["PM 배정 / 일정", "해당 업무관리 카테고리는 화면 준비 영역입니다."],
   projectManage: ["프로젝트 관리", "프로젝트 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 통합 관리합니다."],
   quantityChecklist: ["프로젝트 질의응답 관리", "수량산출 체크리스트, 체크리스트 검토, 이의제기, 오류 소거, 최종 수량 검토를 한 화면에서 관리합니다."],
@@ -9399,6 +9399,10 @@ function switchWorkPanel(panelId) {
   const meta = workPageMeta[targetPanelId] || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
   setText("workPageDesc", meta[1]);
+
+  if (targetPanelId === "projectReceive" && typeof renderProjectReceiveDashboard === "function") {
+    renderProjectReceiveDashboard();
+  }
 
   if (targetPanelId === "qcReview" || targetPanelId === "quantityChecklist") {
     renderChecklistCategoryButtons();
