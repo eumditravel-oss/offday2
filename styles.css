@@ -4604,7 +4604,8 @@ body{
 .actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-2{grid-template-columns:repeat(2,92px)!important;}
 .actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-3{grid-template-columns:repeat(3,92px)!important;}
 .actual-view-tree.concost-tree .actual-view-기술본부 > .actual-view-branch-children{gap:34px;}
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-branch-children{gap:20px;}
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-branch-children,
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경파트 > .actual-view-branch-children{gap:20px;}
 .actual-org-title-box{margin-bottom:10px!important;}
 .actual-org-scroll-note{margin-bottom:6px!important;}
 
@@ -5943,7 +5944,8 @@ body{
   gap:34px;
   align-items:start;
 }
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-children{
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경파트 > .actual-view-children{
   grid-template-columns:92px 92px 92px!important;
   gap:20px;
   align-items:start;
@@ -6053,7 +6055,8 @@ body{
 .actual-view-tree.concost-tree>.actual-view-node-wrap>.actual-view-children.depth-0{gap:56px!important;}
 .actual-view-tree.concost-tree>.actual-view-node-wrap>.actual-view-children.depth-0::before{display:none!important;}
 .actual-view-tree.concost-tree .actual-view-기술본부>.actual-view-children,
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경>.actual-view-children{gap:42px!important;}
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경>.actual-view-children,
+.actual-view-tree.concost-tree .actual-view-구조-토목-조경파트>.actual-view-children{gap:42px!important;}
 .actual-org-fit{padding:18px 70px 42px!important;}
 .actual-org-viewport{overflow:auto!important;}
 
