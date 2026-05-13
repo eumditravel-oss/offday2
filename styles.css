@@ -10517,3 +10517,338 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     width:260px;
   }
 }
+
+/* =========================================================
+   업무관리 > 프로젝트 접수 카드형 화면
+========================================================= */
+.project-receive-shell{
+  display:grid;
+  gap:18px;
+}
+
+.project-receive-hero,
+.project-receive-card,
+.project-receive-status{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+}
+
+.project-receive-hero{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:flex-end;
+  padding:24px;
+  background:linear-gradient(135deg,#ffffff 0%,#f8fbff 60%,#eef6ff 100%);
+}
+
+.project-receive-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  margin-bottom:8px;
+  color:var(--blue);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+.project-receive-hero h2{
+  font-size:28px;
+  letter-spacing:-.8px;
+  margin-bottom:8px;
+}
+
+.project-receive-hero p{
+  color:var(--muted);
+  line-height:1.6;
+  font-weight:700;
+}
+
+.project-receive-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.project-receive-status{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  overflow:hidden;
+}
+
+.project-receive-status div{
+  padding:18px 20px;
+  border-right:1px solid var(--line2);
+}
+
+.project-receive-status div:last-child{border-right:0}
+.project-receive-status span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:7px;
+}
+.project-receive-status strong{
+  display:block;
+  color:#0f172a;
+  font-size:16px;
+  line-height:1.35;
+  word-break:keep-all;
+}
+
+.project-receive-grid{
+  display:grid;
+  grid-template-columns:1.35fr .85fr .85fr;
+  gap:18px;
+  align-items:start;
+}
+
+.project-receive-grid-bottom{
+  grid-template-columns:1.3fr .85fr .9fr;
+}
+
+.project-receive-card{
+  padding:20px;
+  min-width:0;
+}
+
+.project-receive-card-wide{
+  min-height:100%;
+}
+
+.project-receive-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.project-receive-card-head strong{
+  display:block;
+  font-size:17px;
+  letter-spacing:-.4px;
+  margin-bottom:5px;
+}
+
+.project-receive-card-head span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+
+.project-receive-card-head em{
+  width:34px;
+  height:34px;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  background:#eff6ff;
+  color:var(--blue);
+  font-style:normal;
+  font-weight:900;
+  flex:0 0 auto;
+}
+
+.project-receive-form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.project-receive-form-grid.one-col{grid-template-columns:1fr}
+.project-receive-form-grid.contact-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+.receive-field{
+  display:grid;
+  gap:7px;
+  min-width:0;
+}
+
+.receive-field.full{grid-column:1/-1}
+
+.receive-field span{
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+}
+
+.receive-field input,
+.receive-field textarea{
+  width:100%;
+  border:1px solid #dbe3ef;
+  border-radius:14px;
+  background:#f8fafc;
+  padding:11px 12px;
+  color:#0f172a;
+  font-weight:800;
+  outline:none;
+  transition:.15s ease;
+}
+
+.receive-field textarea{
+  resize:vertical;
+  line-height:1.55;
+}
+
+.receive-field input:focus,
+.receive-field textarea:focus{
+  border-color:var(--blue);
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(37,99,235,.08);
+}
+
+.receive-chip-group{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+}
+
+.receive-chip{
+  border:1px solid #dbe3ef;
+  background:#f8fafc;
+  color:#334155;
+  border-radius:999px;
+  padding:10px 12px;
+  font-weight:900;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+
+.receive-chip span{
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#fff;
+  color:#64748b;
+  font-size:11px;
+}
+
+.receive-chip.active{
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+  color:#fff;
+}
+
+.receive-chip.active span{
+  color:#1d4ed8;
+}
+
+.receive-contact-list{
+  display:grid;
+  gap:12px;
+}
+
+.receive-contact-card{
+  border:1px solid var(--line2);
+  border-radius:18px;
+  background:#fbfdff;
+  padding:14px;
+}
+
+.receive-contact-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.receive-contact-title strong{
+  font-size:13px;
+}
+
+.receive-contact-title button{
+  border:0;
+  border-radius:999px;
+  padding:6px 10px;
+  background:#fee2e2;
+  color:#b91c1c;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.receive-add-btn{
+  width:100%;
+  margin-top:12px;
+  border:1px dashed #93c5fd;
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-radius:16px;
+  padding:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.receive-material-list{
+  display:grid;
+  gap:10px;
+}
+
+.receive-material-item{
+  display:grid;
+  grid-template-columns:auto 84px 1fr;
+  gap:9px;
+  align-items:center;
+  border:1px solid var(--line2);
+  background:#f8fafc;
+  border-radius:16px;
+  padding:10px;
+}
+
+.receive-material-item.active{
+  border-color:#93c5fd;
+  background:#eff6ff;
+}
+
+.receive-material-item span{
+  font-weight:900;
+  color:#0f172a;
+}
+
+.receive-material-item input[type="text"],
+.receive-material-item input:not([type]){
+  min-width:0;
+  border:1px solid #dbe3ef;
+  border-radius:12px;
+  padding:9px 10px;
+  background:#fff;
+  font-weight:800;
+}
+
+.project-receive-note-card{
+  padding:22px;
+}
+
+.project-receive-note-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+@media (max-width:1280px){
+  .project-receive-grid,
+  .project-receive-grid-bottom{grid-template-columns:1fr}
+  .project-receive-status{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .project-receive-status div:nth-child(2){border-right:0}
+  .project-receive-status div:nth-child(-n+2){border-bottom:1px solid var(--line2)}
+}
+
+@media (max-width:760px){
+  .project-receive-hero{align-items:flex-start;flex-direction:column}
+  .project-receive-status{grid-template-columns:1fr}
+  .project-receive-status div{border-right:0;border-bottom:1px solid var(--line2)}
+  .project-receive-status div:last-child{border-bottom:0}
+  .project-receive-form-grid,
+  .project-receive-form-grid.contact-grid,
+  .project-receive-note-grid{grid-template-columns:1fr}
+}
