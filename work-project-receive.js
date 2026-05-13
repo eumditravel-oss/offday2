@@ -39,11 +39,11 @@ const projectReceiveDefaultData = {
     { name: "", role: "", dept: "", tel: "", mobile: "", email: "" }
   ],
   materials: [
-    { label: "도면", checked: false, memo: "" },
-    { label: "시방서", checked: false, memo: "" },
-    { label: "현장설명서", checked: false, memo: "" },
-    { label: "내역서", checked: false, memo: "" },
-    { label: "기타자료", checked: false, memo: "" }
+    { label: "도면", checked: false, memo: "", confirmed: false, confirmedBy: "" },
+    { label: "시방서", checked: false, memo: "", confirmed: false, confirmedBy: "" },
+    { label: "현장설명서", checked: false, memo: "", confirmed: false, confirmedBy: "" },
+    { label: "내역서", checked: false, memo: "", confirmed: false, confirmedBy: "" },
+    { label: "기타자료", checked: false, memo: "", confirmed: false, confirmedBy: "" }
   ],
   pmTotal: "",
   pmFinish: "",
@@ -94,11 +94,11 @@ const projectReceiveSampleData = {
     { name: "남종현", role: "매니저", dept: "건축국내견적팀", tel: "02-746-5363", mobile: "010-2080-1933", email: "surnam@hdec.co.kr" }
   ],
   materials: [
-    { label: "도면", checked: true, memo: "2026.05.11 접수" },
-    { label: "시방서", checked: true, memo: "접수" },
-    { label: "현장설명서", checked: true, memo: "접수" },
-    { label: "내역서", checked: true, memo: "접수" },
-    { label: "기타자료", checked: false, memo: "" }
+    { label: "도면", checked: true, memo: "2026.05.11 접수", confirmed: true, confirmedBy: "장병선 / 2026.05.11 09:30" },
+    { label: "시방서", checked: true, memo: "접수", confirmed: true, confirmedBy: "장병선 / 2026.05.11 09:35" },
+    { label: "현장설명서", checked: true, memo: "접수", confirmed: false, confirmedBy: "" },
+    { label: "내역서", checked: true, memo: "접수", confirmed: false, confirmedBy: "" },
+    { label: "기타자료", checked: false, memo: "", confirmed: false, confirmedBy: "" }
   ],
   pmTotal: "",
   pmFinish: "",
@@ -184,19 +184,15 @@ function renderProjectReceiveContacts() {
   const list = document.getElementById("receiveContactList");
   if (!list) return;
   list.innerHTML = projectReceiveState.contacts.map((contact, index) => `
-    <div class="receive-contact-card">
-      <div class="receive-contact-title">
-        <strong>담당자 ${index + 1}</strong>
-        <button type="button" onclick="removeProjectReceiveContact(${index})">삭제</button>
-      </div>
-      <div class="project-receive-form-grid contact-grid">
-        <label class="receive-field"><span>이름</span><input value="${escapeProjectReceiveHtml(contact.name)}" oninput="updateProjectReceiveContact(${index}, 'name', this.value)" /></label>
-        <label class="receive-field"><span>직급</span><input value="${escapeProjectReceiveHtml(contact.role)}" oninput="updateProjectReceiveContact(${index}, 'role', this.value)" /></label>
-        <label class="receive-field"><span>부서</span><input value="${escapeProjectReceiveHtml(contact.dept)}" oninput="updateProjectReceiveContact(${index}, 'dept', this.value)" /></label>
-        <label class="receive-field"><span>일반전화</span><input value="${escapeProjectReceiveHtml(contact.tel)}" oninput="updateProjectReceiveContact(${index}, 'tel', this.value)" /></label>
-        <label class="receive-field"><span>휴대폰</span><input value="${escapeProjectReceiveHtml(contact.mobile)}" oninput="updateProjectReceiveContact(${index}, 'mobile', this.value)" /></label>
-        <label class="receive-field"><span>이메일</span><input value="${escapeProjectReceiveHtml(contact.email)}" oninput="updateProjectReceiveContact(${index}, 'email', this.value)" /></label>
-      </div>
+    <div class="receive-contact-row">
+      <div class="receive-contact-row-index">담당자 ${index + 1}</div>
+      <label class="receive-field"><span>이름</span><input value="${escapeProjectReceiveHtml(contact.name)}" oninput="updateProjectReceiveContact(${index}, 'name', this.value)" /></label>
+      <label class="receive-field"><span>직급</span><input value="${escapeProjectReceiveHtml(contact.role)}" oninput="updateProjectReceiveContact(${index}, 'role', this.value)" /></label>
+      <label class="receive-field"><span>부서</span><input value="${escapeProjectReceiveHtml(contact.dept)}" oninput="updateProjectReceiveContact(${index}, 'dept', this.value)" /></label>
+      <label class="receive-field"><span>일반전화</span><input value="${escapeProjectReceiveHtml(contact.tel)}" oninput="updateProjectReceiveContact(${index}, 'tel', this.value)" /></label>
+      <label class="receive-field"><span>휴대폰</span><input value="${escapeProjectReceiveHtml(contact.mobile)}" oninput="updateProjectReceiveContact(${index}, 'mobile', this.value)" /></label>
+      <label class="receive-field"><span>이메일</span><input value="${escapeProjectReceiveHtml(contact.email)}" oninput="updateProjectReceiveContact(${index}, 'email', this.value)" /></label>
+      <button class="receive-contact-delete" type="button" onclick="removeProjectReceiveContact(${index})">삭제</button>
     </div>
   `).join("");
 }
@@ -224,11 +220,17 @@ function renderProjectReceiveMaterials() {
   const list = document.getElementById("receiveMaterialList");
   if (!list) return;
   list.innerHTML = projectReceiveState.materials.map((item, index) => `
-    <label class="receive-material-item ${item.checked ? "active" : ""}">
-      <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleProjectReceiveMaterial(${index}, this.checked)" />
-      <span>${item.label}</span>
-      <input value="${escapeProjectReceiveHtml(item.memo)}" placeholder="메모" oninput="updateProjectReceiveMaterialMemo(${index}, this.value)" />
-    </label>
+    <div class="receive-material-item ${item.checked ? "active" : ""}">
+      <label class="receive-material-check">
+        <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleProjectReceiveMaterial(${index}, this.checked)" />
+        <span>${item.label}</span>
+      </label>
+      <input class="receive-material-memo" value="${escapeProjectReceiveHtml(item.memo)}" placeholder="메모" oninput="updateProjectReceiveMaterialMemo(${index}, this.value)" />
+      <button class="receive-material-confirm ${item.confirmed ? "confirmed" : ""}" type="button" onclick="confirmProjectReceiveMaterial(${index})">
+        ${item.confirmed ? "확인완료" : "확인"}
+      </button>
+      <div class="receive-material-history">${item.confirmedBy ? `확인: ${escapeProjectReceiveHtml(item.confirmedBy)}` : "확인 이력 없음"}</div>
+    </div>
   `).join("");
 }
 
@@ -241,6 +243,14 @@ function toggleProjectReceiveMaterial(index, checked) {
 function updateProjectReceiveMaterialMemo(index, value) {
   if (!projectReceiveState.materials[index]) return;
   projectReceiveState.materials[index].memo = value;
+}
+
+function confirmProjectReceiveMaterial(index) {
+  if (!projectReceiveState.materials[index]) return;
+  const item = projectReceiveState.materials[index];
+  item.confirmed = !item.confirmed;
+  item.confirmedBy = item.confirmed ? "장병선 / 방금 확인" : "";
+  renderProjectReceiveMaterials();
 }
 
 function syncProjectReceiveInputsToState() {
