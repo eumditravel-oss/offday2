@@ -12235,3 +12235,172 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-summary-grid div{border-right:0;border-bottom:1px solid var(--line2)}
   .pm-summary-grid div:last-child{border-bottom:0}
 }
+
+/* === PM 배정 / 일정 화면 재구성 패치 === */
+.pm-schedule-hero{
+  min-height:48px !important;
+  padding:14px 24px !important;
+}
+.pm-schedule-hero h2{
+  margin-bottom:0 !important;
+  font-size:24px !important;
+}
+.pm-schedule-hero p,
+.pm-schedule-alert{
+  display:none !important;
+}
+.pm-schedule-role-message{
+  background:#fff;
+  border:1px dashed var(--line2);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:34px 36px;
+}
+.pm-schedule-role-message strong{
+  display:block;
+  font-size:22px;
+  margin-bottom:10px;
+}
+.pm-schedule-role-message span{
+  color:var(--muted);
+  font-weight:900;
+}
+.pm-schedule-layout{
+  display:grid;
+  grid-template-columns:1fr !important;
+  gap:18px;
+}
+.pm-schedule-project-card.pm-schedule-project-wide{
+  position:static !important;
+  padding:18px !important;
+}
+.pm-schedule-project-card.pm-schedule-project-wide .pm-card-head{
+  margin-bottom:10px;
+}
+.pm-schedule-project-list{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px !important;
+  max-height:none !important;
+  overflow:visible !important;
+  padding-right:0 !important;
+}
+.pm-project-card{
+  min-height:118px;
+  align-content:start;
+}
+.pm-schedule-detail{
+  display:grid;
+  grid-template-columns:1fr;
+}
+.pm-assignment-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+.pm-schedule-editor-view{
+  display:none;
+}
+.pm-editor-project-info{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 1.4fr;
+  gap:10px;
+  margin-bottom:14px;
+}
+.pm-editor-project-info div{
+  border:1px solid var(--line2);
+  border-radius:14px;
+  background:#fbfdff;
+  padding:12px 14px;
+}
+.pm-editor-project-info span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.pm-editor-project-info strong{
+  display:block;
+  font-size:14px;
+  line-height:1.45;
+}
+.pm-schedule-proposal-grid,
+.pm-editor-schedule-grid{
+  display:grid;
+  grid-template-columns:1fr !important;
+  gap:14px;
+}
+.pm-schedule-sheet-card{
+  padding:14px !important;
+  overflow:hidden;
+}
+.pm-schedule-sheet-wrap{
+  overflow:auto;
+  border:1px solid #0f172a;
+  border-radius:8px;
+  background:#fff;
+}
+.pm-schedule-sheet-table{
+  width:100%;
+  min-width:1180px;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+.pm-schedule-sheet-table th,
+.pm-schedule-sheet-table td{
+  border:1px solid #0f172a;
+  padding:5px 6px;
+  font-size:12px;
+  line-height:1.25;
+  text-align:center;
+  vertical-align:middle;
+}
+.pm-schedule-sheet-table thead th{
+  background:#aef0eb;
+  color:#0f172a;
+  font-weight:900;
+}
+.pm-schedule-sheet-table .pm-sheet-group{
+  background:#fff2c7;
+  width:70px;
+  font-weight:900;
+}
+.pm-schedule-sheet-table .pm-sheet-name{
+  width:140px;
+  text-align:center;
+  background:#fff;
+}
+.pm-schedule-sheet-table td:nth-child(9){
+  background:#eaf5ff;
+  text-align:left;
+}
+.pm-schedule-sheet-table input[type="checkbox"]{
+  width:14px;
+  height:14px;
+  accent-color:var(--blue);
+}
+.pm-sheet-input{
+  width:100%;
+  height:26px;
+  border:0;
+  border-radius:0;
+  padding:3px 4px;
+  background:#edf7ff;
+  font-size:12px;
+  font-weight:800;
+}
+.pm-sheet-input.center{
+  text-align:center;
+}
+.pm-sheet-total-row th,
+.pm-sheet-total-row td{
+  background:#cbd5e1 !important;
+  font-weight:900;
+}
+.pm-proposal-card.active .pm-schedule-sheet-wrap{
+  box-shadow:0 0 0 3px rgba(37,99,235,.14);
+}
+
+@media(max-width:1280px){
+  .pm-schedule-project-list{grid-template-columns:1fr !important;}
+  .pm-assignment-grid,.pm-editor-project-info{grid-template-columns:1fr !important;}
+}
