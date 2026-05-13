@@ -817,10 +817,17 @@ function renderActualOrgCard(node, depth = 0) {
 function renderActualOrgTreeNode(node, depth = 0, path = "0") {
   const { emp, title, name } = orgNodeLabel(node);
   const children = node.children || [];
-  const displayTitle = title || (emp ? emp.position || emp.grade : "조직");
-  const displayPerson = emp ? displayName(emp) : (name || "직원 미연결");
-  const meta = emp ? `${emp.company} · ${emp.dept}` : "조직 노드";
-  const onclick = emp ? ` onclick="openMiniCardPopup('${emp.empNo}')"` : "";
+  const info = typeof getOrgDisplayInfo === "function"
+    ? getOrgDisplayInfo(node, emp, title, name)
+    : {
+      displayTitle: title || (emp ? emp.position || emp.grade : "조직"),
+      displayPerson: emp ? displayName(emp) : (name || "직원 미연결"),
+      meta: emp ? `${emp.company} · ${emp.dept}` : "조직 노드"
+    };
+  const displayTitle = info.displayTitle;
+  const displayPerson = info.displayPerson;
+  const meta = info.meta;
+  const onclick = emp && !(typeof isOrgDepartmentNode === "function" && isOrgDepartmentNode(node)) ? ` onclick="openMiniCardPopup('${emp.empNo}')"` : "";
   const typeClass = node.className || "";
   const layoutClass = getOrgPopupNodeClass(node, depth).replaceAll("org-popup-", "actual-view-");
   const childCount = children.length;
