@@ -905,6 +905,7 @@ function selectPermissionRole(role) {
   if (dropdown) dropdown.classList.remove("open");
   if (button) button.setAttribute("aria-expanded", "false");
   showToast(`현재 권한 등급이 '${role}'로 설정되었습니다.`);
+  if (typeof renderPmScheduleDashboard === "function") renderPmScheduleDashboard();
 }
 
 document.addEventListener("click", event => {
