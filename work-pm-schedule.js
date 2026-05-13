@@ -440,18 +440,28 @@ function renderPmScheduleProjectList() {
     list.innerHTML = `<div class="pm-empty-box">해당 조건의 프로젝트가 없습니다.</div>`;
     return;
   }
-  list.innerHTML = filtered.map(item => {
-    const realIndex = pmScheduleProjects.indexOf(item);
-    const scope = getPmScheduleScopeText(item.project);
-    return `
-      <button class="pm-project-card ${realIndex === pmScheduleSelectedIndex ? "active" : ""}" type="button" onclick="selectPmScheduleProject(${realIndex})">
-        <span class="pm-project-state ${item.status}">${getPmScheduleStatusLabel(item.status)}</span>
-        <strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong>
-        <em>${escapePmScheduleHtml(item.project.projectNo || "NO 미입력")} · ${escapePmScheduleHtml(item.project.client || "의뢰처 미입력")}</em>
-        <small>${escapePmScheduleHtml(scope)}</small>
-      </button>
-    `;
-  }).join("");
+  list.innerHTML = `
+    <div class="pm-project-list-table">
+      <div class="pm-project-list-head">
+        <span>상태</span>
+        <span>프로젝트명</span>
+        <span>접수번호 / 의뢰처</span>
+        <span>작업범위</span>
+      </div>
+      ${filtered.map(item => {
+        const realIndex = pmScheduleProjects.indexOf(item);
+        const scope = getPmScheduleScopeText(item.project);
+        return `
+          <button class="pm-project-list-row ${realIndex === pmScheduleSelectedIndex ? "active" : ""}" type="button" onclick="selectPmScheduleProject(${realIndex})">
+            <span class="pm-project-state ${item.status}">${getPmScheduleStatusLabel(item.status)}</span>
+            <strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong>
+            <em>${escapePmScheduleHtml(item.project.projectNo || "NO 미입력")} · ${escapePmScheduleHtml(item.project.client || "의뢰처 미입력")}</em>
+            <small>${escapePmScheduleHtml(scope)}</small>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
 }
 
 function selectPmScheduleProject(index) {
@@ -565,19 +575,38 @@ function renderPmScheduleRequestTargets(item) {
   if (tlList) {
     const tlDeptOptions = ["Structure", "Finish", "Civil"];
     const leaders = getVietTeamLeaderCandidatesByCategory(pmScheduleTlRequestDeptFilter);
+    const groupedLeaders = groupPmScheduleVietTeamLeadersByDept(leaders);
     tlList.innerHTML = `
-      <div class="pm-request-filter-row">
+      <div class="pm-request-filter-row pm-request-filter-row-title-right">
         <label><span>대상 부서</span><select onchange="setPmScheduleTlRequestDeptFilter(this.value)">
           ${tlDeptOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${pmScheduleTlRequestDeptFilter === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}
         </select></label>
       </div>
-      <div class="pm-check-list-inner pm-teamleader-list-inner">
-        ${leaders.length ? leaders.map(emp => {
-          const value = `${emp.koreanName ? emp.koreanName + ' / ' : ''}${emp.name} ${emp.grade} · ${normalizePmScheduleVietDeptName(emp.dept)}`;
-          return `<label class="pm-check-item"><input type="checkbox" ${item.requestTargets.teamLeaders.includes(value) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('teamLeaders', '${escapePmScheduleAttr(value)}', this.checked)" /> <span>${escapePmScheduleHtml(value)}</span></label>`;
-        }).join("") : `<div class="pm-empty-box small">선택한 부서의 Team Leader가 없습니다.</div>`}
+      <div class="pm-check-list-inner pm-teamleader-list-inner pm-teamleader-group-list">
+        ${leaders.length ? groupedLeaders.map(group => `
+          <div class="pm-teamleader-dept-group">
+            <div class="pm-teamleader-dept-title">${escapePmScheduleHtml(group.dept)}</div>
+            <div class="pm-teamleader-dept-items">
+              ${group.members.map(emp => {
+                const value = `${emp.koreanName ? emp.koreanName + ' / ' : ''}${emp.name} ${emp.grade} · ${normalizePmScheduleVietDeptName(emp.dept)}`;
+                return `<label class="pm-check-item"><input type="checkbox" ${item.requestTargets.teamLeaders.includes(value) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('teamLeaders', '${escapePmScheduleAttr(value)}', this.checked)" /> <span>${escapePmScheduleHtml(value)}</span></label>`;
+              }).join("")}
+            </div>
+          </div>
+        `).join("") : `<div class="pm-empty-box small">선택한 부서의 Team Leader가 없습니다.</div>`}
       </div>`;
   }
+}
+
+
+function groupPmScheduleVietTeamLeadersByDept(leaders) {
+  const map = new Map();
+  leaders.forEach(emp => {
+    const dept = normalizePmScheduleVietDeptName(emp.dept);
+    if (!map.has(dept)) map.set(dept, []);
+    map.get(dept).push(emp);
+  });
+  return Array.from(map.entries()).map(([dept, members]) => ({ dept, members }));
 }
 
 function setPmSchedulePmRequestDeptFilter(value) {
@@ -597,10 +626,11 @@ function getConCostPmCandidatesByDept(project, deptFilter) {
   const key = normalizePmScheduleDept(deptFilter);
   const matched = staff.filter(emp => {
     const dept = normalizePmScheduleDept(emp.dept);
+    if (key.includes("BIM")) return dept.includes("BIM");
     if (key.includes("구조")) return dept.includes("구조");
     if (key.includes("마감")) return dept.includes("마감");
     if (key.includes("토목") || key.includes("조경")) return dept.includes("토목") || dept.includes("조경");
-    return true;
+    return false;
   });
   return matched.length ? matched : staff;
 }
