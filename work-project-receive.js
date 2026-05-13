@@ -39,11 +39,11 @@ const projectReceiveDefaultData = {
     { name: "", role: "", dept: "", tel: "", mobile: "", email: "" }
   ],
   materials: [
-    { label: "도면", checked: false, memo: "", confirmed: false, confirmedBy: "" },
-    { label: "시방서", checked: false, memo: "", confirmed: false, confirmedBy: "" },
-    { label: "현장설명서", checked: false, memo: "", confirmed: false, confirmedBy: "" },
-    { label: "내역서", checked: false, memo: "", confirmed: false, confirmedBy: "" },
-    { label: "기타자료", checked: false, memo: "", confirmed: false, confirmedBy: "" }
+    { label: "도면", memo: "", status: "미접수", comment: "", confirmedBy: "" },
+    { label: "시방서", memo: "", status: "미접수", comment: "", confirmedBy: "" },
+    { label: "현장설명서", memo: "", status: "미접수", comment: "", confirmedBy: "" },
+    { label: "내역서", memo: "", status: "미접수", comment: "", confirmedBy: "" },
+    { label: "기타자료", memo: "", status: "미접수", comment: "", confirmedBy: "" }
   ],
   pmTotal: "",
   pmFinish: "",
@@ -94,11 +94,11 @@ const projectReceiveSampleData = {
     { name: "남종현", role: "매니저", dept: "건축국내견적팀", tel: "02-746-5363", mobile: "010-2080-1933", email: "surnam@hdec.co.kr" }
   ],
   materials: [
-    { label: "도면", checked: true, memo: "2026.05.11 접수", confirmed: true, confirmedBy: getProjectReceiveConfirmStamp() },
-    { label: "시방서", checked: true, memo: "접수", confirmed: true, confirmedBy: getProjectReceiveConfirmStamp() },
-    { label: "현장설명서", checked: true, memo: "접수", confirmed: false, confirmedBy: "" },
-    { label: "내역서", checked: true, memo: "접수", confirmed: false, confirmedBy: "" },
-    { label: "기타자료", checked: false, memo: "", confirmed: false, confirmedBy: "" }
+    { label: "도면", memo: "2026.05.11 접수", status: "확인완료", comment: "", confirmedBy: getProjectReceiveConfirmStamp() },
+    { label: "시방서", memo: "접수", status: "확인완료", comment: "", confirmedBy: getProjectReceiveConfirmStamp() },
+    { label: "현장설명서", memo: "접수", status: "일부접수", comment: "건축 구조 도면은 접수 받았으나 계약범위인 토목도서는 미접수 되었으므로 담당자 확인요망", confirmedBy: getProjectReceiveConfirmStamp() },
+    { label: "내역서", memo: "접수", status: "확인완료", comment: "", confirmedBy: getProjectReceiveConfirmStamp() },
+    { label: "기타자료", memo: "", status: "미접수", comment: "", confirmedBy: "" }
   ],
   pmTotal: "",
   pmFinish: "",
@@ -222,7 +222,7 @@ function renderProjectReceiveStatus() {
   const el = document.getElementById("projectReceiveStatus");
   if (!el) return;
   const checkedScope = projectReceiveState.scopes.filter(item => item.checked).map(item => item.label);
-  const checkedMaterials = projectReceiveState.materials.filter(item => item.checked).length;
+  const checkedMaterials = projectReceiveState.materials.filter(item => normalizeProjectReceiveMaterialStatus(item) !== "미접수").length;
   el.innerHTML = `
     <div><span>접수상태</span><strong>작성중</strong></div>
     <div><span>선택 범위</span><strong>${checkedScope.length ? checkedScope.join(" · ") : "미선택"}</strong></div>
@@ -286,25 +286,43 @@ function removeProjectReceiveContact(index) {
 function renderProjectReceiveMaterials() {
   const list = document.getElementById("receiveMaterialList");
   if (!list) return;
-  list.innerHTML = projectReceiveState.materials.map((item, index) => `
-    <div class="receive-material-item ${item.checked ? "active" : ""}">
-      <label class="receive-material-check">
-        <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleProjectReceiveMaterial(${index}, this.checked)" />
-        <span>${item.label}</span>
-      </label>
-      <input class="receive-material-memo" value="${escapeProjectReceiveHtml(item.memo)}" placeholder="메모" oninput="updateProjectReceiveMaterialMemo(${index}, this.value)" />
-      <button class="receive-material-confirm ${item.confirmed ? "confirmed" : ""}" type="button" onclick="confirmProjectReceiveMaterial(${index})">
-        ${item.confirmed ? "확인완료" : "확인"}
-      </button>
-      <div class="receive-material-history">${item.confirmedBy ? `확인: ${escapeProjectReceiveHtml(item.confirmedBy)}` : "확인 이력 없음"}</div>
+  list.innerHTML = projectReceiveState.materials.map((item, index) => {
+    const status = normalizeProjectReceiveMaterialStatus(item);
+    const comment = item.comment || getProjectReceiveMaterialDefaultComment(status);
+    const hasHistory = Boolean(item.confirmedBy);
+    return `
+    <div class="receive-material-item status-${getProjectReceiveMaterialStatusClass(status)}">
+      <div class="receive-material-name">${escapeProjectReceiveHtml(item.label)}</div>
+      <input class="receive-material-memo" value="${escapeProjectReceiveHtml(item.memo)}" placeholder="접수일 또는 메모" oninput="updateProjectReceiveMaterialMemo(${index}, this.value)" />
+      <div class="receive-material-status-actions" role="group" aria-label="${escapeProjectReceiveHtml(item.label)} 접수 상태">
+        ${["확인완료", "미접수", "일부접수"].map(option => `
+          <button class="receive-material-status-btn ${status === option ? "active" : ""}" type="button" onclick="setProjectReceiveMaterialStatus(${index}, '${option}')">${option}</button>
+        `).join("")}
+      </div>
+      <div class="receive-material-history">${hasHistory ? `확인: ${escapeProjectReceiveHtml(item.confirmedBy)}` : "확인 이력 없음"}</div>
+      <textarea class="receive-material-comment" rows="2" placeholder="미접수 또는 일부접수 사유/코멘트" oninput="updateProjectReceiveMaterialComment(${index}, this.value)">${escapeProjectReceiveHtml(comment)}</textarea>
     </div>
-  `).join("");
+  `;
+  }).join("");
 }
 
-function toggleProjectReceiveMaterial(index, checked) {
-  if (!projectReceiveState.materials[index]) return;
-  projectReceiveState.materials[index].checked = checked;
-  renderProjectReceiveDashboard();
+function normalizeProjectReceiveMaterialStatus(item) {
+  if (item?.status) return item.status;
+  if (item?.confirmed) return "확인완료";
+  if (item?.checked) return "일부접수";
+  return "미접수";
+}
+
+function getProjectReceiveMaterialStatusClass(status) {
+  if (status === "확인완료") return "complete";
+  if (status === "일부접수") return "partial";
+  return "missing";
+}
+
+function getProjectReceiveMaterialDefaultComment(status) {
+  if (status === "일부접수") return "건축 구조 도면은 접수 받았으나 계약범위인 토목도서는 미접수 되었으므로 담당자 확인요망";
+  if (status === "미접수") return "자료 미접수 상태입니다. 발주처 담당자 확인이 필요합니다.";
+  return "";
 }
 
 function updateProjectReceiveMaterialMemo(index, value) {
@@ -312,12 +330,37 @@ function updateProjectReceiveMaterialMemo(index, value) {
   projectReceiveState.materials[index].memo = value;
 }
 
-function confirmProjectReceiveMaterial(index) {
+function updateProjectReceiveMaterialComment(index, value) {
+  if (!projectReceiveState.materials[index]) return;
+  projectReceiveState.materials[index].comment = value;
+}
+
+function setProjectReceiveMaterialStatus(index, status) {
   if (!projectReceiveState.materials[index]) return;
   const item = projectReceiveState.materials[index];
-  item.confirmed = !item.confirmed;
-  item.confirmedBy = item.confirmed ? getProjectReceiveConfirmStamp() : "";
+  item.status = status;
+  item.checked = status !== "미접수";
+  item.confirmed = status === "확인완료";
+  item.confirmedBy = getProjectReceiveConfirmStamp();
+  if ((status === "미접수" || status === "일부접수") && !item.comment) {
+    item.comment = getProjectReceiveMaterialDefaultComment(status);
+  }
+  if (status === "확인완료" && item.comment === getProjectReceiveMaterialDefaultComment("미접수")) {
+    item.comment = "";
+  }
   renderProjectReceiveMaterials();
+  renderProjectReceiveStatus();
+}
+
+function toggleProjectReceiveMaterial(index, checked) {
+  if (!projectReceiveState.materials[index]) return;
+  setProjectReceiveMaterialStatus(index, checked ? "확인완료" : "미접수");
+}
+
+function confirmProjectReceiveMaterial(index) {
+  if (!projectReceiveState.materials[index]) return;
+  const currentStatus = normalizeProjectReceiveMaterialStatus(projectReceiveState.materials[index]);
+  setProjectReceiveMaterialStatus(index, currentStatus === "확인완료" ? "미접수" : "확인완료");
 }
 
 function syncProjectReceiveInputsToState() {
