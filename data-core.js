@@ -982,7 +982,7 @@ const orgStructures = {
                     "employeeId": "CC-008"
                   }
                 ],
-                "displayName": "Structure",
+                "displayName": "StructureㆍCivil",
                 "nodeType": "department",
                 "className": "secondary"
               }
