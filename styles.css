@@ -13389,3 +13389,38 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-combined-sheet-table.without-group .pm-col-name{
   width:240px !important;
 }
+
+/* PM 배정 / 일정: 승인된 1안 기준 작업자별 일정 그래프 */
+.pm-approved-board{
+  margin-top:18px;
+  border:1px solid var(--line2);
+  background:#fff;
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 14px 44px rgba(15,23,42,.04);
+}
+.pm-approved-head{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  margin-bottom:12px;
+}
+.pm-approved-head strong{display:block;font-size:18px;font-weight:900;color:#0f172a;margin-bottom:5px;}
+.pm-approved-head span{display:block;color:#64748b;font-size:13px;font-weight:800;}
+.pm-approved-head em{font-style:normal;border-radius:999px;background:#ecfdf5;color:#047857;border:1px solid #bbf7d0;padding:8px 12px;font-weight:900;font-size:12px;white-space:nowrap;}
+.pm-approved-history{display:flex;gap:8px;align-items:center;border:1px dashed #bfdbfe;background:#f8fbff;border-radius:14px;padding:10px 12px;margin-bottom:14px;}
+.pm-approved-history b{color:#1d4ed8;font-size:12px;white-space:nowrap;}
+.pm-approved-history span{color:#334155;font-weight:800;font-size:12px;line-height:1.45;}
+.pm-approved-chart{display:grid;gap:9px;max-height:420px;overflow:auto;padding-right:4px;}
+.pm-approved-row{display:grid;grid-template-columns:250px 1fr;gap:14px;align-items:center;border:1px solid #edf2f7;border-radius:16px;padding:10px 12px;background:#fbfdff;}
+.pm-approved-person strong{display:block;font-size:13px;font-weight:900;color:#0f172a;margin-bottom:3px;}
+.pm-approved-person span{display:block;font-size:11px;font-weight:800;color:#64748b;}
+.pm-approved-timeline{display:grid;gap:5px;min-width:0;}
+.pm-approved-bar{height:24px;border-radius:999px;background:#e8f1ff;overflow:hidden;position:relative;min-width:42px;}
+.pm-approved-bar i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:linear-gradient(90deg,#2563eb,#60a5fa);display:block;}
+.pm-approved-timeline small{font-size:11px;color:#475569;font-weight:800;}
+.pm-staff-schedule-card{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line2);border-radius:18px;background:#fbfdff;padding:16px;}
+.pm-staff-schedule-card strong{display:block;font-size:17px;font-weight:900;margin-bottom:5px;}
+.pm-staff-schedule-card span{display:block;color:#64748b;font-size:12px;font-weight:800;}
+@media(max-width:900px){.pm-approved-row{grid-template-columns:1fr}.pm-approved-head{flex-direction:column}.pm-approved-history{align-items:flex-start;flex-direction:column}}
