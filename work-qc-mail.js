@@ -10866,14 +10866,20 @@ function getChecklistOrgBranchNodes(company) {
   const children = Array.isArray(base?.children) ? base.children : [];
   if (!children.length) return [];
 
-  // 대상 선택용 드롭박스는 대표/부사장 같은 경영진 노드가 아니라
+  // 대상 선택용 드롭박스는 대표/부사장/Director 같은 경영진 개인 노드가 아니라
   // 실제 업무 참여가 가능한 부사장 하위 조직 단위만 표시한다.
-  return children.filter(node => {
+  // 예: 최영배 개인 노드 아래에 Finish, StructureㆍCivil 부서가 있으면
+  //     드롭다운에는 개인명이 아니라 해당 하위 부서명을 표시한다.
+  return children.flatMap(node => {
     const label = String(getChecklistOrgNodeLabel(node) || node?.title || node?.displayName || "").trim();
     const emp = node?.employeeId ? employees.find(item => item.empNo === node.employeeId) : null;
     const roleText = `${node?.title || ""} ${node?.displayName || ""} ${emp?.grade || ""} ${emp?.position || ""}`;
-    if (label.includes("대표") || label.includes("부사장") || /CEO|Vice President/i.test(roleText)) return false;
-    return true;
+    const isExecutiveNode = label.includes("대표") || label.includes("부사장") || /CEO|Vice President|Director|본부장/i.test(roleText);
+    const departmentChildren = (node?.children || []).filter(child => isChecklistOrgDepartmentNode(child));
+
+    if (isExecutiveNode && departmentChildren.length) return departmentChildren;
+    if (isExecutiveNode) return [];
+    return [node];
   });
 }
 
