@@ -13300,3 +13300,92 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-combined-sheet-table.without-group .pm-col-name{
   width:230px !important;
 }
+
+/* === 2026-05-13 PM 스케쥴 성명 표기 압축 ===
+   - 베트남어 이름과 한국표기명을 한 줄로 통합
+   - 입사일 원문 대신 입사 N년차만 표시
+   - 기존 4줄 구조를 2줄+작은 직급 배지 구조로 줄여 행 높이를 압축 */
+.pm-schedule-soft-table .pm-sheet-name,
+.pm-combined-sheet-table .pm-sheet-name{
+  min-width:210px !important;
+  padding:5px 8px !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+.pm-schedule-soft-table tbody th,
+.pm-schedule-soft-table tbody td,
+.pm-combined-sheet-table tbody th,
+.pm-combined-sheet-table tbody td{
+  padding-top:5px !important;
+  padding-bottom:5px !important;
+}
+
+.pm-person-name-wrap{
+  display:grid;
+  grid-template-columns:1fr;
+  justify-items:center;
+  align-items:center;
+  gap:2px;
+  line-height:1.12;
+}
+
+.pm-person-name{
+  display:block !important;
+  font-size:12px !important;
+  font-weight:950 !important;
+  color:#0f172a !important;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-person-tenure{
+  display:block !important;
+  color:#475569 !important;
+  font-size:10px !important;
+  font-weight:900 !important;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-person-grade{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:max-content;
+  max-width:100%;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#eef6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  font-size:9px;
+  font-weight:900;
+  font-style:normal;
+  white-space:nowrap;
+}
+
+.pm-person-korean,
+.pm-person-join{
+  display:none !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-input,
+.pm-combined-sheet-table .pm-sheet-input,
+.pm-schedule-soft-table .pm-sheet-calculated,
+.pm-combined-sheet-table .pm-sheet-calculated{
+  min-height:24px !important;
+  height:24px !important;
+  line-height:24px !important;
+  padding-top:3px !important;
+  padding-bottom:3px !important;
+}
+
+.pm-schedule-soft-table.without-group .pm-col-name,
+.pm-combined-sheet-table.without-group .pm-col-name{
+  width:240px !important;
+}
