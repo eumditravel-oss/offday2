@@ -12869,3 +12869,165 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-combined-sheet-table .pm-col-total{width:84px !important;}
 .pm-modal-approval-choice input[type="checkbox"]{width:15px;height:15px;accent-color:var(--blue);}
 @media(max-width:900px){.pm-teamleader-list-inner{grid-template-columns:1fr}.pm-assigned-project-item{grid-template-columns:1fr}.pm-request-filter-row{justify-content:flex-start}}
+
+/* === 2026-05-13 PM 스케쥴표 스타일/작업범위 표시 최종 보정 ===
+   - Structure일 때만 RC/SC 작업범위 및 우측 작업범위 칸 표시
+   - Finish/Civil 선택 시 작업범위 관련 칼럼 전체 제거
+   - 프로젝트 질의응답 관리 화면과 유사한 부드러운 카드형 표 스타일 적용 */
+.pm-schedule-soft-table-wrap{
+  border:1px solid #dbeafe !important;
+  border-radius:18px !important;
+  background:#fff !important;
+  box-shadow:0 16px 38px rgba(15,23,42,.06) !important;
+  overflow:auto !important;
+}
+
+.pm-schedule-soft-table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+  background:#fff !important;
+  overflow:hidden !important;
+}
+
+.pm-schedule-soft-table.has-scope{
+  min-width:1360px !important;
+}
+
+.pm-schedule-soft-table.no-scope{
+  min-width:980px !important;
+}
+
+.pm-schedule-soft-table th,
+.pm-schedule-soft-table td{
+  border:0 !important;
+  border-right:1px solid #dbeafe !important;
+  border-bottom:1px solid #dbeafe !important;
+  padding:9px 10px !important;
+  background:#fff !important;
+  color:#0f172a !important;
+}
+
+.pm-schedule-soft-table thead{
+  position:sticky !important;
+  top:0 !important;
+  z-index:30 !important;
+}
+
+.pm-schedule-soft-table thead th{
+  background:#eef6ff !important;
+  color:#0f172a !important;
+  border-color:#cfe0f7 !important;
+  box-shadow:none !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+}
+
+.pm-schedule-soft-table thead tr:first-child th{
+  top:0 !important;
+  z-index:32 !important;
+}
+
+.pm-schedule-soft-table thead tr:nth-child(2) th{
+  top:38px !important;
+  z-index:31 !important;
+}
+
+.pm-schedule-soft-table tbody tr:hover td,
+.pm-schedule-soft-table tbody tr:hover th.pm-sheet-group,
+.pm-schedule-soft-table tbody tr:hover td.pm-sheet-name{
+  background:#f8fbff !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-group{
+  background:#eaf3ff !important;
+  color:#1d4ed8 !important;
+  font-weight:900 !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-name{
+  background:#fff !important;
+  color:#0f172a !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-name strong{
+  color:#0f172a !important;
+  font-size:12px !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-name small{
+  color:#64748b !important;
+}
+
+.pm-schedule-soft-table .pm-scope-header,
+.pm-schedule-soft-table .pm-scope-cell{
+  width:22px !important;
+  max-width:26px !important;
+  padding-left:4px !important;
+  padding-right:4px !important;
+}
+
+.pm-schedule-soft-table .pm-col-check{
+  width:22px !important;
+}
+
+.pm-schedule-soft-table .pm-col-people,
+.pm-schedule-soft-table .pm-col-days{
+  width:96px !important;
+}
+
+.pm-schedule-soft-table .pm-col-total{
+  width:96px !important;
+}
+
+.pm-schedule-soft-table .pm-col-scope{
+  width:360px !important;
+}
+
+.pm-schedule-soft-table .pm-scope-text-cell{
+  background:#eef6ff !important;
+  text-align:left !important;
+}
+
+.pm-schedule-soft-table.no-scope .pm-scope-header,
+.pm-schedule-soft-table.no-scope .pm-scope-cell,
+.pm-schedule-soft-table.no-scope .pm-scope-text-cell{
+  display:none !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-input{
+  border:1px solid transparent !important;
+  border-radius:10px !important;
+  background:#f1f7ff !important;
+  min-height:30px !important;
+  height:30px !important;
+  padding:5px 8px !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-input:focus{
+  border-color:#93c5fd !important;
+  background:#fff !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10) !important;
+  outline:0 !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-calculated{
+  min-height:30px !important;
+  line-height:30px !important;
+  border-radius:10px !important;
+  background:#f8fafc !important;
+  color:#0f172a !important;
+}
+
+.pm-schedule-soft-table .pm-sheet-total-row th,
+.pm-schedule-soft-table .pm-sheet-total-row td{
+  background:#e2e8f0 !important;
+  color:#0f172a !important;
+  font-weight:900 !important;
+}
+
+.pm-schedule-soft-table input[type="checkbox"],
+.pm-schedule-soft-table input[type="checkbox"].pm-nav-cell{
+  width:12px !important;
+  height:12px !important;
+  accent-color:var(--blue) !important;
+}
