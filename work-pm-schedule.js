@@ -22,6 +22,8 @@ let pmScheduleProjects = [];
 let pmScheduleModalEditable = false;
 let pmScheduleModalPlanScope = "current";
 let pmScheduleModalCategory = "Structure";
+let pmSchedulePmRequestDeptFilter = "구조팀";
+let pmScheduleTlRequestDeptFilter = "Structure";
 
 const pmScheduleDeptOrder = [
   "Internal 1",
@@ -409,19 +411,69 @@ function renderPmScheduleRequestTargets(item) {
   const pmList = document.getElementById("pmSchedulePmRequestList");
   const tlList = document.getElementById("pmScheduleTeamLeaderList");
   if (pmList) {
-    const pmTargets = [item.assignment.pmFinish, item.assignment.pmStructure, item.assignment.pmCivil].filter(Boolean);
-    const uniquePmTargets = [...new Set(pmTargets)];
-    pmList.innerHTML = uniquePmTargets.length ? uniquePmTargets.map(name => `
-      <label class="pm-check-item"><input type="checkbox" ${item.requestTargets.pm.includes(name) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('pm', '${escapePmScheduleAttr(name)}', this.checked)" /> <span>${escapePmScheduleHtml(name)}</span></label>
-    `).join("") : `<div class="pm-empty-box small">먼저 PM을 지정하세요.</div>`;
+    const pmDeptOptions = ["구조팀", "마감팀", "토목ㆍ조경팀"];
+    const pmTargets = getConCostPmCandidatesByDept(item.project, pmSchedulePmRequestDeptFilter);
+    pmList.innerHTML = `
+      <div class="pm-request-filter-row">
+        <label><span>대상 부서</span><select onchange="setPmSchedulePmRequestDeptFilter(this.value)">
+          ${pmDeptOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${pmSchedulePmRequestDeptFilter === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}
+        </select></label>
+      </div>
+      <div class="pm-check-list-inner">
+        ${pmTargets.length ? pmTargets.map(emp => {
+          const value = `${emp.name} ${emp.grade}`;
+          return `<label class="pm-check-item"><input type="checkbox" ${item.requestTargets.pm.includes(value) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('pm', '${escapePmScheduleAttr(value)}', this.checked)" /> <span>${escapePmScheduleHtml(value)} · ${escapePmScheduleHtml(emp.dept)}</span></label>`;
+        }).join("") : `<div class="pm-empty-box small">선택한 부서의 PM 후보가 없습니다.</div>`}
+      </div>`;
   }
   if (tlList) {
-    const leaders = getVietTeamLeaderCandidates();
-    tlList.innerHTML = leaders.map(emp => {
-      const value = `${emp.koreanName ? emp.koreanName + ' / ' : ''}${emp.name} ${emp.grade} · ${emp.dept}`;
-      return `<label class="pm-check-item"><input type="checkbox" ${item.requestTargets.teamLeaders.includes(value) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('teamLeaders', '${escapePmScheduleAttr(value)}', this.checked)" /> <span>${escapePmScheduleHtml(value)}</span></label>`;
-    }).join("");
+    const tlDeptOptions = ["Structure", "Finish", "Civil"];
+    const leaders = getVietTeamLeaderCandidatesByCategory(pmScheduleTlRequestDeptFilter);
+    tlList.innerHTML = `
+      <div class="pm-request-filter-row">
+        <label><span>대상 부서</span><select onchange="setPmScheduleTlRequestDeptFilter(this.value)">
+          ${tlDeptOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${pmScheduleTlRequestDeptFilter === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}
+        </select></label>
+      </div>
+      <div class="pm-check-list-inner pm-teamleader-list-inner">
+        ${leaders.length ? leaders.map(emp => {
+          const value = `${emp.koreanName ? emp.koreanName + ' / ' : ''}${emp.name} ${emp.grade} · ${normalizePmScheduleVietDeptName(emp.dept)}`;
+          return `<label class="pm-check-item"><input type="checkbox" ${item.requestTargets.teamLeaders.includes(value) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('teamLeaders', '${escapePmScheduleAttr(value)}', this.checked)" /> <span>${escapePmScheduleHtml(value)}</span></label>`;
+        }).join("") : `<div class="pm-empty-box small">선택한 부서의 Team Leader가 없습니다.</div>`}
+      </div>`;
   }
+}
+
+function setPmSchedulePmRequestDeptFilter(value) {
+  pmSchedulePmRequestDeptFilter = value || "구조팀";
+  const item = getCurrentPmScheduleProject();
+  if (item) renderPmScheduleRequestTargets(item);
+}
+
+function setPmScheduleTlRequestDeptFilter(value) {
+  pmScheduleTlRequestDeptFilter = value || "Structure";
+  const item = getCurrentPmScheduleProject();
+  if (item) renderPmScheduleRequestTargets(item);
+}
+
+function getConCostPmCandidatesByDept(project, deptFilter) {
+  const staff = (typeof employees !== "undefined" ? employees : []).filter(emp => emp.company === "CON-COST" && emp.status === "재직");
+  const key = normalizePmScheduleDept(deptFilter);
+  const matched = staff.filter(emp => {
+    const dept = normalizePmScheduleDept(emp.dept);
+    if (key.includes("구조")) return dept.includes("구조");
+    if (key.includes("마감")) return dept.includes("마감");
+    if (key.includes("토목") || key.includes("조경")) return dept.includes("토목") || dept.includes("조경");
+    return true;
+  });
+  return matched.length ? matched : staff;
+}
+
+function getVietTeamLeaderCandidatesByCategory(category) {
+  const allowed = getPmScheduleCategoryDeptMap()[category] || [];
+  return (typeof employees !== "undefined" ? employees : [])
+    .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && String(emp.grade).includes("Team Leader"))
+    .filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)));
 }
 
 function togglePmScheduleRequestTarget(group, value, checked) {
@@ -456,7 +508,7 @@ function renderPmScheduleProposals(item, editable = false) {
   grid.innerHTML = `
     <div class="pm-plan-open-card">
       <div>
-        <strong>스케쥴 1안 / 2안</strong>
+        <strong>스케쥴 1ㆍ2안 작성 ${editable ? `<em class="pm-editor-status ${getPmScheduleEditorStatus(item).className}">${getPmScheduleEditorStatus(item).label}</em>` : ""}</strong>
         <span>1안: ${escapePmScheduleHtml(p1.author)} · ${escapePmScheduleHtml(p1.submittedAt)} / 2안: ${escapePmScheduleHtml(p2.author)} · ${escapePmScheduleHtml(p2.submittedAt)}</span>
       </div>
       <button class="btn btn-primary" type="button" onclick="openPmSchedulePlanModal(${editable ? 'true' : 'false'})">${editableText}</button>
@@ -523,8 +575,8 @@ function renderPmScheduleApprovalControls(item) {
   return `
     <div class="pm-modal-approval-panel">
       <div class="pm-modal-approval-choice">
-        <label><input type="radio" name="pmModalSelectedProposal" value="plan1" onchange="setPmScheduleModalApprovalPlan(this.value)" /> <span>1안 선택</span></label>
-        <label><input type="radio" name="pmModalSelectedProposal" value="plan2" onchange="setPmScheduleModalApprovalPlan(this.value)" /> <span>2안 선택</span></label>
+        <label><input type="checkbox" name="pmModalSelectedProposal" value="plan1" onclick="togglePmScheduleModalApprovalPlan(this, 'plan1')" /> <span>1안 선택</span></label>
+        <label><input type="checkbox" name="pmModalSelectedProposal" value="plan2" onclick="togglePmScheduleModalApprovalPlan(this, 'plan2')" /> <span>2안 선택</span></label>
       </div>
       <label class="pm-modal-reject-reason"><span>반려 사유</span><textarea id="pmScheduleModalRejectReason" rows="2" placeholder="반려 시 PM 또는 Team Leader에게 전달할 사유를 작성하세요."></textarea></label>
       <div class="pm-modal-approval-actions">
@@ -534,6 +586,18 @@ function renderPmScheduleApprovalControls(item) {
       </div>
     </div>
   `;
+}
+
+function togglePmScheduleModalApprovalPlan(input, planId) {
+  const item = getCurrentPmScheduleProject();
+  if (!item) return;
+  const wasSelected = item.selectedProposal === planId && !input.checked;
+  document.querySelectorAll('input[name="pmModalSelectedProposal"]').forEach(el => {
+    if (el !== input) el.checked = false;
+  });
+  item.selectedProposal = wasSelected ? "" : (input.checked ? planId : "");
+  const approveBtn = document.getElementById("pmScheduleModalApproveBtn");
+  if (approveBtn) approveBtn.disabled = !item.selectedProposal;
 }
 
 function setPmScheduleModalApprovalPlan(planId) {
@@ -548,20 +612,25 @@ function renderPmScheduleCombinedSheet(item, editable) {
   const visibleRows = getPmScheduleVisibleRows(item);
   const plan1Total = getPmSchedulePlanTotal(item, "plan1");
   const plan2Total = getPmSchedulePlanTotal(item, "plan2");
-  const showScope = pmScheduleModalCategory === "Structure";
-  return `
+  const activeCategory = editable ? pmScheduleModalCategory : (item.submittedCategory || pmScheduleModalCategory || "Structure");
+  const oldCategory = pmScheduleModalCategory;
+  pmScheduleModalCategory = activeCategory;
+  const showScope = activeCategory === "Structure";
+  const categoryControl = editable ? `
+      <label class="pm-plan-category-select">
+        <b>대분류 부서</b>
+        <select onchange="setPmScheduleModalCategory(this.value)">
+          ${["Structure", "Finish", "Civil"].map(category => `<option value="${category}" ${activeCategory === category ? "selected" : ""}>${category}</option>`).join("")}
+        </select>
+      </label>` : `<span>검토 대분류: <b>${escapePmScheduleHtml(activeCategory)}</b></span>`;
+  const html = `
     <div class="pm-plan-guide">
       <div class="pm-plan-guide-left">
         <span>계산식: 투입인원 × 작업일수 = 전체일수</span>
         <span>1안 합계: <b data-pm-total="plan1">${plan1Total}</b></span>
         <span>2안 합계: <b data-pm-total="plan2">${plan2Total}</b></span>
       </div>
-      <label class="pm-plan-category-select">
-        <b>대분류 부서</b>
-        <select onchange="setPmScheduleModalCategory(this.value)">
-          ${["Structure", "Finish", "Civil"].map(category => `<option value="${category}" ${pmScheduleModalCategory === category ? "selected" : ""}>${category}</option>`).join("")}
-        </select>
-      </label>
+      ${categoryControl}
     </div>
     <div class="pm-schedule-sheet-wrap pm-combined-sheet-wrap">
       <table class="pm-schedule-sheet-table pm-combined-sheet-table ${showScope ? "has-scope" : "no-scope"}">
@@ -611,6 +680,8 @@ function renderPmScheduleCombinedSheet(item, editable) {
       </table>
     </div>
   `;
+  pmScheduleModalCategory = oldCategory;
+  return html;
 }
 
 function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScope = true, visibleIndex = rowIndex) {
@@ -716,7 +787,7 @@ function updatePmSchedulePlanTotalsInDom(item, rowIndex) {
 function selectPmScheduleProposal(planId) {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
-  item.selectedProposal = planId;
+  item.selectedProposal = item.selectedProposal === planId ? "" : planId;
   renderPmScheduleProposals(item, false);
 }
 
@@ -733,6 +804,65 @@ function renderPmScheduleEditorView() {
     `;
   }
   renderPmScheduleProposals(item, true);
+  renderPmAssignedProjectButton();
+}
+
+function getPmScheduleEditorStatus(item) {
+  if (!item || item.status === "pending" || item.status === "requested" || item.status === "rejected") return { label:"미작성", className:"red" };
+  if (item.status === "submitted") return { label:"대기중", className:"yellow" };
+  if (item.status === "approved") return { label:"승인", className:"green" };
+  return { label:"미작성", className:"red" };
+}
+
+function renderPmAssignedProjectButton() {
+  const holder = document.getElementById("pmAssignedProjectButtonHolder");
+  if (!holder) return;
+  holder.innerHTML = `<button class="btn btn-line" type="button" onclick="openPmAssignedProjectModal()">배정받은 프로젝트</button>`;
+}
+
+function openPmAssignedProjectModal() {
+  ensurePmAssignedProjectModal();
+  renderPmAssignedProjectModal();
+  document.getElementById("pmAssignedProjectModal")?.classList.add("active");
+}
+
+function closePmAssignedProjectModal() {
+  document.getElementById("pmAssignedProjectModal")?.classList.remove("active");
+}
+
+function ensurePmAssignedProjectModal() {
+  if (document.getElementById("pmAssignedProjectModal")) return;
+  const modal = document.createElement("div");
+  modal.id = "pmAssignedProjectModal";
+  modal.className = "modal-backdrop pm-assigned-modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal pm-assigned-modal">
+      <div class="modal-head"><h3>배정받은 프로젝트</h3><button class="close" type="button" onclick="closePmAssignedProjectModal()">×</button></div>
+      <div class="modal-body" id="pmAssignedProjectModalBody"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function renderPmAssignedProjectModal() {
+  const body = document.getElementById("pmAssignedProjectModalBody");
+  if (!body) return;
+  initPmScheduleProjects();
+  body.innerHTML = `<div class="pm-assigned-project-list">${pmScheduleProjects.map((item, index) => {
+    const state = getPmScheduleEditorStatus(item);
+    const canWrite = item.status !== "approved" && item.status !== "submitted";
+    return `<button class="pm-assigned-project-item" type="button" onclick="selectPmAssignedProject(${index})">
+      <strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong>
+      <span>${escapePmScheduleHtml(item.project.projectNo || "-")} · ${escapePmScheduleHtml(getPmScheduleScopeText(item.project))}</span>
+      <em class="pm-editor-status ${state.className}">${state.label}</em>
+      ${canWrite ? `<b>스케쥴 1ㆍ2안 작성</b>` : `<b class="muted">스케쥴 1ㆍ2안 작성</b>`}
+    </button>`;
+  }).join("")}</div>`;
+}
+
+function selectPmAssignedProject(index) {
+  pmScheduleSelectedIndex = index;
+  closePmAssignedProjectModal();
+  renderPmScheduleDashboard();
 }
 
 function submitPmScheduleEditor() {
@@ -745,7 +875,8 @@ function submitPmScheduleEditor() {
     plan.submittedAt = now;
   });
   item.status = "submitted";
-  item.history.unshift(`${item.project.projectName} 스케쥴 작성 완료 결재 알림이 도착했습니다.`);
+  item.submittedCategory = pmScheduleModalCategory;
+  item.history.unshift(`${item.project.projectName} ${pmScheduleModalCategory} 스케쥴 작성 완료 결재 알림이 도착했습니다.`);
   closePmSchedulePlanModal();
   renderPmScheduleDashboard();
   showToast(`${item.project.projectName} 스케쥴 작성 완료`);
