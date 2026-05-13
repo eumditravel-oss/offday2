@@ -11274,3 +11274,71 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-template-columns:1fr !important;
   }
 }
+
+/* =========================================================
+   프로젝트 접수 v9: 접수자료 문서명 잘림 방지
+   - 접수자료 행의 첫 번째 문서명 칸을 넓혀 도면/시방서/현장설명서/내역서/기타자료가 잘리지 않게 조정
+   - 확인 이력 영역은 유지하되 문서명과 입력칸이 겹치지 않도록 재배치
+   ========================================================= */
+.project-receive-material-card .receive-material-item{
+  grid-template-columns:minmax(132px,.72fr) minmax(170px,1fr) 92px minmax(210px,1.12fr) !important;
+  column-gap:10px !important;
+  row-gap:8px !important;
+}
+
+.project-receive-material-card .receive-material-check{
+  min-width:132px !important;
+  width:100% !important;
+  justify-content:flex-start !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+}
+
+.project-receive-material-card .receive-material-check input[type="checkbox"]{
+  flex:0 0 16px !important;
+  width:16px !important;
+  height:16px !important;
+}
+
+.project-receive-material-card .receive-material-check span{
+  display:inline-block !important;
+  min-width:max-content !important;
+  max-width:none !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+}
+
+.project-receive-material-card .receive-material-memo{
+  min-width:0 !important;
+}
+
+.project-receive-material-card .receive-material-confirm{
+  min-width:84px !important;
+  white-space:nowrap !important;
+}
+
+.project-receive-material-card .receive-material-history{
+  min-width:0 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+@media (max-width:1500px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:minmax(132px,.78fr) minmax(160px,1fr) 90px minmax(180px,1fr) !important;
+  }
+}
+
+@media (max-width:1280px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:minmax(132px,.7fr) minmax(0,1fr) 90px !important;
+  }
+
+  .project-receive-material-card .receive-material-history{
+    grid-column:1 / -1 !important;
+    white-space:normal !important;
+  }
+}
