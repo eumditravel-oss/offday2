@@ -13224,3 +13224,79 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   top:0 !important;
   z-index:124 !important;
 }
+
+
+/* === PM 스케쥴 인사카드 기준 정렬/성명 표시 보정 ===
+   - 이름/직급/한국표기명/입사일을 분리 표시
+   - JS에서 인사카드 join 값을 기준으로 즉시 재정렬되도록 구성 */
+.pm-schedule-soft-table .pm-sheet-name,
+.pm-combined-sheet-table .pm-sheet-name{
+  min-width:190px !important;
+  padding:8px 10px !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+.pm-person-name-wrap{
+  display:grid;
+  grid-template-columns:1fr;
+  justify-items:center;
+  align-items:center;
+  gap:3px;
+  line-height:1.15;
+}
+
+.pm-person-name{
+  display:block !important;
+  font-size:13px !important;
+  font-weight:950 !important;
+  color:#0f172a !important;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-person-grade{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:max-content;
+  max-width:100%;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#eef6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  font-size:10px;
+  font-weight:900;
+  font-style:normal;
+  white-space:nowrap;
+}
+
+.pm-person-korean{
+  display:block !important;
+  color:#475569 !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-person-join{
+  display:block !important;
+  color:#94a3b8 !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pm-schedule-soft-table.without-group .pm-col-name,
+.pm-combined-sheet-table.without-group .pm-col-name{
+  width:230px !important;
+}
