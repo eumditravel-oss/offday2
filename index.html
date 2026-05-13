@@ -770,16 +770,103 @@
 
           <section class="main-area">
             <section id="projectReceive" class="work-panel active">
-              <article class="card work-ready-card">
-                <div class="card-head">
-                  <h2>프로젝트 접수</h2>
-                </div>
-                <div class="card-body">
-                  <div class="placeholder-box work-placeholder-box">
-                    <h3>프로젝트 접수 화면 준비 영역</h3>
-                    <p>현재 세부 기능은 미구현 상태입니다. 향후 업무관리 기능 확장 시 화면 구성 및 데이터 연동 영역으로 사용됩니다.</p>
+              <article class="project-receive-shell" id="projectReceiveShell">
+                <div class="project-receive-hero">
+                  <div>
+                    <span class="project-receive-eyebrow">PROJECT INTAKE</span>
+                    <h2>프로젝트 접수</h2>
+                    <p>수주소식·프로젝트 개요·접수자료·납품일정을 카드형 접수 화면으로 관리합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="resetProjectReceiveForm()">초기화</button>
+                    <button class="btn btn-line" type="button" onclick="loadProjectReceiveSample()">견적용역 예시 불러오기</button>
+                    <button class="btn btn-primary" type="button" onclick="saveProjectReceiveDraft()">접수 저장</button>
                   </div>
                 </div>
+
+                <div class="project-receive-status" id="projectReceiveStatus"></div>
+
+                <div class="project-receive-grid">
+                  <section class="project-receive-card project-receive-card-wide">
+                    <div class="project-receive-card-head">
+                      <div><strong>프로젝트 기본정보</strong><span>접수 시 가장 먼저 확인하는 핵심 정보</span></div>
+                      <em>01</em>
+                    </div>
+                    <div class="project-receive-form-grid">
+                      <label class="receive-field full"><span>프로젝트명</span><input id="receiveProjectName" /></label>
+                      <label class="receive-field"><span>프로젝트 NO</span><input id="receiveProjectNo" /></label>
+                      <label class="receive-field"><span>의뢰처</span><input id="receiveClient" /></label>
+                      <label class="receive-field"><span>건물용도</span><input id="receiveUsage" /></label>
+                      <label class="receive-field"><span>연면적</span><input id="receiveArea" /></label>
+                      <label class="receive-field"><span>동수</span><input id="receiveBuildings" /></label>
+                      <label class="receive-field"><span>층수</span><input id="receiveFloors" /></label>
+                      <label class="receive-field"><span>입찰일</span><input id="receiveBidDate" /></label>
+                      <label class="receive-field"><span>단가작업여부</span><input id="receiveUnitPrice" /></label>
+                    </div>
+                  </section>
+
+                  <section class="project-receive-card">
+                    <div class="project-receive-card-head">
+                      <div><strong>업무의 성격</strong><span>중복 선택 가능</span></div>
+                      <em>02</em>
+                    </div>
+                    <div class="receive-chip-group" id="receiveBusinessTypeChips"></div>
+                  </section>
+
+                  <section class="project-receive-card">
+                    <div class="project-receive-card-head">
+                      <div><strong>작업범위</strong><span>부서별 접수 범위</span></div>
+                      <em>03</em>
+                    </div>
+                    <div class="receive-chip-group" id="receiveScopeChips"></div>
+                  </section>
+                </div>
+
+                <div class="project-receive-grid project-receive-grid-bottom">
+                  <section class="project-receive-card project-receive-card-wide">
+                    <div class="project-receive-card-head">
+                      <div><strong>발주처 담당자</strong><span>연락처와 이메일을 한 카드에서 관리</span></div>
+                      <em>04</em>
+                    </div>
+                    <div class="receive-contact-list" id="receiveContactList"></div>
+                    <button class="receive-add-btn" type="button" onclick="addProjectReceiveContact()">+ 담당자 추가</button>
+                  </section>
+
+                  <section class="project-receive-card">
+                    <div class="project-receive-card-head">
+                      <div><strong>접수자료</strong><span>자료 수령 현황</span></div>
+                      <em>05</em>
+                    </div>
+                    <div class="receive-material-list" id="receiveMaterialList"></div>
+                  </section>
+
+                  <section class="project-receive-card">
+                    <div class="project-receive-card-head">
+                      <div><strong>담당 PM / 일정</strong><span>착수와 납품 기준일</span></div>
+                      <em>06</em>
+                    </div>
+                    <div class="project-receive-form-grid one-col">
+                      <label class="receive-field"><span>총괄 PM</span><input id="receivePmTotal" /></label>
+                      <label class="receive-field"><span>마감 PM</span><input id="receivePmFinish" /></label>
+                      <label class="receive-field"><span>StructureㆍCivil PM</span><input id="receivePmStructure" /></label>
+                      <label class="receive-field"><span>작업착수일</span><input id="receiveStartDate" /></label>
+                      <label class="receive-field"><span>1차 납품일</span><input id="receiveFirstDelivery" /></label>
+                      <label class="receive-field"><span>최종 납품일</span><input id="receiveFinalDelivery" /></label>
+                    </div>
+                  </section>
+                </div>
+
+                <section class="project-receive-card project-receive-note-card">
+                  <div class="project-receive-card-head">
+                    <div><strong>수주시 요청사항 / 특기사항</strong><span>접수 내용을 작업자에게 전달하기 위한 메모</span></div>
+                    <em>07</em>
+                  </div>
+                  <div class="project-receive-note-grid">
+                    <label class="receive-field"><span>업무 내용</span><textarea id="receiveWorkContent" rows="4"></textarea></label>
+                    <label class="receive-field"><span>특기사항</span><textarea id="receiveNotes" rows="4"></textarea></label>
+                    <label class="receive-field full"><span>수주시 요청사항</span><textarea id="receiveRequest" rows="5"></textarea></label>
+                  </div>
+                </section>
               </article>
             </section>
 
@@ -1099,7 +1186,8 @@
   <script src="./support-hr.js"></script>
   <script src="./support-org.js"></script>
   <script src="./work-qc-mail.js"></script>
-  <script src="./work-project-management.js"></script>
+  <script src="./work-project-receive.js"></script>
+  <script src="./work-project-managements.js"></script>
   <script src="./app.js"></script>
 
   <div class="modal-backdrop" id="objectionModal">
