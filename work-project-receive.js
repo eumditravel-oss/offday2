@@ -27,7 +27,9 @@ const projectReceiveDefaultData = {
   ],
   scopes: [
     { label: "마감", checked: false },
-    { label: "StructureㆍCivil", checked: false },
+    { label: "구조팀", checked: false },
+    { label: "BIM 파트", checked: false },
+    { label: "토목ㆍ조경 파트", checked: false },
     { label: "인테리어·철거", checked: false },
     { label: "비교내역서", checked: false },
     { label: "단가작업", checked: false },
@@ -78,7 +80,9 @@ const projectReceiveSampleData = {
   ],
   scopes: [
     { label: "마감", checked: true },
-    { label: "StructureㆍCivil", checked: true },
+    { label: "구조팀", checked: true },
+    { label: "BIM 파트", checked: true },
+    { label: "토목ㆍ조경 파트", checked: true },
     { label: "인테리어·철거", checked: true },
     { label: "비교내역서", checked: false },
     { label: "단가작업", checked: false },
