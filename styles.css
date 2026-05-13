@@ -11342,3 +11342,179 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     white-space:normal !important;
   }
 }
+
+/* =========================================================
+   프로젝트 접수: 작성완료 리스트 버튼/모달
+   - 상단 우측 빈 영역에 작성완료 리스트 버튼 추가
+   - 엑셀 기반 작성완료 수주소식 선택 후 수정 화면으로 불러오기
+   ========================================================= */
+.project-receive-actions .btn-completed-list{
+  border-color:#93c5fd !important;
+  background:#eff6ff !important;
+  color:#1d4ed8 !important;
+}
+
+.project-receive-completed-modal.active{
+  display:flex !important;
+}
+
+.project-receive-completed-box{
+  width:min(1080px,calc(100vw - 40px));
+}
+
+.project-receive-completed-box .modal-head{
+  align-items:flex-start;
+}
+
+.project-receive-completed-box .modal-head h3{
+  font-size:22px;
+  letter-spacing:-.5px;
+  margin-bottom:6px;
+}
+
+.project-receive-completed-box .modal-head p{
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.55;
+}
+
+.project-receive-completed-summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  border:1px solid #dbeafe;
+  background:#eff6ff;
+  border-radius:16px;
+  padding:13px 15px;
+  margin-bottom:14px;
+}
+
+.project-receive-completed-summary strong{
+  color:#1d4ed8;
+  font-size:15px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.project-receive-completed-summary span{
+  color:#475569;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.45;
+  text-align:right;
+}
+
+.project-receive-completed-list{
+  display:grid;
+  gap:10px;
+}
+
+.project-receive-completed-item{
+  width:100%;
+  border:1px solid var(--line2);
+  background:#fff;
+  border-radius:18px;
+  padding:14px;
+  display:grid;
+  grid-template-columns:90px minmax(0,1fr) 120px;
+  gap:14px;
+  align-items:center;
+  text-align:left;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.project-receive-completed-item:hover{
+  border-color:#93c5fd;
+  background:#f8fbff;
+}
+
+.project-receive-completed-item.active{
+  border-color:#2563eb;
+  background:#eff6ff;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+}
+
+.project-receive-completed-item .completed-no{
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  min-height:38px;
+  border-radius:999px;
+  background:#0f172a;
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+}
+
+.project-receive-completed-item .completed-main{
+  min-width:0;
+  display:grid;
+  gap:5px;
+}
+
+.project-receive-completed-item .completed-main strong{
+  display:block;
+  color:#0f172a;
+  font-size:15px;
+  font-weight:900;
+  line-height:1.4;
+  word-break:keep-all;
+}
+
+.project-receive-completed-item .completed-main em{
+  display:block;
+  color:#1d4ed8;
+  font-size:12px;
+  font-style:normal;
+  font-weight:900;
+  line-height:1.4;
+}
+
+.project-receive-completed-item .completed-main small{
+  display:block;
+  color:#94a3b8;
+  font-size:11px;
+  font-weight:800;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.project-receive-completed-item .completed-date{
+  justify-self:end;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+  line-height:1.45;
+  text-align:right;
+  white-space:nowrap;
+}
+
+@media(max-width:760px){
+  .project-receive-completed-summary{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .project-receive-completed-summary span{
+    text-align:left;
+  }
+
+  .project-receive-completed-item{
+    grid-template-columns:1fr;
+  }
+
+  .project-receive-completed-item .completed-no{
+    justify-content:flex-start;
+    width:max-content;
+    padding:0 14px;
+  }
+
+  .project-receive-completed-item .completed-date{
+    justify-self:start;
+    text-align:left;
+  }
+}
