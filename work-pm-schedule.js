@@ -21,6 +21,7 @@ let pmScheduleSelectedIndex = 0;
 let pmScheduleProjects = [];
 let pmScheduleModalEditable = false;
 let pmScheduleModalPlanScope = "current";
+let pmScheduleModalCategory = "Structure";
 
 const pmScheduleDeptOrder = [
   "Internal 1",
@@ -76,6 +77,51 @@ function getPmScheduleVietEmployees() {
     if (orderA !== orderB) return orderA - orderB;
     return String(a.name).localeCompare(String(b.name));
   });
+}
+
+function getPmScheduleCategoryDeptMap() {
+  return {
+    Structure: ["Vertical", "Horizon / Foundation", "Horizontal/Foundation"],
+    Finish: ["Internal 1", "Internal 2", "Internal 3", "Partition&Opening", "External"],
+    Civil: ["Civil"]
+  };
+}
+
+function normalizePmScheduleVietDeptName(value) {
+  const text = String(value || "").trim();
+  if (text === "Horizontal/Foundation") return "Horizon / Foundation";
+  return text;
+}
+
+function getPmScheduleCategoryForDept(dept) {
+  const normalized = normalizePmScheduleVietDeptName(dept);
+  const map = getPmScheduleCategoryDeptMap();
+  return Object.keys(map).find(category => map[category].includes(normalized)) || "Finish";
+}
+
+function getPmScheduleVietEmployeesByCategory(category = pmScheduleModalCategory) {
+  const allowed = getPmScheduleCategoryDeptMap()[category] || [];
+  return getPmScheduleVietEmployees().filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)));
+}
+
+function getPmScheduleVisibleRows(item, category = pmScheduleModalCategory) {
+  const allowed = getPmScheduleCategoryDeptMap()[category] || [];
+  const rows = item?.proposals?.plan1?.rows || [];
+  let prevDept = "";
+  return rows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => allowed.includes(normalizePmScheduleVietDeptName(row.dept)))
+    .map(({ row, index }) => {
+      const dept = normalizePmScheduleVietDeptName(row.dept);
+      const group = dept !== prevDept ? dept : "";
+      prevDept = dept;
+      return { row: { ...row, group }, index };
+    });
+}
+
+function setPmScheduleModalCategory(value) {
+  pmScheduleModalCategory = value || "Structure";
+  renderPmSchedulePlanModal();
 }
 
 function createPmSchedulePlanRows() {
@@ -469,22 +515,56 @@ function renderPmSchedulePlanModal() {
   if (foot) {
     foot.innerHTML = pmScheduleModalEditable
       ? `<button class="btn btn-line" type="button" onclick="closePmSchedulePlanModal()">닫기</button><button class="btn btn-primary" type="button" onclick="submitPmScheduleEditor()">스케쥴 작성 완료</button>`
-      : `<button class="btn btn-line" type="button" onclick="closePmSchedulePlanModal()">닫기</button>`;
+      : renderPmScheduleApprovalControls(item);
   }
 }
 
+function renderPmScheduleApprovalControls(item) {
+  return `
+    <div class="pm-modal-approval-panel">
+      <div class="pm-modal-approval-choice">
+        <label><input type="radio" name="pmModalSelectedProposal" value="plan1" onchange="setPmScheduleModalApprovalPlan(this.value)" /> <span>1안 선택</span></label>
+        <label><input type="radio" name="pmModalSelectedProposal" value="plan2" onchange="setPmScheduleModalApprovalPlan(this.value)" /> <span>2안 선택</span></label>
+      </div>
+      <label class="pm-modal-reject-reason"><span>반려 사유</span><textarea id="pmScheduleModalRejectReason" rows="2" placeholder="반려 시 PM 또는 Team Leader에게 전달할 사유를 작성하세요."></textarea></label>
+      <div class="pm-modal-approval-actions">
+        <button class="btn btn-primary" id="pmScheduleModalApproveBtn" type="button" onclick="approvePmScheduleProposal()" disabled>선택안 승인</button>
+        <button class="btn btn-danger" type="button" onclick="rejectPmScheduleProposal()">반려</button>
+        <button class="btn btn-line" type="button" onclick="closePmSchedulePlanModal()">닫기</button>
+      </div>
+    </div>
+  `;
+}
+
+function setPmScheduleModalApprovalPlan(planId) {
+  const item = getCurrentPmScheduleProject();
+  if (!item) return;
+  item.selectedProposal = planId;
+  const approveBtn = document.getElementById("pmScheduleModalApproveBtn");
+  if (approveBtn) approveBtn.disabled = !planId;
+}
+
 function renderPmScheduleCombinedSheet(item, editable) {
-  const rows = item.proposals.plan1.rows;
+  const visibleRows = getPmScheduleVisibleRows(item);
   const plan1Total = getPmSchedulePlanTotal(item, "plan1");
   const plan2Total = getPmSchedulePlanTotal(item, "plan2");
+  const showScope = pmScheduleModalCategory === "Structure";
   return `
     <div class="pm-plan-guide">
-      <span>계산식: 투입인원 × 작업일수 = 전체일수</span>
-      <span>1안 합계: <b data-pm-total="plan1">${plan1Total}</b></span>
-      <span>2안 합계: <b data-pm-total="plan2">${plan2Total}</b></span>
+      <div class="pm-plan-guide-left">
+        <span>계산식: 투입인원 × 작업일수 = 전체일수</span>
+        <span>1안 합계: <b data-pm-total="plan1">${plan1Total}</b></span>
+        <span>2안 합계: <b data-pm-total="plan2">${plan2Total}</b></span>
+      </div>
+      <label class="pm-plan-category-select">
+        <b>대분류 부서</b>
+        <select onchange="setPmScheduleModalCategory(this.value)">
+          ${["Structure", "Finish", "Civil"].map(category => `<option value="${category}" ${pmScheduleModalCategory === category ? "selected" : ""}>${category}</option>`).join("")}
+        </select>
+      </label>
     </div>
     <div class="pm-schedule-sheet-wrap pm-combined-sheet-wrap">
-      <table class="pm-schedule-sheet-table pm-combined-sheet-table">
+      <table class="pm-schedule-sheet-table pm-combined-sheet-table ${showScope ? "has-scope" : "no-scope"}">
         <colgroup>
           <col class="pm-col-group" />
           <col class="pm-col-name" />
@@ -498,7 +578,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           <col class="pm-col-people" />
           <col class="pm-col-days" />
           <col class="pm-col-total" />
-          <col class="pm-col-scope" />
+          ${showScope ? `<col class="pm-col-scope" />` : ""}
         </colgroup>
         <thead>
           <tr>
@@ -508,7 +588,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <th colspan="3">1안 (전체 투입)</th>
             <th colspan="2">작업범위</th>
             <th colspan="3">2안 (최적화 배치)</th>
-            <th rowspan="2">업무범위</th>
+            ${showScope ? `<th rowspan="2">작업범위</th>` : ""}
           </tr>
           <tr>
             <th>RC</th><th>SC</th><th>투입인원</th><th>작업일수</th><th>전체일수</th>
@@ -516,7 +596,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
           </tr>
         </thead>
         <tbody>
-          ${rows.map((row, rowIndex) => renderPmScheduleCombinedRow(item, row, rowIndex, editable)).join("")}
+          ${visibleRows.map(({ row, index }, visibleIndex) => renderPmScheduleCombinedRow(item, row, index, editable, showScope, visibleIndex)).join("")}
           <tr class="pm-sheet-total-row">
             <th colspan="2">전체일수</th>
             <td colspan="2"></td>
@@ -525,7 +605,7 @@ function renderPmScheduleCombinedSheet(item, editable) {
             <td colspan="2"></td>
             <th colspan="2">2안 합계</th>
             <td data-pm-total="plan2">${plan2Total}</td>
-            <td></td>
+            ${showScope ? `<td></td>` : ""}
           </tr>
         </tbody>
       </table>
@@ -533,18 +613,20 @@ function renderPmScheduleCombinedSheet(item, editable) {
   `;
 }
 
-function renderPmScheduleCombinedRow(item, row, rowIndex, editable) {
+function renderPmScheduleCombinedRow(item, row, rowIndex, editable, showScope = true, visibleIndex = rowIndex) {
   const plan1 = row.plan1 || {};
   const plan2 = item.proposals.plan2.rows[rowIndex]?.plan2 || row.plan2 || {};
+  let navCol = 0;
+  const navAttrs = () => `data-pm-row="${visibleIndex}" data-pm-col="${navCol++}" onkeydown="handlePmScheduleCellKey(event)"`;
   const input = (planId, field, value, className = "") => editable
-    ? `<input class="pm-sheet-input ${className}" value="${escapePmScheduleAttr(value)}" oninput="updatePmSchedulePlanCell('${planId}', ${rowIndex}, '${field}', this.value)" />`
+    ? `<input class="pm-sheet-input pm-nav-cell ${className}" ${navAttrs()} value="${escapePmScheduleAttr(value)}" oninput="updatePmSchedulePlanCell('${planId}', ${rowIndex}, '${field}', this.value)" />`
     : `<span>${escapePmScheduleHtml(value || "")}</span>`;
   const total = (planId, value) => `<span class="pm-sheet-calculated" id="pm-${planId}-total-${rowIndex}">${escapePmScheduleHtml(value || "")}</span>`;
   const checkbox = (planId, field, checked) => editable
-    ? `<input type="checkbox" ${checked ? "checked" : ""} onchange="updatePmSchedulePlanCell('${planId}', ${rowIndex}, '${field}', this.checked)" />`
+    ? `<input class="pm-nav-cell" ${navAttrs()} type="checkbox" ${checked ? "checked" : ""} onchange="updatePmSchedulePlanCell('${planId}', ${rowIndex}, '${field}', this.checked)" />`
     : `<input type="checkbox" ${checked ? "checked" : ""} disabled />`;
   const scopeInput = editable
-    ? `<input class="pm-sheet-input" value="${escapePmScheduleAttr(row.scope || "")}" oninput="updatePmSchedulePlanCell('plan1', ${rowIndex}, 'scope', this.value)" />`
+    ? `<input class="pm-sheet-input pm-nav-cell" ${navAttrs()} value="${escapePmScheduleAttr(row.scope || "")}" oninput="updatePmSchedulePlanCell('plan1', ${rowIndex}, 'scope', this.value)" />`
     : `<span>${escapePmScheduleHtml(row.scope || "")}</span>`;
 
   return `
@@ -561,7 +643,7 @@ function renderPmScheduleCombinedRow(item, row, rowIndex, editable) {
       <td>${input("plan2", "people", plan2.people, "center")}</td>
       <td>${input("plan2", "workDays", plan2.workDays, "center")}</td>
       <td>${total("plan2", calculatePmScheduleRowTotal(plan2))}</td>
-      <td>${scopeInput}</td>
+      ${showScope ? `<td>${scopeInput}</td>` : ""}
     </tr>
   `;
 }
@@ -575,13 +657,30 @@ function calculatePmScheduleRowTotal(data) {
 }
 
 function getPmSchedulePlanTotal(item, planId) {
-  const rows = item?.proposals?.plan1?.rows || [];
-  const sum = rows.reduce((acc, row, index) => {
+  const visible = getPmScheduleVisibleRows(item);
+  const sum = visible.reduce((acc, { row, index }) => {
     const data = planId === "plan1" ? row.plan1 : item.proposals.plan2.rows[index]?.plan2;
     const value = Number(calculatePmScheduleRowTotal(data));
     return acc + (Number.isFinite(value) ? value : 0);
   }, 0);
   return Number.isInteger(sum) ? String(sum) : sum.toFixed(2).replace(/\.00$/, "");
+}
+
+function handlePmScheduleCellKey(event) {
+  const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+  if (!keys.includes(event.key)) return;
+  const current = event.currentTarget;
+  const row = Number(current.dataset.pmRow || 0);
+  const col = Number(current.dataset.pmCol || 0);
+  const targetRow = row + (event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0);
+  const targetCol = col + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0);
+  const target = document.querySelector(`.pm-combined-sheet-table .pm-nav-cell[data-pm-row="${targetRow}"][data-pm-col="${targetCol}"]`);
+  if (!target) return;
+  event.preventDefault();
+  target.focus();
+  if (typeof target.select === "function" && target.type !== "checkbox") {
+    try { target.select(); } catch (error) {}
+  }
 }
 
 function updatePmSchedulePlanCell(planId, rowIndex, field, value) {
@@ -655,9 +754,14 @@ function submitPmScheduleEditor() {
 function approvePmScheduleProposal() {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
+  if (!item.selectedProposal || !["plan1", "plan2"].includes(item.selectedProposal)) {
+    showToast("승인할 1안 또는 2안을 먼저 선택하세요.");
+    return;
+  }
   const plan = item.proposals[item.selectedProposal];
   item.status = "approved";
   item.history.unshift(`${plan?.title || "선택안"}이 승인되어 프로젝트 일정으로 확정되었습니다.`);
+  closePmSchedulePlanModal();
   renderPmScheduleDashboard();
   showToast("선택한 스케쥴 안을 승인하고 일정화했습니다.");
 }
@@ -665,10 +769,15 @@ function approvePmScheduleProposal() {
 function rejectPmScheduleProposal() {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
-  const reason = document.getElementById("pmScheduleRejectReason")?.value || "반려 사유 미입력";
+  const reason = (document.getElementById("pmScheduleModalRejectReason")?.value || document.getElementById("pmScheduleRejectReason")?.value || "").trim();
+  if (!reason) {
+    showToast("반려 사유를 먼저 작성하세요.");
+    return;
+  }
   const targets = [...item.requestTargets.pm, ...item.requestTargets.teamLeaders].join(", ") || "작성자";
   item.status = "rejected";
   item.history.unshift(`${targets}에게 반려 알림을 전송했습니다. 사유: ${reason}`);
+  closePmSchedulePlanModal();
   renderPmScheduleDashboard();
   showToast("반려 알림을 전송했습니다.");
 }
