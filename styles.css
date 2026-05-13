@@ -10888,3 +10888,95 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .project-receive-form-grid.contact-grid,
   .project-receive-note-grid{grid-template-columns:1fr}
 }
+
+/* =========================================================
+   프로젝트 접수 v4: 접수자료/PM 정렬 + 발주처 담당자 가로형 배치
+   - 접수자료 04, 담당 PM/일정 05, 발주처 담당자 06 순서 기준
+   - 발주처 담당자는 수주시 요청사항 바로 위에서 전체 폭 사용
+   - 접수자료와 담당 PM/일정은 동일 행에서 깨짐 없이 정렬
+   ========================================================= */
+.project-receive-grid-bottom{
+  display:grid !important;
+  grid-template-columns:minmax(360px,.9fr) minmax(520px,1.1fr) !important;
+  grid-auto-rows:auto !important;
+  gap:18px !important;
+  align-items:stretch !important;
+}
+
+.project-receive-grid-bottom > .project-receive-material-card,
+.project-receive-grid-bottom > .project-receive-pm-card{
+  grid-row:1 !important;
+  min-width:0 !important;
+  height:auto !important;
+}
+
+.project-receive-grid-bottom > .project-receive-material-card{
+  grid-column:1 !important;
+}
+
+.project-receive-grid-bottom > .project-receive-pm-card{
+  grid-column:2 !important;
+}
+
+.project-receive-grid-bottom > .project-receive-contact-card-wrap{
+  grid-column:1 / -1 !important;
+  grid-row:2 !important;
+  min-width:0 !important;
+  height:auto !important;
+}
+
+.project-receive-pm-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+
+.project-receive-contact-card-wrap .receive-contact-list{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+
+.project-receive-contact-card-wrap .receive-contact-card{
+  min-width:0 !important;
+}
+
+.project-receive-contact-card-wrap .project-receive-form-grid.contact-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+.project-receive-contact-card-wrap .receive-field input,
+.project-receive-pm-card .receive-field input,
+.project-receive-material-card .receive-material-item input{
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+.project-receive-material-card .receive-material-item{
+  grid-template-columns:auto minmax(62px,84px) minmax(0,1fr) !important;
+}
+
+.project-receive-note-card{
+  margin-top:0 !important;
+}
+
+@media (max-width:1280px){
+  .project-receive-grid-bottom{
+    grid-template-columns:1fr !important;
+  }
+  .project-receive-grid-bottom > .project-receive-material-card,
+  .project-receive-grid-bottom > .project-receive-pm-card,
+  .project-receive-grid-bottom > .project-receive-contact-card-wrap{
+    grid-column:1 !important;
+    grid-row:auto !important;
+  }
+  .project-receive-contact-card-wrap .receive-contact-list{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media (max-width:760px){
+  .project-receive-pm-grid,
+  .project-receive-contact-card-wrap .project-receive-form-grid.contact-grid{
+    grid-template-columns:1fr !important;
+  }
+}
