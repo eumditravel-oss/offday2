@@ -386,74 +386,83 @@ const orgStructures = {
                       "className": "secondary"
                     },
                     {
-                      "title": "구조팀",
+                      "title": "구조/토목ㆍ조경파트",
                       "memberColumns": 3,
                       "children": [
                         {
-                          "title": "구조/토목 조경",
+                          "title": "구조/토목 조정",
                           "memberColumns": 3,
                           "children": [
                             {
-                              "title": "BIM 파트장",
-                              "memberColumns": 3,
-                              "children": [
-                                {
-                                  "title": "파트 담당",
-                                  "memberColumns": 3,
-                                  "children": [],
-                                  "employeeId": "EMP-2018-001"
-                                }
-                              ],
-                              "employeeId": "CC-029"
-                            },
-                            {
-                              "title": "구조 팀장",
+                              "title": "BIM파트",
+                              "displayName": "BIM파트",
                               "memberColumns": 1,
                               "children": [
                                 {
-                                  "title": "수석",
+                                  "title": "파트장",
                                   "memberColumns": 1,
-                                  "children": [],
-                                  "employeeId": "CC-024"
-                                },
-                                {
-                                  "title": "수석",
-                                  "memberColumns": 1,
-                                  "children": [],
-                                  "employeeId": "CC-025"
-                                },
-                                {
-                                  "title": "책임",
-                                  "memberColumns": 3,
-                                  "children": [],
-                                  "employeeId": "CC-026"
-                                },
-                                {
-                                  "title": "책임",
-                                  "memberColumns": 3,
-                                  "children": [],
-                                  "employeeId": "CC-027"
-                                },
-                                {
-                                  "title": "프로",
-                                  "memberColumns": 3,
-                                  "children": [],
-                                  "employeeId": "CC-028"
+                                  "children": [
+                                    {
+                                      "title": "파트 담당",
+                                      "memberColumns": 1,
+                                      "children": [],
+                                      "employeeId": "EMP-2018-001"
+                                    }
+                                  ],
+                                  "employeeId": "CC-029"
                                 }
                               ],
-                              "employeeId": "CC-023"
+                              "nodeType": "department",
+                              "className": "secondary"
                             },
                             {
-                              "title": "토목·조경파트장",
-                              "memberColumns": 3,
-                              "children": [],
-                              "employeeId": "CC-030"
+                              "title": "구조팀",
+                              "displayName": "구조팀",
+                              "memberColumns": 1,
+                              "children": [
+                                {
+                                  "title": "구조 팀장",
+                                  "memberColumns": 1,
+                                  "children": [
+                                    {
+                                      "title": "수석",
+                                      "memberColumns": 1,
+                                      "children": [],
+                                      "employeeId": "CC-024"
+                                    },
+                                    {
+                                      "title": "수석",
+                                      "memberColumns": 1,
+                                      "children": [],
+                                      "employeeId": "CC-025"
+                                    }
+                                  ],
+                                  "employeeId": "CC-023"
+                                }
+                              ],
+                              "nodeType": "department",
+                              "className": "secondary"
+                            },
+                            {
+                              "title": "토목ㆍ조경파트",
+                              "displayName": "토목ㆍ조경파트",
+                              "memberColumns": 1,
+                              "children": [
+                                {
+                                  "title": "파트장",
+                                  "memberColumns": 1,
+                                  "children": [],
+                                  "employeeId": "CC-030"
+                                }
+                              ],
+                              "nodeType": "department",
+                              "className": "secondary"
                             }
                           ],
                           "employeeId": "CC-008"
                         }
                       ],
-                      "displayName": "구조팀",
+                      "displayName": "구조/토목ㆍ조경파트",
                       "nodeType": "department",
                       "className": "secondary"
                     }
