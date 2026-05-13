@@ -111,6 +111,73 @@ const projectReceiveSampleData = {
   request: "구조, 마감, 인테리어, 철거공사 / 공내역서 작성\n금회증축 연면적 45,013평이 과업 범위임"
 };
 
+
+
+const projectReceiveCompletedProjects = [
+  {
+    sourceFile: "2026041.[한양산업개발(주)]창원 용원물류 골조공사 적정공사비 검증 기술자문 용역.xlsx",
+    completedAt: "2026.05.13 11:47",
+    data: {
+      ...projectReceiveSampleData,
+      projectNo: "2026041",
+      projectName: "창원 용원물류 골조공사 적정공사비 검증 기술자문 용역",
+      client: "한양산업개발㈜",
+      usage: "물류시설",
+      area: "",
+      buildings: "",
+      floors: "",
+      bidDate: "",
+      unitPrice: "공내역서",
+      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["공사비 검증", "본사 입찰"].includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["구조팀", "BIM 파트", "토목ㆍ조경 파트"].includes(item.label) })),
+      workContent: "구조, BIM, 토목ㆍ조경 / 적정공사비 검증 기술자문",
+      request: "창원 용원물류 골조공사 적정공사비 검증 기술자문 용역 접수 건"
+    }
+  },
+  {
+    sourceFile: "2026042.[IPARK현대산업개발(주)]수원아이파크시티 D1블록 판매시설 신축공사 견적용역.xlsx",
+    completedAt: "2026.05.13 11:47",
+    data: {
+      ...projectReceiveSampleData,
+      projectNo: "2026042",
+      projectName: "수원아이파크시티 D1블록 판매시설 신축공사 견적용역",
+      client: "IPARK현대산업개발㈜",
+      usage: "판매시설",
+      area: "",
+      buildings: "",
+      floors: "",
+      bidDate: "",
+      unitPrice: "공내역서",
+      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["정미견적", "본사 입찰"].includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["마감", "구조팀", "BIM 파트"].includes(item.label) })),
+      workContent: "마감, 구조, BIM / 판매시설 신축공사 견적용역",
+      request: "수원아이파크시티 D1블록 판매시설 신축공사 견적용역 접수 건"
+    }
+  },
+  {
+    sourceFile: "2026044.[(주)창조종합건축사사무소]영등포 금융전산센터 개발사업 설계 건축견적용역.xlsx",
+    completedAt: "2026.05.13 11:47",
+    data: {
+      ...projectReceiveSampleData,
+      projectNo: "2026044",
+      projectName: "영등포 금융전산센터 개발사업 설계 건축견적용역",
+      client: "㈜창조종합건축사사무소",
+      usage: "업무시설",
+      area: "",
+      buildings: "",
+      floors: "",
+      bidDate: "",
+      unitPrice: "공내역서",
+      businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["설계가", "정미견적"].includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["마감", "구조팀", "BIM 파트", "토목ㆍ조경 파트"].includes(item.label) })),
+      workContent: "마감, 구조, BIM, 토목ㆍ조경 / 설계 건축견적용역",
+      request: "영등포 금융전산센터 개발사업 설계 건축견적용역 접수 건"
+    }
+  }
+];
+
+let selectedProjectReceiveCompletedIndex = 0;
+
 let projectReceiveState = JSON.parse(JSON.stringify(projectReceiveSampleData));
 
 function setProjectReceiveValue(id, value) {
@@ -290,6 +357,85 @@ function loadProjectReceiveSample() {
   projectReceiveState = JSON.parse(JSON.stringify(projectReceiveSampleData));
   renderProjectReceiveDashboard();
   showToast("견적용역 예시 데이터를 불러왔습니다.");
+}
+
+
+function openProjectReceiveCompletedList() {
+  ensureProjectReceiveCompletedModal();
+  selectedProjectReceiveCompletedIndex = 0;
+  renderProjectReceiveCompletedList();
+  document.getElementById("projectReceiveCompletedModal")?.classList.add("active");
+}
+
+function closeProjectReceiveCompletedList() {
+  document.getElementById("projectReceiveCompletedModal")?.classList.remove("active");
+}
+
+function ensureProjectReceiveCompletedModal() {
+  if (document.getElementById("projectReceiveCompletedModal")) return;
+  const modal = document.createElement("div");
+  modal.id = "projectReceiveCompletedModal";
+  modal.className = "modal-backdrop project-receive-completed-modal";
+  modal.innerHTML = `
+    <div class="modal project-receive-completed-box">
+      <div class="modal-head">
+        <div>
+          <h3>작성완료 리스트</h3>
+          <p>업로드된 엑셀 자료 기준으로 작성 완료된 수주소식을 선택해 수정할 수 있습니다.</p>
+        </div>
+        <button class="close" type="button" onclick="closeProjectReceiveCompletedList()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="project-receive-completed-summary">
+          <strong>총 ${projectReceiveCompletedProjects.length}건</strong>
+          <span>프로젝트를 클릭한 뒤 하단의 수정 버튼을 누르면 접수 화면으로 불러옵니다.</span>
+        </div>
+        <div class="project-receive-completed-list" id="projectReceiveCompletedList"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-line" type="button" onclick="closeProjectReceiveCompletedList()">닫기</button>
+        <button class="btn btn-primary" type="button" onclick="loadSelectedProjectReceiveCompleted()">선택 프로젝트 수정</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", event => {
+    if (event.target === modal) closeProjectReceiveCompletedList();
+  });
+  document.body.appendChild(modal);
+}
+
+function renderProjectReceiveCompletedList() {
+  const list = document.getElementById("projectReceiveCompletedList");
+  if (!list) return;
+  list.innerHTML = projectReceiveCompletedProjects.map((item, index) => {
+    const data = item.data;
+    const scopeText = data.scopes.filter(scope => scope.checked).map(scope => scope.label).join(" · ") || "미선택";
+    return `
+      <button class="project-receive-completed-item ${selectedProjectReceiveCompletedIndex === index ? "active" : ""}" type="button" onclick="selectProjectReceiveCompleted(${index})">
+        <span class="completed-no">${escapeProjectReceiveHtml(data.projectNo)}</span>
+        <span class="completed-main">
+          <strong>${escapeProjectReceiveHtml(data.projectName)}</strong>
+          <em>${escapeProjectReceiveHtml(data.client)} · ${escapeProjectReceiveHtml(scopeText)}</em>
+          <small>${escapeProjectReceiveHtml(item.sourceFile)}</small>
+        </span>
+        <span class="completed-date">작성완료<br>${escapeProjectReceiveHtml(item.completedAt)}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function selectProjectReceiveCompleted(index) {
+  selectedProjectReceiveCompletedIndex = index;
+  renderProjectReceiveCompletedList();
+}
+
+function loadSelectedProjectReceiveCompleted() {
+  const selected = projectReceiveCompletedProjects[selectedProjectReceiveCompletedIndex];
+  if (!selected) return;
+  projectReceiveState = JSON.parse(JSON.stringify(selected.data));
+  renderProjectReceiveDashboard();
+  closeProjectReceiveCompletedList();
+  showToast(`${selected.data.projectNo} 수주소식을 수정 화면으로 불러왔습니다.`);
 }
 
 
