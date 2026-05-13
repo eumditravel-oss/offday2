@@ -9,7 +9,7 @@ const pmScheduleDeptManagerMap = {
   "마감": "조한빈 실장",
   "구조팀": "장범선 실장",
   "BIM 파트": "장범 실장",
-  "토목ㆍ조경 파트": "장범선 실장",
+  "토목ㆍ조경파트": "장범선 실장",
   "인테리어·철거": "조한빈 실장",
   "비교내역서": "조한빈 실장",
   "단가작업": "조한빈 실장",
@@ -518,7 +518,7 @@ function getConCostPmCandidates(project) {
       if (scope === "마감") return dept.includes("마감");
       if (scope === "구조팀") return dept.includes("구조");
       if (scope === "BIM 파트") return dept.includes("BIM");
-      if (scope === "토목ㆍ조경 파트") return dept.includes("토목") || dept.includes("조경");
+      if (scope === "토목ㆍ조경파트") return dept.includes("토목") || dept.includes("조경");
       return true;
     });
   });
@@ -547,7 +547,7 @@ function renderPmScheduleRequestTargets(item) {
   const pmList = document.getElementById("pmSchedulePmRequestList");
   const tlList = document.getElementById("pmScheduleTeamLeaderList");
   if (pmList) {
-    const pmDeptOptions = ["구조팀", "마감팀", "토목ㆍ조경팀"];
+    const pmDeptOptions = ["구조팀", "BIM 파트", "마감팀", "토목ㆍ조경파트"];
     const pmTargets = getConCostPmCandidatesByDept(item.project, pmSchedulePmRequestDeptFilter);
     pmList.innerHTML = `
       <div class="pm-request-filter-row">
