@@ -11702,3 +11702,114 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
       "comment" !important;
   }
 }
+
+/* =========================================================
+   프로젝트 접수 v12: 접수자료 행 추가/삭제 + 더미데이터 표시 구조
+   - 접수자료 우측 상단에 행 추가 버튼 배치
+   - 각 접수자료 행 우측에 삭제 버튼 배치
+   - 자료명/접수일/상태/확인이력/삭제/코멘트가 한 카드 안에서 정렬되도록 보정
+========================================================= */
+.project-receive-material-card .project-receive-card-head{
+  margin-bottom:10px !important;
+}
+
+.receive-material-toolbar{
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  min-height:0 !important;
+  margin:-42px 0 8px !important;
+  padding-right:44px !important;
+  pointer-events:none !important;
+}
+
+.receive-material-add-btn{
+  pointer-events:auto !important;
+  border:1px solid #93c5fd !important;
+  background:#eff6ff !important;
+  color:#1d4ed8 !important;
+  border-radius:12px !important;
+  padding:8px 12px !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+  white-space:nowrap !important;
+}
+
+.receive-material-add-btn:hover{
+  background:#dbeafe !important;
+}
+
+.project-receive-material-card .receive-material-item{
+  grid-template-columns:minmax(92px,.42fr) minmax(150px,.78fr) minmax(250px,1.04fr) minmax(230px,1fr) 52px !important;
+  grid-template-areas:
+    "name memo status history delete"
+    "comment comment comment comment comment" !important;
+}
+
+.receive-material-delete-btn{
+  grid-area:delete !important;
+  justify-self:end !important;
+  align-self:center !important;
+  height:34px !important;
+  min-width:46px !important;
+  border:0 !important;
+  border-radius:999px !important;
+  background:#fee2e2 !important;
+  color:#b91c1c !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+  white-space:nowrap !important;
+}
+
+.receive-material-delete-btn:hover{
+  background:#fecaca !important;
+}
+
+.project-receive-material-card .receive-material-history{
+  padding-left:4px !important;
+}
+
+@media (max-width:1500px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:minmax(90px,.42fr) minmax(145px,.76fr) minmax(238px,1fr) minmax(170px,.86fr) 50px !important;
+  }
+}
+
+@media (max-width:1280px){
+  .receive-material-toolbar{
+    margin:0 0 8px !important;
+    padding-right:0 !important;
+  }
+
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:minmax(90px,.45fr) minmax(0,1fr) 54px !important;
+    grid-template-areas:
+      "name memo delete"
+      "status status status"
+      "history history history"
+      "comment comment comment" !important;
+  }
+
+  .receive-material-delete-btn{
+    justify-self:end !important;
+  }
+}
+
+@media (max-width:760px){
+  .project-receive-material-card .receive-material-item{
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "name"
+      "memo"
+      "status"
+      "history"
+      "delete"
+      "comment" !important;
+  }
+
+  .receive-material-delete-btn{
+    justify-self:start !important;
+  }
+}
