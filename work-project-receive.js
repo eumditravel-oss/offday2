@@ -29,7 +29,7 @@ const projectReceiveDefaultData = {
     { label: "마감", checked: false },
     { label: "구조팀", checked: false },
     { label: "BIM 파트", checked: false },
-    { label: "토목ㆍ조경 파트", checked: false },
+    { label: "토목ㆍ조경파트", checked: false },
     { label: "인테리어·철거", checked: false },
     { label: "비교내역서", checked: false },
     { label: "단가작업", checked: false },
@@ -82,7 +82,7 @@ const projectReceiveSampleData = {
     { label: "마감", checked: true },
     { label: "구조팀", checked: true },
     { label: "BIM 파트", checked: true },
-    { label: "토목ㆍ조경 파트", checked: true },
+    { label: "토목ㆍ조경파트", checked: true },
     { label: "인테리어·철거", checked: true },
     { label: "비교내역서", checked: false },
     { label: "단가작업", checked: false },
@@ -129,7 +129,7 @@ const projectReceiveCompletedProjects = [
       bidDate: "",
       unitPrice: "공내역서",
       businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["공사비 검증", "본사 입찰"].includes(item.label) })),
-      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["구조팀", "BIM 파트", "토목ㆍ조경 파트"].includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["구조팀", "BIM 파트", "토목ㆍ조경파트"].includes(item.label) })),
       workContent: "구조, BIM, 토목ㆍ조경 / 적정공사비 검증 기술자문",
       request: "창원 용원물류 골조공사 적정공사비 검증 기술자문 용역 접수 건"
     }
@@ -169,7 +169,7 @@ const projectReceiveCompletedProjects = [
       bidDate: "",
       unitPrice: "공내역서",
       businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: ["설계가", "정미견적"].includes(item.label) })),
-      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["마감", "구조팀", "BIM 파트", "토목ㆍ조경 파트"].includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: ["마감", "구조팀", "BIM 파트", "토목ㆍ조경파트"].includes(item.label) })),
       workContent: "마감, 구조, BIM, 토목ㆍ조경 / 설계 건축견적용역",
       request: "영등포 금융전산센터 개발사업 설계 건축견적용역 접수 건"
     }
