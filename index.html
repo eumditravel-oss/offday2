@@ -786,8 +786,8 @@
 
                 <div class="project-receive-status" id="projectReceiveStatus"></div>
 
-                <div class="project-receive-grid">
-                  <section class="project-receive-card project-receive-card-wide">
+                <div class="project-receive-grid project-receive-top-grid">
+                  <section class="project-receive-card project-receive-card-wide project-receive-info-card">
                     <div class="project-receive-card-head">
                       <div><strong>프로젝트 기본정보</strong><span>접수 시 가장 먼저 확인하는 핵심 정보</span></div>
                       <em>01</em>
@@ -805,21 +805,23 @@
                     </div>
                   </section>
 
-                  <section class="project-receive-card">
-                    <div class="project-receive-card-head">
-                      <div><strong>업무의 성격</strong><span>중복 선택 가능</span></div>
-                      <em>02</em>
-                    </div>
-                    <div class="receive-chip-group" id="receiveBusinessTypeChips"></div>
-                  </section>
+                  <div class="project-receive-side-stack">
+                    <section class="project-receive-card project-receive-horizontal-card">
+                      <div class="project-receive-card-head">
+                        <div><strong>업무의 성격</strong><span>중복 선택 가능</span></div>
+                        <em>02</em>
+                      </div>
+                      <div class="receive-chip-group" id="receiveBusinessTypeChips"></div>
+                    </section>
 
-                  <section class="project-receive-card">
-                    <div class="project-receive-card-head">
-                      <div><strong>작업범위</strong><span>부서별 접수 범위</span></div>
-                      <em>03</em>
-                    </div>
-                    <div class="receive-chip-group" id="receiveScopeChips"></div>
-                  </section>
+                    <section class="project-receive-card project-receive-horizontal-card project-receive-scope-card">
+                      <div class="project-receive-card-head">
+                        <div><strong>작업범위</strong><span>부서별 접수 범위</span></div>
+                        <em>03</em>
+                      </div>
+                      <div class="receive-chip-group" id="receiveScopeChips"></div>
+                    </section>
+                  </div>
                 </div>
 
                 <div class="project-receive-grid project-receive-grid-bottom">
