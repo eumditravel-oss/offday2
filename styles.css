@@ -12834,3 +12834,38 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     justify-content:flex-start;
   }
 }
+
+
+/* === PM 배정/일정 추가 보정 2026-05-13 === */
+.pm-editor-only-action{display:inline-flex;align-items:center;}
+#pmScheduleManagerView ~ #pmAssignedProjectButtonHolder{display:none;}
+.pm-request-filter-row{margin:0 0 10px;display:flex;justify-content:flex-end;}
+.pm-request-filter-row label{display:flex;align-items:center;gap:8px;font-weight:900;color:#334155;font-size:12px;}
+.pm-request-filter-row select{width:180px;height:38px;border-radius:12px;font-weight:900;padding:7px 10px;}
+.pm-check-list-inner{display:grid;gap:8px;}
+.pm-teamleader-list-inner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:250px;overflow:auto;padding-right:4px;}
+.pm-plan-open-card strong{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pm-editor-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900;font-style:normal;white-space:nowrap;}
+.pm-editor-status.red{background:#fee2e2;color:#dc2626;}
+.pm-editor-status.yellow{background:#fef3c7;color:#d97706;}
+.pm-editor-status.green{background:#dcfce7;color:#15803d;}
+.pm-assigned-modal{width:min(920px,calc(100vw - 36px));}
+.pm-assigned-project-list{display:grid;gap:10px;}
+.pm-assigned-project-item{width:100%;border:1px solid var(--line2);background:#fbfdff;border-radius:16px;padding:14px;display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center;text-align:left;cursor:pointer;}
+.pm-assigned-project-item:hover{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.pm-assigned-project-item strong{font-size:15px;}
+.pm-assigned-project-item span{grid-column:1/2;color:#64748b;font-weight:800;font-size:12px;}
+.pm-assigned-project-item b{font-size:13px;color:var(--blue);}
+.pm-assigned-project-item b.muted{color:#94a3b8;}
+.pm-combined-sheet-wrap{position:relative;}
+.pm-combined-sheet-table{border-collapse:separate !important;border-spacing:0 !important;}
+.pm-combined-sheet-table thead{position:sticky !important;top:0 !important;z-index:20 !important;}
+.pm-combined-sheet-table thead th{position:sticky !important;background:#aef0eb !important;background-clip:padding-box !important;box-shadow:0 1px 0 #0f172a, inset 0 0 0 .5px #0f172a !important;}
+.pm-combined-sheet-table thead tr:first-child th{top:0 !important;z-index:22 !important;}
+.pm-combined-sheet-table thead tr:nth-child(2) th{top:30px !important;z-index:21 !important;}
+.pm-combined-sheet-table .pm-col-check{width:22px !important;}
+.pm-combined-sheet-table input[type="checkbox"],.pm-combined-sheet-table input[type="checkbox"].pm-nav-cell{width:11px !important;height:11px !important;}
+.pm-combined-sheet-table .pm-col-people,.pm-combined-sheet-table .pm-col-days{width:82px !important;}
+.pm-combined-sheet-table .pm-col-total{width:84px !important;}
+.pm-modal-approval-choice input[type="checkbox"]{width:15px;height:15px;accent-color:var(--blue);}
+@media(max-width:900px){.pm-teamleader-list-inner{grid-template-columns:1fr}.pm-assigned-project-item{grid-template-columns:1fr}.pm-request-filter-row{justify-content:flex-start}}
