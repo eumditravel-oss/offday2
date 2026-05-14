@@ -15619,3 +15619,152 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 @media(max-width:1280px){
   .pm-assignment-confirm-btn{width:auto;}
 }
+
+/* 프로젝트 접수 하위 카테고리: 프로젝트 작성 / 프로젝트 리스트 */
+.project-receive-side-group .project-receive-sub-menu{
+  display:grid;
+  gap:7px;
+  padding:8px 0 0 10px;
+}
+
+.project-receive-side-group .side-item.active{
+  background:#2563eb;
+  border-color:#2563eb;
+  color:#fff;
+}
+
+.project-list-shell{
+  display:grid;
+  gap:18px;
+}
+
+.project-list-hero{
+  margin-bottom:0;
+}
+
+.project-list-summary{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.project-list-summary > div{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+}
+
+.project-list-summary span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.project-list-summary strong{
+  display:block;
+  color:#0f172a;
+  font-size:22px;
+  font-weight:900;
+}
+
+.project-list-card{
+  background:#fff;
+  border:1px solid var(--line2);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+
+.project-list-toolbar{
+  display:grid;
+  grid-template-columns:minmax(360px,1fr) 220px;
+  gap:12px;
+  align-items:end;
+  margin-bottom:14px;
+}
+
+.project-list-table-wrap{
+  border:1px solid var(--line2);
+  border-radius:16px;
+  overflow:auto;
+  background:#fff;
+  max-height:calc(100vh - 330px);
+}
+
+.project-list-table{
+  width:100%;
+  min-width:1280px;
+  border-collapse:collapse;
+}
+
+.project-list-table th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:#f8fafc;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+  padding:13px 12px;
+  border-bottom:1px solid var(--line2);
+}
+
+.project-list-table td{
+  padding:14px 12px;
+  border-bottom:1px solid #edf2f7;
+  color:#334155;
+  font-size:13px;
+  font-weight:800;
+  vertical-align:middle;
+}
+
+.project-list-table tr:hover td{
+  background:#fbfdff;
+}
+
+.project-list-name{
+  color:#0f172a !important;
+  font-weight:900 !important;
+  min-width:280px;
+}
+
+.project-list-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:70px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.project-list-status.completed{
+  background:#eaf7ef;
+  color:#16a34a;
+}
+
+.project-list-status.writing{
+  background:#fff7ed;
+  color:#d97706;
+}
+
+.project-list-empty{
+  text-align:center !important;
+  color:#64748b !important;
+  padding:34px !important;
+  font-weight:900 !important;
+}
+
+@media(max-width:1280px){
+  .project-list-summary{grid-template-columns:repeat(2,1fr)}
+  .project-list-toolbar{grid-template-columns:1fr}
+}
+
+@media(max-width:760px){
+  .project-list-summary{grid-template-columns:1fr}
+}
