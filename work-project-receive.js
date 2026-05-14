@@ -809,6 +809,10 @@ function renderProjectReceiveMaterials() {
         <div class="receive-material-history">${hasHistory ? `확인: ${escapeProjectReceiveHtml(item.confirmedBy)}` : "확인 이력 없음"}</div>
         <button class="receive-material-delete-btn" type="button" onclick="removeProjectReceiveMaterial(${index})">삭제</button>
         <textarea class="receive-material-comment" rows="2" placeholder="미접수 또는 일부접수 사유/코멘트" oninput="updateProjectReceiveMaterialComment(${index}, this.value)">${escapeProjectReceiveHtml(comment)}</textarea>
+        <div class="receive-material-attach-area">
+          <button class="receive-material-attach-btn" type="button" onclick="openProjectReceiveMaterialUploadModal(${index})">파일첨부</button>
+          <span>${getProjectReceiveMaterialUploadCountText(item)}</span>
+        </div>
       </div>
     `;
     }).join("")}
@@ -844,13 +848,151 @@ function updateProjectReceiveMaterialComment(index, value) {
   projectReceiveState.materials[index].comment = value;
 }
 
+function getProjectReceiveMaterialUploadCountText(item) {
+  const count = Array.isArray(item?.uploads) ? item.uploads.length : 0;
+  return count ? `접수자료 ${count}건` : "첨부 없음";
+}
+
+function getProjectReceiveUploadStamp() {
+  const now = new Date();
+  const pad = value => String(value).padStart(2, "0");
+  return `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function ensureProjectReceiveMaterialUploads(index) {
+  const item = projectReceiveState.materials[index];
+  if (!item) return [];
+  if (!Array.isArray(item.uploads)) item.uploads = [];
+  return item.uploads;
+}
+
+let projectReceiveUploadMaterialIndex = null;
+
+function openProjectReceiveMaterialUploadModal(index) {
+  if (!projectReceiveState.materials[index]) return;
+  projectReceiveUploadMaterialIndex = index;
+  ensureProjectReceiveMaterialUploadModal();
+  renderProjectReceiveMaterialUploadModal();
+  document.getElementById("projectReceiveMaterialUploadModal")?.classList.add("active");
+}
+
+function closeProjectReceiveMaterialUploadModal() {
+  document.getElementById("projectReceiveMaterialUploadModal")?.classList.remove("active");
+  projectReceiveUploadMaterialIndex = null;
+}
+
+function ensureProjectReceiveMaterialUploadModal() {
+  if (document.getElementById("projectReceiveMaterialUploadModal")) return;
+  const modal = document.createElement("div");
+  modal.id = "projectReceiveMaterialUploadModal";
+  modal.className = "modal-backdrop receive-upload-modal";
+  modal.innerHTML = `
+    <div class="modal receive-upload-box">
+      <div class="modal-head">
+        <div>
+          <h2 id="receiveUploadModalTitle">접수자료 파일첨부</h2>
+          <p class="subcopy">파일을 추가할 때마다 접수자료(1차), 접수자료(2차) 순서로 이력이 생성됩니다.</p>
+        </div>
+        <button class="close" type="button" onclick="closeProjectReceiveMaterialUploadModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="receive-upload-control">
+          <label class="receive-upload-button">
+            <input id="receiveUploadFileInput" type="file" onchange="addProjectReceiveMaterialUploadFromInput(this)" />
+            <span>업로드 파일 선택</span>
+          </label>
+          <em>파일 선택 시 현재 날짜와 함께 접수자료 차수가 자동 기록됩니다.</em>
+        </div>
+        <div id="receiveUploadHistoryList" class="receive-upload-history-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-line" type="button" onclick="closeProjectReceiveMaterialUploadModal()">닫기</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", event => {
+    if (event.target === modal) closeProjectReceiveMaterialUploadModal();
+  });
+  document.body.appendChild(modal);
+}
+
+function addProjectReceiveMaterialUploadFromInput(input) {
+  const index = projectReceiveUploadMaterialIndex;
+  const item = projectReceiveState.materials[index];
+  const file = input?.files?.[0];
+  if (!item || !file) return;
+  const uploads = ensureProjectReceiveMaterialUploads(index);
+  const nextRound = uploads.length + 1;
+  uploads.push({
+    round: nextRound,
+    title: `접수자료(${nextRound}차)`,
+    fileName: file.name,
+    uploadedAt: getProjectReceiveUploadStamp(),
+    phoneComment: ""
+  });
+  input.value = "";
+  if (item.status === "미접수") {
+    item.status = "일부접수";
+    item.checked = true;
+    item.confirmedBy = getProjectReceiveConfirmStamp();
+  }
+  renderProjectReceiveMaterialUploadModal();
+  renderProjectReceiveMaterials();
+  renderProjectReceiveStatus();
+}
+
+function renderProjectReceiveMaterialUploadModal() {
+  const index = projectReceiveUploadMaterialIndex;
+  const item = projectReceiveState.materials[index];
+  const title = document.getElementById("receiveUploadModalTitle");
+  const list = document.getElementById("receiveUploadHistoryList");
+  if (!item || !list) return;
+  if (title) title.textContent = `${item.label} 파일첨부`;
+  const uploads = ensureProjectReceiveMaterialUploads(index);
+  if (!uploads.length) {
+    list.innerHTML = `<div class="receive-upload-empty">아직 첨부된 파일이 없습니다.</div>`;
+    return;
+  }
+  list.innerHTML = uploads.map((upload, uploadIndex) => `
+    <div class="receive-upload-history-item">
+      <div class="receive-upload-history-main">
+        <strong>${escapeProjectReceiveHtml(upload.title || `접수자료(${uploadIndex + 1}차)`)}</strong>
+        <span>${escapeProjectReceiveHtml(upload.fileName || "파일명 없음")}</span>
+        <em>최초 업로드: ${escapeProjectReceiveHtml(upload.uploadedAt || "날짜 없음")}</em>
+      </div>
+      <textarea rows="2" placeholder="경영지원팀 유선 확인 내용 또는 추가 코멘트" oninput="updateProjectReceiveMaterialUploadComment(${index}, ${uploadIndex}, this.value)">${escapeProjectReceiveHtml(upload.phoneComment || "")}</textarea>
+      <button class="receive-upload-remove-btn" type="button" onclick="removeProjectReceiveMaterialUpload(${index}, ${uploadIndex})">삭제</button>
+    </div>
+  `).join("");
+}
+
+function updateProjectReceiveMaterialUploadComment(materialIndex, uploadIndex, value) {
+  const uploads = ensureProjectReceiveMaterialUploads(materialIndex);
+  if (!uploads[uploadIndex]) return;
+  uploads[uploadIndex].phoneComment = value;
+}
+
+function removeProjectReceiveMaterialUpload(materialIndex, uploadIndex) {
+  const uploads = ensureProjectReceiveMaterialUploads(materialIndex);
+  if (!uploads[uploadIndex]) return;
+  uploads.splice(uploadIndex, 1);
+  uploads.forEach((upload, index) => {
+    upload.round = index + 1;
+    upload.title = `접수자료(${index + 1}차)`;
+  });
+  renderProjectReceiveMaterialUploadModal();
+  renderProjectReceiveMaterials();
+  renderProjectReceiveStatus();
+}
+
 function addProjectReceiveMaterial() {
   projectReceiveState.materials.push({
     label: "추가자료",
     memo: "",
     status: "미접수",
     comment: "접수받은 내용 없음.",
-    confirmedBy: ""
+    confirmedBy: "",
+    uploads: []
   });
   renderProjectReceiveMaterials();
   renderProjectReceiveStatus();
@@ -859,7 +1001,7 @@ function addProjectReceiveMaterial() {
 function removeProjectReceiveMaterial(index) {
   if (!projectReceiveState.materials[index]) return;
   if (projectReceiveState.materials.length <= 1) {
-    projectReceiveState.materials = [{ label: "기타자료", memo: "", status: "미접수", comment: "접수받은 내용 없음.", confirmedBy: "" }];
+    projectReceiveState.materials = [{ label: "기타자료", memo: "", status: "미접수", comment: "접수받은 내용 없음.", confirmedBy: "", uploads: [] }];
   } else {
     projectReceiveState.materials.splice(index, 1);
   }
