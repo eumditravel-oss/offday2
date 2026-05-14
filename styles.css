@@ -14567,3 +14567,175 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-row:auto !important;
   }
 }
+
+
+/* === 2026-05-14 Team Leader 요청 영역 레이아웃 재수정 ===
+   - 직원명 1줄 표시가 가능하도록 카드 내부 폭 확대
+   - Finish: External을 Internal 2 바로 아래 배치
+   - Structure: Vertical / Horizontal/Foundation 정상 2열 배치
+   - 기존 nth-child 강제 배치보다 부서 class 기준 배치를 우선 적용 */
+.pm-request-grid{
+  grid-template-columns:minmax(360px,.42fr) minmax(0,1fr) !important;
+  gap:14px !important;
+}
+
+.pm-request-box:nth-child(2){
+  overflow:hidden !important;
+  min-width:0 !important;
+}
+
+.pm-teamleader-list-inner.pm-teamleader-group-list{
+  width:100% !important;
+  display:grid !important;
+  gap:10px 12px !important;
+  align-items:start !important;
+  align-content:start !important;
+  justify-content:stretch !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-category-structure{
+  grid-template-columns:repeat(2, minmax(330px, 420px)) minmax(0,1fr) !important;
+}
+
+.pm-teamleader-category-finish{
+  grid-template-columns:repeat(3, minmax(300px, 1fr)) !important;
+}
+
+.pm-teamleader-category-civil{
+  grid-template-columns:minmax(330px, 420px) minmax(0,1fr) !important;
+}
+
+.pm-teamleader-dept-group{
+  display:grid !important;
+  grid-template-columns:132px minmax(170px, 1fr) !important;
+  gap:8px !important;
+  align-items:start !important;
+  align-content:start !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:8px !important;
+  overflow:visible !important;
+  position:static !important;
+  transform:none !important;
+  box-sizing:border-box !important;
+}
+
+.pm-teamleader-dept-title{
+  min-height:42px !important;
+  height:100% !important;
+  align-self:stretch !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  line-height:1.12 !important;
+  padding:8px 8px !important;
+}
+
+.pm-teamleader-dept-items{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item{
+  min-width:170px !important;
+  width:100% !important;
+  height:38px !important;
+  min-height:38px !important;
+  padding:7px 10px !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item span{
+  display:block !important;
+  min-width:0 !important;
+  max-width:none !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  font-size:13px !important;
+  line-height:1.15 !important;
+}
+
+.pm-teamleader-category-structure .dept-vertical{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+.pm-teamleader-category-structure .dept-horizontal-foundation{
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+
+.pm-teamleader-category-finish .dept-internal-1{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+.pm-teamleader-category-finish .dept-internal-2{
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+.pm-teamleader-category-finish .dept-partition-opening{
+  grid-column:3 !important;
+  grid-row:1 / span 2 !important;
+}
+.pm-teamleader-category-finish .dept-external{
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+.pm-teamleader-category-civil .dept-civil{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
+@media(max-width:1500px){
+  .pm-request-grid{
+    grid-template-columns:minmax(340px,.40fr) minmax(0,1fr) !important;
+  }
+  .pm-teamleader-category-finish{
+    grid-template-columns:repeat(3, minmax(280px, 1fr)) !important;
+  }
+  .pm-teamleader-category-structure{
+    grid-template-columns:repeat(2, minmax(300px, 390px)) minmax(0,1fr) !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:122px minmax(168px,1fr) !important;
+  }
+  .pm-teamleader-dept-items .pm-check-item span{
+    font-size:12.5px !important;
+  }
+}
+
+@media(max-width:1280px){
+  .pm-request-grid{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-category-structure,
+  .pm-teamleader-category-finish,
+  .pm-teamleader-category-civil{
+    grid-template-columns:repeat(2,minmax(280px,1fr)) !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-column:auto !important;
+    grid-row:auto !important;
+  }
+}
+
+@media(max-width:760px){
+  .pm-teamleader-category-structure,
+  .pm-teamleader-category-finish,
+  .pm-teamleader-category-civil{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:1fr !important;
+  }
+}
