@@ -13753,3 +13753,73 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-teamleader-group-list{grid-template-columns:1fr !important;}
   .pm-teamleader-dept-items{grid-template-columns:1fr !important;}
 }
+
+/* === 2026-05-14 Viet QS Team Leader 전용 리스트 표시 보정 === */
+.pm-request-grid{
+  grid-template-columns:minmax(300px,.75fr) minmax(0,1.75fr) !important;
+}
+.pm-request-box:nth-child(2){
+  display:block !important;
+}
+.pm-teamleader-group-list{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:8px !important;
+  width:100% !important;
+  align-items:stretch !important;
+}
+.pm-teamleader-dept-group{
+  display:grid !important;
+  grid-template-columns:170px minmax(0,1fr) !important;
+  align-items:stretch !important;
+  gap:10px !important;
+  width:100% !important;
+  min-height:48px !important;
+  padding:10px !important;
+  border:1px solid #d7e4f5 !important;
+  border-radius:16px !important;
+  background:#fff !important;
+}
+.pm-teamleader-dept-title{
+  min-height:38px !important;
+  height:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:8px 10px !important;
+  border-radius:14px !important;
+  background:#eef6ff !important;
+  color:#2563eb !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1.2 !important;
+  text-align:center !important;
+}
+.pm-teamleader-dept-items{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr)) !important;
+  gap:8px !important;
+  width:100% !important;
+  align-items:stretch !important;
+}
+.pm-teamleader-dept-items .pm-check-item{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  min-height:38px !important;
+  padding:8px 10px !important;
+  align-items:center !important;
+  border-radius:12px !important;
+}
+.pm-teamleader-dept-items .pm-check-item span{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  word-break:normal !important;
+  line-height:1.2 !important;
+  font-size:13px !important;
+}
+@media(max-width:1100px){
+  .pm-teamleader-dept-group{grid-template-columns:1fr !important;}
+  .pm-teamleader-dept-items{grid-template-columns:repeat(auto-fit,minmax(160px,1fr)) !important;}
+}
