@@ -536,9 +536,21 @@ function getConCostPmCandidates(project) {
   return matched.length ? matched : staff;
 }
 
+function isVietTeamLeaderOnly(emp) {
+  const grade = String(emp?.grade || "");
+  return grade.includes("Team Leader") && !grade.includes("Asst. Team Leader");
+}
+
+function formatVietTeamLeaderRequestName(emp) {
+  const englishName = String(emp?.name || "").trim();
+  const koreanName = String(emp?.koreanName || "").trim();
+  if (englishName && koreanName) return `${englishName}(${koreanName})`;
+  return englishName || koreanName || "이름 미등록";
+}
+
 function getVietTeamLeaderCandidates() {
   return (typeof employees !== "undefined" ? employees : [])
-    .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && String(emp.grade).includes("Team Leader"))
+    .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && isVietTeamLeaderOnly(emp))
     .sort(comparePmScheduleEmployees)
     .slice(0, 24);
 }
@@ -590,7 +602,7 @@ function renderPmScheduleRequestTargets(item) {
             <div class="pm-teamleader-dept-title">${escapePmScheduleHtml(group.dept)}</div>
             <div class="pm-teamleader-dept-items">
               ${group.members.map(emp => {
-                const value = `${emp.koreanName ? emp.koreanName + ' / ' : ''}${emp.name} ${emp.grade} · ${normalizePmScheduleVietDeptName(emp.dept)}`;
+                const value = formatVietTeamLeaderRequestName(emp);
                 return `<label class="pm-check-item"><input type="checkbox" ${item.requestTargets.teamLeaders.includes(value) ? "checked" : ""} onchange="togglePmScheduleRequestTarget('teamLeaders', '${escapePmScheduleAttr(value)}', this.checked)" /> <span>${escapePmScheduleHtml(value)}</span></label>`;
               }).join("")}
             </div>
@@ -691,7 +703,7 @@ function sortConCostPmCandidates(list) {
 function getVietTeamLeaderCandidatesByCategory(category) {
   const allowed = getPmScheduleCategoryDeptMap()[category] || [];
   return (typeof employees !== "undefined" ? employees : [])
-    .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && String(emp.grade).includes("Team Leader"))
+    .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && isVietTeamLeaderOnly(emp))
     .filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)))
     .sort(comparePmScheduleEmployees);
 }
