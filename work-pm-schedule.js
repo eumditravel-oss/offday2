@@ -599,7 +599,7 @@ function renderPmScheduleRequestTargets(item) {
       <div class="pm-check-list-inner pm-teamleader-list-inner pm-teamleader-group-list">
         ${leaders.length ? groupedLeaders.map(group => `
           <div class="pm-teamleader-dept-group">
-            <div class="pm-teamleader-dept-title">${escapePmScheduleHtml(group.dept)}</div>
+            <div class="pm-teamleader-dept-title">${formatPmScheduleTeamLeaderDeptTitle(group.dept)}</div>
             <div class="pm-teamleader-dept-items">
               ${group.members.map(emp => {
                 const value = formatVietTeamLeaderRequestName(emp);
@@ -613,14 +613,33 @@ function renderPmScheduleRequestTargets(item) {
 }
 
 
+
+function getPmScheduleTeamLeaderDisplayDept(emp) {
+  const rawDept = normalizePmScheduleVietDeptName(emp?.dept);
+  const englishName = String(emp?.name || "").trim();
+  const koreanName = String(emp?.koreanName || "").trim();
+
+  // 조직도 기준 보정: Dinh Phi(피)는 Internal 1 하위 Team Leader로 표기
+  if (englishName === "Dinh Phi" || koreanName === "피") return "Internal 1";
+  return rawDept;
+}
+
+function formatPmScheduleTeamLeaderDeptTitle(dept) {
+  if (dept === "Partition&Opening") return "Partition<br>&amp;Opening";
+  return escapePmScheduleHtml(dept);
+}
+
 function groupPmScheduleVietTeamLeadersByDept(leaders) {
   const map = new Map();
   leaders.forEach(emp => {
-    const dept = normalizePmScheduleVietDeptName(emp.dept);
+    const dept = getPmScheduleTeamLeaderDisplayDept(emp);
     if (!map.has(dept)) map.set(dept, []);
     map.get(dept).push(emp);
   });
-  return Array.from(map.entries()).map(([dept, members]) => ({ dept, members }));
+
+  return pmScheduleDeptOrder
+    .filter(dept => map.has(dept))
+    .map(dept => ({ dept, members: map.get(dept) }));
 }
 
 function setPmSchedulePmRequestDeptFilter(value) {
