@@ -9392,9 +9392,16 @@ function switchWorkPanel(panelId) {
 
   document.querySelectorAll(".work-panel").forEach(panel => panel.classList.remove("active"));
   document.querySelectorAll("[data-work-main]").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.remove("active"));
 
   document.getElementById(targetPanelId)?.classList.add("active");
-  document.querySelector(`[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+
+  if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
+    document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+  } else {
+    document.querySelector(`.side-main[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+  }
 
   const meta = workPageMeta[targetPanelId] || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
