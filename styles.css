@@ -13543,3 +13543,73 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-teamleader-group-list{grid-template-columns:1fr !important;}
   .pm-teamleader-dept-items{grid-template-columns:1fr;}
 }
+
+/* === 2026-05-14 PM 배정/일정 리스트/조직도 반영 보정 === */
+.pm-project-list-table{
+  max-height:414px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+.pm-project-list-head,
+.pm-project-list-row{
+  grid-template-columns:110px minmax(300px,1.55fr) minmax(220px,.75fr) minmax(220px,.9fr) !important;
+  gap:10px !important;
+}
+.pm-project-list-head{
+  position:sticky !important;
+  top:0 !important;
+  z-index:5 !important;
+  padding:7px 14px !important;
+  min-height:34px !important;
+}
+.pm-project-list-row{
+  padding:6px 14px !important;
+  min-height:38px !important;
+}
+.pm-project-list-row strong{font-size:13px !important;line-height:1.2 !important;}
+.pm-project-list-row em,
+.pm-project-list-row small{font-size:11px !important;line-height:1.2 !important;}
+.pm-project-list-row .pm-project-state{padding:5px 9px !important;font-size:11px !important;}
+
+.pm-teamleader-group-list{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+}
+.pm-teamleader-dept-group{
+  display:grid !important;
+  grid-template-columns:150px 1fr !important;
+  align-items:center !important;
+  gap:10px !important;
+  padding:8px 10px !important;
+}
+.pm-teamleader-dept-title{
+  margin-bottom:0 !important;
+  min-height:34px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+}
+.pm-teamleader-dept-items{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:8px !important;
+}
+.pm-teamleader-dept-items .pm-check-item{
+  flex:0 0 auto !important;
+  min-width:210px !important;
+  max-width:280px !important;
+  padding:8px 10px !important;
+}
+.pm-teamleader-dept-items .pm-check-item span{
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+@media(max-width:1200px){
+  .pm-project-list-table{max-height:420px !important;}
+  .pm-teamleader-dept-group{grid-template-columns:1fr !important;align-items:stretch !important;}
+  .pm-teamleader-dept-title{justify-content:flex-start !important;}
+  .pm-teamleader-dept-items .pm-check-item{min-width:100% !important;max-width:100% !important;}
+}
