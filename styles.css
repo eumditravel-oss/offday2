@@ -13763,16 +13763,17 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .pm-teamleader-group-list{
   display:grid !important;
-  grid-template-columns:1fr !important;
-  gap:8px !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  grid-auto-flow:row !important;
+  gap:10px !important;
   width:100% !important;
-  align-items:stretch !important;
+  align-items:start !important;
 }
 .pm-teamleader-dept-group{
   display:grid !important;
-  grid-template-columns:170px minmax(0,1fr) !important;
+  grid-template-columns:132px minmax(0,1fr) !important;
   align-items:stretch !important;
-  gap:10px !important;
+  gap:9px !important;
   width:100% !important;
   min-height:48px !important;
   padding:10px !important;
@@ -13786,7 +13787,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  padding:8px 10px !important;
+  padding:8px 9px !important;
   border-radius:14px !important;
   background:#eef6ff !important;
   color:#2563eb !important;
@@ -13797,7 +13798,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .pm-teamleader-dept-items{
   display:grid !important;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr)) !important;
+  grid-template-columns:repeat(auto-fit,minmax(156px,1fr)) !important;
   gap:8px !important;
   width:100% !important;
   align-items:stretch !important;
@@ -13818,6 +13819,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   word-break:normal !important;
   line-height:1.2 !important;
   font-size:13px !important;
+}
+@media(max-width:1400px){
+  .pm-teamleader-group-list{grid-template-columns:1fr !important;}
+  .pm-teamleader-dept-group{grid-template-columns:150px minmax(0,1fr) !important;}
 }
 @media(max-width:1100px){
   .pm-teamleader-dept-group{grid-template-columns:1fr !important;}
