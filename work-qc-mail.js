@@ -9404,6 +9404,10 @@ function switchWorkPanel(panelId) {
     renderProjectReceiveDashboard();
   }
 
+  if (targetPanelId === "projectReceiveList" && typeof renderProjectReceiveListView === "function") {
+    renderProjectReceiveListView();
+  }
+
   if (targetPanelId === "qcReview" || targetPanelId === "quantityChecklist") {
     renderChecklistCategoryButtons();
     renderChecklistGrid();
