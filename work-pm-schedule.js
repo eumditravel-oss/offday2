@@ -597,9 +597,9 @@ function renderPmScheduleRequestTargets(item) {
           ${tlDeptOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${pmScheduleTlRequestDeptFilter === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}
         </select></label>
       </div>
-      <div class="pm-check-list-inner pm-teamleader-list-inner pm-teamleader-group-list">
+      <div class="pm-check-list-inner pm-teamleader-list-inner pm-teamleader-group-list pm-teamleader-category-${escapePmScheduleAttr(pmScheduleTlRequestDeptFilter.toLowerCase())}">
         ${leaders.length ? groupedLeaders.map(group => `
-          <div class="pm-teamleader-dept-group">
+          <div class="pm-teamleader-dept-group dept-${getPmScheduleTeamLeaderDeptClass(group.dept)}">
             <div class="pm-teamleader-dept-title">${formatPmScheduleTeamLeaderDeptTitle(group.dept)}</div>
             <div class="pm-teamleader-dept-items">
               ${group.members.map(emp => {
@@ -633,6 +633,11 @@ function formatPmScheduleTeamLeaderDeptTitle(dept) {
   return escapePmScheduleHtml(dept);
 }
 
+function getPmScheduleTeamLeaderDeptClass(dept) {
+  const normalized = String(dept || "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
+  return normalized || "none";
+}
+
 function groupPmScheduleVietTeamLeadersByDept(leaders) {
   const map = new Map();
   leaders.forEach(emp => {
@@ -642,7 +647,13 @@ function groupPmScheduleVietTeamLeadersByDept(leaders) {
   });
 
   const used = new Set();
-  const ordered = pmScheduleDeptOrder
+  const categoryOrder = pmScheduleTlRequestDeptFilter === "Structure"
+    ? ["Vertical", "Horizontal/Foundation"]
+    : pmScheduleTlRequestDeptFilter === "Finish"
+      ? ["Internal 1", "Internal 2", "Partition&Opening", "External"]
+      : ["Civil"];
+
+  const ordered = categoryOrder
     .filter(dept => map.has(dept) && !used.has(dept) && used.add(dept))
     .map(dept => ({ dept, members: map.get(dept) }));
 
