@@ -1185,3 +1185,102 @@ function escapeProjectReceiveHtml(value) {
 document.addEventListener("DOMContentLoaded", () => {
   renderProjectReceiveDashboard();
 });
+
+
+function getProjectReceiveListItems() {
+  const completed = (typeof projectReceiveCompletedProjects !== "undefined" ? projectReceiveCompletedProjects : [])
+    .map((item, index) => ({
+      source: "completed",
+      index,
+      data: item.data || item,
+      status: "작성완료"
+    }));
+
+  const current = (typeof projectReceiveState !== "undefined" && projectReceiveState?.projectNo)
+    ? [{ source: "current", index: -1, data: projectReceiveState, status: "작성중" }]
+    : [];
+
+  const merged = [...current, ...completed];
+  const seen = new Set();
+  return merged.filter(item => {
+    const key = item.data?.projectNo || `${item.data?.projectName || ""}-${item.data?.client || ""}`;
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function getProjectReceiveListScopeText(data) {
+  const scopes = Array.isArray(data?.scopes) ? data.scopes : [];
+  return scopes
+    .map(item => typeof item === "string" ? item : (item?.checked ? item.label : ""))
+    .filter(Boolean)
+    .join(" · ") || "미선택";
+}
+
+function renderProjectReceiveListView() {
+  const body = document.getElementById("projectReceiveListBody");
+  const summary = document.getElementById("projectReceiveListSummary");
+  if (!body) return;
+
+  const query = (document.getElementById("projectReceiveListSearch")?.value || "").trim().toLowerCase();
+  const scopeFilter = document.getElementById("projectReceiveListScopeFilter")?.value || "전체";
+  const items = getProjectReceiveListItems();
+  const filtered = items.filter(item => {
+    const data = item.data || {};
+    const scopeText = getProjectReceiveListScopeText(data);
+    const searchTarget = [
+      data.projectNo,
+      data.projectName,
+      data.client,
+      data.usage,
+      data.area,
+      data.floors,
+      data.basementFloors,
+      data.groundFloors,
+      scopeText,
+      data.firstDelivery,
+      item.status
+    ].join(" ").toLowerCase();
+    const matchesQuery = !query || searchTarget.includes(query);
+    const matchesScope = scopeFilter === "전체" || scopeText.includes(scopeFilter);
+    return matchesQuery && matchesScope;
+  });
+
+  if (summary) {
+    const completedCount = items.filter(item => item.status === "작성완료").length;
+    const currentCount = items.filter(item => item.status === "작성중").length;
+    summary.innerHTML = `
+      <div><span>전체 프로젝트</span><strong>${items.length}건</strong></div>
+      <div><span>작성완료</span><strong>${completedCount}건</strong></div>
+      <div><span>작성중</span><strong>${currentCount}건</strong></div>
+      <div><span>현재 표시</span><strong>${filtered.length}건</strong></div>
+    `;
+  }
+
+  if (!filtered.length) {
+    body.innerHTML = `<tr><td colspan="9" class="project-list-empty">조건에 맞는 프로젝트가 없습니다.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map(item => {
+    const data = item.data || {};
+    const scopeText = getProjectReceiveListScopeText(data);
+    const floorText = data.floors || [data.basementFloors, data.groundFloors].filter(Boolean).join(" / ") || "-";
+    const statusClass = item.status === "작성완료" ? "completed" : "writing";
+    return `
+      <tr>
+        <td><strong>${escapeProjectReceiveHtml(data.projectNo || "-")}</strong></td>
+        <td class="project-list-name">${escapeProjectReceiveHtml(data.projectName || "프로젝트명 미입력")}</td>
+        <td>${escapeProjectReceiveHtml(data.client || "-")}</td>
+        <td>${escapeProjectReceiveHtml(data.usage || "-")}</td>
+        <td>${escapeProjectReceiveHtml(data.area || "-")}</td>
+        <td>${escapeProjectReceiveHtml(floorText)}</td>
+        <td>${escapeProjectReceiveHtml(scopeText)}</td>
+        <td>${escapeProjectReceiveHtml(data.firstDelivery || "미입력")}</td>
+        <td><span class="project-list-status ${statusClass}">${item.status}</span></td>
+      </tr>
+    `;
+  }).join("");
+}
