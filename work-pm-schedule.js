@@ -333,6 +333,7 @@ function makePmScheduleProject(data, source = "프로젝트 접수", status = "p
     assignment: {
       pmFinish: project.pmFinish || "",
       pmStructure: project.pmStructure || "",
+      pmBim: project.pmBim || "",
       pmCivil: project.pmCivil || ""
     },
     requestTargets: {
@@ -504,10 +505,10 @@ function renderPmScheduleDetail() {
 }
 
 function renderPmScheduleAssignmentSelects(item) {
-  const employeesForPm = getConCostPmCandidates(item.project);
-  fillPmScheduleSelect("pmFinishSelect", employeesForPm, item.assignment.pmFinish, "마감 PM 선택");
-  fillPmScheduleSelect("pmStructureSelect", employeesForPm, item.assignment.pmStructure, "구조 PM 선택");
-  fillPmScheduleSelect("pmCivilSelect", employeesForPm, item.assignment.pmCivil, "토목ㆍ조경 PM 선택");
+  fillPmScheduleSelect("pmFinishSelect", getConCostPmCandidatesByDept(item.project, "마감팀"), item.assignment.pmFinish, "마감팀 PM 선택");
+  fillPmScheduleSelect("pmStructureSelect", getConCostPmCandidatesByDept(item.project, "구조팀"), item.assignment.pmStructure, "구조팀 PM 선택");
+  fillPmScheduleSelect("pmBimSelect", getConCostPmCandidatesByDept(item.project, "BIM파트"), item.assignment.pmBim, "BIM파트 PM 선택");
+  fillPmScheduleSelect("pmCivilSelect", getConCostPmCandidatesByDept(item.project, "토목ㆍ조경파트"), item.assignment.pmCivil, "토목ㆍ조경파트 PM 선택");
 }
 
 function fillPmScheduleSelect(id, candidates, selectedValue, placeholder) {
@@ -543,7 +544,7 @@ function getVietTeamLeaderCandidates() {
 }
 
 function normalizePmScheduleDept(value) {
-  return String(value || "").replaceAll("ㆍ", "·").replaceAll(" ", "");
+  return String(value || "").replace(/[ㆍ·\/\s]/g, "");
 }
 
 function updatePmScheduleAssignment(key, value) {
@@ -557,7 +558,8 @@ function renderPmScheduleRequestTargets(item) {
   const pmList = document.getElementById("pmSchedulePmRequestList");
   const tlList = document.getElementById("pmScheduleTeamLeaderList");
   if (pmList) {
-    const pmDeptOptions = ["구조팀", "BIM 파트", "마감팀", "토목ㆍ조경파트"];
+    const pmDeptOptions = ["마감팀", "구조팀", "BIM파트", "토목ㆍ조경파트"];
+    if (pmSchedulePmRequestDeptFilter === "BIM 파트") pmSchedulePmRequestDeptFilter = "BIM파트";
     const pmTargets = getConCostPmCandidatesByDept(item.project, pmSchedulePmRequestDeptFilter);
     pmList.innerHTML = `
       <div class="pm-request-filter-row">
@@ -650,20 +652,39 @@ function getConCostOrgEmployeeIdsByDeptName(deptName) {
 function getConCostPmCandidatesByDept(project, deptFilter) {
   const staff = (typeof employees !== "undefined" ? employees : []).filter(emp => emp.company === "CON-COST" && emp.status === "재직");
   const key = normalizePmScheduleDept(deptFilter);
-  const orgIds = getConCostOrgEmployeeIdsByDeptName(deptFilter);
+  const orgSearchNames = {
+    "마감팀": ["마감팀", "마감"],
+    "구조팀": ["구조팀"],
+    "BIM파트": ["BIM파트", "BIM 파트"],
+    "토목조경파트": ["토목ㆍ조경파트", "토목·조경파트", "토목 조경파트"]
+  };
+  const searchNames = orgSearchNames[key] || [deptFilter];
+  const orgIds = new Set();
+  searchNames.forEach(name => getConCostOrgEmployeeIdsByDeptName(name).forEach(id => orgIds.add(id)));
 
   if (orgIds.size) {
     const byOrg = staff.filter(emp => orgIds.has(emp.empNo));
-    if (byOrg.length) return byOrg;
+    if (byOrg.length) return sortConCostPmCandidates(byOrg);
   }
 
-  return staff.filter(emp => {
+  const matched = staff.filter(emp => {
     const dept = normalizePmScheduleDept(emp.dept);
-    if (key.includes("BIM")) return dept === "BIM파트" || dept.includes("BIM");
-    if (key.includes("구조")) return dept.includes("구조") && !dept.includes("토목조경");
+    if (key.includes("BIM")) return dept.includes("BIM");
     if (key.includes("마감")) return dept.includes("마감");
-    if (key.includes("토목") || key.includes("조경")) return dept === "토목조경파트" || dept.includes("토목조경파트");
+    if (key.includes("토목") || key.includes("조경")) return dept.includes("토목조경") && !dept.includes("구조토목조경");
+    if (key.includes("구조")) return dept.includes("구조토목조경") || (dept.includes("구조") && !dept.includes("토목조경파트"));
     return false;
+  });
+  return sortConCostPmCandidates(matched);
+}
+
+function sortConCostPmCandidates(list) {
+  const rank = { "실장": 1, "팀장": 2, "파트장": 3, "수석": 4, "책임": 5, "선임": 6, "프로": 7, "사원": 8 };
+  return [...list].sort((a, b) => {
+    const gradeA = rank[a.grade] || 99;
+    const gradeB = rank[b.grade] || 99;
+    if (gradeA !== gradeB) return gradeA - gradeB;
+    return String(a.name || "").localeCompare(String(b.name || ""));
   });
 }
 
