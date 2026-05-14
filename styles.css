@@ -15947,3 +15947,13 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 @media(max-width:760px){
   .project-viewer-pm-list{grid-template-columns:1fr;}
 }
+
+/* PM 권한 수신 표시 */
+.pm-assigned-project-item small{
+  display:block;
+  margin-top:4px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.35;
+}
