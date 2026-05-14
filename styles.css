@@ -16132,3 +16132,102 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
     flex:1;
   }
 }
+
+/* === 2026-05-15 실장 권한 PM배정 화면 단순화 === */
+.pm-schedule-shell[data-pm-section="assign"] .pm-schedule-layout {
+  grid-template-columns: 1fr;
+}
+
+.pm-schedule-shell[data-pm-section="assign"] .pm-schedule-detail:not(.pm-assignment-panel-open) {
+  display: none !important;
+}
+
+.pm-schedule-shell[data-pm-section="assign"] .pm-schedule-project-wide {
+  width: 100%;
+}
+
+.pm-schedule-shell[data-pm-section="assign"] .pm-card-head.compact {
+  align-items: center;
+}
+
+.pm-schedule-shell[data-pm-section="assign"] .pm-card-head.compact .btn {
+  min-width: 118px;
+  height: 40px;
+}
+
+.pm-assignment-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  display: none;
+  background: rgba(15, 23, 42, 0.32);
+}
+
+.pm-assignment-panel-backdrop.active {
+  display: block;
+}
+
+.pm-schedule-detail.pm-assignment-panel-open {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 1100;
+  display: block !important;
+  width: min(1560px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  padding: 18px;
+  border: 1px solid #d9e2ef;
+  border-radius: 22px;
+  background: #f8fbff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
+}
+
+.pm-schedule-detail.pm-assignment-panel-open::before {
+  content: "PM배정";
+  display: block;
+  margin: 0 0 14px 4px;
+  padding-left: 12px;
+  border-left: 5px solid #ff8a1f;
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.pm-request-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.pm-request-submit-row .btn {
+  min-width: 160px;
+  height: 44px;
+}
+
+.pm-simple-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pm-simple-timeline span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid #dbe5f2;
+  border-radius: 999px;
+  background: #fff;
+  color: #42526a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pm-simple-timeline span.active {
+  border-color: #ff8a1f;
+  background: #fff3e8;
+  color: #f97316;
+}
