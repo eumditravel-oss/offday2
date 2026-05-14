@@ -15906,3 +15906,44 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   .project-viewer-grid div:nth-last-child(-n+2){border-bottom:0}
   .project-viewer-material-list li{grid-template-columns:1fr}
 }
+
+/* 프로젝트 리스트 / 상세 뷰어: 지하·지상층수 분리 및 PM 지정 표시 */
+.project-viewer-pm-list{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+
+.project-viewer-pm-list div{
+  border:1px solid var(--line2);
+  background:#fbfdff;
+  border-radius:14px;
+  padding:12px 14px;
+  min-width:0;
+}
+
+.project-viewer-pm-list span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:7px;
+}
+
+.project-viewer-pm-list strong{
+  display:block;
+  color:#0f172a;
+  font-size:14px;
+  font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+@media(max-width:1280px){
+  .project-viewer-pm-list{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+@media(max-width:760px){
+  .project-viewer-pm-list{grid-template-columns:1fr;}
+}
