@@ -15957,3 +15957,178 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   font-weight:800;
   line-height:1.35;
 }
+
+/* =========================================================
+   PM 배정 / 일정 세부 카테고리 및 전체 일정 보드
+========================================================= */
+.pm-schedule-sub-menu.active{
+  display:grid !important;
+  gap:7px !important;
+}
+
+.pm-schedule-sub-menu .side-item.active{
+  background:#0f172a !important;
+  border-color:#0f172a !important;
+  color:#fff !important;
+}
+
+.pm-manager-only[style*="display: none"],
+.pm-section-assign-only[style*="display: none"]{
+  display:none !important;
+}
+
+.pm-schedule-shell[data-pm-section="all"] .pm-schedule-layout{
+  grid-template-columns:1fr !important;
+}
+
+.pm-schedule-shell[data-pm-section="all"] .pm-schedule-detail{
+  display:block !important;
+}
+
+.pm-all-schedule-card{
+  min-height:520px;
+}
+
+.pm-all-team-filter{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:260px;
+  font-weight:900;
+  color:#334155;
+}
+
+.pm-all-team-filter span{
+  white-space:nowrap;
+  font-size:13px;
+  color:#334155;
+}
+
+.pm-all-team-filter select{
+  height:42px;
+  min-width:160px;
+  font-weight:900;
+}
+
+.pm-all-schedule-guide{
+  border:1px solid #fed7aa;
+  background:#fff7ed;
+  color:#9a3412;
+  border-radius:14px;
+  padding:11px 13px;
+  font-weight:900;
+  margin-bottom:12px;
+}
+
+.pm-all-schedule-wrap{
+  overflow:auto;
+  border:1px solid var(--line2);
+  border-radius:18px;
+  background:#fff;
+  max-height:640px;
+}
+
+.pm-all-schedule-table{
+  width:100%;
+  min-width:1480px;
+  border-collapse:separate;
+  border-spacing:0;
+}
+
+.pm-all-schedule-table th,
+.pm-all-schedule-table td{
+  border-right:1px solid #edf2f7;
+  border-bottom:1px solid #edf2f7;
+  padding:10px 9px;
+  vertical-align:top;
+  font-size:12px;
+  line-height:1.35;
+}
+
+.pm-all-schedule-table thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#f7f8fa;
+  color:#475569;
+  font-weight:900;
+  text-align:center;
+}
+
+.pm-all-person-col{
+  width:180px;
+}
+
+.pm-all-person-cell{
+  background:#fbfdff;
+  text-align:left !important;
+  position:sticky;
+  left:0;
+  z-index:1;
+}
+
+.pm-all-person-cell strong{
+  display:block;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:4px;
+}
+
+.pm-all-person-cell span{
+  display:block;
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
+}
+
+.pm-all-schedule-chip{
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  color:#0f172a;
+  border-radius:12px;
+  padding:7px 8px;
+  margin-bottom:6px;
+  display:grid;
+  gap:3px;
+  min-width:120px;
+}
+
+.pm-all-schedule-chip b{
+  color:#1d4ed8;
+  font-weight:900;
+}
+
+.pm-all-schedule-chip span{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-weight:900;
+}
+
+.pm-all-schedule-chip em{
+  justify-self:start;
+  border-radius:999px;
+  background:#fff7ed;
+  color:#d97706;
+  padding:2px 7px;
+  font-style:normal;
+  font-weight:900;
+  font-size:11px;
+}
+
+.pm-all-empty{
+  color:#cbd5e1;
+  font-weight:900;
+}
+
+@media(max-width:1280px){
+  .pm-all-team-filter{
+    min-width:0;
+    width:100%;
+  }
+  .pm-all-team-filter select{
+    flex:1;
+  }
+}
