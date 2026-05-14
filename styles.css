@@ -15013,59 +15013,285 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   }
 }
 
-/* === 2026-05-14 기준 코드 보정: Finish Team Leader Internal 3 표시 ===
-   - JS의 Finish 그룹 순서에 Internal 3을 포함
-   - 2열 배치에서 Internal 3을 누락 없이 표시
-   - External은 Internal 2 바로 아래 유지
-   - Partition&Opening은 하단 전체 폭으로 배치하여 잘림 방지 */
-.pm-request-box:nth-child(2) .pm-check-list-inner.pm-teamleader-list-inner.pm-teamleader-group-list{
-  overflow:visible !important;
+
+/* 프로젝트 접수: 골조성 세부 카테고리 */
+.receive-chip-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
 }
 
-.pm-teamleader-category-finish{
-  grid-template-columns:repeat(2, minmax(390px, 1fr)) !important;
-  grid-auto-rows:auto !important;
-  align-items:start !important;
-  align-content:start !important;
+.receive-chip-wrap.has-subchips{
+  width:100%;
+  align-items:flex-start;
 }
 
-.pm-teamleader-category-finish .dept-internal-1{grid-column:1 !important;grid-row:1 !important;}
-.pm-teamleader-category-finish .dept-internal-2{grid-column:2 !important;grid-row:1 !important;}
-.pm-teamleader-category-finish .dept-internal-3{grid-column:1 !important;grid-row:2 !important;}
-.pm-teamleader-category-finish .dept-external{grid-column:2 !important;grid-row:2 !important;}
-.pm-teamleader-category-finish .dept-partition-opening{grid-column:1 / -1 !important;grid-row:3 !important;}
-
-.pm-teamleader-category-finish .dept-partition-opening{
-  grid-template-columns:132px minmax(270px, 1fr) !important;
+.receive-subchip-group{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  padding:8px 10px;
+  border:1px dashed #bfdbfe;
+  border-radius:16px;
+  background:#f8fbff;
 }
 
-.pm-teamleader-category-finish .dept-partition-opening .pm-teamleader-dept-items{
-  grid-template-columns:repeat(3, minmax(220px, 1fr)) !important;
+.receive-subchip{
+  border:1px solid var(--line2);
+  background:#fff;
+  color:#334155;
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:900;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  white-space:nowrap;
 }
 
-.pm-teamleader-category-finish .dept-partition-opening .pm-check-item{
-  min-width:220px !important;
+.receive-subchip span{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:inline-grid;
+  place-items:center;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:11px;
 }
 
-@media(max-width:1500px){
-  .pm-teamleader-category-finish{
-    grid-template-columns:repeat(2, minmax(360px, 1fr)) !important;
-  }
-  .pm-teamleader-category-finish .dept-partition-opening .pm-teamleader-dept-items{
-    grid-template-columns:repeat(2, minmax(220px, 1fr)) !important;
-  }
+.receive-subchip.active{
+  background:#2563eb;
+  border-color:#2563eb;
+  color:#fff;
 }
+
+.receive-subchip.active span{
+  background:rgba(255,255,255,.18);
+  color:#fff;
+}
+
+.pm-modal-approval-guide{
+  padding:10px 12px;
+  border:1px solid #bfdbfe;
+  background:#f8fbff;
+  border-radius:14px;
+  color:#1d4ed8;
+  font-weight:900;
+  line-height:1.45;
+}
+
+/* =========================================================
+   2026-05-14 디자인 스킨 보정
+   - 현재 화면 구조는 유지
+   - 첨부 스크린샷과 유사한 CON COST 대시보드형 UI 톤 적용
+========================================================= */
+:root{
+  --bg:#f3f6f9;
+  --panel:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --line:#e7eaee;
+  --line2:#dfe5ec;
+  --blue:#111827;
+  --blue2:#111827;
+  --orange:#ff8a1c;
+  --orange2:#f97316;
+  --green:#12925f;
+  --radius:16px;
+  --shadow:0 2px 10px rgba(17,24,39,.07);
+}
+
+body{
+  background:#f3f6f9 !important;
+  color:#111827;
+  font-size:14px;
+}
+
+.topbar{
+  height:64px !important;
+  padding:0 28px !important;
+  background:#fff !important;
+  border-bottom:1px solid #dfe5ec !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.06) !important;
+}
+
+.brand{min-width:230px;}
+
+.brand-mark{
+  width:28px !important;
+  height:28px !important;
+  border-radius:6px !important;
+  background:#f97316 !important;
+  color:transparent !important;
+  transform:rotate(45deg);
+  position:relative;
+  box-shadow:none !important;
+}
+
+.brand-mark::after{
+  content:"";
+  position:absolute;
+  inset:7px;
+  background:#fff;
+  border-radius:3px;
+}
+
+.brand-text strong{
+  color:#f97316 !important;
+  font-size:22px !important;
+  font-weight:900 !important;
+  letter-spacing:-1.1px !important;
+  line-height:1;
+}
+
+.brand-text span{display:none !important;}
+
+.top-tabs{
+  flex:1;
+  justify-content:center;
+  gap:34px !important;
+  color:#111827 !important;
+  font-size:14px;
+  font-weight:800 !important;
+}
+
+.top-tabs span{
+  color:#111827 !important;
+  padding:22px 0;
+  position:relative;
+}
+
+.top-tabs span::after{
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  border-right:1.5px solid #111827;
+  border-bottom:1.5px solid #111827;
+  transform:rotate(45deg) translateY(-2px);
+  margin-left:7px;
+}
+
+.top-tabs span.active{color:#111827 !important;}
+
+.top-tabs span.active::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:3px;
+  background:#f97316;
+  border-radius:99px 99px 0 0;
+}
+
+.top-right{gap:8px !important;}
+
+.lang,.bell,.user,.permission-user-btn{
+  min-height:38px;
+  background:#fff !important;
+  border:1px solid #edf0f3 !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+  color:#111827 !important;
+}
+
+.user,.permission-user-btn{border-radius:999px !important;}
+.bell{border-radius:50% !important;}
+.bell::after{background:#ef4444 !important;color:#fff !important;}
+.org-btn{background:#fff !important;color:#111827 !important;border-color:#e5e7eb !important;}
+.content{padding:18px 16px 36px !important;}
+
+.card,.kpi-card,.side-nav,.employee-item,.mail-search-card,.mail-table-card,.mail-sidebox,.mail-mainbox,.pm-schedule-hero,.pm-schedule-card,.pm-schedule-project-card,.pm-schedule-alert,.work-receive-hero,.receive-card,.receive-status-card,.org-card,.quick-box,.summary-box,.mini-box,.admin-toggle-item,.process-card,.placeholder-box{
+  background:#fff !important;
+  border:1px solid #e0e6ed !important;
+  border-radius:16px !important;
+  box-shadow:0 2px 10px rgba(15,23,42,.06) !important;
+}
+
+.card-head,.pm-card-head,.receive-card-title,.mail-card-head{
+  background:#fff !important;
+  border-bottom:0 !important;
+}
+
+.card-head h2,.pm-card-head strong,.receive-card-title h3,.mail-card-head h2,.process-card strong,.placeholder-box h3{
+  position:relative;
+  padding-left:14px;
+  color:#111827 !important;
+  font-weight:900 !important;
+}
+
+.card-head h2::before,.pm-card-head strong::before,.receive-card-title h3::before,.mail-card-head h2::before,.process-card strong::before,.placeholder-box h3::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.25em;
+  width:5px;
+  height:18px;
+  border-radius:99px;
+  background:#ff8a1c;
+}
+
+.side-nav{top:82px !important;padding:14px !important;}
+.side-title{color:#475569 !important;font-size:12px !important;}
+.side-main,.side-item{
+  border-radius:12px !important;
+  background:#fff !important;
+  color:#111827 !important;
+  border:1px solid #e1e7ef !important;
+  font-weight:900 !important;
+}
+.side-main:hover,.side-item:hover{border-color:#ffb26b !important;background:#fff8f1 !important;}
+.side-main.active,.side-item.active{background:#111827 !important;color:#fff !important;border-color:#111827 !important;}
+
+.btn-primary{background:#f97316 !important;color:#fff !important;border:1px solid #f97316 !important;}
+.btn-primary:hover{background:#ea580c !important;}
+.btn-line{background:#fff !important;border:1px solid #e1e7ef !important;color:#111827 !important;box-shadow:0 1px 4px rgba(15,23,42,.04);}
+.inner-tab.active,.pm-filter-chip.active,.mail-filter.active{background:#111827 !important;border-color:#111827 !important;color:#fff !important;}
+.badge.blue,.company-chip.concost,.status-pill{background:#fff4e8 !important;color:#f97316 !important;}
+.badge.green,.company-chip.vietqs{background:#e8f7ef !important;color:#12925f !important;}
+
+input,select,textarea{border-color:#dfe6ef !important;background:#fff !important;border-radius:12px !important;}
+input:focus,select:focus,textarea:focus{border-color:#ffb26b !important;box-shadow:0 0 0 3px rgba(249,115,22,.12) !important;}
+
+table th,.excel-grid th,.pm-schedule-soft-table thead th,.pm-project-list-head{background:#f7f8fa !important;color:#4b5563 !important;border-color:#e5e9ef !important;}
+table td,.excel-grid td,.pm-schedule-soft-table td,.pm-project-list-row{border-color:#edf0f3 !important;}
+tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
+
+.work-receive-hero{min-height:76px !important;padding:18px 24px !important;}
+.receive-status-card{border-radius:16px !important;}
+.receive-scope-chip,.receive-subchip{border-radius:999px !important;border-color:#e1e7ef !important;background:#fff !important;color:#111827 !important;}
+.receive-scope-chip.active,.receive-subchip.active{background:#f97316 !important;border-color:#f97316 !important;color:#fff !important;}
+.receive-scope-chip.active span,.receive-subchip.active span{background:rgba(255,255,255,.2) !important;color:#fff !important;}
+.receive-subchip-group{background:#fff8f1 !important;border-color:#fed7aa !important;}
+
+.pm-schedule-hero{min-height:76px !important;padding:18px 24px !important;}
+.pm-schedule-hero h2{font-size:24px !important;}
+.pm-project-state.pending{background:#fff3df !important;color:#ea580c !important;}
+.pm-project-state.requested{background:#fff4e8 !important;color:#f97316 !important;}
+.pm-project-state.submitted{background:#e8f7ef !important;color:#12925f !important;}
+.pm-project-state.approved{background:#dcfce7 !important;color:#15803d !important;}
+.pm-project-state.rejected{background:#fee2e2 !important;color:#dc2626 !important;}
+.pm-request-box,.pm-teamleader-dept-card,.pm-check-item,.pm-assigned-project-item,.pm-proposal-card{background:#fff !important;border:1px solid #e1e7ef !important;border-radius:14px !important;box-shadow:none !important;}
+.pm-teamleader-dept-title{background:#fff4e8 !important;color:#f97316 !important;}
+.pm-check-item:hover,.pm-teamleader-dept-card:hover,.pm-proposal-card:hover{border-color:#ffb26b !important;background:#fffaf5 !important;}
+.pm-proposal-card.active{border-color:#f97316 !important;box-shadow:0 0 0 3px rgba(249,115,22,.12) !important;}
+
+.mail-side-item.active,.mail-side-item:hover{background:#fff4e8 !important;color:#f97316 !important;border-color:#fed7aa !important;}
+.mail-table tbody tr:hover td{background:#fff8f1 !important;}
+
+.page-head h1{color:#111827 !important;font-size:28px !important;font-weight:900 !important;}
+.breadcrumb{color:#f97316 !important;}
+
+*::-webkit-scrollbar{width:10px;height:10px;}
+*::-webkit-scrollbar-thumb{background:#c9ced6;border-radius:999px;border:3px solid #f3f6f9;}
+*::-webkit-scrollbar-track{background:#f3f6f9;}
 
 @media(max-width:1280px){
-  .pm-teamleader-category-finish .dept-internal-1,
-  .pm-teamleader-category-finish .dept-internal-2,
-  .pm-teamleader-category-finish .dept-internal-3,
-  .pm-teamleader-category-finish .dept-external,
-  .pm-teamleader-category-finish .dept-partition-opening{
-    grid-column:auto !important;
-    grid-row:auto !important;
-  }
-  .pm-teamleader-category-finish .dept-partition-opening .pm-teamleader-dept-items{
-    grid-template-columns:1fr !important;
-  }
+  .topbar{height:auto !important;min-height:64px;align-items:flex-start;flex-wrap:wrap;gap:10px;padding:14px 18px !important;}
+  .top-tabs{order:3;flex-basis:100%;justify-content:flex-start;overflow:auto;gap:20px !important;}
+  .content{padding:16px !important;}
 }
