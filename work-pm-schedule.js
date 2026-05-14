@@ -621,18 +621,50 @@ function setPmScheduleTlRequestDeptFilter(value) {
   if (item) renderPmScheduleRequestTargets(item);
 }
 
+function getConCostOrgEmployeeIdsByDeptName(deptName) {
+  const targetKey = normalizePmScheduleDept(deptName);
+  const structures = typeof orgStructures !== "undefined" ? orgStructures : null;
+  const roots = structures ? Object.values(structures).filter(Boolean) : [];
+  const ids = new Set();
+
+  function collectEmployeeIds(node) {
+    if (!node) return;
+    if (node.employeeId) ids.add(node.employeeId);
+    (node.children || []).forEach(collectEmployeeIds);
+  }
+
+  function walk(node) {
+    if (!node) return;
+    const nodeName = normalizePmScheduleDept(node.displayName || node.title || "");
+    if (nodeName === targetKey) {
+      collectEmployeeIds(node);
+      return;
+    }
+    (node.children || []).forEach(walk);
+  }
+
+  roots.forEach(walk);
+  return ids;
+}
+
 function getConCostPmCandidatesByDept(project, deptFilter) {
   const staff = (typeof employees !== "undefined" ? employees : []).filter(emp => emp.company === "CON-COST" && emp.status === "재직");
   const key = normalizePmScheduleDept(deptFilter);
-  const matched = staff.filter(emp => {
+  const orgIds = getConCostOrgEmployeeIdsByDeptName(deptFilter);
+
+  if (orgIds.size) {
+    const byOrg = staff.filter(emp => orgIds.has(emp.empNo));
+    if (byOrg.length) return byOrg;
+  }
+
+  return staff.filter(emp => {
     const dept = normalizePmScheduleDept(emp.dept);
-    if (key.includes("BIM")) return dept.includes("BIM");
-    if (key.includes("구조")) return dept.includes("구조");
+    if (key.includes("BIM")) return dept === "BIM파트" || dept.includes("BIM");
+    if (key.includes("구조")) return dept.includes("구조") && !dept.includes("토목조경");
     if (key.includes("마감")) return dept.includes("마감");
-    if (key.includes("토목") || key.includes("조경")) return dept.includes("토목") || dept.includes("조경");
+    if (key.includes("토목") || key.includes("조경")) return dept === "토목조경파트" || dept.includes("토목조경파트");
     return false;
   });
-  return matched.length ? matched : staff;
 }
 
 function getVietTeamLeaderCandidatesByCategory(category) {
