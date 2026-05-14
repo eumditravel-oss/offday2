@@ -583,6 +583,9 @@ function confirmPmScheduleAssignment() {
     return;
   }
 
+  if (typeof applyPmScheduleAssignmentToProjectReceiveData === "function") {
+    applyPmScheduleAssignmentToProjectReceiveData(item.project?.projectNo, item.assignment);
+  }
   item.history.unshift("PM 지정 확인이 완료되었습니다.");
   showToast("PM 지정 확인이 완료되었습니다.");
   renderPmScheduleDetail();
@@ -640,6 +643,9 @@ function updatePmScheduleAssignment(key, value) {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
   item.assignment[key] = value;
+  if (typeof applyPmScheduleAssignmentToProjectReceiveData === "function") {
+    applyPmScheduleAssignmentToProjectReceiveData(item.project?.projectNo, item.assignment);
+  }
   renderPmScheduleAssignmentWarnings(item);
   renderPmScheduleRequestTargets(item);
 }
