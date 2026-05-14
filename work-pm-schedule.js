@@ -33,6 +33,7 @@ const pmScheduleDeptOrder = [
   "Partition&Opening",
   "External",
   "Vertical",
+  "Horizon / Foundation",
   "Horizontal/Foundation",
   "Civil",
   "Development"
@@ -598,7 +599,7 @@ function renderPmScheduleRequestTargets(item) {
       </div>
       <div class="pm-check-list-inner pm-teamleader-list-inner pm-teamleader-group-list">
         ${leaders.length ? groupedLeaders.map(group => `
-          <div class="pm-teamleader-dept-group">
+          <div class="pm-teamleader-dept-group dept-${getPmScheduleTeamLeaderDeptClass(group.dept)}">
             <div class="pm-teamleader-dept-title">${formatPmScheduleTeamLeaderDeptTitle(group.dept)}</div>
             <div class="pm-teamleader-dept-items">
               ${group.members.map(emp => {
@@ -624,8 +625,17 @@ function getPmScheduleTeamLeaderDisplayDept(emp) {
   return rawDept;
 }
 
+function getPmScheduleTeamLeaderDeptClass(dept) {
+  return String(dept || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function formatPmScheduleTeamLeaderDeptTitle(dept) {
   if (dept === "Partition&Opening") return "Partition<br>&amp;Opening";
+  if (dept === "Horizon / Foundation" || dept === "Horizontal/Foundation") return "Horizontal/Foundation";
   return escapePmScheduleHtml(dept);
 }
 
