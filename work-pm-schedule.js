@@ -25,6 +25,7 @@ let pmScheduleModalCategory = "Structure";
 let pmSchedulePmRequestDeptFilter = "구조팀";
 let pmScheduleTlRequestDeptFilter = "Structure";
 let pmScheduleModalMiddleDept = "";
+let pmScheduleActiveSection = "assign";
 
 const pmScheduleDeptOrder = [
   "Internal 1",
@@ -107,7 +108,8 @@ function getPmScheduleRole() {
 }
 
 function isPmScheduleManagerRole() {
-  return getPmScheduleRole() === "실장";
+  const role = getPmScheduleRole();
+  return role === "실장" || role === "팀장";
 }
 
 function isPmScheduleEditorRole() {
@@ -401,6 +403,38 @@ function getCurrentPmScheduleProject() {
   return pmScheduleProjects[pmScheduleSelectedIndex] || pmScheduleProjects[0];
 }
 
+
+function setPmScheduleSection(section = "assign") {
+  pmScheduleActiveSection = ["assign", "approval", "all"].includes(section) ? section : "assign";
+  const shell = document.getElementById("pmScheduleShell");
+  if (shell) shell.dataset.pmSection = pmScheduleActiveSection;
+
+  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.add("active"));
+  document.querySelectorAll("[data-pm-section]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.pmSection === pmScheduleActiveSection);
+  });
+
+  document.querySelectorAll("[data-pm-section-view]").forEach(el => {
+    const views = String(el.dataset.pmSectionView || "").split(/\s+/);
+    el.style.display = views.includes(pmScheduleActiveSection) ? "" : "none";
+  });
+
+  document.querySelectorAll(".pm-section-assign-only").forEach(el => {
+    el.style.display = (pmScheduleActiveSection === "assign" && isPmScheduleManagerRole()) ? "" : "none";
+  });
+
+  if (pmScheduleActiveSection === "all") renderPmScheduleAllSchedule();
+}
+
+function syncPmScheduleHeroButtons() {
+  document.querySelectorAll(".pm-manager-only").forEach(el => {
+    el.style.display = isPmScheduleManagerRole() ? "" : "none";
+  });
+  document.querySelectorAll(".pm-section-assign-only").forEach(el => {
+    el.style.display = (pmScheduleActiveSection === "assign" && isPmScheduleManagerRole()) ? "" : "none";
+  });
+}
+
 function renderPmScheduleDashboard() {
   if (!document.getElementById("pmScheduleShell")) return;
   initPmScheduleProjects();
@@ -409,6 +443,7 @@ function renderPmScheduleDashboard() {
   const managerView = document.getElementById("pmScheduleManagerView");
   const editorView = document.getElementById("pmScheduleEditorView");
   const role = getPmScheduleRole();
+  syncPmScheduleHeroButtons();
 
   if (isPmScheduleManagerRole()) {
     if (roleMessage) roleMessage.style.display = "none";
@@ -416,6 +451,7 @@ function renderPmScheduleDashboard() {
     if (editorView) editorView.style.display = "none";
     renderPmScheduleProjectList();
     renderPmScheduleDetail();
+    setPmScheduleSection(pmScheduleActiveSection);
     return;
   }
 
@@ -424,6 +460,7 @@ function renderPmScheduleDashboard() {
     if (managerView) managerView.style.display = "none";
     if (editorView) editorView.style.display = "block";
     renderPmScheduleEditorView();
+    syncPmScheduleHeroButtons();
     return;
   }
 
@@ -1336,6 +1373,85 @@ function selectPmAssignedProject(index) {
   pmScheduleSelectedIndex = index;
   closePmAssignedProjectModal();
   renderPmScheduleDashboard();
+}
+
+
+function getPmScheduleAllScheduleMonths() {
+  return ["2026.01", "2026.02", "2026.03", "2026.04", "2026.05", "2026.06", "2026.07", "2026.08", "2026.09", "2026.10", "2026.11", "2026.12"];
+}
+
+function getPmScheduleAllTeamCategory() {
+  const value = document.getElementById("pmScheduleAllTeamFilter")?.value || "Finish";
+  if (value === "Structure") return "Structure";
+  if (value === "Civil") return "Civil";
+  return "Finish";
+}
+
+function getPmScheduleProjectMonthKey(item) {
+  const raw = String(item?.project?.firstDelivery || item?.project?.startDate || item?.scheduleStartDate || "").trim();
+  const match = raw.match(/(20\d{2})[.\/-]?(\d{1,2})/);
+  if (!match) return "미정";
+  return `${match[1]}.${String(match[2]).padStart(2, "0")}`;
+}
+
+function getPmScheduleAllScheduleItemsForEmployee(emp, category) {
+  initPmScheduleProjects();
+  const items = [];
+  pmScheduleProjects.forEach(project => {
+    const planId = project.approvedPlan || project.selectedProposal || "plan1";
+    const proposal = project.proposals?.[planId] || project.proposals?.plan1;
+    const rows = proposal?.rows || [];
+    const row = rows.find(r => r.empNo === emp.empNo && getPmScheduleCategoryForDept(r.dept) === category);
+    if (!row) return;
+    const planData = planId === "plan2" ? row.plan2 : row.plan1;
+    const isAssigned = Boolean(planData?.rc || planData?.sc || Number(planData?.people || 0) > 0 || Number(planData?.totalDays || 0) > 0);
+    if (!isAssigned) return;
+    items.push({
+      month: getPmScheduleProjectMonthKey(project),
+      projectNo: project.project?.projectNo || "-",
+      projectName: project.project?.projectName || "프로젝트명 미입력",
+      days: planData?.totalDays || planData?.workDays || "",
+      status: getPmScheduleStatusLabel(project.status)
+    });
+  });
+  return items;
+}
+
+function renderPmScheduleAllSchedule() {
+  const board = document.getElementById("pmScheduleAllScheduleBoard");
+  if (!board) return;
+  const category = getPmScheduleAllTeamCategory();
+  const employees = getPmScheduleVietEmployeesByCategory(category).filter(emp => String(emp.grade || "").includes("Team Leader") || String(emp.grade || "").includes("Staff") || String(emp.grade || "").includes("Asst."));
+  const months = getPmScheduleAllScheduleMonths();
+
+  if (!employees.length) {
+    board.innerHTML = `<div class="pm-empty-box">선택한 팀 구분에 표시할 직원 인사카드가 없습니다.</div>`;
+    return;
+  }
+
+  board.innerHTML = `
+    <table class="pm-all-schedule-table">
+      <thead>
+        <tr>
+          <th class="pm-all-person-col">직원 인사카드</th>
+          <th>부서</th>
+          ${months.map(month => `<th>${month}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${employees.map(emp => {
+          const items = getPmScheduleAllScheduleItemsForEmployee(emp, category);
+          return `<tr>
+            <th class="pm-all-person-cell"><strong>${escapePmScheduleHtml(emp.name || "-")}</strong><span>${escapePmScheduleHtml(emp.koreanName || emp.grade || "")}</span></th>
+            <td>${escapePmScheduleHtml(normalizePmScheduleVietDeptName(emp.dept))}</td>
+            ${months.map(month => {
+              const monthItems = items.filter(item => item.month === month);
+              return `<td>${monthItems.map(item => `<div class="pm-all-schedule-chip"><b>${escapePmScheduleHtml(item.projectNo)}</b><span>${escapePmScheduleHtml(item.projectName)}</span>${item.days ? `<em>${escapePmScheduleHtml(item.days)}일</em>` : ""}</div>`).join("") || `<span class="pm-all-empty">-</span>`}</td>`;
+            }).join("")}
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>`;
 }
 
 
