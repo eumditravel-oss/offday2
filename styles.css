@@ -13680,3 +13680,76 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 @media(max-width:900px){
   .pm-teamleader-dept-items{grid-template-columns:1fr !important;}
 }
+
+/* === 2026-05-14 PM 요청/Team Leader 영역 너비 및 PM 지정 1열 보정 === */
+.pm-assignment-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+.pm-request-grid{
+  grid-template-columns:minmax(320px,.8fr) minmax(0,1.6fr) !important;
+  gap:14px !important;
+}
+.pm-request-box:first-child{
+  min-width:0 !important;
+}
+.pm-request-box:nth-child(2){
+  min-width:0 !important;
+  width:100% !important;
+}
+.pm-request-box:nth-child(2) > strong,
+.pm-request-box:nth-child(2) > p{
+  padding-right:230px !important;
+}
+.pm-teamleader-list,
+.pm-teamleader-list-inner{
+  width:100% !important;
+  max-width:100% !important;
+  max-height:none !important;
+  overflow:visible !important;
+  padding-right:0 !important;
+}
+.pm-teamleader-group-list{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr)) !important;
+  gap:10px 12px !important;
+  align-items:start !important;
+}
+.pm-teamleader-dept-group{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  box-sizing:border-box !important;
+}
+.pm-teamleader-dept-items{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:8px !important;
+  width:100% !important;
+}
+.pm-teamleader-dept-items .pm-check-item{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  min-height:58px !important;
+}
+.pm-teamleader-dept-items .pm-check-item span{
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:keep-all !important;
+  line-height:1.28 !important;
+}
+@media(max-width:1400px){
+  .pm-assignment-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  .pm-request-grid{grid-template-columns:1fr !important;}
+  .pm-request-box:nth-child(2) > strong,
+  .pm-request-box:nth-child(2) > p{padding-right:0 !important;}
+  .pm-request-filter-row-title-right{position:static !important;margin:0 0 10px !important;justify-content:flex-start !important;}
+}
+@media(max-width:900px){
+  .pm-assignment-grid{grid-template-columns:1fr !important;}
+  .pm-teamleader-group-list{grid-template-columns:1fr !important;}
+  .pm-teamleader-dept-items{grid-template-columns:1fr !important;}
+}
