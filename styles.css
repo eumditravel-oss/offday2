@@ -9152,6 +9152,101 @@ body.checklist-target-modal-open{
   }
 }
 
+
+/* === 2026-05-14 Viet QS Team Leader 최종 보정 ===
+   - 3열 x 2줄 배치 유지
+   - 이름 1줄 표기
+   - 인원 1명 그룹의 세로 과확장 방지
+   - Partition&Opening 명칭 줄바꿈 표시 */
+.pm-teamleader-group-list{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(330px,1fr)) !important;
+  grid-auto-flow:row !important;
+  gap:10px 12px !important;
+  align-items:start !important;
+  align-content:start !important;
+  width:100% !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-group{
+  display:grid !important;
+  grid-template-columns:126px minmax(180px,1fr) !important;
+  gap:8px !important;
+  align-items:start !important;
+  align-content:start !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  height:auto !important;
+  padding:8px !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-title{
+  min-height:38px !important;
+  height:100% !important;
+  padding:8px 8px !important;
+  line-height:1.18 !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+}
+
+.pm-teamleader-dept-items{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  align-items:start !important;
+  align-content:start !important;
+  min-height:0 !important;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item{
+  min-height:38px !important;
+  height:38px !important;
+  padding:7px 9px !important;
+  overflow:hidden !important;
+  display:flex !important;
+  align-items:center !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item span{
+  display:block !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  line-height:1.1 !important;
+  font-size:13px !important;
+}
+
+@media(max-width:1500px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(3,minmax(300px,1fr)) !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:118px minmax(170px,1fr) !important;
+  }
+}
+
+@media(max-width:1280px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(2,minmax(320px,1fr)) !important;
+  }
+}
+
+@media(max-width:760px){
+  .pm-teamleader-group-list{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:1fr !important;
+  }
+}
+
 ```
 
 /* === QC 대상 선택 모달: 외부 큰 세로 스크롤 제거 최종 보정 === */
@@ -14098,6 +14193,101 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 @media(max-width:1200px){
   .pm-teamleader-group-list{
     grid-template-columns:repeat(2,minmax(260px,1fr)) !important;
+  }
+}
+
+@media(max-width:760px){
+  .pm-teamleader-group-list{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:1fr !important;
+  }
+}
+
+
+/* === 2026-05-14 Viet QS Team Leader 최종 보정 ===
+   - 3열 x 2줄 배치 유지
+   - 이름 1줄 표기
+   - 인원 1명 그룹의 세로 과확장 방지
+   - Partition&Opening 명칭 줄바꿈 표시 */
+.pm-teamleader-group-list{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(330px,1fr)) !important;
+  grid-auto-flow:row !important;
+  gap:10px 12px !important;
+  align-items:start !important;
+  align-content:start !important;
+  width:100% !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-group{
+  display:grid !important;
+  grid-template-columns:126px minmax(180px,1fr) !important;
+  gap:8px !important;
+  align-items:start !important;
+  align-content:start !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  height:auto !important;
+  padding:8px !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-title{
+  min-height:38px !important;
+  height:100% !important;
+  padding:8px 8px !important;
+  line-height:1.18 !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+}
+
+.pm-teamleader-dept-items{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  align-items:start !important;
+  align-content:start !important;
+  min-height:0 !important;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item{
+  min-height:38px !important;
+  height:38px !important;
+  padding:7px 9px !important;
+  overflow:hidden !important;
+  display:flex !important;
+  align-items:center !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item span{
+  display:block !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  line-height:1.1 !important;
+  font-size:13px !important;
+}
+
+@media(max-width:1500px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(3,minmax(300px,1fr)) !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:118px minmax(170px,1fr) !important;
+  }
+}
+
+@media(max-width:1280px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(2,minmax(320px,1fr)) !important;
   }
 }
 
