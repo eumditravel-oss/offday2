@@ -15331,3 +15331,21 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
     max-width:240px !important;
   }
 }
+
+/* 프로젝트 접수: 지하층수/지상층수 1행 2열 배치 */
+.receive-floor-pair{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  min-width:0;
+}
+
+.receive-floor-pair .receive-field{
+  min-width:0;
+}
+
+@media(max-width:760px){
+  .receive-floor-pair{
+    grid-template-columns:1fr;
+  }
+}
