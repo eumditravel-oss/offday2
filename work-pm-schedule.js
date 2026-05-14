@@ -509,6 +509,37 @@ function selectPmScheduleProject(index) {
   renderPmScheduleDashboard();
 }
 
+function ensurePmAssignmentBackdrop() {
+  let backdrop = document.getElementById("pmAssignmentPanelBackdrop");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.id = "pmAssignmentPanelBackdrop";
+    backdrop.className = "pm-assignment-panel-backdrop";
+    backdrop.addEventListener("click", closePmAssignmentPanel);
+    document.body.appendChild(backdrop);
+  }
+  return backdrop;
+}
+
+function openPmAssignmentPanel() {
+  if (!isPmScheduleManagerRole()) return;
+  pmScheduleActiveSection = "assign";
+  renderPmScheduleDetail();
+  setPmScheduleSection("assign");
+  const detail = document.querySelector("#pmScheduleManagerView .pm-schedule-detail");
+  const backdrop = ensurePmAssignmentBackdrop();
+  if (detail) detail.classList.add("pm-assignment-panel-open");
+  if (backdrop) backdrop.classList.add("active");
+}
+
+function closePmAssignmentPanel() {
+  const detail = document.querySelector("#pmScheduleManagerView .pm-schedule-detail");
+  const backdrop = document.getElementById("pmAssignmentPanelBackdrop");
+  if (detail) detail.classList.remove("pm-assignment-panel-open");
+  if (backdrop) backdrop.classList.remove("active");
+}
+
+
 function getPmScheduleStatusLabel(status) {
   return {
     pending: "PM 미배정",
@@ -535,6 +566,12 @@ function renderPmScheduleDetail() {
       <div><span>작업범위</span><strong>${escapePmScheduleHtml(getPmScheduleScopeText(project))}</strong></div>
       <div><span>상위조직 실장</span><strong>${escapePmScheduleHtml(item.manager)}</strong></div>
       <div><span>납품기준</span><strong>${escapePmScheduleHtml(project.firstDelivery || "미입력")}</strong></div>
+      <div class="pm-simple-timeline" style="grid-column:1 / -1">
+        <span class="active">접수</span>
+        <span class="${item.status === "pending" ? "active" : ""}">PM 지정</span>
+        <span class="${item.status === "requested" ? "active" : ""}">작성요청</span>
+        <span class="${["submitted", "approved"].includes(item.status) ? "active" : ""}">검토/확정</span>
+      </div>
     `;
   }
 
@@ -938,6 +975,7 @@ function requestPmScheduleDrafts() {
   item.status = "requested";
   const pmAuthorityText = item.requestTargets.pm.length ? ` / 한국 PM 권한 수신자: ${getPmSchedulePmAuthorityText(item)}` : "";
   item.history.unshift(`${totalTargets.join(", ")}에게 스케쥴 1·2안 작성 요청 알림을 보냈습니다.${pmAuthorityText}`);
+  closePmAssignmentPanel();
   renderPmScheduleDashboard();
   showToast("스케쥴 관리 1·2안 작성 요청 알림을 전송했습니다.");
 }
