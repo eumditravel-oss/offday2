@@ -10,6 +10,8 @@ const pmScheduleDeptManagerMap = {
   "구조팀": "장범선 실장",
   "BIM 파트": "장범 실장",
   "토목ㆍ조경파트": "장범선 실장",
+  "클레임": "조한빈 실장",
+  "골조성": "장범선 실장",
   "인테리어·철거": "조한빈 실장",
   "비교내역서": "조한빈 실장",
   "단가작업": "조한빈 실장",
@@ -106,13 +108,22 @@ function getPmScheduleRole() {
   return typeof currentPermissionRoleValue !== "undefined" ? currentPermissionRoleValue : "PM";
 }
 
-function isPmScheduleManagerRole() {
+function isPmScheduleDirectorRole() {
   return getPmScheduleRole() === "실장";
+}
+
+function isPmScheduleTeamManagerRole() {
+  const role = getPmScheduleRole();
+  return role === "팀장" || role === "Leader";
+}
+
+function isPmScheduleManagerRole() {
+  return isPmScheduleDirectorRole() || isPmScheduleTeamManagerRole();
 }
 
 function isPmScheduleEditorRole() {
   const role = getPmScheduleRole();
-  return role === "PM" || role === "Staff" || role === "Leader" || role === "Asst.Leader" || role.includes("Team Leader");
+  return role === "PM" || role === "Staff" || role === "Asst.Leader" || role.includes("Team Leader");
 }
 
 function isPmScheduleStaffRole() {
@@ -121,7 +132,11 @@ function isPmScheduleStaffRole() {
 
 function getPmScheduleScopeText(project) {
   const scopes = project?.scopes || [];
-  return scopes.filter(item => item.checked).map(item => item.label).join(" · ") || "미선택";
+  const labels = scopes.filter(item => item.checked).map(item => {
+    const childLabels = (item.children || []).filter(child => child.checked).map(child => child.label);
+    return childLabels.length ? `${item.label}(${childLabels.join(" · ")})` : item.label;
+  });
+  return labels.join(" · ") || "미선택";
 }
 
 function getPmScheduleManagerText(project) {
@@ -475,7 +490,8 @@ function getPmScheduleStatusLabel(status) {
   return {
     pending: "PM 미배정",
     requested: "작성요청",
-    submitted: "검토대기",
+    submitted: "팀장 검토대기",
+    teamApproved: "실장 최종검토",
     approved: "일정확정",
     rejected: "반려"
   }[status] || "대기";
@@ -620,7 +636,10 @@ function getPmScheduleTeamLeaderDisplayDept(emp) {
   const englishName = String(emp?.name || "").trim();
   const koreanName = String(emp?.koreanName || "").trim();
 
-  // 화면 표기는 조직도 데이터의 실제 하위 부서 기준으로 통일
+  // 조직도 기준 보정: Dinh Phi(피)는 Internal 1 하위 Team Leader로 표기
+  if (englishName === "Dinh Phi" || koreanName === "피") return "Internal 1";
+
+  // 화면 표기는 사용자가 확인한 조직도 명칭 기준으로 통일
   if (rawDept === "Horizon / Foundation") return "Horizontal/Foundation";
   return rawDept;
 }
@@ -648,7 +667,7 @@ function groupPmScheduleVietTeamLeadersByDept(leaders) {
   const categoryOrder = pmScheduleTlRequestDeptFilter === "Structure"
     ? ["Vertical", "Horizontal/Foundation"]
     : pmScheduleTlRequestDeptFilter === "Finish"
-      ? ["Internal 1", "Internal 2", "Internal 3", "External", "Partition&Opening"]
+      ? ["Internal 1", "Internal 2", "Partition&Opening", "External"]
       : ["Civil"];
 
   const ordered = categoryOrder
@@ -842,15 +861,28 @@ function renderPmSchedulePlanModal() {
 }
 
 function renderPmScheduleApprovalControls(item) {
+  const role = getPmScheduleRole();
+  const isDirector = isPmScheduleDirectorRole();
+  const isTeamManager = isPmScheduleTeamManagerRole();
+  const canFirstApprove = isTeamManager && item.status === "submitted";
+  const canFinalApprove = isDirector && item.status === "teamApproved";
+  const approveLabel = isTeamManager ? "1차 승인" : "최종 승인";
+  const guide = isDirector && item.status !== "teamApproved"
+    ? "팀장 1차 승인 후 실장 최종 승인이 가능합니다."
+    : isTeamManager && item.status !== "submitted"
+      ? "작성 완료 결재가 올라온 건만 1차 승인할 수 있습니다."
+      : "1안 또는 2안을 선택한 뒤 승인하거나 반려할 수 있습니다.";
+  const approveDisabled = !(canFirstApprove || canFinalApprove) || !item.selectedProposal;
   return `
     <div class="pm-modal-approval-panel">
+      <div class="pm-modal-approval-guide">${escapePmScheduleHtml(guide)}</div>
       <div class="pm-modal-approval-choice">
-        <label><input type="checkbox" name="pmModalSelectedProposal" value="plan1" onclick="togglePmScheduleModalApprovalPlan(this, 'plan1')" /> <span>1안 선택</span></label>
-        <label><input type="checkbox" name="pmModalSelectedProposal" value="plan2" onclick="togglePmScheduleModalApprovalPlan(this, 'plan2')" /> <span>2안 선택</span></label>
+        <label><input type="checkbox" name="pmModalSelectedProposal" value="plan1" onclick="togglePmScheduleModalApprovalPlan(this, 'plan1')" ${item.selectedProposal === "plan1" ? "checked" : ""} /> <span>1안 선택</span></label>
+        <label><input type="checkbox" name="pmModalSelectedProposal" value="plan2" onclick="togglePmScheduleModalApprovalPlan(this, 'plan2')" ${item.selectedProposal === "plan2" ? "checked" : ""} /> <span>2안 선택</span></label>
       </div>
       <label class="pm-modal-reject-reason"><span>반려 사유</span><textarea id="pmScheduleModalRejectReason" rows="2" placeholder="반려 시 PM 또는 Team Leader에게 전달할 사유를 작성하세요."></textarea></label>
       <div class="pm-modal-approval-actions">
-        <button class="btn btn-primary" id="pmScheduleModalApproveBtn" type="button" onclick="approvePmScheduleProposal()" disabled>선택안 승인</button>
+        <button class="btn btn-primary" id="pmScheduleModalApproveBtn" type="button" onclick="approvePmScheduleProposal()" ${approveDisabled ? "disabled" : ""}>${approveLabel}</button>
         <button class="btn btn-danger" type="button" onclick="rejectPmScheduleProposal()">반려</button>
         <button class="btn btn-line" type="button" onclick="closePmSchedulePlanModal()">닫기</button>
       </div>
@@ -867,7 +899,11 @@ function togglePmScheduleModalApprovalPlan(input, planId) {
   });
   item.selectedProposal = wasSelected ? "" : (input.checked ? planId : "");
   const approveBtn = document.getElementById("pmScheduleModalApproveBtn");
-  if (approveBtn) approveBtn.disabled = !item.selectedProposal;
+  if (approveBtn) {
+    const canFirstApprove = isPmScheduleTeamManagerRole() && item.status === "submitted";
+    const canFinalApprove = isPmScheduleDirectorRole() && item.status === "teamApproved";
+    approveBtn.disabled = !item.selectedProposal || !(canFirstApprove || canFinalApprove);
+  }
 }
 
 function setPmScheduleModalApprovalPlan(planId) {
@@ -1127,7 +1163,8 @@ function renderPmScheduleEditorView() {
 
 function getPmScheduleEditorStatus(item) {
   if (!item || item.status === "pending" || item.status === "requested" || item.status === "rejected") return { label:"미작성", className:"red" };
-  if (item.status === "submitted") return { label:"대기중", className:"yellow" };
+  if (item.status === "submitted") return { label:"팀장 검토대기", className:"yellow" };
+  if (item.status === "teamApproved") return { label:"실장 최종검토", className:"yellow" };
   if (item.status === "approved") return { label:"승인", className:"green" };
   return { label:"미작성", className:"red" };
 }
@@ -1167,7 +1204,7 @@ function renderPmAssignedProjectModal() {
   initPmScheduleProjects();
   body.innerHTML = `<div class="pm-assigned-project-list">${pmScheduleProjects.map((item, index) => {
     const state = getPmScheduleEditorStatus(item);
-    const canWrite = item.status !== "approved" && item.status !== "submitted";
+    const canWrite = item.status !== "approved" && item.status !== "submitted" && item.status !== "teamApproved";
     return `<button class="pm-assigned-project-item" type="button" onclick="selectPmAssignedProject(${index})">
       <strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong>
       <span>${escapePmScheduleHtml(item.project.projectNo || "-")} · ${escapePmScheduleHtml(getPmScheduleScopeText(item.project))}</span>
@@ -1269,6 +1306,9 @@ function submitPmScheduleEditor() {
   });
   item.status = "submitted";
   item.submittedCategory = pmScheduleModalCategory;
+  item.teamApprovedAt = "";
+  item.teamApprovedBy = "";
+  item.approvedPlan = "";
   item.history.unshift(`${item.project.projectName} ${pmScheduleModalCategory} 스케쥴 작성 완료 결재 알림이 도착했습니다.`);
   closePmSchedulePlanModal();
   renderPmScheduleDashboard();
@@ -1283,14 +1323,41 @@ function approvePmScheduleProposal() {
     return;
   }
   const plan = item.proposals[item.selectedProposal];
-  item.status = "approved";
-  item.approvedPlan = item.selectedProposal;
-  item.scheduleStartDate = item.scheduleStartDate || "2026.05.11";
-  item.scheduleApprovedAt = item.scheduleApprovedAt || getPmScheduleNowText();
-  item.history.unshift(`${item.scheduleApprovedAt} · ${plan?.title || "선택안"}이 승인되어 프로젝트 일정으로 확정되었습니다.`);
-  closePmSchedulePlanModal();
-  renderPmScheduleDashboard();
-  showToast("선택한 스케쥴 안을 승인하고 일정화했습니다.");
+  const now = getPmScheduleNowText();
+
+  if (isPmScheduleTeamManagerRole()) {
+    if (item.status !== "submitted") {
+      showToast("작성 완료 결재가 올라온 건만 팀장 1차 승인할 수 있습니다.");
+      return;
+    }
+    item.status = "teamApproved";
+    item.teamApprovedPlan = item.selectedProposal;
+    item.teamApprovedAt = now;
+    item.teamApprovedBy = "팀장";
+    item.history.unshift(`${now} · 팀장 1차 승인: ${plan?.title || "선택안"}이 실장 최종 승인 단계로 전달되었습니다.`);
+    closePmSchedulePlanModal();
+    renderPmScheduleDashboard();
+    showToast("팀장 1차 승인이 완료되었습니다. 실장 최종 승인 대기 상태로 변경했습니다.");
+    return;
+  }
+
+  if (isPmScheduleDirectorRole()) {
+    if (item.status !== "teamApproved") {
+      showToast("팀장 1차 승인 후 실장 최종 승인이 가능합니다.");
+      return;
+    }
+    item.status = "approved";
+    item.approvedPlan = item.selectedProposal || item.teamApprovedPlan;
+    item.scheduleStartDate = item.scheduleStartDate || "2026.05.11";
+    item.scheduleApprovedAt = now;
+    item.history.unshift(`${item.scheduleApprovedAt} · 실장 최종 승인: ${plan?.title || "선택안"}이 승인되어 프로젝트 일정으로 확정되었습니다.`);
+    closePmSchedulePlanModal();
+    renderPmScheduleDashboard();
+    showToast("실장 최종 승인이 완료되었습니다.");
+    return;
+  }
+
+  showToast("승인 권한이 없습니다.");
 }
 
 function rejectPmScheduleProposal() {
@@ -1302,8 +1369,11 @@ function rejectPmScheduleProposal() {
     return;
   }
   const targets = [...item.requestTargets.pm, ...item.requestTargets.teamLeaders].join(", ") || "작성자";
+  const rejectRole = isPmScheduleDirectorRole() ? "실장 최종 반려" : isPmScheduleTeamManagerRole() ? "팀장 1차 반려" : "반려";
   item.status = "rejected";
-  item.history.unshift(`${targets}에게 반려 알림을 전송했습니다. 사유: ${reason}`);
+  item.teamApprovedAt = "";
+  item.teamApprovedBy = "";
+  item.history.unshift(`${rejectRole}: ${targets}에게 반려 알림을 전송했습니다. 사유: ${reason}`);
   closePmSchedulePlanModal();
   renderPmScheduleDashboard();
   showToast("반려 알림을 전송했습니다.");
