@@ -3,7 +3,7 @@
    ========================= */
 const workPageMeta = {
   projectReceive: ["프로젝트 접수", "수주소식, 프로젝트 개요, 접수자료, 담당 PM, 납품일정을 카드형 화면으로 관리합니다."],
-  pmSchedule: ["PM 배정 / 일정", "해당 업무관리 카테고리는 화면 준비 영역입니다."],
+  pmSchedule: ["PM 배정 / 일정", "PM 배정, 작업일정 결재, 전체 일정을 세부 카테고리로 관리합니다."],
   projectManage: ["프로젝트 관리", "프로젝트 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 통합 관리합니다."],
   quantityChecklist: ["프로젝트 질의응답 관리", "수량산출 체크리스트, 체크리스트 검토, 이의제기, 오류 소거, 최종 수량 검토를 한 화면에서 관리합니다."],
   qcReview: ["프로젝트 질의응답 관리", "수량산출 체크리스트, 체크리스트 검토, 이의제기, 오류 소거, 최종 수량 검토를 한 화면에서 관리합니다."],
@@ -9393,12 +9393,17 @@ function switchWorkPanel(panelId) {
   document.querySelectorAll(".work-panel").forEach(panel => panel.classList.remove("active"));
   document.querySelectorAll("[data-work-main]").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.remove("active"));
+  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
 
   document.getElementById(targetPanelId)?.classList.add("active");
 
   if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
     document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.add("active"));
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+  } else if (targetPanelId === "pmSchedule") {
+    document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.add("active"));
+    const activeSection = typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign";
+    document.querySelector(`.side-item[data-work-main="pmSchedule"][data-pm-section="${activeSection}"]`)?.classList.add("active");
   } else {
     document.querySelector(`.side-main[data-work-main="${targetPanelId}"]`)?.classList.add("active");
   }
@@ -9413,6 +9418,11 @@ function switchWorkPanel(panelId) {
 
   if (targetPanelId === "projectReceiveList" && typeof renderProjectReceiveListView === "function") {
     renderProjectReceiveListView();
+  }
+
+  if (targetPanelId === "pmSchedule" && typeof renderPmScheduleDashboard === "function") {
+    renderPmScheduleDashboard();
+    if (typeof setPmScheduleSection === "function") setPmScheduleSection(typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign");
   }
 
   if (targetPanelId === "qcReview" || targetPanelId === "quantityChecklist") {
@@ -12413,7 +12423,15 @@ function markQuestionCategorySent(category) {
 
 
 document.querySelectorAll("[data-work-main]").forEach(btn => {
-  btn.addEventListener("click", () => switchWorkPanel(btn.dataset.workMain));
+  btn.addEventListener("click", () => {
+    if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
+      setPmScheduleSection(btn.dataset.pmSection);
+    }
+    switchWorkPanel(btn.dataset.workMain);
+    if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
+      setPmScheduleSection(btn.dataset.pmSection);
+    }
+  });
 });
 renderChecklistGrid();
 
