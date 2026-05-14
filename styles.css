@@ -14300,50 +14300,90 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   }
 }
 
-/* === 2026-05-14 PM 요청 대상 레이아웃 재구성 최종 보정 ===
-   - 대상 부서 드롭다운을 각 카드 타이틀 우측으로 이동
-   - Viet QS Team Leader 그룹 깨짐 방지
-   - Structure: Vertical + Horizontal/Foundation 동시 표시
-   - Finish: External을 Internal 2 바로 아래에 고정 */
-.pm-request-box{
+
+/* === 2026-05-14 Team Leader 요청 영역 최종 재구성 패치 ===
+   - 직원 이름이 보이지 않는 문제 해결
+   - Structure의 Horizontal/Foundation 구분 복구 대응
+   - Finish에서 External을 Internal 2 바로 아래에 배치
+   - Partition&Opening은 2줄 표기 유지
+   - 그룹 높이는 인원 수 기준으로만 늘어나도록 고정 해제 */
+.pm-request-box:first-child{
   position:relative !important;
-  overflow:hidden !important;
+  padding-top:15px !important;
 }
 
-.pm-request-box > strong,
-.pm-request-box > p{
-  padding-right:220px !important;
+.pm-request-box:first-child > strong{
+  display:inline-block !important;
+  padding-right:235px !important;
 }
 
-.pm-request-filter-row,
-.pm-request-filter-row-title-right{
+.pm-request-box:first-child > p{
+  max-width:260px !important;
+  padding-right:0 !important;
+}
+
+.pm-request-box:first-child .pm-request-filter-row{
   position:absolute !important;
-  top:14px !important;
-  right:15px !important;
+  top:16px !important;
+  right:16px !important;
   margin:0 !important;
   display:flex !important;
   justify-content:flex-end !important;
   align-items:center !important;
-  z-index:3 !important;
 }
 
-.pm-request-filter-row label,
-.pm-request-filter-row-title-right label{
+.pm-request-box:first-child .pm-request-filter-row label{
   display:flex !important;
   align-items:center !important;
   gap:8px !important;
   white-space:nowrap !important;
+}
+
+.pm-request-box:first-child .pm-request-filter-row select{
+  width:190px !important;
+  height:42px !important;
+}
+
+.pm-request-box:nth-child(2){
+  position:relative !important;
+  padding-top:16px !important;
+  overflow:hidden !important;
+}
+
+.pm-request-box:nth-child(2) > strong{
+  display:inline-block !important;
+  padding-right:235px !important;
+}
+
+.pm-request-box:nth-child(2) > p{
+  padding-right:235px !important;
+}
+
+.pm-request-filter-row-title-right{
+  position:absolute !important;
+  top:16px !important;
+  right:16px !important;
   margin:0 !important;
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
 }
 
-.pm-request-filter-row select,
+.pm-request-filter-row-title-right label{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  color:#334155 !important;
+  white-space:nowrap !important;
+}
+
 .pm-request-filter-row-title-right select{
-  width:180px !important;
-  height:38px !important;
-}
-
-.pm-check-list-inner{
-  margin-top:22px !important;
+  width:190px !important;
+  height:42px !important;
+  border-radius:13px !important;
+  font-weight:900 !important;
 }
 
 .pm-teamleader-list,
@@ -14352,30 +14392,32 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   max-width:100% !important;
   overflow:visible !important;
   padding:0 !important;
+  margin-top:18px !important;
 }
 
 .pm-teamleader-group-list{
+  width:100% !important;
+  max-width:100% !important;
   display:grid !important;
-  grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
-  grid-auto-rows:auto !important;
+  grid-template-columns:repeat(3, minmax(260px, 1fr)) !important;
+  grid-auto-flow:row !important;
   gap:10px 12px !important;
   align-items:start !important;
   align-content:start !important;
-  width:100% !important;
-  max-width:100% !important;
   overflow:visible !important;
 }
 
 .pm-teamleader-dept-group{
   display:grid !important;
-  grid-template-columns:132px minmax(0, 1fr) !important;
+  grid-template-columns:126px minmax(0, 1fr) !important;
   gap:8px !important;
-  align-items:stretch !important;
+  align-items:start !important;
   align-content:start !important;
   width:100% !important;
+  max-width:100% !important;
   min-width:0 !important;
-  height:auto !important;
   min-height:0 !important;
+  height:auto !important;
   padding:8px !important;
   margin:0 !important;
   border:1px solid #d7e4f5 !important;
@@ -14388,15 +14430,15 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 .pm-teamleader-dept-title{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:40px !important;
+  height:100% !important;
+  align-self:stretch !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  width:100% !important;
-  min-width:0 !important;
-  height:auto !important;
-  min-height:42px !important;
-  align-self:stretch !important;
-  padding:8px 7px !important;
+  padding:8px 8px !important;
   border-radius:13px !important;
   background:#eef6ff !important;
   color:#2563eb !important;
@@ -14410,31 +14452,34 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 .pm-teamleader-dept-items{
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
   display:grid !important;
   grid-template-columns:1fr !important;
   gap:6px !important;
   align-items:start !important;
   align-content:start !important;
-  width:100% !important;
-  min-width:0 !important;
-  height:auto !important;
-  min-height:0 !important;
   overflow:visible !important;
 }
 
 .pm-teamleader-dept-items .pm-check-item{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  height:38px !important;
+  min-height:38px !important;
   display:flex !important;
   align-items:center !important;
   gap:7px !important;
-  width:100% !important;
-  min-width:0 !important;
-  max-width:none !important;
-  height:38px !important;
-  min-height:38px !important;
   padding:7px 9px !important;
+  border:1px solid #d7e4f5 !important;
   border-radius:11px !important;
-  overflow:hidden !important;
+  background:#fff !important;
   box-sizing:border-box !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
 }
 
 .pm-teamleader-dept-items .pm-check-item input{
@@ -14442,43 +14487,46 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   width:15px !important;
   height:15px !important;
   margin:0 !important;
+  padding:0 !important;
 }
 
 .pm-teamleader-dept-items .pm-check-item span{
   display:block !important;
   flex:1 1 auto !important;
   min-width:0 !important;
-  max-width:100% !important;
+  max-width:none !important;
+  color:#0f172a !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1.15 !important;
   white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
   word-break:normal !important;
   overflow-wrap:normal !important;
-  line-height:1.1 !important;
-  font-size:13px !important;
 }
 
-/* Finish 배치: External을 Internal 2 바로 아래로 고정 */
-.pm-teamleader-dept-group.dept-internal-1{grid-column:1 !important;grid-row:1 !important;}
-.pm-teamleader-dept-group.dept-internal-2{grid-column:2 !important;grid-row:1 !important;}
-.pm-teamleader-dept-group.dept-partitionandopening{grid-column:3 !important;grid-row:1 / span 2 !important;}
-.pm-teamleader-dept-group.dept-internal-3{grid-column:1 !important;grid-row:2 !important;}
-.pm-teamleader-dept-group.dept-external{grid-column:2 !important;grid-row:2 !important;}
-
-/* Structure 배치: 두 구분을 한 줄로 안정 배치 */
-.pm-teamleader-dept-group.dept-vertical{grid-column:1 !important;grid-row:1 !important;}
-.pm-teamleader-dept-group.dept-horizontal-foundation,
-.pm-teamleader-dept-group.dept-horizon-foundation{grid-column:2 !important;grid-row:1 !important;}
-
-.pm-teamleader-dept-group.dept-horizontal-foundation .pm-teamleader-dept-title,
-.pm-teamleader-dept-group.dept-horizon-foundation .pm-teamleader-dept-title,
-.pm-teamleader-dept-group.dept-partitionandopening .pm-teamleader-dept-title{
-  font-size:12px !important;
+/* Finish 배치: Internal 1 / Internal 2 / Partition&Opening, External은 Internal 2 바로 아래 */
+.pm-teamleader-dept-group:has(.pm-teamleader-dept-title:nth-child(1)){
+  min-height:0 !important;
 }
+
+.pm-teamleader-dept-group:has(.pm-teamleader-dept-title){
+  align-self:start !important;
+}
+
+.pm-teamleader-dept-group:nth-child(1){grid-column:1 !important;grid-row:1 !important;}
+.pm-teamleader-dept-group:nth-child(2){grid-column:2 !important;grid-row:1 !important;}
+.pm-teamleader-dept-group:nth-child(3){grid-column:3 !important;grid-row:1 !important;}
+.pm-teamleader-dept-group:nth-child(4){grid-column:2 !important;grid-row:2 !important;}
+.pm-teamleader-dept-group:nth-child(5){grid-column:1 !important;grid-row:2 !important;}
 
 @media(max-width:1500px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(3, minmax(250px, 1fr)) !important;
+  }
   .pm-teamleader-dept-group{
-    grid-template-columns:118px minmax(0, 1fr) !important;
+    grid-template-columns:116px minmax(0,1fr) !important;
   }
   .pm-teamleader-dept-title,
   .pm-teamleader-dept-items .pm-check-item span{
@@ -14487,22 +14535,35 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 @media(max-width:1280px){
-  .pm-request-grid{grid-template-columns:1fr !important;}
-  .pm-request-box > strong,
-  .pm-request-box > p{padding-right:0 !important;}
-  .pm-request-filter-row,
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(2, minmax(280px, 1fr)) !important;
+  }
+  .pm-teamleader-dept-group:nth-child(n){
+    grid-column:auto !important;
+    grid-row:auto !important;
+  }
+  .pm-request-box:first-child > strong,
+  .pm-request-box:nth-child(2) > strong,
+  .pm-request-box:nth-child(2) > p{
+    padding-right:0 !important;
+  }
+  .pm-request-box:first-child .pm-request-filter-row,
   .pm-request-filter-row-title-right{
     position:static !important;
+    margin:10px 0 12px !important;
     justify-content:flex-start !important;
-    margin:8px 0 10px !important;
   }
-  .pm-check-list-inner{margin-top:0 !important;}
-  .pm-teamleader-group-list{grid-template-columns:repeat(2, minmax(0,1fr)) !important;}
-  .pm-teamleader-dept-group[class*="dept-"]{grid-column:auto !important;grid-row:auto !important;}
 }
 
 @media(max-width:760px){
-  .pm-teamleader-group-list{grid-template-columns:1fr !important;}
-  .pm-teamleader-dept-group{grid-template-columns:1fr !important;}
-  .pm-teamleader-dept-group[class*="dept-"]{grid-column:auto !important;grid-row:auto !important;}
+  .pm-teamleader-group-list{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group:nth-child(n){
+    grid-column:auto !important;
+    grid-row:auto !important;
+  }
 }
