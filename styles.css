@@ -14739,3 +14739,111 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-template-columns:1fr !important;
   }
 }
+
+
+
+/* === 2026-05-14 기준파일 재수정: Team Leader 직원명 카드 2배 확장 + Horizontal 줄바꿈 ===
+   - Horizontal/Foundation 표기는 JS에서 Horizontal<br>&Foundation으로 출력
+   - 직원명 카드 가로폭을 기존 대비 약 2배로 확보
+   - 이름은 1줄 유지, 영역 부족 시 말줄임 처리
+   - Structure/Finish 배치 순서는 기존 class 기반 배치 유지 */
+.pm-teamleader-list,
+.pm-teamleader-list-inner{
+  overflow:visible !important;
+}
+
+.pm-teamleader-list-inner.pm-teamleader-group-list{
+  gap:12px 16px !important;
+  justify-content:start !important;
+  align-items:start !important;
+}
+
+.pm-teamleader-category-structure{
+  grid-template-columns:repeat(2, minmax(500px, 1fr)) !important;
+}
+
+.pm-teamleader-category-finish{
+  grid-template-columns:repeat(3, minmax(430px, 1fr)) !important;
+}
+
+.pm-teamleader-category-civil{
+  grid-template-columns:minmax(500px, 1fr) minmax(0,1fr) !important;
+}
+
+.pm-teamleader-dept-group{
+  grid-template-columns:132px minmax(340px, 1fr) !important;
+  width:100% !important;
+  min-width:430px !important;
+  max-width:none !important;
+  overflow:visible !important;
+  align-items:stretch !important;
+}
+
+.pm-teamleader-dept-title{
+  min-width:132px !important;
+  white-space:normal !important;
+  text-align:center !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  line-height:1.18 !important;
+}
+
+.pm-teamleader-dept-items{
+  min-width:340px !important;
+  width:100% !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item{
+  min-width:340px !important;
+  width:100% !important;
+  max-width:none !important;
+  height:38px !important;
+  min-height:38px !important;
+  overflow:hidden !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item span{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  word-break:keep-all !important;
+  overflow-wrap:normal !important;
+}
+
+.pm-teamleader-category-finish .dept-external{
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+@media(max-width:1700px){
+  .pm-teamleader-category-finish{
+    grid-template-columns:repeat(2, minmax(430px, 1fr)) !important;
+  }
+  .pm-teamleader-category-finish .dept-internal-1{grid-column:1 !important;grid-row:1 !important;}
+  .pm-teamleader-category-finish .dept-internal-2{grid-column:2 !important;grid-row:1 !important;}
+  .pm-teamleader-category-finish .dept-external{grid-column:2 !important;grid-row:2 !important;}
+  .pm-teamleader-category-finish .dept-partition-opening{grid-column:1 !important;grid-row:2 / span 2 !important;}
+}
+
+@media(max-width:1280px){
+  .pm-teamleader-category-structure,
+  .pm-teamleader-category-finish,
+  .pm-teamleader-category-civil{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:132px minmax(260px, 1fr) !important;
+    min-width:0 !important;
+    grid-column:auto !important;
+    grid-row:auto !important;
+  }
+  .pm-teamleader-dept-items,
+  .pm-teamleader-dept-items .pm-check-item{
+    min-width:260px !important;
+  }
+}
