@@ -33,7 +33,14 @@ const projectReceiveDefaultData = {
     { label: "인테리어·철거", checked: false },
     { label: "비교내역서", checked: false },
     { label: "단가작업", checked: false },
-    { label: "기계/전기", checked: false }
+    { label: "기계/전기", checked: false },
+    { label: "클레임", checked: false },
+    { label: "골조성", checked: false, children: [
+      { label: "가설", checked: false },
+      { label: "단열", checked: false },
+      { label: "견출", checked: false },
+      { label: "방수턱", checked: false }
+    ] }
   ],
   contacts: [
     { name: "", role: "", dept: "", tel: "", mobile: "", email: "" }
@@ -86,7 +93,14 @@ const projectReceiveSampleData = {
     { label: "인테리어·철거", checked: true },
     { label: "비교내역서", checked: false },
     { label: "단가작업", checked: false },
-    { label: "기계/전기", checked: false }
+    { label: "기계/전기", checked: false },
+    { label: "클레임", checked: false },
+    { label: "골조성", checked: false, children: [
+      { label: "가설", checked: false },
+      { label: "단열", checked: false },
+      { label: "견출", checked: false },
+      { label: "방수턱", checked: false }
+    ] }
   ],
   contacts: [
     { name: "한동훈", role: "매니저", dept: "건축국내견적팀", tel: "02-746-8013", mobile: "010-3572-5478", email: "donghunhan@hdec.co.kr" },
@@ -131,7 +145,11 @@ function createProjectReceiveCompletedProject(config) {
       bidDate: config.bidDate || "",
       unitPrice: config.unitPrice || "공내역서",
       businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: businessTypeLabels.includes(item.label) })),
-      scopes: projectReceiveSampleData.scopes.map(item => ({ ...item, checked: scopeLabels.includes(item.label) })),
+      scopes: projectReceiveSampleData.scopes.map(item => ({
+        ...item,
+        checked: scopeLabels.includes(item.label),
+        children: item.children ? item.children.map(child => ({ ...child, checked: (config.scopeDetails?.[item.label] || []).includes(child.label) })) : undefined
+      })),
       contacts: config.contacts || [{ name: "", role: "", dept: "", tel: "", mobile: "", email: "" }],
       materials: createProjectReceiveDummyMaterials(config.receivedDate),
       startDate: config.startDate || "",
@@ -162,6 +180,8 @@ function inferProjectReceiveScopes(...texts) {
   const source = texts.filter(Boolean).join(" ");
   const labels = new Set();
   if (/마감|건축|리모델링|내부|외부|철거|창호|골조성마감/.test(source)) labels.add("마감");
+  if (/클레임|소송|분쟁|감정/.test(source)) labels.add("클레임");
+  if (/골조성|가설|단열|견출|방수턱/.test(source)) labels.add("골조성");
   if (/구조|골조|철근|거푸집|철골|BIM|모델링|물량산출/.test(source)) labels.add("구조팀");
   if (/BIM|모델링|3D/.test(source)) labels.add("BIM 파트");
   if (/토목|조경|흙막이|부대토목|Civil/.test(source)) labels.add("토목ㆍ조경파트");
@@ -546,7 +566,41 @@ function getProjectReceiveValue(id) {
   return document.getElementById(id)?.value || "";
 }
 
+
+function ensureProjectReceiveScopeOptions() {
+  const required = [
+    { label: "클레임", checked: false },
+    { label: "골조성", checked: false, children: [
+      { label: "가설", checked: false },
+      { label: "단열", checked: false },
+      { label: "견출", checked: false },
+      { label: "방수턱", checked: false }
+    ] }
+  ];
+  if (!Array.isArray(projectReceiveState.scopes)) projectReceiveState.scopes = [];
+  required.forEach(option => {
+    const found = projectReceiveState.scopes.find(item => item.label === option.label);
+    if (!found) {
+      projectReceiveState.scopes.push(JSON.parse(JSON.stringify(option)));
+      return;
+    }
+    if (option.children) {
+      if (!Array.isArray(found.children)) found.children = [];
+      option.children.forEach(child => {
+        if (!found.children.find(item => item.label === child.label)) found.children.push({ ...child });
+      });
+    }
+  });
+}
+
+function getProjectReceiveScopeDisplayText(scope) {
+  if (!scope?.checked) return "";
+  const selectedChildren = (scope.children || []).filter(child => child.checked).map(child => child.label);
+  return selectedChildren.length ? `${scope.label}(${selectedChildren.join(" · ")})` : scope.label;
+}
+
 function renderProjectReceiveDashboard() {
+  ensureProjectReceiveScopeOptions();
   if (!document.getElementById("projectReceiveShell")) return;
 
   setProjectReceiveValue("receiveProjectName", projectReceiveState.projectName);
@@ -578,7 +632,7 @@ function renderProjectReceiveDashboard() {
 function renderProjectReceiveStatus() {
   const el = document.getElementById("projectReceiveStatus");
   if (!el) return;
-  const checkedScope = projectReceiveState.scopes.filter(item => item.checked).map(item => item.label);
+  const checkedScope = projectReceiveState.scopes.map(getProjectReceiveScopeDisplayText).filter(Boolean);
   const checkedMaterials = projectReceiveState.materials.filter(item => normalizeProjectReceiveMaterialStatus(item) !== "미접수").length;
   el.innerHTML = `
     <div><span>접수상태</span><strong>작성중</strong></div>
@@ -591,16 +645,41 @@ function renderProjectReceiveStatus() {
 function renderProjectReceiveChips(targetId, stateKey) {
   const wrap = document.getElementById(targetId);
   if (!wrap) return;
-  wrap.innerHTML = projectReceiveState[stateKey].map((item, index) => `
-    <button class="receive-chip ${item.checked ? "active" : ""}" type="button" onclick="toggleProjectReceiveChip('${stateKey}', ${index})">
-      <span>${item.checked ? "✓" : "+"}</span>${item.label}
-    </button>
-  `).join("");
+  wrap.innerHTML = projectReceiveState[stateKey].map((item, index) => {
+    const childHtml = item.children && item.checked ? `
+      <div class="receive-subchip-group">
+        ${item.children.map((child, childIndex) => `
+          <button class="receive-subchip ${child.checked ? "active" : ""}" type="button" onclick="toggleProjectReceiveScopeChild(${index}, ${childIndex}); event.stopPropagation();">
+            <span>${child.checked ? "✓" : "+"}</span>${child.label}
+          </button>
+        `).join("")}
+      </div>
+    ` : "";
+    return `
+      <div class="receive-chip-wrap ${item.children ? "has-subchips" : ""}">
+        <button class="receive-chip ${item.checked ? "active" : ""}" type="button" onclick="toggleProjectReceiveChip('${stateKey}', ${index})">
+          <span>${item.checked ? "✓" : "+"}</span>${item.label}
+        </button>
+        ${childHtml}
+      </div>
+    `;
+  }).join("");
 }
 
 function toggleProjectReceiveChip(stateKey, index) {
   if (!projectReceiveState[stateKey]?.[index]) return;
-  projectReceiveState[stateKey][index].checked = !projectReceiveState[stateKey][index].checked;
+  const item = projectReceiveState[stateKey][index];
+  item.checked = !item.checked;
+  if (!item.checked && item.children) item.children.forEach(child => { child.checked = false; });
+  renderProjectReceiveDashboard();
+}
+
+function toggleProjectReceiveScopeChild(scopeIndex, childIndex) {
+  const scope = projectReceiveState.scopes?.[scopeIndex];
+  const child = scope?.children?.[childIndex];
+  if (!scope || !child) return;
+  scope.checked = true;
+  child.checked = !child.checked;
   renderProjectReceiveDashboard();
 }
 
@@ -842,7 +921,7 @@ function renderProjectReceiveCompletedList() {
   if (!list) return;
   list.innerHTML = projectReceiveCompletedProjects.map((item, index) => {
     const data = item.data;
-    const scopeText = data.scopes.filter(scope => scope.checked).map(scope => scope.label).join(" · ") || "미선택";
+    const scopeText = data.scopes.map(getProjectReceiveScopeDisplayText).filter(Boolean).join(" · ") || "미선택";
     return `
       <button class="project-receive-completed-item ${selectedProjectReceiveCompletedIndex === index ? "active" : ""}" type="button" onclick="selectProjectReceiveCompleted(${index})">
         <span class="completed-no">${escapeProjectReceiveHtml(data.projectNo)}</span>
