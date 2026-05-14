@@ -630,6 +630,7 @@ function getPmScheduleTeamLeaderDisplayDept(emp) {
 
 function formatPmScheduleTeamLeaderDeptTitle(dept) {
   if (dept === "Partition&Opening") return "Partition<br>&amp;Opening";
+  if (dept === "Horizontal/Foundation" || dept === "Horizon / Foundation") return "Horizontal<br>&amp;Foundation";
   return escapePmScheduleHtml(dept);
 }
 
