@@ -576,7 +576,7 @@ function renderPmScheduleRequestTargets(item) {
     const pmTargets = getConCostPmCandidatesByDept(item.project, pmSchedulePmRequestDeptFilter);
     pmList.innerHTML = `
       <div class="pm-request-filter-row">
-        <label><span>대상 부서</span><select onchange="setPmSchedulePmRequestDeptFilter(this.value)">
+        <label><span>부서</span><select onchange="setPmSchedulePmRequestDeptFilter(this.value)">
           ${pmDeptOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${pmSchedulePmRequestDeptFilter === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}
         </select></label>
       </div>
@@ -593,7 +593,7 @@ function renderPmScheduleRequestTargets(item) {
     const groupedLeaders = groupPmScheduleVietTeamLeadersByDept(leaders);
     tlList.innerHTML = `
       <div class="pm-request-filter-row pm-request-filter-row-title-right">
-        <label><span>대상 부서</span><select onchange="setPmScheduleTlRequestDeptFilter(this.value)">
+        <label><span>부서</span><select onchange="setPmScheduleTlRequestDeptFilter(this.value)">
           ${tlDeptOptions.map(dept => `<option value="${escapePmScheduleAttr(dept)}" ${pmScheduleTlRequestDeptFilter === dept ? "selected" : ""}>${escapePmScheduleHtml(dept)}</option>`).join("")}
         </select></label>
       </div>
