@@ -510,6 +510,82 @@ function renderPmScheduleAssignmentSelects(item) {
   fillPmScheduleSelect("pmStructureSelect", getConCostPmCandidatesByDept(item.project, "구조팀"), item.assignment.pmStructure, "구조팀 PM 선택");
   fillPmScheduleSelect("pmBimSelect", getConCostPmCandidatesByDept(item.project, "BIM파트"), item.assignment.pmBim, "BIM파트 PM 선택");
   fillPmScheduleSelect("pmCivilSelect", getConCostPmCandidatesByDept(item.project, "토목ㆍ조경파트"), item.assignment.pmCivil, "토목ㆍ조경파트 PM 선택");
+  renderPmScheduleAssignmentWarnings(item);
+}
+
+function getPmScheduleRequiredAssignmentGroups(item) {
+  const scopes = (item?.project?.scopes || [])
+    .filter(scope => scope.checked)
+    .map(scope => normalizePmScheduleDept(scope.label));
+
+  const required = {
+    finish: scopes.some(scope => scope.includes("마감")),
+    structure: scopes.some(scope => scope.includes("구조") || scope.includes("BIM")),
+    civil: scopes.some(scope => scope.includes("토목") || scope.includes("조경"))
+  };
+
+  return required;
+}
+
+function hasAnyPmScheduleAssignment(item) {
+  const assignment = item?.assignment || {};
+  return Boolean(assignment.pmFinish || assignment.pmStructure || assignment.pmBim || assignment.pmCivil);
+}
+
+function getPmScheduleMissingAssignmentKeys(item) {
+  const assignment = item?.assignment || {};
+  const required = getPmScheduleRequiredAssignmentGroups(item);
+  const missing = [];
+
+  if (required.finish && !assignment.pmFinish) missing.push("pmFinish");
+  if (required.structure && !assignment.pmStructure && !assignment.pmBim) {
+    missing.push("pmStructure", "pmBim");
+  }
+  if (required.civil && !assignment.pmCivil) missing.push("pmCivil");
+
+  return missing;
+}
+
+function setPmScheduleAssignmentWarningState(item, missingKeys) {
+  const warningMap = {
+    pmFinish: "pmFinishWarning",
+    pmStructure: "pmStructureWarning",
+    pmBim: "pmBimWarning",
+    pmCivil: "pmCivilWarning"
+  };
+
+  Object.entries(warningMap).forEach(([key, elementId]) => {
+    const warning = document.getElementById(elementId);
+    const field = document.getElementById(key + "Field");
+    const select = document.getElementById(key + "Select");
+    const isMissing = missingKeys.includes(key);
+
+    if (warning) warning.style.display = isMissing ? "block" : "none";
+    if (field) field.classList.toggle("pm-assignment-missing", isMissing);
+    if (select) select.classList.toggle("pm-assignment-select-missing", isMissing);
+  });
+}
+
+function renderPmScheduleAssignmentWarnings(item) {
+  const missingKeys = hasAnyPmScheduleAssignment(item) ? getPmScheduleMissingAssignmentKeys(item) : [];
+  setPmScheduleAssignmentWarningState(item, missingKeys);
+}
+
+function confirmPmScheduleAssignment() {
+  const item = getCurrentPmScheduleProject();
+  if (!item) return;
+
+  const missingKeys = getPmScheduleMissingAssignmentKeys(item);
+  setPmScheduleAssignmentWarningState(item, missingKeys);
+
+  if (missingKeys.length) {
+    showToast("PM 지정이 필요한 부서가 있습니다.");
+    return;
+  }
+
+  item.history.unshift("PM 지정 확인이 완료되었습니다.");
+  showToast("PM 지정 확인이 완료되었습니다.");
+  renderPmScheduleDetail();
 }
 
 function fillPmScheduleSelect(id, candidates, selectedValue, placeholder) {
@@ -564,6 +640,7 @@ function updatePmScheduleAssignment(key, value) {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
   item.assignment[key] = value;
+  renderPmScheduleAssignmentWarnings(item);
   renderPmScheduleRequestTargets(item);
 }
 
