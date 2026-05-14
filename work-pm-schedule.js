@@ -620,10 +620,7 @@ function getPmScheduleTeamLeaderDisplayDept(emp) {
   const englishName = String(emp?.name || "").trim();
   const koreanName = String(emp?.koreanName || "").trim();
 
-  // 조직도 기준 보정: Dinh Phi(피)는 Internal 1 하위 Team Leader로 표기
-  if (englishName === "Dinh Phi" || koreanName === "피") return "Internal 1";
-
-  // 화면 표기는 사용자가 확인한 조직도 명칭 기준으로 통일
+  // 화면 표기는 조직도 데이터의 실제 하위 부서 기준으로 통일
   if (rawDept === "Horizon / Foundation") return "Horizontal/Foundation";
   return rawDept;
 }
@@ -651,13 +648,12 @@ function groupPmScheduleVietTeamLeadersByDept(leaders) {
   const categoryOrder = pmScheduleTlRequestDeptFilter === "Structure"
     ? ["Vertical", "Horizontal/Foundation"]
     : pmScheduleTlRequestDeptFilter === "Finish"
-      ? ["Internal 1", "Internal 2", "Partition&Opening", "External"]
+      ? ["Internal 1", "Internal 2", "Internal 3", "External", "Partition&Opening"]
       : ["Civil"];
 
-  const ordered = categoryOrder.map(dept => {
-    used.add(dept);
-    return { dept, members: map.get(dept) || [] };
-  });
+  const ordered = categoryOrder
+    .filter(dept => map.has(dept) && !used.has(dept) && used.add(dept))
+    .map(dept => ({ dept, members: map.get(dept) }));
 
   map.forEach((members, dept) => {
     if (!used.has(dept)) ordered.push({ dept, members });
