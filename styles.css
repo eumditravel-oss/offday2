@@ -15014,145 +15014,72 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-
-/* === 2026-05-14 Finish Team Leader Internal 3 표시/2열 배치 최종 보정 ===
-   - Internal 3 구분이 누락되지 않도록 Finish 영역을 2열/3행 배치로 재정렬
-   - 직원 카드 폭과 부모 카드 폭을 일치시켜 이름 카드가 짧게 잘리지 않도록 보정
-   - 화면 폭이 좁을 때는 1열로 자동 전환 */
-.pm-request-box:nth-child(2) .pm-teamleader-list-inner.pm-teamleader-group-list{
-  width:100% !important;
-  max-width:100% !important;
-  overflow:visible !important;
-  align-items:start !important;
-  align-content:start !important;
-  justify-content:start !important;
+/* 프로젝트 접수: 골조성 세부 카테고리 */
+.receive-chip-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
 }
 
-.pm-teamleader-category-finish{
-  display:grid !important;
-  grid-template-columns:repeat(2, minmax(430px, 1fr)) !important;
-  gap:12px 14px !important;
+.receive-chip-wrap.has-subchips{
+  width:100%;
+  align-items:flex-start;
 }
 
-.pm-teamleader-category-finish .dept-internal-1{
-  grid-column:1 !important;
-  grid-row:1 !important;
+.receive-subchip-group{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  padding:8px 10px;
+  border:1px dashed #bfdbfe;
+  border-radius:16px;
+  background:#f8fbff;
 }
 
-.pm-teamleader-category-finish .dept-internal-2{
-  grid-column:2 !important;
-  grid-row:1 !important;
+.receive-subchip{
+  border:1px solid var(--line2);
+  background:#fff;
+  color:#334155;
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:900;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  white-space:nowrap;
 }
 
-.pm-teamleader-category-finish .dept-internal-3{
-  grid-column:1 !important;
-  grid-row:2 !important;
+.receive-subchip span{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:inline-grid;
+  place-items:center;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:11px;
 }
 
-.pm-teamleader-category-finish .dept-external{
-  grid-column:2 !important;
-  grid-row:2 !important;
+.receive-subchip.active{
+  background:#2563eb;
+  border-color:#2563eb;
+  color:#fff;
 }
 
-.pm-teamleader-category-finish .dept-partition-opening{
-  grid-column:1 !important;
-  grid-row:3 !important;
+.receive-subchip.active span{
+  background:rgba(255,255,255,.18);
+  color:#fff;
 }
 
-.pm-teamleader-category-finish .pm-teamleader-dept-group,
-.pm-teamleader-category-structure .pm-teamleader-dept-group,
-.pm-teamleader-category-civil .pm-teamleader-dept-group{
-  width:100% !important;
-  min-width:430px !important;
-  max-width:100% !important;
-  display:grid !important;
-  grid-template-columns:132px minmax(270px, 1fr) !important;
-  gap:8px !important;
-  align-items:stretch !important;
-  box-sizing:border-box !important;
-  overflow:visible !important;
-}
-
-.pm-teamleader-dept-title{
-  min-width:132px !important;
-  width:132px !important;
-  white-space:normal !important;
-  word-break:keep-all !important;
-  line-height:1.12 !important;
-}
-
-.pm-teamleader-dept-items{
-  width:100% !important;
-  min-width:270px !important;
-  max-width:none !important;
-  display:grid !important;
-  grid-template-columns:1fr !important;
-  gap:6px !important;
-  overflow:visible !important;
-}
-
-.pm-teamleader-dept-items .pm-check-item{
-  width:100% !important;
-  min-width:270px !important;
-  max-width:none !important;
-  min-height:38px !important;
-  height:38px !important;
-  display:flex !important;
-  align-items:center !important;
-  gap:8px !important;
-  padding:7px 10px !important;
-  overflow:hidden !important;
-  box-sizing:border-box !important;
-}
-
-.pm-teamleader-dept-items .pm-check-item span{
-  flex:1 1 auto !important;
-  min-width:0 !important;
-  display:block !important;
-  white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  word-break:keep-all !important;
-  line-height:1.15 !important;
-}
-
-@media(max-width:1500px){
-  .pm-teamleader-category-finish,
-  .pm-teamleader-category-structure{
-    grid-template-columns:repeat(2, minmax(390px, 1fr)) !important;
-  }
-  .pm-teamleader-category-finish .pm-teamleader-dept-group,
-  .pm-teamleader-category-structure .pm-teamleader-dept-group,
-  .pm-teamleader-category-civil .pm-teamleader-dept-group{
-    min-width:390px !important;
-    grid-template-columns:122px minmax(238px, 1fr) !important;
-  }
-  .pm-teamleader-dept-title{
-    min-width:122px !important;
-    width:122px !important;
-  }
-  .pm-teamleader-dept-items,
-  .pm-teamleader-dept-items .pm-check-item{
-    min-width:238px !important;
-  }
-}
-
-@media(max-width:1280px){
-  .pm-teamleader-category-finish,
-  .pm-teamleader-category-structure,
-  .pm-teamleader-category-civil{
-    grid-template-columns:1fr !important;
-  }
-  .pm-teamleader-category-finish .pm-teamleader-dept-group,
-  .pm-teamleader-category-structure .pm-teamleader-dept-group,
-  .pm-teamleader-category-civil .pm-teamleader-dept-group{
-    grid-column:auto !important;
-    grid-row:auto !important;
-    min-width:0 !important;
-    grid-template-columns:122px minmax(220px, 1fr) !important;
-  }
-  .pm-teamleader-dept-items,
-  .pm-teamleader-dept-items .pm-check-item{
-    min-width:220px !important;
-  }
+.pm-modal-approval-guide{
+  padding:10px 12px;
+  border:1px solid #bfdbfe;
+  background:#f8fbff;
+  border-radius:14px;
+  color:#1d4ed8;
+  font-weight:900;
+  line-height:1.45;
 }
