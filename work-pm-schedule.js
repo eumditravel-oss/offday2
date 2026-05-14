@@ -654,9 +654,10 @@ function groupPmScheduleVietTeamLeadersByDept(leaders) {
       ? ["Internal 1", "Internal 2", "Partition&Opening", "External"]
       : ["Civil"];
 
-  const ordered = categoryOrder
-    .filter(dept => map.has(dept) && !used.has(dept) && used.add(dept))
-    .map(dept => ({ dept, members: map.get(dept) }));
+  const ordered = categoryOrder.map(dept => {
+    used.add(dept);
+    return { dept, members: map.get(dept) || [] };
+  });
 
   map.forEach((members, dept) => {
     if (!used.has(dept)) ordered.push({ dept, members });
