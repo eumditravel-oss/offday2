@@ -576,18 +576,32 @@ function confirmPmScheduleAssignment() {
   if (!item) return;
 
   const missingKeys = getPmScheduleMissingAssignmentKeys(item);
-  setPmScheduleAssignmentWarningState(item, missingKeys);
 
-  if (missingKeys.length) {
-    showToast("PM 지정이 필요한 부서가 있습니다.");
+  if (!hasAnyPmScheduleAssignment(item)) {
+    setPmScheduleAssignmentWarningState(item, missingKeys);
+    showToast("우선 지정할 PM을 선택해 주세요.");
     return;
   }
+
+  // 일부 부서만 PM 지정된 경우에도 우선 저장한다.
+  // 미지정 부서는 경고 문구만 유지하고, 지정된 부서는 경고를 제거한다.
+  setPmScheduleAssignmentWarningState(item, missingKeys);
 
   if (typeof applyPmScheduleAssignmentToProjectReceiveData === "function") {
     applyPmScheduleAssignmentToProjectReceiveData(item.project?.projectNo, item.assignment);
   }
-  item.history.unshift("PM 지정 확인이 완료되었습니다.");
-  showToast("PM 지정 확인이 완료되었습니다.");
+
+  const assignedLabels = [];
+  if (item.assignment.pmFinish) assignedLabels.push("마감팀");
+  if (item.assignment.pmStructure || item.assignment.pmBim) assignedLabels.push("구조/BIM");
+  if (item.assignment.pmCivil) assignedLabels.push("토목ㆍ조경파트");
+
+  const message = missingKeys.length
+    ? `PM 부분 지정 저장 완료: ${assignedLabels.join(" · ")} / 미지정 부서는 추후 지정 필요`
+    : "PM 지정 확인이 완료되었습니다.";
+
+  item.history.unshift(message);
+  showToast(message);
   renderPmScheduleDetail();
 }
 
