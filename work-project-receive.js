@@ -1270,7 +1270,7 @@ function renderProjectReceiveListView() {
     const floorText = data.floors || [data.basementFloors, data.groundFloors].filter(Boolean).join(" / ") || "-";
     const statusClass = item.status === "작성완료" ? "completed" : "writing";
     return `
-      <tr>
+      <tr class="project-list-clickable-row" onclick="openProjectReceiveListViewer('${escapeProjectReceiveHtml(item.source)}', ${Number(item.index)})">
         <td><strong>${escapeProjectReceiveHtml(data.projectNo || "-")}</strong></td>
         <td class="project-list-name">${escapeProjectReceiveHtml(data.projectName || "프로젝트명 미입력")}</td>
         <td>${escapeProjectReceiveHtml(data.client || "-")}</td>
@@ -1283,4 +1283,118 @@ function renderProjectReceiveListView() {
       </tr>
     `;
   }).join("");
+}
+
+function getProjectReceiveViewerItem(source, index) {
+  if (source === "current") {
+    return { source, index: -1, data: projectReceiveState, status: "작성중" };
+  }
+  if (source === "completed") {
+    const item = projectReceiveCompletedProjects[index];
+    return item ? { source, index, data: item.data || item, status: "작성완료", sourceFile: item.sourceFile || "", completedAt: item.completedAt || "" } : null;
+  }
+  return null;
+}
+
+function openProjectReceiveListViewer(source, index) {
+  const item = getProjectReceiveViewerItem(source, index);
+  if (!item) return;
+  ensureProjectReceiveListViewerModal();
+  const modal = document.getElementById("projectReceiveListViewerModal");
+  const body = document.getElementById("projectReceiveListViewerBody");
+  if (!modal || !body) return;
+
+  const data = item.data || {};
+  const scopeText = getProjectReceiveListScopeText(data);
+  const businessText = (data.businessTypes || []).filter(v => v?.checked).map(v => v.label).join(" · ") || "미선택";
+  const floorText = data.floors || [data.basementFloors, data.groundFloors].filter(Boolean).join(" / ") || "-";
+  const materialText = (data.materials || []).map(material => {
+    const status = normalizeProjectReceiveMaterialStatus(material);
+    return `<li><strong>${escapeProjectReceiveHtml(material.label || "자료")}</strong><span>${escapeProjectReceiveHtml(status)}</span><em>${escapeProjectReceiveHtml(material.comment || material.memo || "-")}</em></li>`;
+  }).join("");
+
+  body.innerHTML = `
+    <div class="project-viewer-title-row">
+      <div>
+        <span class="project-list-status ${item.status === "작성완료" ? "completed" : "writing"}">${escapeProjectReceiveHtml(item.status || "작성중")}</span>
+        <h3>${escapeProjectReceiveHtml(data.projectName || "프로젝트명 미입력")}</h3>
+        <p>${escapeProjectReceiveHtml(data.projectNo || "NO 미입력")} · ${escapeProjectReceiveHtml(data.client || "의뢰처 미입력")}</p>
+      </div>
+      <button class="btn btn-primary" type="button" onclick="editProjectReceiveFromViewer('${escapeProjectReceiveHtml(item.source)}', ${Number(item.index)})">수정하기</button>
+    </div>
+
+    <div class="project-viewer-grid">
+      <div><span>프로젝트 NO</span><strong>${escapeProjectReceiveHtml(data.projectNo || "-")}</strong></div>
+      <div><span>의뢰처</span><strong>${escapeProjectReceiveHtml(data.client || "-")}</strong></div>
+      <div><span>건물용도</span><strong>${escapeProjectReceiveHtml(data.usage || "-")}</strong></div>
+      <div><span>연면적</span><strong>${escapeProjectReceiveHtml(data.area || "-")}</strong></div>
+      <div><span>동수</span><strong>${escapeProjectReceiveHtml(data.buildings || "-")}</strong></div>
+      <div><span>층수</span><strong>${escapeProjectReceiveHtml(floorText)}</strong></div>
+      <div><span>지하층수</span><strong>${escapeProjectReceiveHtml(data.basementFloors || "-")}</strong></div>
+      <div><span>지상층수</span><strong>${escapeProjectReceiveHtml(data.groundFloors || "-")}</strong></div>
+      <div><span>입찰일</span><strong>${escapeProjectReceiveHtml(data.bidDate || "-")}</strong></div>
+      <div><span>단가작업여부</span><strong>${escapeProjectReceiveHtml(data.unitPrice || "-")}</strong></div>
+      <div><span>납품기준</span><strong>${escapeProjectReceiveHtml(data.firstDelivery || "미입력")}</strong></div>
+      <div><span>최종 납품</span><strong>${escapeProjectReceiveHtml(data.finalDelivery || "미입력")}</strong></div>
+    </div>
+
+    <div class="project-viewer-section">
+      <h4>업무의 성격</h4>
+      <p>${escapeProjectReceiveHtml(businessText)}</p>
+    </div>
+    <div class="project-viewer-section">
+      <h4>작업범위</h4>
+      <p>${escapeProjectReceiveHtml(scopeText)}</p>
+    </div>
+    <div class="project-viewer-section">
+      <h4>접수자료</h4>
+      <ul class="project-viewer-material-list">${materialText || "<li><strong>자료 없음</strong><span>-</span><em>-</em></li>"}</ul>
+    </div>
+    <div class="project-viewer-section">
+      <h4>작업내용 / 요청사항</h4>
+      <p>${escapeProjectReceiveHtml(data.workContent || data.request || data.notes || "입력 내용 없음")}</p>
+    </div>
+  `;
+  modal.classList.add("active");
+}
+
+function closeProjectReceiveListViewer() {
+  document.getElementById("projectReceiveListViewerModal")?.classList.remove("active");
+}
+
+function editProjectReceiveFromViewer(source, index) {
+  const item = getProjectReceiveViewerItem(source, index);
+  if (!item) return;
+  projectReceiveState = JSON.parse(JSON.stringify(item.data || {}));
+  normalizeProjectReceiveFloorState(projectReceiveState);
+  closeProjectReceiveListViewer();
+  if (typeof switchWorkPanel === "function") switchWorkPanel("projectReceive");
+  renderProjectReceiveDashboard();
+  showToast(`${projectReceiveState.projectNo || "선택 프로젝트"} 프로젝트를 수정 화면으로 불러왔습니다.`);
+}
+
+function ensureProjectReceiveListViewerModal() {
+  if (document.getElementById("projectReceiveListViewerModal")) return;
+  const modal = document.createElement("div");
+  modal.id = "projectReceiveListViewerModal";
+  modal.className = "modal-backdrop project-receive-viewer-modal";
+  modal.innerHTML = `
+    <div class="modal modal-wide project-receive-viewer-box">
+      <div class="modal-head">
+        <div>
+          <h3>프로젝트 접수 상세</h3>
+          <p>프로젝트 작성 화면에 입력된 내용을 뷰어 형식으로 확인합니다.</p>
+        </div>
+        <button class="close" type="button" onclick="closeProjectReceiveListViewer()">×</button>
+      </div>
+      <div class="modal-body" id="projectReceiveListViewerBody"></div>
+      <div class="modal-foot">
+        <button class="btn btn-line" type="button" onclick="closeProjectReceiveListViewer()">닫기</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", event => {
+    if (event.target === modal) closeProjectReceiveListViewer();
+  });
+  document.body.appendChild(modal);
 }
