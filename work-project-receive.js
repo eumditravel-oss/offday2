@@ -11,6 +11,8 @@ const projectReceiveDefaultData = {
   area: "",
   buildings: "",
   floors: "",
+  basementFloors: "",
+  groundFloors: "",
   bidDate: "",
   unitPrice: "",
   businessTypes: [
@@ -71,6 +73,8 @@ const projectReceiveSampleData = {
   area: "45,013평",
   buildings: "4개동(금회변경)",
   floors: "B6/S9",
+  basementFloors: "지하6층",
+  groundFloors: "지상9층",
   bidDate: "2026.06말",
   unitPrice: "공내역서",
   businessTypes: [
@@ -142,6 +146,8 @@ function createProjectReceiveCompletedProject(config) {
       area: config.area || "",
       buildings: config.buildings || "",
       floors: config.floors || "",
+      basementFloors: config.basementFloors || parseProjectReceiveFloors(config.floors || "").basementFloors,
+      groundFloors: config.groundFloors || parseProjectReceiveFloors(config.floors || "").groundFloors,
       bidDate: config.bidDate || "",
       unitPrice: config.unitPrice || "공내역서",
       businessTypes: projectReceiveSampleData.businessTypes.map(item => ({ ...item, checked: businessTypeLabels.includes(item.label) })),
@@ -566,6 +572,65 @@ function getProjectReceiveValue(id) {
   return document.getElementById(id)?.value || "";
 }
 
+function normalizeProjectReceiveFloorPart(value, type) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const compact = raw.replace(/\s+/g, "");
+  const isBasement = type === "basement";
+  const prefixText = isBasement ? "지하" : "지상";
+
+  if (compact.includes(prefixText)) return compact.endsWith("층") ? compact : `${compact}층`;
+
+  const letter = isBasement ? "B" : "S";
+  const match = compact.match(new RegExp(`${letter}\\s*([0-9]+)`, "i"));
+  if (match) return `${prefixText}${match[1]}층`;
+
+  const numberMatch = compact.match(/([0-9]+)/);
+  if (numberMatch) return `${prefixText}${numberMatch[1]}층`;
+
+  return raw;
+}
+
+function parseProjectReceiveFloors(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return { basementFloors: "", groundFloors: "" };
+  const parts = raw.split(/[\/|,]/).map(item => item.trim()).filter(Boolean);
+  let basementRaw = parts.find(item => /^B/i.test(item) || item.includes("지하")) || "";
+  let groundRaw = parts.find(item => /^S/i.test(item) || item.includes("지상")) || "";
+
+  if (!basementRaw && !groundRaw && parts.length >= 2) {
+    basementRaw = parts[0];
+    groundRaw = parts[1];
+  }
+
+  return {
+    basementFloors: normalizeProjectReceiveFloorPart(basementRaw, "basement"),
+    groundFloors: normalizeProjectReceiveFloorPart(groundRaw, "ground")
+  };
+}
+
+function getProjectReceiveFloorNumber(value) {
+  const match = String(value || "").match(/([0-9]+)/);
+  return match ? match[1] : "";
+}
+
+function composeProjectReceiveFloors(basementFloors, groundFloors) {
+  const basementNo = getProjectReceiveFloorNumber(basementFloors);
+  const groundNo = getProjectReceiveFloorNumber(groundFloors);
+  if (basementNo && groundNo) return `B${basementNo}/S${groundNo}`;
+  if (basementNo) return `B${basementNo}`;
+  if (groundNo) return `S${groundNo}`;
+  return "";
+}
+
+function normalizeProjectReceiveFloorState(target = projectReceiveState) {
+  if (!target) return;
+  const parsed = parseProjectReceiveFloors(target.floors || "");
+  target.basementFloors = target.basementFloors || parsed.basementFloors;
+  target.groundFloors = target.groundFloors || parsed.groundFloors;
+  target.floors = composeProjectReceiveFloors(target.basementFloors, target.groundFloors) || target.floors || "";
+}
+
 
 function ensureProjectReceiveScopeOptions() {
   const required = [
@@ -609,7 +674,9 @@ function renderProjectReceiveDashboard() {
   setProjectReceiveValue("receiveUsage", projectReceiveState.usage);
   setProjectReceiveValue("receiveArea", projectReceiveState.area);
   setProjectReceiveValue("receiveBuildings", projectReceiveState.buildings);
-  setProjectReceiveValue("receiveFloors", projectReceiveState.floors);
+  normalizeProjectReceiveFloorState(projectReceiveState);
+  setProjectReceiveValue("receiveBasementFloors", projectReceiveState.basementFloors);
+  setProjectReceiveValue("receiveGroundFloors", projectReceiveState.groundFloors);
   setProjectReceiveValue("receiveBidDate", projectReceiveState.bidDate);
   setProjectReceiveValue("receiveUnitPrice", projectReceiveState.unitPrice);
   setProjectReceiveValue("receivePmTotal", projectReceiveState.pmTotal);
@@ -835,7 +902,9 @@ function syncProjectReceiveInputsToState() {
   projectReceiveState.usage = getProjectReceiveValue("receiveUsage");
   projectReceiveState.area = getProjectReceiveValue("receiveArea");
   projectReceiveState.buildings = getProjectReceiveValue("receiveBuildings");
-  projectReceiveState.floors = getProjectReceiveValue("receiveFloors");
+  projectReceiveState.basementFloors = normalizeProjectReceiveFloorPart(getProjectReceiveValue("receiveBasementFloors"), "basement");
+  projectReceiveState.groundFloors = normalizeProjectReceiveFloorPart(getProjectReceiveValue("receiveGroundFloors"), "ground");
+  projectReceiveState.floors = composeProjectReceiveFloors(projectReceiveState.basementFloors, projectReceiveState.groundFloors);
   projectReceiveState.bidDate = getProjectReceiveValue("receiveBidDate");
   projectReceiveState.unitPrice = getProjectReceiveValue("receiveUnitPrice");
   projectReceiveState.pmTotal = getProjectReceiveValue("receivePmTotal");
