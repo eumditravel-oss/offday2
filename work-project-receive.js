@@ -1219,6 +1219,59 @@ function getProjectReceiveListScopeText(data) {
     .join(" · ") || "미선택";
 }
 
+
+function getProjectReceivePmAssignment(data = {}) {
+  const assignment = {
+    pmFinish: data.pmFinish || "",
+    pmStructure: data.pmStructure || "",
+    pmBim: data.pmBim || "",
+    pmCivil: data.pmCivil || ""
+  };
+
+  if (typeof pmScheduleProjects !== "undefined" && Array.isArray(pmScheduleProjects)) {
+    const projectNo = String(data.projectNo || "").trim();
+    const matched = pmScheduleProjects.find(item => String(item?.project?.projectNo || "").trim() === projectNo);
+    if (matched?.assignment) {
+      assignment.pmFinish = matched.assignment.pmFinish || assignment.pmFinish;
+      assignment.pmStructure = matched.assignment.pmStructure || assignment.pmStructure;
+      assignment.pmBim = matched.assignment.pmBim || assignment.pmBim;
+      assignment.pmCivil = matched.assignment.pmCivil || assignment.pmCivil;
+    }
+  }
+
+  return assignment;
+}
+
+function getProjectReceivePmAssignmentDisplay(data = {}) {
+  const assignment = getProjectReceivePmAssignment(data);
+  return [
+    { label: "마감팀 PM", value: assignment.pmFinish },
+    { label: "구조팀 PM", value: assignment.pmStructure },
+    { label: "BIM파트 PM", value: assignment.pmBim },
+    { label: "토목ㆍ조경파트 PM", value: assignment.pmCivil }
+  ];
+}
+
+function applyPmScheduleAssignmentToProjectReceiveData(projectNo, assignment = {}) {
+  const targetNo = String(projectNo || "").trim();
+  if (!targetNo) return;
+
+  const assignTo = data => {
+    if (!data || String(data.projectNo || "").trim() !== targetNo) return;
+    data.pmFinish = assignment.pmFinish || "";
+    data.pmStructure = assignment.pmStructure || "";
+    data.pmBim = assignment.pmBim || "";
+    data.pmCivil = assignment.pmCivil || "";
+  };
+
+  if (typeof projectReceiveState !== "undefined") assignTo(projectReceiveState);
+  if (typeof projectReceiveCompletedProjects !== "undefined" && Array.isArray(projectReceiveCompletedProjects)) {
+    projectReceiveCompletedProjects.forEach(item => assignTo(item.data || item));
+  }
+
+  if (document.getElementById("projectReceiveListBody")) renderProjectReceiveListView();
+}
+
 function renderProjectReceiveListView() {
   const body = document.getElementById("projectReceiveListBody");
   const summary = document.getElementById("projectReceiveListSummary");
@@ -1260,14 +1313,16 @@ function renderProjectReceiveListView() {
   }
 
   if (!filtered.length) {
-    body.innerHTML = `<tr><td colspan="9" class="project-list-empty">조건에 맞는 프로젝트가 없습니다.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="10" class="project-list-empty">조건에 맞는 프로젝트가 없습니다.</td></tr>`;
     return;
   }
 
   body.innerHTML = filtered.map(item => {
     const data = item.data || {};
     const scopeText = getProjectReceiveListScopeText(data);
-    const floorText = data.floors || [data.basementFloors, data.groundFloors].filter(Boolean).join(" / ") || "-";
+    const parsedFloors = parseProjectReceiveFloors(data.floors || "");
+    const basementFloors = data.basementFloors || parsedFloors.basementFloors || "-";
+    const groundFloors = data.groundFloors || parsedFloors.groundFloors || "-";
     const statusClass = item.status === "작성완료" ? "completed" : "writing";
     return `
       <tr class="project-list-clickable-row" onclick="openProjectReceiveListViewer('${escapeProjectReceiveHtml(item.source)}', ${Number(item.index)})">
@@ -1276,7 +1331,8 @@ function renderProjectReceiveListView() {
         <td>${escapeProjectReceiveHtml(data.client || "-")}</td>
         <td>${escapeProjectReceiveHtml(data.usage || "-")}</td>
         <td>${escapeProjectReceiveHtml(data.area || "-")}</td>
-        <td>${escapeProjectReceiveHtml(floorText)}</td>
+        <td>${escapeProjectReceiveHtml(basementFloors)}</td>
+        <td>${escapeProjectReceiveHtml(groundFloors)}</td>
         <td>${escapeProjectReceiveHtml(scopeText)}</td>
         <td>${escapeProjectReceiveHtml(data.firstDelivery || "미입력")}</td>
         <td><span class="project-list-status ${statusClass}">${item.status}</span></td>
@@ -1307,7 +1363,10 @@ function openProjectReceiveListViewer(source, index) {
   const data = item.data || {};
   const scopeText = getProjectReceiveListScopeText(data);
   const businessText = (data.businessTypes || []).filter(v => v?.checked).map(v => v.label).join(" · ") || "미선택";
-  const floorText = data.floors || [data.basementFloors, data.groundFloors].filter(Boolean).join(" / ") || "-";
+  const parsedFloors = parseProjectReceiveFloors(data.floors || "");
+  const basementFloors = data.basementFloors || parsedFloors.basementFloors || "-";
+  const groundFloors = data.groundFloors || parsedFloors.groundFloors || "-";
+  const pmAssignmentRows = getProjectReceivePmAssignmentDisplay(data);
   const materialText = (data.materials || []).map(material => {
     const status = normalizeProjectReceiveMaterialStatus(material);
     return `<li><strong>${escapeProjectReceiveHtml(material.label || "자료")}</strong><span>${escapeProjectReceiveHtml(status)}</span><em>${escapeProjectReceiveHtml(material.comment || material.memo || "-")}</em></li>`;
@@ -1329,9 +1388,8 @@ function openProjectReceiveListViewer(source, index) {
       <div><span>건물용도</span><strong>${escapeProjectReceiveHtml(data.usage || "-")}</strong></div>
       <div><span>연면적</span><strong>${escapeProjectReceiveHtml(data.area || "-")}</strong></div>
       <div><span>동수</span><strong>${escapeProjectReceiveHtml(data.buildings || "-")}</strong></div>
-      <div><span>층수</span><strong>${escapeProjectReceiveHtml(floorText)}</strong></div>
-      <div><span>지하층수</span><strong>${escapeProjectReceiveHtml(data.basementFloors || "-")}</strong></div>
-      <div><span>지상층수</span><strong>${escapeProjectReceiveHtml(data.groundFloors || "-")}</strong></div>
+      <div><span>지하층수</span><strong>${escapeProjectReceiveHtml(basementFloors)}</strong></div>
+      <div><span>지상층수</span><strong>${escapeProjectReceiveHtml(groundFloors)}</strong></div>
       <div><span>입찰일</span><strong>${escapeProjectReceiveHtml(data.bidDate || "-")}</strong></div>
       <div><span>단가작업여부</span><strong>${escapeProjectReceiveHtml(data.unitPrice || "-")}</strong></div>
       <div><span>납품기준</span><strong>${escapeProjectReceiveHtml(data.firstDelivery || "미입력")}</strong></div>
@@ -1345,6 +1403,12 @@ function openProjectReceiveListViewer(source, index) {
     <div class="project-viewer-section">
       <h4>작업범위</h4>
       <p>${escapeProjectReceiveHtml(scopeText)}</p>
+    </div>
+    <div class="project-viewer-section">
+      <h4>PM 지정</h4>
+      <div class="project-viewer-pm-list">
+        ${pmAssignmentRows.map(row => `<div><span>${escapeProjectReceiveHtml(row.label)}</span><strong>${escapeProjectReceiveHtml(row.value || "미지정")}</strong></div>`).join("")}
+      </div>
     </div>
     <div class="project-viewer-section">
       <h4>접수자료</h4>
