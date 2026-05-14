@@ -13963,3 +13963,149 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
     grid-template-columns:1fr !important;
   }
 }
+
+
+/* === 2026-05-14 Viet QS Team Leader 2줄 배치/이름 전체 표시 최종 보정 ===
+   - 5개 이하 그룹은 3열 x 2줄 기준으로 배치
+   - 그룹 내부 세로 과확장 방지
+   - Team Leader 이름이 잘리지 않도록 줄바꿈 허용 */
+.pm-teamleader-list,
+.pm-teamleader-list-inner{
+  width:100% !important;
+  max-width:100% !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-group-list{
+  width:100% !important;
+  max-width:100% !important;
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(260px,1fr)) !important;
+  grid-auto-flow:row !important;
+  gap:10px 12px !important;
+  align-items:start !important;
+  align-content:start !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-group{
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:118px minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:start !important;
+  align-content:start !important;
+  padding:8px !important;
+  margin:0 !important;
+  border:1px solid #d7e4f5 !important;
+  border-radius:16px !important;
+  background:#fff !important;
+  box-sizing:border-box !important;
+  position:static !important;
+  transform:none !important;
+  overflow:visible !important;
+  flex:none !important;
+}
+
+.pm-teamleader-dept-title{
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:36px !important;
+  align-self:stretch !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:8px 8px !important;
+  border-radius:13px !important;
+  background:#eef6ff !important;
+  color:#2563eb !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1.18 !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  box-sizing:border-box !important;
+}
+
+.pm-teamleader-dept-items{
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  align-items:start !important;
+  align-content:start !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item{
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:34px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  padding:7px 9px !important;
+  border-radius:11px !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item input{
+  flex:0 0 15px !important;
+  width:15px !important;
+  height:15px !important;
+  margin:0 !important;
+}
+
+.pm-teamleader-dept-items .pm-check-item span{
+  display:block !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:keep-all !important;
+  overflow-wrap:anywhere !important;
+  line-height:1.25 !important;
+  font-size:13px !important;
+}
+
+@media(max-width:1500px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(3,minmax(230px,1fr)) !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:108px minmax(0,1fr) !important;
+  }
+  .pm-teamleader-dept-title,
+  .pm-teamleader-dept-items .pm-check-item span{
+    font-size:12px !important;
+  }
+}
+
+@media(max-width:1200px){
+  .pm-teamleader-group-list{
+    grid-template-columns:repeat(2,minmax(260px,1fr)) !important;
+  }
+}
+
+@media(max-width:760px){
+  .pm-teamleader-group-list{
+    grid-template-columns:1fr !important;
+  }
+  .pm-teamleader-dept-group{
+    grid-template-columns:1fr !important;
+  }
+}
