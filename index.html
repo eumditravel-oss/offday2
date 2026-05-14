@@ -756,7 +756,13 @@
         <section class="workspace">
           <aside class="side-nav">
             <div class="side-title">업무관리 좌측 카테고리</div>
-            <div class="side-group"><button class="side-main active" data-work-main="projectReceive">프로젝트 접수</button></div>
+            <div class="side-group project-receive-side-group">
+              <button class="side-main active" data-work-main="projectReceive">프로젝트 접수</button>
+              <div class="side-sub active project-receive-sub-menu">
+                <button class="side-item active" data-work-main="projectReceive">프로젝트 작성</button>
+                <button class="side-item" data-work-main="projectReceiveList">프로젝트 리스트</button>
+              </div>
+            </div>
             <div class="side-group"><button class="side-main" data-work-main="pmSchedule">PM 배정 / 일정</button></div>
             <div class="side-group"><button class="side-main" data-work-main="projectManage">프로젝트 관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="qcReview">프로젝트 질의응답 관리</button></div>
@@ -867,6 +873,63 @@
                     <label class="receive-field full"><span>수주시 요청사항</span><textarea id="receiveRequest" rows="5"></textarea></label>
                   </div>
                 </section>
+              </article>
+            </section>
+
+            <section id="projectReceiveList" class="work-panel">
+              <article class="project-list-shell">
+                <div class="project-receive-hero project-list-hero">
+                  <div>
+                    <h2>프로젝트 리스트</h2>
+                    <p class="subcopy">프로젝트 접수에서 등록된 프로젝트를 리스트 형식으로 확인합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="renderProjectReceiveListView()">새로고침</button>
+                    <button class="btn btn-primary" type="button" onclick="switchWorkPanel('projectReceive')">+ 프로젝트 작성</button>
+                  </div>
+                </div>
+
+                <section class="project-list-summary" id="projectReceiveListSummary"></section>
+
+                <article class="project-list-card">
+                  <div class="project-list-toolbar">
+                    <div class="field project-list-search-field">
+                      <label>검색</label>
+                      <input id="projectReceiveListSearch" placeholder="프로젝트명, 접수번호, 의뢰처, 작업범위 검색" oninput="renderProjectReceiveListView()" />
+                    </div>
+                    <div class="field">
+                      <label>작업범위</label>
+                      <select id="projectReceiveListScopeFilter" onchange="renderProjectReceiveListView()">
+                        <option value="전체">전체</option>
+                        <option value="마감">마감</option>
+                        <option value="구조팀">구조팀</option>
+                        <option value="BIM 파트">BIM 파트</option>
+                        <option value="토목ㆍ조경파트">토목ㆍ조경파트</option>
+                        <option value="기계/전기">기계/전기</option>
+                        <option value="클레임">클레임</option>
+                        <option value="골조성">골조성</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="project-list-table-wrap">
+                    <table class="project-list-table">
+                      <thead>
+                        <tr>
+                          <th>접수번호</th>
+                          <th>프로젝트명</th>
+                          <th>의뢰처</th>
+                          <th>건물용도</th>
+                          <th>연면적</th>
+                          <th>층수</th>
+                          <th>작업범위</th>
+                          <th>납품기준</th>
+                          <th>상태</th>
+                        </tr>
+                      </thead>
+                      <tbody id="projectReceiveListBody"></tbody>
+                    </table>
+                  </div>
+                </article>
               </article>
             </section>
 
