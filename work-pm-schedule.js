@@ -34,6 +34,7 @@ const pmScheduleDeptOrder = [
   "External",
   "Vertical",
   "Horizontal/Foundation",
+  "Horizon / Foundation",
   "Civil",
   "Development"
 ];
@@ -140,7 +141,7 @@ function getPmScheduleVietEmployees() {
 
 function getPmScheduleCategoryDeptMap() {
   return {
-    Structure: ["Vertical", "Horizontal/Foundation", "Horizon / Foundation"],
+    Structure: ["Vertical", "Horizon / Foundation", "Horizontal/Foundation"],
     Finish: ["Internal 1", "Internal 2", "Internal 3", "Partition&Opening", "External"],
     Civil: ["Civil"]
   };
@@ -598,7 +599,7 @@ function renderPmScheduleRequestTargets(item) {
       </div>
       <div class="pm-check-list-inner pm-teamleader-list-inner pm-teamleader-group-list">
         ${leaders.length ? groupedLeaders.map(group => `
-          <div class="pm-teamleader-dept-group ${getPmScheduleTeamLeaderDeptClass(group.dept)}" data-dept="${escapePmScheduleAttr(group.dept)}">
+          <div class="pm-teamleader-dept-group">
             <div class="pm-teamleader-dept-title">${formatPmScheduleTeamLeaderDeptTitle(group.dept)}</div>
             <div class="pm-teamleader-dept-items">
               ${group.members.map(emp => {
@@ -615,31 +616,21 @@ function renderPmScheduleRequestTargets(item) {
 
 
 function getPmScheduleTeamLeaderDisplayDept(emp) {
+  const rawDept = normalizePmScheduleVietDeptName(emp?.dept);
   const englishName = String(emp?.name || "").trim();
   const koreanName = String(emp?.koreanName || "").trim();
-  const empNo = String(emp?.empNo || "").trim();
-  const rawDept = String(emp?.dept || "").trim();
-  const normalizedDept = normalizePmScheduleVietDeptName(rawDept);
 
   // 조직도 기준 보정: Dinh Phi(피)는 Internal 1 하위 Team Leader로 표기
-  if (empNo === "VQS-017" || englishName === "Dinh Phi" || koreanName === "피") return "Internal 1";
+  if (englishName === "Dinh Phi" || koreanName === "피") return "Internal 1";
 
-  // 조직도 표기명 통일
-  if (normalizedDept === "Horizon / Foundation" || rawDept === "Horizontal/Foundation") return "Horizontal/Foundation";
-  return normalizedDept;
+  // 화면 표기는 사용자가 확인한 조직도 명칭 기준으로 통일
+  if (rawDept === "Horizon / Foundation") return "Horizontal/Foundation";
+  return rawDept;
 }
 
 function formatPmScheduleTeamLeaderDeptTitle(dept) {
   if (dept === "Partition&Opening") return "Partition<br>&amp;Opening";
   return escapePmScheduleHtml(dept);
-}
-
-function getPmScheduleTeamLeaderDeptClass(dept) {
-  return `dept-${String(dept || "")
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9가-힣]+/g, "-")
-    .replace(/^-+|-+$/g, "")}`;
 }
 
 function groupPmScheduleVietTeamLeadersByDept(leaders) {
@@ -650,9 +641,15 @@ function groupPmScheduleVietTeamLeadersByDept(leaders) {
     map.get(dept).push(emp);
   });
 
-  return pmScheduleDeptOrder
-    .filter(dept => map.has(dept))
+  const used = new Set();
+  const ordered = pmScheduleDeptOrder
+    .filter(dept => map.has(dept) && !used.has(dept) && used.add(dept))
     .map(dept => ({ dept, members: map.get(dept) }));
+
+  map.forEach((members, dept) => {
+    if (!used.has(dept)) ordered.push({ dept, members });
+  });
+  return ordered;
 }
 
 function setPmSchedulePmRequestDeptFilter(value) {
@@ -733,13 +730,10 @@ function sortConCostPmCandidates(list) {
 }
 
 function getVietTeamLeaderCandidatesByCategory(category) {
-  const allowed = (getPmScheduleCategoryDeptMap()[category] || []).map(dept => {
-    const normalized = normalizePmScheduleVietDeptName(dept);
-    return normalized === "Horizon / Foundation" ? "Horizontal/Foundation" : normalized;
-  });
+  const allowed = getPmScheduleCategoryDeptMap()[category] || [];
   return (typeof employees !== "undefined" ? employees : [])
     .filter(emp => emp.company === "Viet QS" && emp.status === "재직" && isVietTeamLeaderOnly(emp))
-    .filter(emp => allowed.includes(getPmScheduleTeamLeaderDisplayDept(emp)))
+    .filter(emp => allowed.includes(normalizePmScheduleVietDeptName(emp.dept)))
     .sort(comparePmScheduleEmployees);
 }
 
