@@ -339,6 +339,7 @@ function makePmScheduleProject(data, source = "프로젝트 접수", status = "p
     },
     requestTargets: {
       pm: [],
+      pmAuthority: [],
       teamLeaders: []
     },
     requestMemo: "",
@@ -846,25 +847,60 @@ function getVietTeamLeaderCandidatesByCategory(category) {
     .sort(comparePmScheduleEmployees);
 }
 
+
+function getPmSchedulePmAuthorityTargets(item) {
+  if (!item) return [];
+  if (!item.requestTargets) item.requestTargets = { pm: [], pmAuthority: [], teamLeaders: [] };
+  if (!Array.isArray(item.requestTargets.pm)) item.requestTargets.pm = [];
+  item.requestTargets.pmAuthority = item.requestTargets.pm.map(value => ({
+    displayName: value,
+    permissionRole: "PM",
+    requestedAt: item.pmAuthorityRequestedAt || "미전송"
+  }));
+  return item.requestTargets.pmAuthority;
+}
+
+function syncPmSchedulePmAuthorityTargets(item) {
+  if (!item) return [];
+  const targets = getPmSchedulePmAuthorityTargets(item);
+  item.pmAuthorityTargets = targets;
+  return targets;
+}
+
+function getPmSchedulePmAuthorityText(item) {
+  const targets = syncPmSchedulePmAuthorityTargets(item);
+  return targets.length
+    ? targets.map(target => `${target.displayName} · PM 권한`).join(" / ")
+    : "PM 권한 수신자 없음";
+}
+
 function togglePmScheduleRequestTarget(group, value, checked) {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
+  if (!item.requestTargets) item.requestTargets = { pm: [], pmAuthority: [], teamLeaders: [] };
   const list = item.requestTargets[group] || [];
   if (checked && !list.includes(value)) list.push(value);
   if (!checked) item.requestTargets[group] = list.filter(name => name !== value);
+
+  // 한국 PM 요청에서 선택된 인원은 실제 직급과 무관하게 해당 프로젝트의 PM 권한 수신자로 처리한다.
+  // 즉, 수석/책임/선임/팀장 등 어떤 직급을 선택해도 권한 화면에서는 PM 작성요청 대상으로 표시된다.
+  if (group === "pm") syncPmSchedulePmAuthorityTargets(item);
 }
 
 function requestPmScheduleDrafts() {
   const item = getCurrentPmScheduleProject();
   if (!item) return;
   item.requestMemo = document.getElementById("pmScheduleRequestMemo")?.value || "";
+  item.pmAuthorityRequestedAt = getPmScheduleNowText();
+  syncPmSchedulePmAuthorityTargets(item);
   const totalTargets = [...item.requestTargets.pm, ...item.requestTargets.teamLeaders];
   if (!totalTargets.length) {
     showToast("스케쥴 작성 요청 대상을 먼저 선택하세요.");
     return;
   }
   item.status = "requested";
-  item.history.unshift(`${totalTargets.join(", ")}에게 스케쥴 1·2안 작성 요청 알림을 보냈습니다.`);
+  const pmAuthorityText = item.requestTargets.pm.length ? ` / 한국 PM 권한 수신자: ${getPmSchedulePmAuthorityText(item)}` : "";
+  item.history.unshift(`${totalTargets.join(", ")}에게 스케쥴 1·2안 작성 요청 알림을 보냈습니다.${pmAuthorityText}`);
   renderPmScheduleDashboard();
   showToast("스케쥴 관리 1·2안 작성 요청 알림을 전송했습니다.");
 }
@@ -1214,6 +1250,7 @@ function renderPmScheduleEditorView() {
       <div><span>프로젝트명</span><strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong></div>
       <div><span>작업범위</span><strong>${escapePmScheduleHtml(getPmScheduleScopeText(item.project))}</strong></div>
       <div><span>요청 메모</span><strong>${escapePmScheduleHtml(item.requestMemo || "요청 메모 없음")}</strong></div>
+      ${getPmScheduleRole() === "PM" ? `<div><span>PM 작성요청</span><strong>${escapePmScheduleHtml(getPmSchedulePmAuthorityText(item))}</strong></div>` : ""}
     `;
   }
   if (isPmScheduleStaffRole()) {
@@ -1265,12 +1302,30 @@ function renderPmAssignedProjectModal() {
   const body = document.getElementById("pmAssignedProjectModalBody");
   if (!body) return;
   initPmScheduleProjects();
-  body.innerHTML = `<div class="pm-assigned-project-list">${pmScheduleProjects.map((item, index) => {
+  const role = getPmScheduleRole();
+  const indexedProjects = pmScheduleProjects.map((item, index) => ({ item, index }));
+  const visibleProjects = role === "PM"
+    ? indexedProjects.filter(({ item }) => {
+        syncPmSchedulePmAuthorityTargets(item);
+        return (item.requestTargets?.pm || []).length || item.assignment?.pmFinish || item.assignment?.pmStructure || item.assignment?.pmBim || item.assignment?.pmCivil;
+      })
+    : indexedProjects;
+
+  if (!visibleProjects.length) {
+    body.innerHTML = `<div class="pm-empty-box">현재 권한에서 수신된 작성요청 프로젝트가 없습니다.</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="pm-assigned-project-list">${visibleProjects.map(({ item, index }) => {
     const state = getPmScheduleEditorStatus(item);
     const canWrite = item.status !== "approved" && item.status !== "submitted";
+    const pmAuthorityLine = role === "PM" && (item.requestTargets?.pm || []).length
+      ? `<small>PM 권한 수신: ${escapePmScheduleHtml(getPmSchedulePmAuthorityText(item))}</small>`
+      : "";
     return `<button class="pm-assigned-project-item" type="button" onclick="selectPmAssignedProject(${index})">
       <strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong>
       <span>${escapePmScheduleHtml(item.project.projectNo || "-")} · ${escapePmScheduleHtml(getPmScheduleScopeText(item.project))}</span>
+      ${pmAuthorityLine}
       <em class="pm-editor-status ${state.className}">${state.label}</em>
       ${canWrite ? `<b>스케쥴 1ㆍ2안 작성</b>` : `<b class="muted">스케쥴 1ㆍ2안 작성</b>`}
     </button>`;
