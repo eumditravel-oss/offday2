@@ -763,7 +763,14 @@
                 <button class="side-item" data-work-main="projectReceiveList">프로젝트 리스트</button>
               </div>
             </div>
-            <div class="side-group"><button class="side-main" data-work-main="pmSchedule">PM 배정 / 일정</button></div>
+            <div class="side-group pm-schedule-side-group">
+              <button class="side-main" data-work-main="pmSchedule" data-pm-section="assign">PM 배정 / 일정</button>
+              <div class="side-sub pm-schedule-sub-menu">
+                <button class="side-item" data-work-main="pmSchedule" data-pm-section="assign">PM배정</button>
+                <button class="side-item" data-work-main="pmSchedule" data-pm-section="approval">작업일정 결재</button>
+                <button class="side-item" data-work-main="pmSchedule" data-pm-section="all">전체 일정</button>
+              </div>
+            </div>
             <div class="side-group"><button class="side-main" data-work-main="projectManage">프로젝트 관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="qcReview">프로젝트 질의응답 관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="deliveryData">납품 및 데이터관리</button></div>
@@ -943,14 +950,14 @@
                   <div class="pm-schedule-hero-actions">
                     <span id="pmAssignedProjectButtonHolder" class="pm-editor-only-action"></span>
                     <button class="btn btn-line" type="button" onclick="renderPmScheduleDashboard()">새로고침</button>
-                    <button class="btn btn-primary pm-manager-only" type="button" onclick="requestPmScheduleDrafts()">스케쥴 작성 요청</button>
+                    <button class="btn btn-primary pm-manager-only pm-section-assign-only" type="button" onclick="requestPmScheduleDrafts()">스케쥴 작성 요청</button>
                   </div>
                 </div>
 
                 <div id="pmScheduleRoleMessage" class="pm-schedule-role-message"></div>
 
                 <div class="pm-schedule-layout" id="pmScheduleManagerView">
-                  <aside class="pm-schedule-project-card pm-schedule-project-wide">
+                  <aside class="pm-schedule-project-card pm-schedule-project-wide" data-pm-section-view="assign approval">
                     <div class="pm-card-head compact">
                       <div><strong>접수 프로젝트 리스트</strong><span>실장 권한 기준 배정 대기</span></div>
                     </div>
@@ -964,7 +971,7 @@
                   </aside>
 
                   <main class="pm-schedule-detail">
-                    <section class="pm-schedule-card pm-schedule-summary-card">
+                    <section class="pm-schedule-card pm-schedule-summary-card" data-pm-section-view="assign approval">
                       <div class="pm-card-head">
                         <div><strong id="pmScheduleProjectTitle">프로젝트를 선택하세요</strong><span id="pmScheduleProjectSub">접수된 프로젝트의 작업범위와 담당 실장을 확인합니다.</span></div>
                         <em id="pmScheduleProjectStatus">대기</em>
@@ -972,7 +979,7 @@
                       <div class="pm-summary-grid" id="pmScheduleSummaryGrid"></div>
                     </section>
 
-                    <section class="pm-schedule-card">
+                    <section class="pm-schedule-card" data-pm-section-view="assign">
                       <div class="pm-card-head">
                         <div><strong>PM 지정</strong><span>실장은 조직도 기준 하위 직원 중 PM을 지정합니다.</span></div>
                         <button class="btn btn-line pm-assignment-confirm-btn" type="button" onclick="confirmPmScheduleAssignment()">확인</button>
@@ -985,7 +992,7 @@
                       </div>
                     </section>
 
-                    <section class="pm-schedule-card">
+                    <section class="pm-schedule-card" data-pm-section-view="assign">
                       <div class="pm-card-head">
                         <div><strong>스케쥴 1·2안 작성 요청 대상</strong><span>PM 또는 Viet QS Team Leader에게 다수 요청 가능</span></div>
                       </div>
@@ -1006,7 +1013,7 @@
                       </div>
                     </section>
 
-                    <section class="pm-schedule-card">
+                    <section class="pm-schedule-card" data-pm-section-view="approval">
                       <div class="pm-card-head">
                         <div><strong>Viet QS스케쥴 1안 / 2안 검토</strong><span>제출된 안을 비교 후 1개 안을 승인하거나 반려합니다.</span></div>
                       </div>
@@ -1018,6 +1025,15 @@
                           <button class="btn btn-danger" type="button" onclick="rejectPmScheduleProposal()">반려</button>
                         </div>
                       </div>
+                    </section>
+
+                    <section class="pm-schedule-card pm-all-schedule-card" data-pm-section-view="all">
+                      <div class="pm-card-head">
+                        <div><strong>전체 일정</strong><span>직원 인사카드 기준 월별 투입 일정을 확인합니다.</span></div>
+                        <label class="pm-all-team-filter"><span>팀 구분</span><select id="pmScheduleAllTeamFilter" onchange="renderPmScheduleAllSchedule()"><option value="Finish">Finish Team</option><option value="Structure">Structure Team</option><option value="Civil">Civil</option></select></label>
+                      </div>
+                      <div class="pm-all-schedule-guide">스케쥴 1ㆍ2안 작성/승인 내역을 기준으로 직원별 월별 일정이 자동 반영됩니다.</div>
+                      <div class="pm-all-schedule-wrap" id="pmScheduleAllScheduleBoard"></div>
                     </section>
                   </main>
                 </div>
