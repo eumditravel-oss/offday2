@@ -948,9 +948,7 @@
                     <h2>PM 배정 / 일정</h2>
                   </div>
                   <div class="pm-schedule-hero-actions">
-                    <span id="pmAssignedProjectButtonHolder" class="pm-editor-only-action"></span>
                     <button class="btn btn-line" type="button" onclick="renderPmScheduleDashboard()">새로고침</button>
-                    <button class="btn btn-primary pm-manager-only pm-section-assign-only" type="button" onclick="requestPmScheduleDrafts()">스케쥴 작성 요청</button>
                   </div>
                 </div>
 
@@ -960,6 +958,7 @@
                   <aside class="pm-schedule-project-card pm-schedule-project-wide" data-pm-section-view="assign approval">
                     <div class="pm-card-head compact">
                       <div><strong>접수 프로젝트 리스트</strong><span>실장 권한 기준 배정 대기</span></div>
+                      <button class="btn btn-primary pm-manager-only pm-section-assign-only" type="button" onclick="openPmAssignmentPanel()">PM배정</button>
                     </div>
                     <div class="pm-project-filter-row">
                       <button class="pm-filter-chip active" type="button" onclick="setPmScheduleFilter('all', this)">전체</button>
@@ -1010,6 +1009,9 @@
                       </div>
                       <div class="pm-request-note-row">
                         <label class="receive-field full"><span>요청 메모</span><textarea id="pmScheduleRequestMemo" rows="3" placeholder="예: 한국 PM은 범위 정리, Viet QS Team Leader는 1안/2안 작성 요청"></textarea></label>
+                      </div>
+                      <div class="pm-request-submit-row">
+                        <button class="btn btn-primary" type="button" onclick="requestPmScheduleDrafts()">스케쥴 작성 요청</button>
                       </div>
                     </section>
 
