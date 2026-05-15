@@ -759,6 +759,7 @@
             <div class="side-group estimate-quote-side-group">
               <button class="side-main" data-work-main="estimateQuote">견적서 관리</button>
               <div class="side-sub estimate-quote-sub-menu">
+                <button class="side-item" data-work-main="estimateDbManage">DB관리</button>
                 <button class="side-item" data-work-main="estimateQuote">견적서 작성</button>
                 <button class="side-item" data-work-main="estimateQuoteList">견적서 관리</button>
               </div>
@@ -785,6 +786,35 @@
           </aside>
 
           <section class="main-area">
+            <section id="estimateDbManage" class="work-panel">
+              <article class="quote-shell quote-db-shell">
+                <div class="project-receive-hero quote-hero">
+                  <div>
+                    <h2>DB관리</h2>
+                    <p class="subcopy">견적서 작성에 사용할 기준 DB를 엑셀 형식으로 관리합니다. 세부 구분명은 추후 지정 기준에 맞춰 확장합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="renderEstimateDbManage()">새로고침</button>
+                    <button class="btn btn-primary" type="button" onclick="addEstimateDbRow()">+ 행 추가</button>
+                  </div>
+                </div>
+
+                <section class="project-receive-card quote-card quote-card-full quote-db-card">
+                  <div class="quote-db-tabs" id="estimateDbTabs">
+                    <button class="quote-db-tab active" type="button" data-db-tab="pj" onclick="setEstimateDbTab('pj')">PJ관리</button>
+                    <button class="quote-db-tab" type="button" data-db-tab="progress" onclick="setEstimateDbTab('progress')">기성관리</button>
+                    <button class="quote-db-tab" type="button" data-db-tab="mep" onclick="setEstimateDbTab('mep')">기전업체</button>
+                  </div>
+                  <div class="quote-db-grid-wrap">
+                    <table class="quote-db-table">
+                      <thead id="estimateDbHead"></thead>
+                      <tbody id="estimateDbBody"></tbody>
+                    </table>
+                  </div>
+                </section>
+              </article>
+            </section>
+
             <section id="estimateQuote" class="work-panel">
               <article class="quote-shell" id="estimateQuoteShell">
                 <div class="project-receive-hero quote-hero">
@@ -953,6 +983,15 @@
                       <em>04</em>
                     </div>
                     <div class="receive-material-list" id="receiveMaterialList"></div>
+                    <div class="receive-webhard-box">
+                      <div class="receive-webhard-title">웹하드 정보</div>
+                      <div class="receive-webhard-grid">
+                        <label class="receive-field"><span>웹하드 주소</span><input id="receiveWebhardUrl" placeholder="예: http://only.webhard.co.kr" /></label>
+                        <label class="receive-field"><span>ID</span><input id="receiveWebhardId" placeholder="예: hdeckucu" /></label>
+                        <label class="receive-field"><span>PW</span><input id="receiveWebhardPw" placeholder="예: s100" /></label>
+                        <label class="receive-field"><span>비고</span><input id="receiveWebhardNote" placeholder="폴더 접속KEY, 폴더명, 자료 위치 등" /></label>
+                      </div>
+                    </div>
                   </section>
 
                   <section class="project-receive-card project-receive-pm-card">
