@@ -2,6 +2,7 @@
    업무관리 탭 / QC 체크리스트
    ========================= */
 const workPageMeta = {
+  estimateDbManage: ["DB관리", "PJ관리, 기성관리, 기전업체 기준 DB를 엑셀 형식으로 관리합니다."],
   estimateQuote: ["견적서 작성", "최초 견적 문의, 도면/웹하드 정보, 통화·이메일 기록을 작성합니다."],
   estimateQuoteList: ["견적서 관리", "견적서 기록을 수정하고 견적서 양식 다운로드 및 착수 전환을 관리합니다."],
   projectReceive: ["프로젝트 접수", "수주소식, 프로젝트 개요, 접수자료, 담당 PM, 납품일정을 카드형 화면으로 관리합니다."],
@@ -9390,7 +9391,7 @@ function updateBellReviewCount() {
 
 
 function syncWorkSideAccordion(targetPanelId) {
-  const isEstimateQuote = targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList";
+  const isEstimateQuote = targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList";
   const isProjectReceive = targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList";
   const isPmSchedule = targetPanelId === "pmSchedule";
   document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.toggle("active", isEstimateQuote));
@@ -9413,7 +9414,7 @@ function switchWorkPanel(panelId) {
   document.getElementById(targetPanelId)?.classList.add("active");
   syncWorkSideAccordion(targetPanelId);
 
-  if (targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
+  if (targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
   } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
@@ -9427,6 +9428,10 @@ function switchWorkPanel(panelId) {
   const meta = workPageMeta[targetPanelId] || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
   setText("workPageDesc", meta[1]);
+
+  if (targetPanelId === "estimateDbManage" && typeof renderEstimateDbManage === "function") {
+    renderEstimateDbManage();
+  }
 
   if (targetPanelId === "estimateQuote" && typeof renderEstimateQuoteDashboard === "function") {
     renderEstimateQuoteDashboard();
