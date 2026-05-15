@@ -9387,6 +9387,15 @@ function updateBellReviewCount() {
 }
 
 
+function syncWorkSideAccordion(targetPanelId) {
+  const isProjectReceive = targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList";
+  const isPmSchedule = targetPanelId === "pmSchedule";
+  document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.toggle("active", isProjectReceive));
+  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.toggle("active", isPmSchedule));
+  document.querySelectorAll(".side-main[data-work-main='projectReceive']").forEach(btn => btn.classList.toggle("active", isProjectReceive));
+  document.querySelectorAll(".side-main[data-work-main='pmSchedule']").forEach(btn => btn.classList.toggle("active", isPmSchedule));
+}
+
 function switchWorkPanel(panelId) {
   const targetPanelId = panelId || "projectReceive";
 
@@ -9396,12 +9405,11 @@ function switchWorkPanel(panelId) {
   document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
 
   document.getElementById(targetPanelId)?.classList.add("active");
+  syncWorkSideAccordion(targetPanelId);
 
   if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
-    document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.add("active"));
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
   } else if (targetPanelId === "pmSchedule") {
-    document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.add("active"));
     const activeSection = typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign";
     document.querySelector(`.side-item[data-work-main="pmSchedule"][data-pm-section="${activeSection}"]`)?.classList.add("active");
   } else {
