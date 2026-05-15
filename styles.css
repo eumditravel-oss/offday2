@@ -16520,3 +16520,50 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 @media (max-width: 900px) {
   .receive-webhard-grid { grid-template-columns: 1fr; }
 }
+
+/* === 견적서 DB관리 엑셀 작성란 v9 === */
+.quote-db-grid-wrap {
+  max-height: 68vh;
+}
+.quote-db-table {
+  min-width: 2600px;
+  table-layout: fixed;
+}
+.quote-db-table th,
+.quote-db-table td {
+  min-width: 120px;
+  padding: 7px 8px;
+  white-space: nowrap;
+}
+.quote-db-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: center;
+  background: #f1f5f9;
+}
+.quote-db-table .quote-db-head-row-2 th {
+  top: 36px;
+  background: #f8fafc;
+}
+.quote-db-table input {
+  min-height: 28px;
+  font-size: 13px;
+}
+.quote-db-company-row td,
+.quote-db-account-row td {
+  background: #fff7ed;
+  font-weight: 900;
+}
+.quote-db-company-row input {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+.quote-db-account-row td {
+  background: #f8fafc;
+}
+.quote-db-account-row input {
+  color: #475569;
+  font-weight: 800;
+}
