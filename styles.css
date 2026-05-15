@@ -16325,3 +16325,118 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 .project-list-name{line-height:1.2 !important;}
 .project-list-status{padding:5px 10px !important;font-size:11px !important;}
 #projectReceiveSaveBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.2);}
+
+
+/* === 견적서 관리 카테고리 / 견적서 작성 화면 === */
+.estimate-quote-sub-menu,
+.project-receive-sub-menu,
+.pm-schedule-sub-menu {
+  display: none;
+}
+.estimate-quote-sub-menu.active,
+.project-receive-sub-menu.active,
+.pm-schedule-sub-menu.active {
+  display: flex;
+}
+.quote-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.quote-hero .subcopy {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+.quote-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
+  gap: 18px;
+}
+.quote-card {
+  min-height: 0;
+}
+.quote-card-wide,
+.quote-card-full {
+  grid-column: 1 / -1;
+}
+.quote-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.quote-chip-group {
+  gap: 10px;
+}
+.quote-chip-block.has-children {
+  padding: 10px;
+  border: 1px dashed #fed7aa;
+  border-radius: 16px;
+  background: #fff7ed;
+}
+.quote-inline-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+.quote-list-table-wrap {
+  max-height: 640px;
+}
+.quote-list-table th,
+.quote-list-table td {
+  white-space: normal;
+}
+.quote-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 900;
+}
+.quote-action-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-xs {
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.empty-cell {
+  text-align: center;
+  color: #64748b;
+  font-weight: 800;
+  padding: 28px !important;
+}
+
+/* 프로젝트 리스트 세로 폭 축소 */
+.project-list-table th,
+.project-list-table td {
+  padding-top: 7px !important;
+  padding-bottom: 7px !important;
+  line-height: 1.28;
+}
+.project-list-table tbody tr {
+  min-height: 34px;
+}
+.project-list-table .status-pill,
+.project-list-table .badge,
+.project-list-table .project-status-badge {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+@media (max-width: 1200px) {
+  .quote-grid {
+    grid-template-columns: 1fr;
+  }
+}
