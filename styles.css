@@ -16231,3 +16231,88 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   background: #fff3e8;
   color: #f97316;
 }
+
+/* PM 배정 / 일정 - 작업일정 결재 리스트 및 요청 확인 모달 */
+.pm-section-approval-only{
+  display:none;
+}
+
+.pm-project-list-table.approval-list .pm-project-list-row small{
+  color:#0f172a;
+  font-weight:900;
+}
+
+.pm-modal-timeline-panel{
+  flex:0 0 auto;
+  border:1px solid var(--line2);
+  border-radius:18px;
+  background:#fff;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.pm-modal-timeline-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.pm-modal-timeline-head strong{
+  display:block;
+  font-size:17px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.pm-modal-timeline-head span{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+  text-align:right;
+}
+
+.pm-modal-timeline-list{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:8px;
+}
+
+.pm-modal-timeline-step{
+  border:1px solid var(--line2);
+  border-radius:14px;
+  background:#f8fafc;
+  padding:10px;
+  min-height:68px;
+}
+
+.pm-modal-timeline-step.active{
+  background:#eff6ff;
+  border-color:#bfdbfe;
+}
+
+.pm-modal-timeline-step b,
+.pm-modal-timeline-step span{
+  display:block;
+}
+
+.pm-modal-timeline-step b{
+  font-size:12px;
+  font-weight:900;
+  color:#2563eb;
+  margin-bottom:5px;
+}
+
+.pm-modal-timeline-step span{
+  font-size:12px;
+  font-weight:800;
+  color:#334155;
+  line-height:1.4;
+}
+
+@media (max-width:1200px){
+  .pm-modal-timeline-list{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+}
