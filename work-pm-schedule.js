@@ -104,21 +104,127 @@ function clonePmScheduleData(data) {
 }
 
 function getPmScheduleRole() {
-  return typeof currentPermissionRoleValue !== "undefined" ? currentPermissionRoleValue : "PM";
+  return typeof currentPermissionRoleValue !== "undefined" ? currentPermissionRoleValue : "구조PM";
+}
+
+function getPmScheduleRoleProfile(role = getPmScheduleRole()) {
+  const text = String(role || "").trim();
+  const profile = { raw: text, base: text, domain: "all", category: "", middleDept: "" };
+
+  if (["실장", "팀장"].includes(text)) {
+    profile.base = "manager";
+    profile.domain = "structure";
+    return profile;
+  }
+  if (text === "구조실장" || text === "구조팀장") {
+    profile.base = "manager";
+    profile.domain = "structure";
+    return profile;
+  }
+  if (text === "마감실장") {
+    profile.base = "manager";
+    profile.domain = "finish";
+    return profile;
+  }
+  if (text === "PM") {
+    profile.base = "pm";
+    profile.domain = "structure";
+    profile.category = "Structure";
+    return profile;
+  }
+  if (text === "구조PM") {
+    profile.base = "pm";
+    profile.domain = "structure";
+    profile.category = "Structure";
+    return profile;
+  }
+  if (text === "마감PM") {
+    profile.base = "pm";
+    profile.domain = "finish";
+    profile.category = "Finish";
+    return profile;
+  }
+  if (text === "토목ㆍ조경PM") {
+    profile.base = "pm";
+    profile.domain = "civil";
+    profile.category = "Civil";
+    return profile;
+  }
+  if (text === "Leader" || text.includes("Team Leader")) {
+    profile.base = "leader";
+    profile.domain = "structure";
+    profile.category = "Structure";
+    return profile;
+  }
+  if (text === "Asst.Leader") {
+    profile.base = "leader";
+    profile.domain = "structure";
+    profile.category = "Structure";
+    return profile;
+  }
+  if (text.startsWith("Leader-Finish-")) {
+    profile.base = "leader";
+    profile.domain = "finish";
+    profile.category = "Finish";
+    profile.middleDept = text.replace("Leader-Finish-", "");
+    return profile;
+  }
+  if (text.startsWith("Leader-Structure-")) {
+    profile.base = "leader";
+    profile.domain = "structure";
+    profile.category = "Structure";
+    profile.middleDept = text.replace("Leader-Structure-", "");
+    return profile;
+  }
+  if (text === "Leader-Civil") {
+    profile.base = "leader";
+    profile.domain = "civil";
+    profile.category = "Civil";
+    return profile;
+  }
+  if (text === "Staff" || ["사원", "수석", "선임", "책임"].includes(text)) {
+    profile.base = "staff";
+  }
+  return profile;
 }
 
 function isPmScheduleManagerRole() {
-  const role = getPmScheduleRole();
-  return role === "실장" || role === "팀장";
+  return getPmScheduleRoleProfile().base === "manager";
 }
 
 function isPmScheduleEditorRole() {
-  const role = getPmScheduleRole();
-  return role === "PM" || role === "Staff" || role === "Leader" || role === "Asst.Leader" || role.includes("Team Leader");
+  const base = getPmScheduleRoleProfile().base;
+  return base === "pm" || base === "leader" || base === "staff";
 }
 
 function isPmScheduleStaffRole() {
-  return getPmScheduleRole() === "Staff" || getPmScheduleRole() === "사원" || getPmScheduleRole() === "수석" || getPmScheduleRole() === "선임" || getPmScheduleRole() === "책임";
+  return getPmScheduleRoleProfile().base === "staff";
+}
+
+function getPmScheduleRoleCategory() {
+  return getPmScheduleRoleProfile().category || "Structure";
+}
+
+function getPmScheduleRoleMiddleDept() {
+  const middle = getPmScheduleRoleProfile().middleDept || "";
+  return normalizePmScheduleVietDeptName(middle);
+}
+
+function getPmScheduleRoleDomainScopes() {
+  const domain = getPmScheduleRoleProfile().domain;
+  if (domain === "finish") return ["마감", "인테리어·철거", "비교내역서", "단가작업", "기계/전기", "골조성"];
+  if (domain === "civil") return ["토목ㆍ조경파트", "토목", "조경"];
+  if (domain === "structure") return ["구조팀", "BIM 파트", "토목ㆍ조경파트", "구조", "BIM", "토목", "조경"];
+  return [];
+}
+
+function isPmScheduleProjectInRoleDomain(item) {
+  const profile = getPmScheduleRoleProfile();
+  if (!["manager", "pm", "leader"].includes(profile.base)) return true;
+  const scopes = (item?.project?.scopes || []).filter(scope => scope.checked).map(scope => String(scope.label || ""));
+  const allowed = getPmScheduleRoleDomainScopes();
+  if (!allowed.length || !scopes.length) return true;
+  return scopes.some(scope => allowed.some(key => scope.includes(key) || key.includes(scope)));
 }
 
 function getPmScheduleScopeText(project) {
@@ -173,13 +279,14 @@ function getPmScheduleMiddleDeptOptions(category = pmScheduleModalCategory) {
 function getPmScheduleEffectiveMiddleDept(category = pmScheduleModalCategory) {
   const options = getPmScheduleMiddleDeptOptions(category);
   if (!isPmScheduleLeaderRole()) return "";
+  const fixedMiddle = getPmScheduleRoleMiddleDept();
+  if (fixedMiddle && options.map(normalizePmScheduleVietDeptName).includes(fixedMiddle)) return fixedMiddle;
   if (options.includes(pmScheduleModalMiddleDept)) return pmScheduleModalMiddleDept;
   return options[0] || "";
 }
 
 function isPmScheduleLeaderRole() {
-  const role = getPmScheduleRole();
-  return role === "Leader" || role === "Asst.Leader" || role.includes("Team Leader");
+  return getPmScheduleRoleProfile().base === "leader";
 }
 
 function setPmScheduleModalMiddleDept(value) {
@@ -208,8 +315,10 @@ function getPmScheduleVisibleRows(item, category = pmScheduleModalCategory, midd
 }
 
 function setPmScheduleModalCategory(value) {
-  pmScheduleModalCategory = value || "Structure";
-  pmScheduleModalMiddleDept = getPmScheduleMiddleDeptOptions(pmScheduleModalCategory)[0] || "";
+  const fixedCategory = getPmScheduleRoleCategory();
+  pmScheduleModalCategory = isPmScheduleLeaderRole() || getPmScheduleRoleProfile().base === "pm" ? fixedCategory : (value || "Structure");
+  const fixedMiddle = getPmScheduleRoleMiddleDept();
+  pmScheduleModalMiddleDept = fixedMiddle || getPmScheduleMiddleDeptOptions(pmScheduleModalCategory)[0] || "";
   renderPmSchedulePlanModal();
 }
 
@@ -394,9 +503,10 @@ function setPmScheduleFilter(filter, button) {
 
 function getPmScheduleFilteredProjects() {
   initPmScheduleProjects();
-  if (pmScheduleActiveSection === "approval") return getPmScheduleApprovalProjects();
-  if (pmScheduleFilter === "all") return pmScheduleProjects;
-  return pmScheduleProjects.filter(item => item.status === pmScheduleFilter);
+  const base = pmScheduleActiveSection === "approval"
+    ? getPmScheduleApprovalProjects()
+    : (pmScheduleFilter === "all" ? pmScheduleProjects : pmScheduleProjects.filter(item => item.status === pmScheduleFilter));
+  return base.filter(item => isPmScheduleProjectInRoleDomain(item));
 }
 
 function getPmScheduleApprovalProjects() {
@@ -431,7 +541,8 @@ function setPmScheduleSection(section = "assign") {
   const shell = document.getElementById("pmScheduleShell");
   if (shell) shell.dataset.pmSection = pmScheduleActiveSection;
 
-  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.add("active"));
+  const pmPanelActive = document.getElementById("pmSchedule")?.classList.contains("active");
+  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.toggle("active", !!pmPanelActive));
   document.querySelectorAll("[data-pm-section]").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.pmSection === pmScheduleActiveSection);
   });
