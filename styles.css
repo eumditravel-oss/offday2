@@ -16448,3 +16448,75 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
     grid-template-columns: 1fr;
   }
 }
+
+
+/* === 프로젝트 접수 웹하드 정보 / 견적서 DB관리 v8 === */
+.receive-webhard-box {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+.receive-webhard-title {
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+.receive-webhard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.quote-db-shell { display: block; }
+.quote-db-card { margin-top: 18px; }
+.quote-db-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.quote-db-tab {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.quote-db-tab.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.quote-db-grid-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.quote-db-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  background: #fff;
+}
+.quote-db-table th,
+.quote-db-table td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding: 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+.quote-db-table th {
+  background: #f8fafc;
+  font-weight: 900;
+}
+.quote-db-table input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  font-weight: 700;
+  background: transparent;
+}
+@media (max-width: 900px) {
+  .receive-webhard-grid { grid-template-columns: 1fr; }
+}
