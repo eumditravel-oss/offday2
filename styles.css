@@ -16336,7 +16336,15 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 .estimate-quote-sub-menu.active,
 .project-receive-sub-menu.active,
 .pm-schedule-sub-menu.active {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 8px 0 0 10px;
+}
+.estimate-quote-sub-menu.active .side-item,
+.project-receive-sub-menu.active .side-item,
+.pm-schedule-sub-menu.active .side-item {
+  width: 100%;
 }
 .quote-shell {
   display: flex;
