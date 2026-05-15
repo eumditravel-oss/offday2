@@ -15709,17 +15709,19 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   color:#475569;
   font-size:12px;
   font-weight:900;
-  padding:13px 12px;
+  padding:7px 10px;
   border-bottom:1px solid var(--line2);
+  line-height:1.2;
 }
 
 .project-list-table td{
-  padding:14px 12px;
+  padding:5px 10px;
   border-bottom:1px solid #edf2f7;
   color:#334155;
-  font-size:13px;
+  font-size:12px;
   font-weight:800;
   vertical-align:middle;
+  line-height:1.2;
 }
 
 .project-list-table tr:hover td{
@@ -16316,3 +16318,10 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
     grid-template-columns:repeat(2, minmax(0, 1fr));
   }
 }
+
+
+/* === 2026-05-15 프로젝트 리스트 행 높이 축소 + 접수 저장 비활성 표시 === */
+.project-list-table td strong,
+.project-list-name{line-height:1.2 !important;}
+.project-list-status{padding:5px 10px !important;font-size:11px !important;}
+#projectReceiveSaveBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.2);}
