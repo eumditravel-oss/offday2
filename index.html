@@ -756,6 +756,13 @@
         <section class="workspace">
           <aside class="side-nav">
             <div class="side-title">업무관리 좌측 카테고리</div>
+            <div class="side-group estimate-quote-side-group">
+              <button class="side-main" data-work-main="estimateQuote">견적서 관리</button>
+              <div class="side-sub estimate-quote-sub-menu">
+                <button class="side-item" data-work-main="estimateQuote">견적서 작성</button>
+                <button class="side-item" data-work-main="estimateQuoteList">견적서 관리</button>
+              </div>
+            </div>
             <div class="side-group project-receive-side-group">
               <button class="side-main active" data-work-main="projectReceive">프로젝트 접수</button>
               <div class="side-sub active project-receive-sub-menu">
@@ -778,6 +785,110 @@
           </aside>
 
           <section class="main-area">
+            <section id="estimateQuote" class="work-panel">
+              <article class="quote-shell" id="estimateQuoteShell">
+                <div class="project-receive-hero quote-hero">
+                  <div>
+                    <h2>견적서 작성</h2>
+                    <p class="subcopy">최초 견적 문의 내용을 기록하고, 착수 확정 시 프로젝트 작성 화면으로 불러올 수 있습니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="resetEstimateQuoteForm()">초기화</button>
+                    <button class="btn btn-line" type="button" onclick="loadEstimateQuoteSample()">포항 AI Factory 예시 불러오기</button>
+                    <button class="btn btn-primary" type="button" onclick="saveEstimateQuoteDraft()">견적서 저장</button>
+                  </div>
+                </div>
+                <div class="quote-grid">
+                  <section class="project-receive-card quote-card quote-card-wide">
+                    <div class="project-receive-card-head"><div><strong>프로젝트 / 계약 개요</strong><span>연면적, 층수, 진행 계약 조건을 기록합니다.</span></div><em>01</em></div>
+                    <div class="project-receive-form-grid quote-form-grid">
+                      <label class="receive-field full"><span>프로젝트명</span><input id="quoteProjectName" /></label>
+                      <label class="receive-field"><span>접수번호</span><input id="quoteProjectNo" /></label>
+                      <label class="receive-field"><span>의뢰처</span><input id="quoteClient" /></label>
+                      <label class="receive-field"><span>건물용도</span><input id="quoteUsage" /></label>
+                      <label class="receive-field"><span>연면적(㎡)</span><input id="quoteAreaM2" /></label>
+                      <label class="receive-field"><span>연면적(평)</span><input id="quoteAreaPy" /></label>
+                      <label class="receive-field"><span>동수</span><input id="quoteBuildings" /></label>
+                      <label class="receive-field"><span>층수</span><input id="quoteFloors" placeholder="예: B0/S2" /></label>
+                      <label class="receive-field"><span>구조 진행 계약</span><input id="quoteStructureContract" placeholder="예: 1회 / 2회 / 별도협의" /></label>
+                      <label class="receive-field"><span>마감 진행 계약</span><input id="quoteFinishContract" placeholder="예: 1회 / 2회 / 별도협의" /></label>
+                    </div>
+                  </section>
+                  <section class="project-receive-card quote-card">
+                    <div class="project-receive-card-head"><div><strong>작업범위 / 골조성 세부</strong><span>수주소식 선택사항과 연동 예정입니다.</span></div><em>02</em></div>
+                    <div class="receive-chip-group quote-chip-group" id="quoteScopeChips"></div>
+                    <div class="quote-inline-note">골조성을 선택하면 가설, 단열, 견출, 방수턱 중 해당 항목을 같이 기록합니다.</div>
+                  </section>
+                  <section class="project-receive-card quote-card quote-card-wide">
+                    <div class="project-receive-card-head"><div><strong>도면 / 웹하드 정보</strong><span>도면 다운로드 주소, 웹하드 계정, 비밀번호, 접속키를 기록합니다.</span></div><em>03</em></div>
+                    <div class="project-receive-form-grid quote-form-grid">
+                      <label class="receive-field full"><span>도면 다운로드 주소 / 웹하드 주소</span><input id="quoteDownloadUrl" /></label>
+                      <label class="receive-field"><span>아이디</span><input id="quoteWebhardId" /></label>
+                      <label class="receive-field"><span>비밀번호</span><input id="quoteWebhardPw" /></label>
+                      <label class="receive-field"><span>폴더 접속KEY</span><input id="quoteAccessKey" /></label>
+                      <label class="receive-field"><span>폴더명 / 자료위치</span><input id="quoteFolderName" /></label>
+                    </div>
+                  </section>
+                  <section class="project-receive-card quote-card">
+                    <div class="project-receive-card-head"><div><strong>의뢰자 정보</strong><span>담당자, 연락처, 이메일을 기록합니다.</span></div><em>04</em></div>
+                    <div class="project-receive-form-grid quote-form-grid">
+                      <label class="receive-field"><span>의뢰자명</span><input id="quoteRequesterName" /></label>
+                      <label class="receive-field"><span>부서/직책</span><input id="quoteRequesterDept" /></label>
+                      <label class="receive-field"><span>전화번호</span><input id="quoteRequesterPhone" /></label>
+                      <label class="receive-field"><span>이메일</span><input id="quoteRequesterEmail" /></label>
+                    </div>
+                  </section>
+                  <section class="project-receive-card quote-card quote-card-full">
+                    <div class="project-receive-card-head"><div><strong>상담 / 이메일 기록</strong><span>통화내용과 초반부 중요 이메일 내용을 누적 기록합니다.</span></div><em>05</em></div>
+                    <div class="project-receive-note-grid">
+                      <label class="receive-field"><span>통화내용 기록</span><textarea id="quoteCallMemo" rows="8"></textarea></label>
+                      <label class="receive-field"><span>중요 이메일 내용 기록</span><textarea id="quoteEmailMemo" rows="8"></textarea></label>
+                      <label class="receive-field full"><span>견적 특기사항 / 착수 조건</span><textarea id="quoteNotes" rows="5"></textarea></label>
+                    </div>
+                  </section>
+                </div>
+              </article>
+            </section>
+
+            <section id="estimateQuoteList" class="work-panel">
+              <article class="quote-shell quote-list-shell">
+                <div class="project-receive-hero quote-hero">
+                  <div>
+                    <h2>견적서 관리</h2>
+                    <p class="subcopy">견적 기록을 수정하고, 담당자 요청 시 견적서 양식을 다운로드합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="renderEstimateQuoteList()">새로고침</button>
+                    <button class="btn btn-line" type="button" onclick="downloadEstimateQuoteTemplate()">견적서 양식 다운로드</button>
+                    <button class="btn btn-primary" type="button" onclick="switchWorkPanel('estimateQuote')">+ 견적서 작성</button>
+                  </div>
+                </div>
+                <article class="project-list-card">
+                  <div class="project-list-toolbar">
+                    <div class="field project-list-search-field">
+                      <label>검색</label>
+                      <input id="estimateQuoteSearch" placeholder="프로젝트명, 의뢰처, 담당자, 작업범위 검색" oninput="renderEstimateQuoteList()" />
+                    </div>
+                    <div class="field">
+                      <label>상태</label>
+                      <select id="estimateQuoteStatusFilter" onchange="renderEstimateQuoteList()">
+                        <option value="전체">전체</option>
+                        <option value="견적작성중">견적작성중</option>
+                        <option value="견적발송">견적발송</option>
+                        <option value="착수확정">착수확정</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="project-list-table-wrap quote-list-table-wrap">
+                    <table class="project-list-table quote-list-table">
+                      <thead><tr><th>접수번호</th><th>프로젝트명</th><th>의뢰처</th><th>연면적</th><th>층수</th><th>작업범위</th><th>의뢰자</th><th>상태</th><th>관리</th></tr></thead>
+                      <tbody id="estimateQuoteListBody"></tbody>
+                    </table>
+                  </div>
+                </article>
+              </article>
+            </section>
+
             <section id="projectReceive" class="work-panel active">
               <article class="project-receive-shell" id="projectReceiveShell">
                 <div class="project-receive-hero">
