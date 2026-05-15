@@ -1791,29 +1791,67 @@ function downloadEstimateQuoteTemplate() {
 
 /* =========================================================
    견적서 관리 > DB관리
+   - 업로드 엑셀(그룹웨어.xlsx) 작성란 기준
    - PJ관리 / 기성관리 / 기전업체 엑셀형 입력 화면
 ========================================================= */
-const estimateDbColumns = {
-  pj: ["No", "프로젝트명", "의뢰처", "건물용도", "연면적", "비고"],
-  progress: ["No", "프로젝트명", "기성 구분", "기준일", "금액", "비고"],
-  mep: ["No", "업체명", "담당자", "연락처", "이메일", "비고"]
+const estimateDbSheets = {
+  pj: {
+    title: "PJ 관리",
+    headerRows: [[
+      "년도", "접수번호", "PJ NO", "국내/해외", "거래처명", "프로젝트명", "부서명", "거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타", "작업공종", "작업공종2", "PM(마감)", "PM(구조)", "PM(토목,조경)", "PM(기계)", "PM(전기)", "PM(인테리어)", "PM(철거)", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도", "연면적(m2)", "연면적(평)", "층수", "동수", "타입수", "세대수", "수주일자", "작업착수일자", "1차납품일자", "1차납품공종", "2차납품일자", "2차납품공종", "수주시 요청사항"
+    ]],
+    rows: [[
+      "2026", "260515", "2026002", "국내", "현대건설㈜", "00 신축공사 견적용역", "견적부", "홍길동", "실장", "02-000-0000", "010-0000-0000", "070-000-0000", "000@oo.co.kr", "000@naver.com", "https://only.webhard.co.kr/", "111", "2222", "guest 선택", "마감", "", "", "", "", "", "", "", "", "실행", "개산견적", "1회차", "공내역서", "창고", "3025", "10000", "B4/S25", "10", "12", "500", "2026.01.05", "2026.01.05", "2026.01.31", "선실행(구조)", "2026.08월경", "본실행(마감,구조)", ""
+    ]]
+  },
+  progress: {
+    title: "PJ 기성",
+    headerRows: [
+      ["년도", "PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "발행완료", "납품완료", "작업진행중", "작업대기중", "작업취소", "외주 금액", "", "", "", "", "", "기성조건", "견적서일자", "수주일자", "계약일자", "총괄PM", "납품예정일", "", "", "세금계산서 (발행기준)", "", "", "", "", "", "입금예정일", "", "", "", "", "", "입금일", "", "", "", "", "", "입금예정월", "", "", "", "", "", "", "", "", "", "", "", "기성스토리", "특이사항", "거래처기성담당자", "기성담당자", "연락예정일"],
+      ["", "", "", "", "A", "B", "C (A-B)", "C1", "C2", "C3", "C4", "C5", "기계", "전기", "외주", "송무", "기타", "합계", "", "", "", "", "", "1차납품", "2차납품", "3차납품", "계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성", "계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성", "계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "미정", "", "", "", ""]
+    ],
+    rows: [
+      ["2026", "2026002", "(주)00건설", "00 프로젝트", "1000000", "300000", "700000", "", "", "", "", "700000", "㈜대신엔지니어링", "", "김준영", "", "", "", "계약분 30% / 납품후 20% / 최종 50%", "260103", "260105", "260107", "박ㅇㅇ", "260131", "", "", "300000", "200000", "", "", "", "50000", "300000", "", "", "", "", "", "300000", "", "", "", "", "", "", "200000", "", "400000", "", "", "", "600000", "", "", "", "", "-500000", "", "2월14일에 다시 연락하기로", "서현대실장 / 010-0000-0000", "강동균", "260515"],
+      ["", "", "", "", "", "", "", "", "", "", "", "", "200000", "", "100000", "", "", "300000", "", "", "", "", "", "", "", "", "260666", "날짜", "날짜", "날짜", "날짜", "날짜", "260615", "날짜", "날짜", "날짜", "날짜", "날짜", "260515", "날짜", "날짜", "날짜", "날짜", "날짜", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+    ]
+  },
+  mep: {
+    title: "기전업체",
+    companyMode: true,
+    headerRows: [[
+      "년도", "PJ NO", "PJ명", "계약금액", "기지급액", "금회발행요청액", "요청후잔액", "지급금액1", "지급일자1", "지급금액2", "지급일자2", "지급금액3", "지급일자3", "지급금액4", "지급일자4", "지급금액5", "지급일자5", "지급금액6", "지급일자6", "계약업체", "컨코스트계약금", "수령액", "잔액", "받은비율", "받은비율대비 미지급액", "비고"
+    ]],
+    sections: [
+      {
+        company: "㈜AA적산엔지니어링",
+        account: "계좌정보 / 우리은행 / 445-028489-13-001 / 예금주: ㈜AA적산엔지니어링",
+        rows: [
+          ["2026", "2026003", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+          ["2026", "2026001", "", "2000000", "200000", "800000", "1000000", "100000", "260102", "100000", "260204", "", "", "", "", "", "", "", "", "00건설", "10000000", "5000000", "5000000", "0.5", "800000", ""]
+        ]
+      },
+      {
+        company: "㈜BB적산엔지니어링",
+        account: "계좌정보 / 우리은행 / 445-028489-13-001 / 예금주: ㈜BB적산엔지니어링",
+        rows: [
+          ["2026", "2026003", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+          ["2026", "2026001", "", "2000000", "200000", "800000", "1000000", "100000", "260102", "100000", "260204", "", "", "", "", "", "", "", "", "00건설", "10000000", "5000000", "5000000", "0.5", "800000", ""]
+        ]
+      }
+    ]
+  }
 };
 
 let estimateDbActiveTab = "pj";
-const estimateDbState = {
-  pj: [
-    ["1", "포항 AI Factory 데이터센터 증축공사 견적용역", "현대건설㈜", "데이터센터", "5,887평", "예시 데이터"]
-  ],
-  progress: [
-    ["1", "", "", "", "", ""]
-  ],
-  mep: [
-    ["1", "", "", "", "", ""]
-  ]
-};
 
+function getEstimateDbSheet(tab = estimateDbActiveTab) {
+  return estimateDbSheets[tab] || estimateDbSheets.pj;
+}
+function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
+  return sheet.headerRows?.[sheet.headerRows.length - 1] || [];
+}
 function setEstimateDbTab(tab) {
-  if (!estimateDbColumns[tab]) return;
+  if (!estimateDbSheets[tab]) return;
   estimateDbActiveTab = tab;
   renderEstimateDbManage();
 }
@@ -1823,34 +1861,77 @@ function renderEstimateDbManage() {
   const body = document.getElementById("estimateDbBody");
   if (!head || !body) return;
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
-  const columns = estimateDbColumns[estimateDbActiveTab] || [];
-  const rows = estimateDbState[estimateDbActiveTab] || [];
-  head.innerHTML = `<tr>${columns.map(col => `<th>${col}</th>`).join("")}<th>관리</th></tr>`;
-  body.innerHTML = rows.map((row, rowIndex) => `
-    <tr>
-      ${columns.map((col, colIndex) => `<td><input value="${escapeProjectReceiveHtml(row[colIndex] || "")}" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
-      <td><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
+  const sheet = getEstimateDbSheet();
+  const colCount = getEstimateDbLeafColumns(sheet).length;
+  head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
+    <tr class="quote-db-head-row quote-db-head-row-${index + 1}">
+      ${headerRow.map(col => `<th>${escapeProjectReceiveHtml(col || "")}</th>`).join("")}
+      ${index === 0 ? `<th rowspan="${Math.max(1, sheet.headerRows.length)}">관리</th>` : ""}
     </tr>
-  `).join("") || `<tr><td colspan="${columns.length + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`;
+  `).join("");
+
+  if (sheet.companyMode) {
+    body.innerHTML = (sheet.sections || []).map((section, sectionIndex) => {
+      const sectionRows = section.rows || [];
+      return `
+        <tr class="quote-db-company-row"><td colspan="${colCount + 1}">
+          <input value="${escapeProjectReceiveHtml(section.company || "")}" oninput="updateEstimateDbSection(${sectionIndex}, 'company', this.value)" />
+        </td></tr>
+        <tr class="quote-db-account-row"><td colspan="${colCount + 1}">
+          <input value="${escapeProjectReceiveHtml(section.account || "")}" oninput="updateEstimateDbSection(${sectionIndex}, 'account', this.value)" />
+        </td></tr>
+        ${sectionRows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount, sectionIndex)).join("")}
+      `;
+    }).join("");
+    return;
+  }
+
+  const rows = sheet.rows || [];
+  body.innerHTML = rows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`;
 }
 
-function updateEstimateDbCell(rowIndex, colIndex, value) {
-  const rows = estimateDbState[estimateDbActiveTab];
+function renderEstimateDbRow(row, rowIndex, colCount, sectionIndex = null) {
+  const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
+  const sectionArg = sectionIndex === null ? "null" : sectionIndex;
+  return `
+    <tr>
+      ${safeRow.map((value, colIndex) => `<td><input value="${escapeProjectReceiveHtml(value)}" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, ${sectionArg})" /></td>`).join("")}
+      <td><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex}, ${sectionArg})">삭제</button></td>
+    </tr>
+  `;
+}
+
+function updateEstimateDbSection(sectionIndex, key, value) {
+  const sheet = getEstimateDbSheet();
+  if (!sheet.companyMode || !sheet.sections?.[sectionIndex]) return;
+  sheet.sections[sectionIndex][key] = value;
+}
+function updateEstimateDbCell(rowIndex, colIndex, value, sectionIndex = null) {
+  const sheet = getEstimateDbSheet();
+  const rows = sectionIndex === null ? sheet.rows : sheet.sections?.[sectionIndex]?.rows;
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = value;
 }
 
 function addEstimateDbRow() {
-  const columns = estimateDbColumns[estimateDbActiveTab] || [];
-  const rows = estimateDbState[estimateDbActiveTab] || (estimateDbState[estimateDbActiveTab] = []);
+  const sheet = getEstimateDbSheet();
+  const columns = getEstimateDbLeafColumns(sheet);
   const next = Array(columns.length).fill("");
-  next[0] = String(rows.length + 1);
-  rows.push(next);
+  next[0] = String(new Date().getFullYear());
+  if (sheet.companyMode) {
+    const section = sheet.sections?.[0];
+    if (!section) return;
+    section.rows.push(next);
+  } else {
+    sheet.rows = sheet.rows || [];
+    sheet.rows.push(next);
+  }
   renderEstimateDbManage();
 }
 
-function removeEstimateDbRow(rowIndex) {
-  const rows = estimateDbState[estimateDbActiveTab];
+function removeEstimateDbRow(rowIndex, sectionIndex = null) {
+  const sheet = getEstimateDbSheet();
+  const rows = sectionIndex === null ? sheet.rows : sheet.sections?.[sectionIndex]?.rows;
   if (!rows?.[rowIndex]) return;
   rows.splice(rowIndex, 1);
   renderEstimateDbManage();
