@@ -861,16 +861,26 @@ const permissionRoleOptions = [
   "경영지원(김태영선임)",
   "경영지원(현예은선임)",
   "본부장",
-  "실장",
-  "팀장",
+  "구조실장",
+  "마감실장",
+  "구조팀장",
   "파트장",
   "T/F팀",
-  "PM",
-  "Leader",
+  "구조PM",
+  "마감PM",
+  "토목ㆍ조경PM",
+  "Leader-Finish-Internal1",
+  "Leader-Finish-Internal2",
+  "Leader-Finish-Internal3",
+  "Leader-Finish-Partition&Opening",
+  "Leader-Finish-External",
+  "Leader-Structure-Vertical",
+  "Leader-Structure-Horizontal/Foundation",
+  "Leader-Civil",
   "Asst.Leader",
   "Staff"
 ];
-let currentPermissionRoleValue = "PM";
+let currentPermissionRoleValue = "구조PM";
 
 function renderPermissionRoleDropdown() {
   const list = document.getElementById("permissionRoleList");
