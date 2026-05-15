@@ -54,6 +54,10 @@ const projectReceiveDefaultData = {
     { label: "내역서", memo: "", status: "미접수", comment: "", confirmedBy: "" },
     { label: "기타자료", memo: "", status: "미접수", comment: "", confirmedBy: "" }
   ],
+  webhardUrl: "",
+  webhardId: "",
+  webhardPw: "",
+  webhardNote: "",
   pmTotal: "",
   pmFinish: "",
   pmStructure: "",
@@ -118,6 +122,10 @@ const projectReceiveSampleData = {
     { label: "내역서", memo: "2026.05.11", status: "확인완료", comment: "공내역서 접수 확인.", confirmedBy: "박용진 수석 / 2026.05.13 13:14" },
     { label: "기타자료", memo: "접수일 또는 메모", status: "미접수", comment: "접수받은 내용 없음.", confirmedBy: "" }
   ],
+  webhardUrl: "http://only.webhard.co.kr",
+  webhardId: "hdeckucu",
+  webhardPw: "s100",
+  webhardNote: "폴더 접속KEY: 0505 / 폴더명: 260406 포항 AI DC",
   pmTotal: "",
   pmFinish: "",
   pmStructure: "",
@@ -688,6 +696,10 @@ function renderProjectReceiveDashboard() {
   setProjectReceiveValue("receiveWorkContent", projectReceiveState.workContent);
   setProjectReceiveValue("receiveNotes", projectReceiveState.notes);
   setProjectReceiveValue("receiveRequest", projectReceiveState.request);
+  setProjectReceiveValue("receiveWebhardUrl", projectReceiveState.webhardUrl);
+  setProjectReceiveValue("receiveWebhardId", projectReceiveState.webhardId);
+  setProjectReceiveValue("receiveWebhardPw", projectReceiveState.webhardPw);
+  setProjectReceiveValue("receiveWebhardNote", projectReceiveState.webhardNote);
 
   renderProjectReceiveStatus();
   renderProjectReceiveChips("receiveBusinessTypeChips", "businessTypes");
@@ -1058,6 +1070,10 @@ function syncProjectReceiveInputsToState() {
   projectReceiveState.workContent = getProjectReceiveValue("receiveWorkContent");
   projectReceiveState.notes = getProjectReceiveValue("receiveNotes");
   projectReceiveState.request = getProjectReceiveValue("receiveRequest");
+  projectReceiveState.webhardUrl = getProjectReceiveValue("receiveWebhardUrl");
+  projectReceiveState.webhardId = getProjectReceiveValue("receiveWebhardId");
+  projectReceiveState.webhardPw = getProjectReceiveValue("receiveWebhardPw");
+  projectReceiveState.webhardNote = getProjectReceiveValue("receiveWebhardNote");
 }
 
 function saveProjectReceiveDraft() {
@@ -1420,6 +1436,10 @@ function openProjectReceiveListViewer(source, index) {
       <ul class="project-viewer-material-list">${materialText || "<li><strong>자료 없음</strong><span>-</span><em>-</em></li>"}</ul>
     </div>
     <div class="project-viewer-section">
+      <h4>웹하드 정보</h4>
+      <p>${escapeProjectReceiveHtml([data.webhardUrl, data.webhardId ? `ID: ${data.webhardId}` : "", data.webhardPw ? `PW: ${data.webhardPw}` : "", data.webhardNote].filter(Boolean).join(" / ") || "입력 내용 없음")}</p>
+    </div>
+    <div class="project-viewer-section">
       <h4>작업내용 / 요청사항</h4>
       <p>${escapeProjectReceiveHtml(data.workContent || data.request || data.notes || "입력 내용 없음")}</p>
     </div>
@@ -1766,4 +1786,72 @@ function downloadEstimateQuoteTemplate() {
     console.error(error);
     showToast("견적서 양식 다운로드 중 오류가 발생했습니다.");
   }
+}
+
+
+/* =========================================================
+   견적서 관리 > DB관리
+   - PJ관리 / 기성관리 / 기전업체 엑셀형 입력 화면
+========================================================= */
+const estimateDbColumns = {
+  pj: ["No", "프로젝트명", "의뢰처", "건물용도", "연면적", "비고"],
+  progress: ["No", "프로젝트명", "기성 구분", "기준일", "금액", "비고"],
+  mep: ["No", "업체명", "담당자", "연락처", "이메일", "비고"]
+};
+
+let estimateDbActiveTab = "pj";
+const estimateDbState = {
+  pj: [
+    ["1", "포항 AI Factory 데이터센터 증축공사 견적용역", "현대건설㈜", "데이터센터", "5,887평", "예시 데이터"]
+  ],
+  progress: [
+    ["1", "", "", "", "", ""]
+  ],
+  mep: [
+    ["1", "", "", "", "", ""]
+  ]
+};
+
+function setEstimateDbTab(tab) {
+  if (!estimateDbColumns[tab]) return;
+  estimateDbActiveTab = tab;
+  renderEstimateDbManage();
+}
+
+function renderEstimateDbManage() {
+  const head = document.getElementById("estimateDbHead");
+  const body = document.getElementById("estimateDbBody");
+  if (!head || !body) return;
+  document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
+  const columns = estimateDbColumns[estimateDbActiveTab] || [];
+  const rows = estimateDbState[estimateDbActiveTab] || [];
+  head.innerHTML = `<tr>${columns.map(col => `<th>${col}</th>`).join("")}<th>관리</th></tr>`;
+  body.innerHTML = rows.map((row, rowIndex) => `
+    <tr>
+      ${columns.map((col, colIndex) => `<td><input value="${escapeProjectReceiveHtml(row[colIndex] || "")}" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
+      <td><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
+    </tr>
+  `).join("") || `<tr><td colspan="${columns.length + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`;
+}
+
+function updateEstimateDbCell(rowIndex, colIndex, value) {
+  const rows = estimateDbState[estimateDbActiveTab];
+  if (!rows?.[rowIndex]) return;
+  rows[rowIndex][colIndex] = value;
+}
+
+function addEstimateDbRow() {
+  const columns = estimateDbColumns[estimateDbActiveTab] || [];
+  const rows = estimateDbState[estimateDbActiveTab] || (estimateDbState[estimateDbActiveTab] = []);
+  const next = Array(columns.length).fill("");
+  next[0] = String(rows.length + 1);
+  rows.push(next);
+  renderEstimateDbManage();
+}
+
+function removeEstimateDbRow(rowIndex) {
+  const rows = estimateDbState[estimateDbActiveTab];
+  if (!rows?.[rowIndex]) return;
+  rows.splice(rowIndex, 1);
+  renderEstimateDbManage();
 }
