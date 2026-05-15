@@ -1062,6 +1062,11 @@ function syncProjectReceiveInputsToState() {
 
 function saveProjectReceiveDraft() {
   syncProjectReceiveInputsToState();
+  if (!validateProjectReceiveSkeletonScope()) {
+    renderProjectReceiveDashboard();
+    showToast("골조성을 선택한 경우 가설, 단열, 견출, 방수턱 중 최소 1개를 선택해야 접수저장이 가능합니다.");
+    return;
+  }
   renderProjectReceiveStatus();
   if (typeof registerPmScheduleProjectFromReceive === "function") {
     registerPmScheduleProjectFromReceive(projectReceiveState);
