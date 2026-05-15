@@ -957,10 +957,11 @@
                 <div class="pm-schedule-layout" id="pmScheduleManagerView">
                   <aside class="pm-schedule-project-card pm-schedule-project-wide" data-pm-section-view="assign approval">
                     <div class="pm-card-head compact">
-                      <div><strong>접수 프로젝트 리스트</strong><span>실장 권한 기준 배정 대기</span></div>
+                      <div><strong id="pmScheduleListTitle">접수 프로젝트 리스트</strong><span id="pmScheduleListSub">실장 권한 기준 배정 대기</span></div>
                       <button class="btn btn-primary pm-manager-only pm-section-assign-only" type="button" onclick="openPmAssignmentPanel()">PM배정</button>
+                      <button class="btn btn-primary pm-manager-only pm-section-approval-only" type="button" onclick="openPmScheduleApprovalRequest()">요청 확인하기</button>
                     </div>
-                    <div class="pm-project-filter-row">
+                    <div class="pm-project-filter-row" id="pmScheduleFilterRow">
                       <button class="pm-filter-chip active" type="button" onclick="setPmScheduleFilter('all', this)">전체</button>
                       <button class="pm-filter-chip" type="button" onclick="setPmScheduleFilter('pending', this)">PM 미배정</button>
                       <button class="pm-filter-chip" type="button" onclick="setPmScheduleFilter('requested', this)">작성요청</button>
