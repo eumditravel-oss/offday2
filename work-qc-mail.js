@@ -2,6 +2,8 @@
    업무관리 탭 / QC 체크리스트
    ========================= */
 const workPageMeta = {
+  estimateQuote: ["견적서 작성", "최초 견적 문의, 도면/웹하드 정보, 통화·이메일 기록을 작성합니다."],
+  estimateQuoteList: ["견적서 관리", "견적서 기록을 수정하고 견적서 양식 다운로드 및 착수 전환을 관리합니다."],
   projectReceive: ["프로젝트 접수", "수주소식, 프로젝트 개요, 접수자료, 담당 PM, 납품일정을 카드형 화면으로 관리합니다."],
   pmSchedule: ["PM 배정 / 일정", "PM 배정, 작업일정 결재, 전체 일정을 세부 카테고리로 관리합니다."],
   projectManage: ["프로젝트 관리", "프로젝트 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 통합 관리합니다."],
@@ -9388,10 +9390,13 @@ function updateBellReviewCount() {
 
 
 function syncWorkSideAccordion(targetPanelId) {
+  const isEstimateQuote = targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList";
   const isProjectReceive = targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList";
   const isPmSchedule = targetPanelId === "pmSchedule";
+  document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.toggle("active", isEstimateQuote));
   document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.toggle("active", isProjectReceive));
   document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.toggle("active", isPmSchedule));
+  document.querySelectorAll(".side-main[data-work-main='estimateQuote']").forEach(btn => btn.classList.toggle("active", isEstimateQuote));
   document.querySelectorAll(".side-main[data-work-main='projectReceive']").forEach(btn => btn.classList.toggle("active", isProjectReceive));
   document.querySelectorAll(".side-main[data-work-main='pmSchedule']").forEach(btn => btn.classList.toggle("active", isPmSchedule));
 }
@@ -9401,13 +9406,16 @@ function switchWorkPanel(panelId) {
 
   document.querySelectorAll(".work-panel").forEach(panel => panel.classList.remove("active"));
   document.querySelectorAll("[data-work-main]").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.remove("active"));
   document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.remove("active"));
   document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
 
   document.getElementById(targetPanelId)?.classList.add("active");
   syncWorkSideAccordion(targetPanelId);
 
-  if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
+  if (targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
+    document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+  } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
   } else if (targetPanelId === "pmSchedule") {
     const activeSection = typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign";
@@ -9419,6 +9427,14 @@ function switchWorkPanel(panelId) {
   const meta = workPageMeta[targetPanelId] || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
   setText("workPageDesc", meta[1]);
+
+  if (targetPanelId === "estimateQuote" && typeof renderEstimateQuoteDashboard === "function") {
+    renderEstimateQuoteDashboard();
+  }
+
+  if (targetPanelId === "estimateQuoteList" && typeof renderEstimateQuoteList === "function") {
+    renderEstimateQuoteList();
+  }
 
   if (targetPanelId === "projectReceive" && typeof renderProjectReceiveDashboard === "function") {
     renderProjectReceiveDashboard();
