@@ -8,7 +8,7 @@
 const pmScheduleDeptManagerMap = {
   "마감": "조한빈 실장",
   "구조팀": "장범선 실장",
-  "BIM 파트": "장범 실장",
+  "BIM 파트": "장범선 실장",
   "토목ㆍ조경파트": "장범선 실장",
   "인테리어·철거": "조한빈 실장",
   "비교내역서": "조한빈 실장",
@@ -394,8 +394,30 @@ function setPmScheduleFilter(filter, button) {
 
 function getPmScheduleFilteredProjects() {
   initPmScheduleProjects();
+  if (pmScheduleActiveSection === "approval") return getPmScheduleApprovalProjects();
   if (pmScheduleFilter === "all") return pmScheduleProjects;
   return pmScheduleProjects.filter(item => item.status === pmScheduleFilter);
+}
+
+function getPmScheduleApprovalProjects() {
+  initPmScheduleProjects();
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  return pmScheduleProjects.filter(item => {
+    if (item.status === "submitted") return true;
+    if (item.status !== "approved") return false;
+    const approvedAt = parsePmScheduleDate(item.scheduleApprovedAt || item.approvedAt || item.receivedAt);
+    return approvedAt && approvedAt >= sevenDaysAgo;
+  });
+}
+
+function parsePmScheduleDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const normalized = text.replace(/\./g, "-").replace(/(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})/, "$1T$2");
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+  return null;
 }
 
 function getCurrentPmScheduleProject() {
@@ -423,6 +445,9 @@ function setPmScheduleSection(section = "assign") {
     el.style.display = (pmScheduleActiveSection === "assign" && isPmScheduleManagerRole()) ? "" : "none";
   });
 
+  renderPmScheduleProjectList();
+  renderPmScheduleDetail();
+  updatePmScheduleListHeader();
   if (pmScheduleActiveSection === "all") renderPmScheduleAllSchedule();
 }
 
@@ -433,6 +458,20 @@ function syncPmScheduleHeroButtons() {
   document.querySelectorAll(".pm-section-assign-only").forEach(el => {
     el.style.display = (pmScheduleActiveSection === "assign" && isPmScheduleManagerRole()) ? "" : "none";
   });
+  document.querySelectorAll(".pm-section-approval-only").forEach(el => {
+    el.style.display = (pmScheduleActiveSection === "approval" && isPmScheduleManagerRole()) ? "" : "none";
+  });
+}
+
+function updatePmScheduleListHeader() {
+  const title = document.getElementById("pmScheduleListTitle");
+  const sub = document.getElementById("pmScheduleListSub");
+  const filters = document.getElementById("pmScheduleFilterRow");
+  if (title) title.textContent = pmScheduleActiveSection === "approval" ? "작업일정 결재 리스트" : "접수 프로젝트 리스트";
+  if (sub) sub.textContent = pmScheduleActiveSection === "approval"
+    ? "최근 7일 내 일정확정 건과 PM 스케쥴 결재 요청 건"
+    : "실장 권한 기준 배정 대기";
+  if (filters) filters.style.display = pmScheduleActiveSection === "approval" ? "none" : "flex";
 }
 
 function renderPmScheduleDashboard() {
@@ -451,6 +490,7 @@ function renderPmScheduleDashboard() {
     if (editorView) editorView.style.display = "none";
     renderPmScheduleProjectList();
     renderPmScheduleDetail();
+    updatePmScheduleListHeader();
     setPmScheduleSection(pmScheduleActiveSection);
     return;
   }
@@ -477,26 +517,29 @@ function renderPmScheduleProjectList() {
   if (!list) return;
   const filtered = getPmScheduleFilteredProjects();
   if (!filtered.length) {
-    list.innerHTML = `<div class="pm-empty-box">해당 조건의 프로젝트가 없습니다.</div>`;
+    list.innerHTML = `<div class="pm-empty-box">${pmScheduleActiveSection === "approval" ? "결재 요청 또는 최근 일정확정 프로젝트가 없습니다." : "해당 조건의 프로젝트가 없습니다."}</div>`;
     return;
   }
+  const isApproval = pmScheduleActiveSection === "approval";
   list.innerHTML = `
-    <div class="pm-project-list-table">
+    <div class="pm-project-list-table ${isApproval ? "approval-list" : ""}">
       <div class="pm-project-list-head">
         <span>상태</span>
         <span>프로젝트명</span>
-        <span>접수번호 / 의뢰처</span>
-        <span>작업범위</span>
+        <span>${isApproval ? "요청일 / 확정일" : "접수번호 / 의뢰처"}</span>
+        <span>${isApproval ? "검토구분" : "작업범위"}</span>
       </div>
       ${filtered.map(item => {
         const realIndex = pmScheduleProjects.indexOf(item);
         const scope = getPmScheduleScopeText(item.project);
+        const approvalDate = item.status === "approved" ? (item.scheduleApprovedAt || "확정일 미등록") : (item.proposals?.plan1?.submittedAt || "요청일 미등록");
+        const reviewScope = item.status === "approved" ? `${item.approvedPlan === "plan2" ? "2안" : "1안"} 일정확정` : `${item.submittedCategory || "Structure"} 1ㆍ2안 결재 요청`;
         return `
           <button class="pm-project-list-row ${realIndex === pmScheduleSelectedIndex ? "active" : ""}" type="button" onclick="selectPmScheduleProject(${realIndex})">
             <span class="pm-project-state ${item.status}">${getPmScheduleStatusLabel(item.status)}</span>
             <strong>${escapePmScheduleHtml(item.project.projectName || "프로젝트명 미입력")}</strong>
-            <em>${escapePmScheduleHtml(item.project.projectNo || "NO 미입력")} · ${escapePmScheduleHtml(item.project.client || "의뢰처 미입력")}</em>
-            <small>${escapePmScheduleHtml(scope)}</small>
+            <em>${isApproval ? escapePmScheduleHtml(approvalDate) : `${escapePmScheduleHtml(item.project.projectNo || "NO 미입력")} · ${escapePmScheduleHtml(item.project.client || "의뢰처 미입력")}`}</em>
+            <small>${escapePmScheduleHtml(isApproval ? reviewScope : scope)}</small>
           </button>
         `;
       }).join("")}
@@ -537,6 +580,17 @@ function closePmAssignmentPanel() {
   const backdrop = document.getElementById("pmAssignmentPanelBackdrop");
   if (detail) detail.classList.remove("pm-assignment-panel-open");
   if (backdrop) backdrop.classList.remove("active");
+}
+
+function openPmScheduleApprovalRequest() {
+  const item = getCurrentPmScheduleProject();
+  if (!item) return;
+  if (!["submitted", "approved"].includes(item.status)) {
+    showToast("검토할 결재 요청 또는 확정 일정이 없습니다.");
+    return;
+  }
+  pmScheduleModalEditable = false;
+  openPmSchedulePlanModal(false);
 }
 
 
@@ -1044,12 +1098,34 @@ function renderPmSchedulePlanModal() {
   const foot = document.getElementById("pmSchedulePlanModalFoot");
   if (title) title.textContent = "스케쥴 1안 / 2안 가로 비교";
   if (sub) sub.textContent = `${item.project.projectName || "프로젝트명 미입력"} · Viet QS 부서/인사카드 기준`;
-  if (body) body.innerHTML = renderPmScheduleCombinedSheet(item, pmScheduleModalEditable);
+  if (body) body.innerHTML = `${!pmScheduleModalEditable ? renderPmScheduleModalTimeline(item) : ""}${renderPmScheduleCombinedSheet(item, pmScheduleModalEditable)}`;
   if (foot) {
     foot.innerHTML = pmScheduleModalEditable
       ? `<button class="btn btn-line" type="button" onclick="closePmSchedulePlanModal()">닫기</button><button class="btn btn-primary" type="button" onclick="submitPmScheduleEditor()">스케쥴 작성 완료</button>`
       : renderPmScheduleApprovalControls(item);
   }
+}
+
+function renderPmScheduleModalTimeline(item) {
+  const selectedPlan = item.approvedPlan || item.selectedProposal || "plan1";
+  const rows = [
+    ["접수", item.receivedAt || "접수일 미등록"],
+    ["PM 지정", hasAnyPmScheduleAssignment(item) ? "PM 지정 저장" : "PM 미지정"],
+    ["작성요청", item.pmAuthorityRequestedAt || (item.status === "requested" ? "요청 완료" : "요청 전")],
+    ["결재요청", item.proposals?.plan1?.submittedAt || "미제출"],
+    ["검토/확정", item.status === "approved" ? `${selectedPlan === "plan2" ? "2안" : "1안"} 확정 · ${item.scheduleApprovedAt || "확정일 미등록"}` : "검토 대기"]
+  ];
+  return `
+    <div class="pm-modal-timeline-panel">
+      <div class="pm-modal-timeline-head">
+        <strong>프로젝트 타임라인</strong>
+        <span>${escapePmScheduleHtml(item.project?.projectName || "프로젝트명 미입력")}</span>
+      </div>
+      <div class="pm-modal-timeline-list">
+        ${rows.map(([label, value], index) => `<div class="pm-modal-timeline-step ${index === 0 || value !== "요청 전" && value !== "미제출" ? "active" : ""}"><b>${escapePmScheduleHtml(label)}</b><span>${escapePmScheduleHtml(value)}</span></div>`).join("")}
+      </div>
+    </div>
+  `;
 }
 
 function renderPmScheduleApprovalControls(item) {
