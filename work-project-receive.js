@@ -1790,70 +1790,85 @@ function downloadEstimateQuoteTemplate() {
 
 
 /* =========================================================
-   견적서 관리 > DB관리
-   - 업로드 엑셀(그룹웨어.xlsx) 작성란 기준
-   - PJ관리 / 기성관리 / 기전업체 엑셀형 입력 화면
+   견적서 관리 > DB관리 / 연도별 0~3 시트 연결 화면 v12
+   - DB_프로젝트 / DB_기성 / DB기전외주 형식 적용
+   - DB 값을 기준으로 0.수주매출입금, 1.수주 프로젝트, 2.매출 프로젝트, 3.입금 프로젝트 산출
+   - 연도별 화면 조회 및 Excel XML 다중 시트 내보내기 지원
 ========================================================= */
 const estimateDbSheets = {
   pj: {
-    title: "PJ 관리",
-    headerRows: [[
-      "년도", "접수번호", "PJ NO", "국내/해외", "거래처명", "프로젝트명", "부서명", "거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타", "작업공종", "작업공종2", "PM(마감)", "PM(구조)", "PM(토목,조경)", "PM(기계)", "PM(전기)", "PM(인테리어)", "PM(철거)", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도", "연면적(m2)", "연면적(평)", "층수", "동수", "타입수", "세대수", "수주일자", "작업착수일자", "1차납품일자", "1차납품공종", "2차납품일자", "2차납품공종", "수주시 요청사항"
-    ]],
-    rows: [[
-      "2026", "260515", "2026002", "국내", "현대건설㈜", "00 신축공사 견적용역", "견적부", "홍길동", "실장", "02-000-0000", "010-0000-0000", "070-000-0000", "000@oo.co.kr", "000@naver.com", "https://only.webhard.co.kr/", "111", "2222", "guest 선택", "마감", "", "", "", "", "", "", "", "", "실행", "개산견적", "1회차", "공내역서", "창고", "3025", "10000", "B4/S25", "10", "12", "500", "2026.01.05", "2026.01.05", "2026.01.31", "선실행(구조)", "2026.08월경", "본실행(마감,구조)", ""
-    ]]
+    title: "DB_프로젝트",
+    excelName: "DB_프로젝트",
+    headerRows: [["년도", "접수번호", "PJ NO", "국내/해외", "거래처명", "프로젝트명", "부서명", "거래처담당자", "작업공종", "작업구분", "업무성격", "건물용도", "연면적(평)", "층수", "수주일자", "수주월", "작업착수일자", "1차납품일자", "2차납품일자", "PM(마감)", "PM(구조)", "PM(토목,조경)"]],
+    rows: [["2026", "260515", "2026002", "국내", "현대건설㈜", "00 신축공사 견적용역", "견적부", "홍길동", "마감", "실행", "개산견적", "창고", "10000", "B4/S25", "2026.01.05", "1", "2026.01.05", "2026.01.31", "2026.08월경", "", "", ""]]
   },
   progress: {
-    title: "PJ 기성",
-    headerRows: [
-      ["년도", "PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "발행완료", "납품완료", "작업진행중", "작업대기중", "작업취소", "외주 금액", "", "", "", "", "", "기성조건", "견적서일자", "수주일자", "계약일자", "총괄PM", "납품예정일", "", "", "세금계산서 (발행기준)", "", "", "", "", "", "입금예정일", "", "", "", "", "", "입금일", "", "", "", "", "", "입금예정월", "", "", "", "", "", "", "", "", "", "", "", "기성스토리", "특이사항", "거래처기성담당자", "기성담당자", "연락예정일"],
-      ["", "", "", "", "A", "B", "C (A-B)", "C1", "C2", "C3", "C4", "C5", "기계", "전기", "외주", "송무", "기타", "합계", "", "", "", "", "", "1차납품", "2차납품", "3차납품", "계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성", "계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성", "계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "미정", "", "", "", ""]
-    ],
-    rows: [
-      ["2026", "2026002", "(주)00건설", "00 프로젝트", "1000000", "300000", "700000", "", "", "", "", "700000", "㈜대신엔지니어링", "", "김준영", "", "", "", "계약분 30% / 납품후 20% / 최종 50%", "260103", "260105", "260107", "박ㅇㅇ", "260131", "", "", "300000", "200000", "", "", "", "50000", "300000", "", "", "", "", "", "300000", "", "", "", "", "", "", "200000", "", "400000", "", "", "", "600000", "", "", "", "", "-500000", "", "2월14일에 다시 연락하기로", "서현대실장 / 010-0000-0000", "강동균", "260515"],
-      ["", "", "", "", "", "", "", "", "", "", "", "", "200000", "", "100000", "", "", "300000", "", "", "", "", "", "", "", "", "260666", "날짜", "날짜", "날짜", "날짜", "날짜", "260615", "날짜", "날짜", "날짜", "날짜", "날짜", "260515", "날짜", "날짜", "날짜", "날짜", "날짜", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
-    ]
+    title: "DB_기성",
+    excelName: "DB_기성",
+    headerRows: [["년도", "PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "외주합계", "기성조건", "견적서일자", "수주일자", "수주월", "계약일자", "총괄PM", "납품예정일", "계약금_세금계산서", "1차기성_세금계산서", "2차기성_세금계산서", "3차기성_세금계산서", "4차기성_세금계산서", "5차기성_세금계산서", "계약금_입금일", "1차기성_입금일", "2차기성_입금일", "3차기성_입금일", "4차기성_입금일", "5차기성_입금일", "특이사항", "거래처기성담당자", "기성담당자", "연락예정일"]],
+    rows: [["2026", "2026002", "(주)00건설", "00 프로젝트", "1000000", "300000", "700000", "300000", "계약분 30%\n납품후 20%\n최종 50%", "260103", "260105", "1", "260107", "박ㅇㅇ", "260131", "300000", "200000", "", "", "", "50000", "300000", "", "", "", "", "", "", "2월14일에 다시 연락하기로", "서현대실장\n010-0000-0000", "강동균"]]
   },
   mep: {
-    title: "기전업체",
-    companyMode: true,
-    headerRows: [[
-      "년도", "PJ NO", "PJ명", "계약금액", "기지급액", "금회발행요청액", "요청후잔액", "지급금액1", "지급일자1", "지급금액2", "지급일자2", "지급금액3", "지급일자3", "지급금액4", "지급일자4", "지급금액5", "지급일자5", "지급금액6", "지급일자6", "계약업체", "컨코스트계약금", "수령액", "잔액", "받은비율", "받은비율대비 미지급액", "비고"
-    ]],
-    sections: [
-      {
-        company: "㈜AA적산엔지니어링",
-        account: "계좌정보 / 우리은행 / 445-028489-13-001 / 예금주: ㈜AA적산엔지니어링",
-        rows: [
-          ["2026", "2026003", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-          ["2026", "2026001", "", "2000000", "200000", "800000", "1000000", "100000", "260102", "100000", "260204", "", "", "", "", "", "", "", "", "00건설", "10000000", "5000000", "5000000", "0.5", "800000", ""]
-        ]
-      },
-      {
-        company: "㈜BB적산엔지니어링",
-        account: "계좌정보 / 우리은행 / 445-028489-13-001 / 예금주: ㈜BB적산엔지니어링",
-        rows: [
-          ["2026", "2026003", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-          ["2026", "2026001", "", "2000000", "200000", "800000", "1000000", "100000", "260102", "100000", "260204", "", "", "", "", "", "", "", "", "00건설", "10000000", "5000000", "5000000", "0.5", "800000", ""]
-        ]
-      }
-    ]
+    title: "DB기전외주",
+    excelName: "DB기전외주",
+    headerRows: [["업체명", "계좌정보", "은행명", "계좌번호", "예금주", "년도", "PJ NO", "PJ명", "계약금액", "기지급액", "금회발행요청액", "요청후잔액", "지급금액1", "지급일자1", "지급금액2", "지급일자2", "지급금액3", "지급일자3", "지급금액4", "지급일자4", "지급금액5", "지급일자5", "지급금액6", "지급일자6", "계약업체", "컨코스트계약금", "수령액", "잔액", "받은비율", "받은비율대비 미지급액", "지급합계", "지급월1", "지급월2"]],
+    rows: [["㈜AA적산엔지니어링", "계좌정보", "우리은행", "445-028489-13-001", "예금주: ㈜AA적산엔지어링", "2026", "2026001", "00 프로젝트", "2000000", "200000", "800000", "1000000", "100000", "260102", "100000", "260204", "", "", "", "", "", "", "", "", "00건설", "10000000", "5000000", "5000000", "0.5", "800000", "200000", "1", "2"]]
   }
 };
 
+const estimateDbReportTabs = {
+  summary: "0.수주매출입금",
+  order: "1.수주 프로젝트",
+  sales: "2.매출 프로젝트",
+  deposit: "3.입금 프로젝트"
+};
 let estimateDbActiveTab = "pj";
+let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
 
-function getEstimateDbSheet(tab = estimateDbActiveTab) {
-  return estimateDbSheets[tab] || estimateDbSheets.pj;
+function normalizeEstimateDbText(value) { return String(value ?? "").trim(); }
+function toEstimateDbNumber(value) {
+  const raw = normalizeEstimateDbText(value).replace(/,/g, "").replace(/원/g, "");
+  const num = Number(raw);
+  return Number.isFinite(num) ? num : 0;
 }
-function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
-  return sheet.headerRows?.[sheet.headerRows.length - 1] || [];
+function parseEstimateDbYear(value) {
+  const m = normalizeEstimateDbText(value).match(/(20\d{2})/);
+  return m ? m[1] : String(new Date().getFullYear());
 }
-function getEstimateDbRows(sheet = getEstimateDbSheet(), sectionIndex = null) {
-  if (sectionIndex === null || sectionIndex === "null") return sheet.rows || [];
-  return sheet.sections?.[Number(sectionIndex)]?.rows || [];
+function parseEstimateDbMonth(value) {
+  const raw = normalizeEstimateDbText(value);
+  const direct = raw.match(/(?:^|[^0-9])(1[0-2]|0?[1-9])\s*월/);
+  if (direct) return Number(direct[1]);
+  const compact = raw.match(/^(?:\d{2})?(0[1-9]|1[0-2])\d{2}$/);
+  if (compact) return Number(compact[1]);
+  const date = raw.match(/20\d{2}[.\/-](0?[1-9]|1[0-2])/);
+  if (date) return Number(date[1]);
+  return null;
+}
+function getEstimateDbSheet(tab = estimateDbActiveTab) { return estimateDbSheets[tab] || estimateDbSheets.pj; }
+function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) { return sheet.headerRows?.[sheet.headerRows.length - 1] || []; }
+function getEstimateDbRows(sheet = getEstimateDbSheet()) { return sheet.rows || []; }
+function getEstimateDbYears() {
+  const years = new Set();
+  Object.values(estimateDbSheets).forEach(sheet => (sheet.rows || []).forEach(row => {
+    const year = parseEstimateDbYear(row[0] || row[5] || "");
+    if (year) years.add(year);
+  }));
+  if (!years.size) years.add(String(new Date().getFullYear()));
+  return [...years].sort();
+}
+function getSelectedEstimateDbYear() {
+  const select = document.getElementById("estimateDbYearSelect");
+  return select?.value || getEstimateDbYears()[0] || String(new Date().getFullYear());
+}
+function syncEstimateDbYearOptions() {
+  const select = document.getElementById("estimateDbYearSelect");
+  if (!select) return;
+  const current = select.value;
+  const years = getEstimateDbYears();
+  select.innerHTML = years.map(y => `<option value="${escapeEstimateDbHtml(y)}">${escapeEstimateDbHtml(y)}년</option>`).join("");
+  select.value = years.includes(current) ? current : (years[0] || String(new Date().getFullYear()));
 }
 function setEstimateDbTab(tab) {
   if (!estimateDbSheets[tab]) return;
@@ -1861,122 +1876,97 @@ function setEstimateDbTab(tab) {
   estimateDbSelectedCell = { tab, sectionIndex: null, rowIndex: 0, colIndex: 0 };
   renderEstimateDbManage();
 }
+function setEstimateDbReportTab(tab) {
+  if (!estimateDbReportTabs[tab]) return;
+  estimateDbReportActiveTab = tab;
+  renderEstimateDbReports();
+}
 function estimateDbDisplayLength(value) {
-  return String(value || "").split("").reduce((sum, ch) => sum + (/[ㄱ-ㅎ가-힣]/.test(ch) ? 1.7 : 1), 0);
+  return String(value ?? "").split("").reduce((sum, ch) => sum + (ch.charCodeAt(0) > 127 ? 1.65 : 1), 0);
 }
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet()) {
   const values = [];
   (sheet.headerRows || []).forEach(row => values.push(row[colIndex] || ""));
-  if (sheet.companyMode) {
-    (sheet.sections || []).forEach(section => (section.rows || []).forEach(row => values.push(row[colIndex] || "")));
-  } else {
-    (sheet.rows || []).forEach(row => values.push(row[colIndex] || ""));
-  }
+  (sheet.rows || []).slice(0, 30).forEach(row => values.push(row[colIndex] || ""));
   const maxLen = Math.max(8, ...values.map(estimateDbDisplayLength));
-  return Math.max(130, Math.min(420, Math.ceil(maxLen * 12 + 42)));
+  return Math.max(140, Math.min(520, Math.ceil(maxLen * 11 + 56)));
 }
 function makeEstimateDbCellStyle(colIndex, sheet = getEstimateDbSheet()) {
   const width = getEstimateDbColumnWidth(colIndex, sheet);
   return `style="min-width:${width}px;width:${width}px;"`;
 }
-
+function escapeEstimateDbHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 function renderEstimateDbManage() {
   const head = document.getElementById("estimateDbHead");
   const body = document.getElementById("estimateDbBody");
   if (!head || !body) return;
+  syncEstimateDbYearOptions();
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
   const sheet = getEstimateDbSheet();
   const colCount = getEstimateDbLeafColumns(sheet).length;
   head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
     <tr class="quote-db-head-row quote-db-head-row-${index + 1}">
-      ${headerRow.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeProjectReceiveHtml(col || "")}</th>`).join("")}
+      ${headerRow.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "")}</th>`).join("")}
       ${index === 0 ? `<th class="quote-db-manage-col" rowspan="${Math.max(1, sheet.headerRows.length)}">관리</th>` : ""}
     </tr>
   `).join("");
-
-  if (sheet.companyMode) {
-    body.innerHTML = (sheet.sections || []).map((section, sectionIndex) => {
-      const sectionRows = section.rows || [];
-      return `
-        <tr class="quote-db-company-row"><td colspan="${colCount + 1}">
-          <input value="${escapeProjectReceiveHtml(section.company || "")}" oninput="updateEstimateDbSection(${sectionIndex}, 'company', this.value)" />
-        </td></tr>
-        <tr class="quote-db-account-row"><td colspan="${colCount + 1}">
-          <input value="${escapeProjectReceiveHtml(section.account || "")}" oninput="updateEstimateDbSection(${sectionIndex}, 'account', this.value)" />
-        </td></tr>
-        ${sectionRows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount, sectionIndex)).join("")}
-      `;
-    }).join("");
-    restoreEstimateDbFocus();
-    return;
-  }
-
   const rows = sheet.rows || [];
   body.innerHTML = rows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`;
+  renderEstimateDbReports();
   restoreEstimateDbFocus();
 }
-
-function renderEstimateDbRow(row, rowIndex, colCount, sectionIndex = null) {
+function renderEstimateDbRow(row, rowIndex, colCount) {
   const sheet = getEstimateDbSheet();
   const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
-  const sectionArg = sectionIndex === null ? "null" : sectionIndex;
-  const sectionData = sectionIndex === null ? "" : `data-section-index="${sectionIndex}"`;
   return `
-    <tr class="quote-db-data-row" data-row-index="${rowIndex}" ${sectionData}>
-      ${safeRow.map((value, colIndex) => `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input" value="${escapeProjectReceiveHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}" ${sectionData} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex}, ${sectionArg})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, ${sectionArg})" onkeydown="handleEstimateDbKeydown(event)" /></td>`).join("")}
-      <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex}, ${sectionArg})">삭제</button></td>
+    <tr class="quote-db-data-row" data-row-index="${rowIndex}">
+      ${safeRow.map((value, colIndex) => `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input" value="${escapeEstimateDbHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" /></td>`).join("")}
+      <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
   `;
 }
-
-function selectEstimateDbCell(rowIndex, colIndex, sectionIndex = null) {
-  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex, rowIndex, colIndex };
+function selectEstimateDbCell(rowIndex, colIndex) {
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
   document.querySelectorAll(".quote-db-data-row").forEach(row => row.classList.remove("selected"));
-  const selector = sectionIndex === null
-    ? `.quote-db-data-row[data-row-index="${rowIndex}"]:not([data-section-index])`
-    : `.quote-db-data-row[data-row-index="${rowIndex}"][data-section-index="${sectionIndex}"]`;
-  document.querySelector(selector)?.classList.add("selected");
+  document.querySelector(`.quote-db-data-row[data-row-index="${rowIndex}"]`)?.classList.add("selected");
 }
 function restoreEstimateDbFocus() {
   const cell = estimateDbSelectedCell;
   if (cell.tab !== estimateDbActiveTab) return;
-  requestAnimationFrame(() => selectEstimateDbCell(cell.rowIndex || 0, cell.colIndex || 0, cell.sectionIndex ?? null));
+  requestAnimationFrame(() => selectEstimateDbCell(cell.rowIndex || 0, cell.colIndex || 0));
 }
-function focusEstimateDbCell(rowIndex, colIndex, sectionIndex = null) {
-  const selector = sectionIndex === null
-    ? `.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]:not([data-section-index])`
-    : `.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"][data-section-index="${sectionIndex}"]`;
-  const input = document.querySelector(selector);
-  if (input) {
-    input.focus();
-    input.select?.();
-  }
+function focusEstimateDbCell(rowIndex, colIndex) {
+  const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
+  if (input) { input.focus(); input.select?.(); }
 }
 function handleEstimateDbKeydown(event) {
   const input = event.currentTarget;
   const rowIndex = Number(input.dataset.rowIndex || 0);
   const colIndex = Number(input.dataset.colIndex || 0);
-  const sectionIndex = input.dataset.sectionIndex === undefined ? null : Number(input.dataset.sectionIndex);
-  const sheet = getEstimateDbSheet();
-  const rows = getEstimateDbRows(sheet, sectionIndex);
-  const colCount = getEstimateDbLeafColumns(sheet).length;
-
+  const rows = getEstimateDbRows();
+  const colCount = getEstimateDbLeafColumns().length;
   if (event.ctrlKey && event.key === "F9") {
     event.preventDefault();
-    addEstimateDbRow(sectionIndex, rowIndex + 1);
-    requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex, sectionIndex));
+    addEstimateDbRow(null, rowIndex + 1);
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex));
     return;
   }
   if (event.ctrlKey && event.key === "F3") {
     event.preventDefault();
-    duplicateEstimateDbRow(rowIndex, sectionIndex);
-    requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex, sectionIndex));
+    duplicateEstimateDbRow(rowIndex);
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex));
     return;
   }
   if (event.ctrlKey && (event.key === "Delete" || event.key === "Del")) {
     event.preventDefault();
-    removeEstimateDbRow(rowIndex, sectionIndex);
-    requestAnimationFrame(() => focusEstimateDbCell(Math.max(0, rowIndex - 1), Math.min(colIndex, colCount - 1), sectionIndex));
+    removeEstimateDbRow(rowIndex);
+    requestAnimationFrame(() => focusEstimateDbCell(Math.max(0, rowIndex - 1), Math.min(colIndex, colCount - 1)));
     return;
   }
   const arrowMap = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
@@ -1986,83 +1976,196 @@ function handleEstimateDbKeydown(event) {
     const nextCol = Math.max(0, Math.min(colCount - 1, colIndex + dc));
     if (nextRow !== rowIndex || nextCol !== colIndex) {
       event.preventDefault();
-      focusEstimateDbCell(nextRow, nextCol, sectionIndex);
+      focusEstimateDbCell(nextRow, nextCol);
     }
   }
 }
-
-function updateEstimateDbSection(sectionIndex, key, value) {
-  const sheet = getEstimateDbSheet();
-  if (!sheet.companyMode || !sheet.sections?.[sectionIndex]) return;
-  sheet.sections[sectionIndex][key] = value;
-}
-function updateEstimateDbCell(rowIndex, colIndex, value, sectionIndex = null) {
-  const sheet = getEstimateDbSheet();
-  const rows = getEstimateDbRows(sheet, sectionIndex);
+function updateEstimateDbCell(rowIndex, colIndex, value) {
+  const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = value;
+  renderEstimateDbReports();
 }
-
-function addEstimateDbRow(sectionIndex = null, insertAt = null) {
+function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const sheet = getEstimateDbSheet();
   const columns = getEstimateDbLeafColumns(sheet);
   const next = Array(columns.length).fill("");
-  next[0] = String(new Date().getFullYear());
-  const rows = getEstimateDbRows(sheet, sheet.companyMode ? (sectionIndex ?? 0) : null);
-  if (!rows) return;
+  const yearIndex = columns.findIndex(c => c === "년도");
+  if (yearIndex >= 0) next[yearIndex] = getSelectedEstimateDbYear();
+  const rows = getEstimateDbRows(sheet);
   if (insertAt === null || insertAt === undefined || insertAt > rows.length) rows.push(next);
   else rows.splice(Math.max(0, insertAt), 0, next);
   renderEstimateDbManage();
 }
-
-function duplicateEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0, sectionIndex = estimateDbSelectedCell.sectionIndex ?? null) {
-  const sheet = getEstimateDbSheet();
-  const rows = getEstimateDbRows(sheet, sectionIndex);
+function duplicateEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
+  const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows.splice(rowIndex + 1, 0, [...rows[rowIndex]]);
   renderEstimateDbManage();
 }
-
-function removeEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0, sectionIndex = estimateDbSelectedCell.sectionIndex ?? null) {
-  const sheet = getEstimateDbSheet();
-  const rows = getEstimateDbRows(sheet, sectionIndex);
+function removeEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
+  const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows.splice(rowIndex, 1);
-  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex, rowIndex: Math.max(0, rowIndex - 1), colIndex: estimateDbSelectedCell.colIndex || 0 };
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex: Math.max(0, rowIndex - 1), colIndex: estimateDbSelectedCell.colIndex || 0 };
   renderEstimateDbManage();
 }
-
-function escapeEstimateDbExcelCell(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+function getEstimateDbRowsByYear(tab, year = getSelectedEstimateDbYear()) {
+  const sheet = estimateDbSheets[tab];
+  const columns = getEstimateDbLeafColumns(sheet);
+  const yearIndex = columns.findIndex(c => c === "년도");
+  return (sheet.rows || []).filter(row => {
+    const val = yearIndex >= 0 ? row[yearIndex] : row[0];
+    return parseEstimateDbYear(val) === String(year);
+  });
 }
-function exportEstimateDbToExcel() {
-  const sheet = getEstimateDbSheet();
-  const colCount = getEstimateDbLeafColumns(sheet).length;
-  const headerHtml = (sheet.headerRows || []).map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbExcelCell(cell)}</th>`).join("")}</tr>`).join("");
-  let bodyHtml = "";
-  if (sheet.companyMode) {
-    bodyHtml = (sheet.sections || []).map(section => `
-      <tr><td colspan="${colCount}"><b>${escapeEstimateDbExcelCell(section.company || "")}</b></td></tr>
-      <tr><td colspan="${colCount}">${escapeEstimateDbExcelCell(section.account || "")}</td></tr>
-      ${(section.rows || []).map(row => `<tr>${Array.from({ length: colCount }, (_, i) => `<td>${escapeEstimateDbExcelCell(row[i] || "")}</td>`).join("")}</tr>`).join("")}
-    `).join("");
+function estimateDbIndexMap(tab) {
+  const columns = getEstimateDbLeafColumns(estimateDbSheets[tab]);
+  return Object.fromEntries(columns.map((name, i) => [name, i]));
+}
+function sumEstimateDbByMonth(rows, monthIndex, amountIndex, year = getSelectedEstimateDbYear()) {
+  return rows.reduce((sum, row) => {
+    const month = parseEstimateDbMonth(row[monthIndex]);
+    if (month && month === Number(monthIndex === -1 ? 0 : row.__monthFilter)) return sum;
+    return sum + toEstimateDbNumber(row[amountIndex]);
+  }, 0);
+}
+function buildOrderRows(year = getSelectedEstimateDbYear()) {
+  const idx = estimateDbIndexMap("pj");
+  const mepIdx = estimateDbIndexMap("mep");
+  const rows = getEstimateDbRowsByYear("pj", year);
+  const mepRows = getEstimateDbRowsByYear("mep", year);
+  const monthly = Array.from({ length: 12 }, (_, m) => {
+    const month = m + 1;
+    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["수주일자"]]) === month);
+    const outRows = mepRows.filter(row => parseEstimateDbMonth(row[mepIdx["지급일자1"]]) === month || parseEstimateDbMonth(row[mepIdx["지급일자2"]]) === month);
+    const orderAmount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["연면적(평)"]]) * 14000, 0);
+    const outAmount = outRows.reduce((sum, row) => sum + toEstimateDbNumber(row[mepIdx["지급합계"]] || row[mepIdx["계약금액"]]), 0);
+    return [year, `${month}월`, monthRows.length || "", orderAmount, 0, orderAmount, outAmount, Math.max(0, orderAmount - outAmount), ""];
+  });
+  const detailHeader = ["NO", "수주월", "거래처명", "프로젝트명", "작업공종", "수주일자", "최종수주액", "기전/외주", "컨코스트", "PM(마감)", "PM(구조)", "PM(토목,조경)"];
+  const detail = rows.map(row => {
+    const amount = toEstimateDbNumber(row[idx["연면적(평)"]]) * 14000;
+    const month = parseEstimateDbMonth(row[idx["수주일자"]]) || "";
+    return [row[idx["접수번호"]], month ? `${month}월` : "", row[idx["거래처명"]], row[idx["프로젝트명"]], row[idx["작업공종"]], row[idx["수주일자"]], amount, "", amount, row[idx["PM(마감)"]], row[idx["PM(구조)"]], row[idx["PM(토목,조경)"]]];
+  });
+  return { title: `${year}년 수주`, header: ["년도", "월", "건 수", "수주액", "조정금액", "최종수주액(①)", "기전/외주(②)", "컨코스트(①-②)", "비고"], monthly, detailHeader, detail };
+}
+function buildSalesRows(year = getSelectedEstimateDbYear()) {
+  const idx = estimateDbIndexMap("progress");
+  const rows = getEstimateDbRowsByYear("progress", year);
+  const monthly = Array.from({ length: 12 }, (_, m) => {
+    const month = m + 1;
+    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["계약일자"]] || row[idx["수주일자"]]) === month);
+    const amount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["계약금액"]]), 0);
+    const out = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["외주합계"]]), 0);
+    return [year, `${month}월`, monthRows.length || "", amount, Math.round(amount * 1.1), out, Math.max(0, amount - out), ""];
+  });
+  const detailHeader = ["PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "외주합계", "계약일자", "총괄PM", "납품예정일", "특이사항"];
+  const detail = rows.map(row => [row[idx["PJ NO"]], row[idx["업체명"]], row[idx["PJ명"]], row[idx["계약금액"]], row[idx["수령액"]], row[idx["잔액"]], row[idx["외주합계"]], row[idx["계약일자"]], row[idx["총괄PM"]], row[idx["납품예정일"]], row[idx["특이사항"]]]);
+  return { title: `${year}년 매출`, header: ["년도", "월", "건 수", "발행액(①)", "발행액(①)VAT포함", "기전/외주(②)", "컨코스트(①-②)", "비고"], monthly, detailHeader, detail };
+}
+function buildDepositRows(year = getSelectedEstimateDbYear()) {
+  const idx = estimateDbIndexMap("progress");
+  const rows = getEstimateDbRowsByYear("progress", year);
+  const detailHeader = ["NO", "업체", "프로젝트명", "기성담당자", "총액", "기수령액", "청구액(별도)", "청구액(포함)", "청구후잔액", "기전/외주", "발행일", "지급예상일", "지급일", "지급액(vat별도)", "지급액(vat포함)", "은행명", "종류", "비고"];
+  const detail = rows.map(row => {
+    const total = toEstimateDbNumber(row[idx["계약금액"]]);
+    const paid = toEstimateDbNumber(row[idx["수령액"]]);
+    const bill = Math.max(0, total - paid);
+    return [row[idx["PJ NO"]], row[idx["업체명"]], row[idx["PJ명"]], row[idx["기성담당자"]], total, paid, bill, Math.round(bill * 1.1), Math.max(0, total - paid - bill), row[idx["외주합계"]], row[idx["계약금_세금계산서"]], row[idx["납품예정일"]], row[idx["계약금_입금일"]], bill, Math.round(bill * 1.1), "", "", row[idx["특이사항"]]];
+  });
+  return { title: `${year}년 입금`, detailHeader, detail };
+}
+function buildSummaryRows(year = getSelectedEstimateDbYear()) {
+  const order = buildOrderRows(year).monthly;
+  const sales = buildSalesRows(year).monthly;
+  const deposit = buildDepositRows(year).detail;
+  return Array.from({ length: 12 }, (_, m) => {
+    const orderAmount = toEstimateDbNumber(order[m][5]);
+    const orderOut = toEstimateDbNumber(order[m][6]);
+    const salesAmount = toEstimateDbNumber(sales[m][3]);
+    const salesOut = toEstimateDbNumber(sales[m][5]);
+    const depRows = deposit.filter(row => parseEstimateDbMonth(row[12]) === m + 1 || parseEstimateDbMonth(row[10]) === m + 1);
+    const depAmount = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[13]), 0);
+    const depOut = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[9]), 0);
+    return [`${m + 1}월`, 100000000, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, 100000000), pct(orderAmount, 100000000), 100000000, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, 100000000), pct(salesAmount, 100000000), 100000000, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, 100000000), pct(depAmount, 100000000), ""];
+  });
+}
+function pct(value, total) { return total ? Math.round((value / total) * 1000) / 10 + "%" : "0%"; }
+function renderEstimateDbReports() {
+  const tabs = document.getElementById("estimateDbReportTabs");
+  const target = document.getElementById("estimateDbReportBody");
+  if (!tabs || !target) return;
+  tabs.querySelectorAll("button").forEach(btn => btn.classList.toggle("active", btn.dataset.reportTab === estimateDbReportActiveTab));
+  const year = getSelectedEstimateDbYear();
+  let html = "";
+  if (estimateDbReportActiveTab === "summary") {
+    const rows = buildSummaryRows(year);
+    html = renderReportTable(`${year}년 수주.매출.입금`, [["구분", "수주목표", "수주달성", "기전/외주", "차액", "비율1", "비율2", "매출목표", "매출달성", "기전/외주", "차액", "비율1", "비율2", "입금목표", "입금달성", "기전/외주", "차액", "비율1", "비율2", "비고"]], rows);
+  } else if (estimateDbReportActiveTab === "order") {
+    const data = buildOrderRows(year);
+    html = renderReportTable(data.title, [data.header], data.monthly) + renderReportTable("수주 프로젝트 상세", [data.detailHeader], data.detail);
+  } else if (estimateDbReportActiveTab === "sales") {
+    const data = buildSalesRows(year);
+    html = renderReportTable(data.title, [data.header], data.monthly) + renderReportTable("매출 프로젝트 상세", [data.detailHeader], data.detail);
   } else {
-    bodyHtml = (sheet.rows || []).map(row => `<tr>${Array.from({ length: colCount }, (_, i) => `<td>${escapeEstimateDbExcelCell(row[i] || "")}</td>`).join("")}</tr>`).join("");
+    const data = buildDepositRows(year);
+    html = renderReportTable(data.title, [data.detailHeader], data.detail);
   }
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body><table border="1"><thead>${headerHtml}</thead><tbody>${bodyHtml}</tbody></table></body></html>`;
-  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  target.innerHTML = html;
+}
+function renderReportTable(title, headerRows, rows) {
+  return `<div class="quote-report-table-block"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(cell)}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
+}
+function escapeEstimateDbExcelCell(value) { return escapeEstimateDbHtml(value); }
+function worksheetXml(name, rows) {
+  return `<Worksheet ss:Name="${escapeEstimateDbXml(name)}"><Table>${rows.map(row => `<Row>${row.map(cell => `<Cell><Data ss:Type="String">${escapeEstimateDbXml(cell)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`;
+}
+function escapeEstimateDbXml(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function getEstimateDbExportRows(tab) {
+  const sheet = estimateDbSheets[tab];
+  return [...(sheet.headerRows || []), ...(sheet.rows || [])];
+}
+function getEstimateDbReportExportSheets(year = getSelectedEstimateDbYear()) {
+  const order = buildOrderRows(year);
+  const sales = buildSalesRows(year);
+  const deposit = buildDepositRows(year);
+  return [
+    { name: "0.수주매출입금", rows: [[`${year}년 수주.매출.입금`], ["구분", "수주목표", "수주달성", "기전/외주", "차액", "비율1", "비율2", "매출목표", "매출달성", "기전/외주", "차액", "비율1", "비율2", "입금목표", "입금달성", "기전/외주", "차액", "비율1", "비율2", "비고"], ...buildSummaryRows(year)] },
+    { name: "1.수주 프로젝트", rows: [[order.title], order.header, ...order.monthly, [], order.detailHeader, ...order.detail] },
+    { name: "2.매출 프로젝트", rows: [[sales.title], sales.header, ...sales.monthly, [], sales.detailHeader, ...sales.detail] },
+    { name: "3.입금 프로젝트", rows: [[deposit.title], deposit.detailHeader, ...deposit.detail] }
+  ];
+}
+function downloadEstimateDbWorkbook(fileName, sheets) {
+  const xml = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style></Styles>${sheets.map(s => worksheetXml(s.name, s.rows)).join("")}</Workbook>`;
+  const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   a.href = url;
-  a.download = `CONCOST_DB_${sheet.title || estimateDbActiveTab}_${date}.xls`;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  showToast("DB관리 데이터를 엑셀 파일로 내보냅니다.");
 }
+function exportEstimateDbToExcel() {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const sheets = [
+    { name: "DB_프로젝트", rows: getEstimateDbExportRows("pj") },
+    { name: "DB_기성", rows: getEstimateDbExportRows("progress") },
+    { name: "DB기전외주", rows: getEstimateDbExportRows("mep") }
+  ];
+  downloadEstimateDbWorkbook(`CONCOST_DB_${date}.xls`, sheets);
+  showToast("DB 3개 시트를 엑셀 파일로 내보냅니다.");
+}
+function exportEstimateDbReportsToExcel() {
+  const year = getSelectedEstimateDbYear();
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  downloadEstimateDbWorkbook(`CONCOST_수주매출입금_${year}_${date}.xls`, getEstimateDbReportExportSheets(year));
+  showToast(`${year}년 0~3번 결과 시트를 엑셀 파일로 내보냅니다.`);
+}
+function handleEstimateDbYearChange() { renderEstimateDbReports(); }
