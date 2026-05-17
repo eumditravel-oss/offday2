@@ -16604,3 +16604,25 @@ th.quote-db-manage-col {
   color: #475569;
   font-weight: 800;
 }
+
+
+/* === DB관리 연도별 0~3 시트 연결 화면 v12 === */
+.quote-db-report-card{margin-top:18px;}
+.quote-db-report-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;}
+.quote-db-report-head strong{display:block;font-size:18px;color:#0f172a;margin-bottom:6px;}
+.quote-db-report-head span{display:block;font-size:13px;color:#64748b;}
+.quote-db-report-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.quote-db-report-actions label{display:flex;align-items:center;gap:8px;font-weight:800;color:#0f172a;}
+.quote-db-report-actions select{height:38px;border:1px solid #d7e2ee;border-radius:10px;padding:0 30px 0 12px;font-weight:800;background:#fff;}
+.quote-db-report-tabs{margin-top:4px;margin-bottom:14px;}
+.quote-db-report-wrap{overflow:auto;border:1px solid #dbe5f0;border-radius:14px;background:#fff;max-height:560px;}
+.quote-report-table-block{padding:12px 12px 18px;min-width:max-content;}
+.quote-report-table-block + .quote-report-table-block{border-top:8px solid #f1f5f9;}
+.quote-report-table-block h3{font-size:16px;font-weight:900;color:#0f172a;margin:4px 0 10px;}
+.quote-report-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13px;}
+.quote-report-table th,.quote-report-table td{border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:8px 10px;white-space:nowrap;vertical-align:middle;min-width:110px;}
+.quote-report-table th{position:sticky;top:0;background:#f8fafc;font-weight:900;color:#334155;z-index:1;}
+.quote-report-table td{background:#fff;color:#0f172a;font-weight:700;}
+.quote-report-table tr:hover td{background:#f8fbff;}
+.quote-db-table th,.quote-db-table td{white-space:nowrap;}
+.quote-db-cell-input{min-width:100%;}
