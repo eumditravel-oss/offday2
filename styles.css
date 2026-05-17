@@ -16521,19 +16521,25 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   .receive-webhard-grid { grid-template-columns: 1fr; }
 }
 
-/* === 견적서 DB관리 엑셀 작성란 v9 === */
+/* === 견적서 DB관리 엑셀 작성란 v10 === */
 .quote-db-grid-wrap {
   max-height: 68vh;
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
 }
 .quote-db-table {
-  min-width: 2600px;
-  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 .quote-db-table th,
 .quote-db-table td {
-  min-width: 120px;
   padding: 7px 8px;
   white-space: nowrap;
+  vertical-align: middle;
 }
 .quote-db-table th {
   position: sticky;
@@ -16541,14 +16547,45 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   z-index: 2;
   text-align: center;
   background: #f1f5f9;
+  color: #475569;
+  font-weight: 900;
 }
 .quote-db-table .quote-db-head-row-2 th {
   top: 36px;
   background: #f8fafc;
 }
 .quote-db-table input {
-  min-height: 28px;
+  width: 100%;
+  min-width: 100%;
+  min-height: 30px;
+  padding: 5px 7px;
   font-size: 13px;
+  font-weight: 800;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-sizing: border-box;
+}
+.quote-db-table input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+}
+.quote-db-data-row.selected td {
+  background: #fff7ed;
+}
+.quote-db-manage-col {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  min-width: 78px !important;
+  width: 78px !important;
+  background: #ffffff;
+  box-shadow: -8px 0 14px rgba(15, 23, 42, 0.06);
+}
+th.quote-db-manage-col {
+  background: #f1f5f9;
 }
 .quote-db-company-row td,
 .quote-db-account-row td {
