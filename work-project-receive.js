@@ -1843,6 +1843,7 @@ const estimateDbSheets = {
 };
 
 let estimateDbActiveTab = "pj";
+let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
 
 function getEstimateDbSheet(tab = estimateDbActiveTab) {
   return estimateDbSheets[tab] || estimateDbSheets.pj;
@@ -1850,10 +1851,33 @@ function getEstimateDbSheet(tab = estimateDbActiveTab) {
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   return sheet.headerRows?.[sheet.headerRows.length - 1] || [];
 }
+function getEstimateDbRows(sheet = getEstimateDbSheet(), sectionIndex = null) {
+  if (sectionIndex === null || sectionIndex === "null") return sheet.rows || [];
+  return sheet.sections?.[Number(sectionIndex)]?.rows || [];
+}
 function setEstimateDbTab(tab) {
   if (!estimateDbSheets[tab]) return;
   estimateDbActiveTab = tab;
+  estimateDbSelectedCell = { tab, sectionIndex: null, rowIndex: 0, colIndex: 0 };
   renderEstimateDbManage();
+}
+function estimateDbDisplayLength(value) {
+  return String(value || "").split("").reduce((sum, ch) => sum + (/[ㄱ-ㅎ가-힣]/.test(ch) ? 1.7 : 1), 0);
+}
+function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet()) {
+  const values = [];
+  (sheet.headerRows || []).forEach(row => values.push(row[colIndex] || ""));
+  if (sheet.companyMode) {
+    (sheet.sections || []).forEach(section => (section.rows || []).forEach(row => values.push(row[colIndex] || "")));
+  } else {
+    (sheet.rows || []).forEach(row => values.push(row[colIndex] || ""));
+  }
+  const maxLen = Math.max(8, ...values.map(estimateDbDisplayLength));
+  return Math.max(130, Math.min(420, Math.ceil(maxLen * 12 + 42)));
+}
+function makeEstimateDbCellStyle(colIndex, sheet = getEstimateDbSheet()) {
+  const width = getEstimateDbColumnWidth(colIndex, sheet);
+  return `style="min-width:${width}px;width:${width}px;"`;
 }
 
 function renderEstimateDbManage() {
@@ -1865,8 +1889,8 @@ function renderEstimateDbManage() {
   const colCount = getEstimateDbLeafColumns(sheet).length;
   head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
     <tr class="quote-db-head-row quote-db-head-row-${index + 1}">
-      ${headerRow.map(col => `<th>${escapeProjectReceiveHtml(col || "")}</th>`).join("")}
-      ${index === 0 ? `<th rowspan="${Math.max(1, sheet.headerRows.length)}">관리</th>` : ""}
+      ${headerRow.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeProjectReceiveHtml(col || "")}</th>`).join("")}
+      ${index === 0 ? `<th class="quote-db-manage-col" rowspan="${Math.max(1, sheet.headerRows.length)}">관리</th>` : ""}
     </tr>
   `).join("");
 
@@ -1883,22 +1907,88 @@ function renderEstimateDbManage() {
         ${sectionRows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount, sectionIndex)).join("")}
       `;
     }).join("");
+    restoreEstimateDbFocus();
     return;
   }
 
   const rows = sheet.rows || [];
   body.innerHTML = rows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`;
+  restoreEstimateDbFocus();
 }
 
 function renderEstimateDbRow(row, rowIndex, colCount, sectionIndex = null) {
+  const sheet = getEstimateDbSheet();
   const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
   const sectionArg = sectionIndex === null ? "null" : sectionIndex;
+  const sectionData = sectionIndex === null ? "" : `data-section-index="${sectionIndex}"`;
   return `
-    <tr>
-      ${safeRow.map((value, colIndex) => `<td><input value="${escapeProjectReceiveHtml(value)}" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, ${sectionArg})" /></td>`).join("")}
-      <td><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex}, ${sectionArg})">삭제</button></td>
+    <tr class="quote-db-data-row" data-row-index="${rowIndex}" ${sectionData}>
+      ${safeRow.map((value, colIndex) => `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input" value="${escapeProjectReceiveHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}" ${sectionData} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex}, ${sectionArg})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, ${sectionArg})" onkeydown="handleEstimateDbKeydown(event)" /></td>`).join("")}
+      <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex}, ${sectionArg})">삭제</button></td>
     </tr>
   `;
+}
+
+function selectEstimateDbCell(rowIndex, colIndex, sectionIndex = null) {
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex, rowIndex, colIndex };
+  document.querySelectorAll(".quote-db-data-row").forEach(row => row.classList.remove("selected"));
+  const selector = sectionIndex === null
+    ? `.quote-db-data-row[data-row-index="${rowIndex}"]:not([data-section-index])`
+    : `.quote-db-data-row[data-row-index="${rowIndex}"][data-section-index="${sectionIndex}"]`;
+  document.querySelector(selector)?.classList.add("selected");
+}
+function restoreEstimateDbFocus() {
+  const cell = estimateDbSelectedCell;
+  if (cell.tab !== estimateDbActiveTab) return;
+  requestAnimationFrame(() => selectEstimateDbCell(cell.rowIndex || 0, cell.colIndex || 0, cell.sectionIndex ?? null));
+}
+function focusEstimateDbCell(rowIndex, colIndex, sectionIndex = null) {
+  const selector = sectionIndex === null
+    ? `.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]:not([data-section-index])`
+    : `.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"][data-section-index="${sectionIndex}"]`;
+  const input = document.querySelector(selector);
+  if (input) {
+    input.focus();
+    input.select?.();
+  }
+}
+function handleEstimateDbKeydown(event) {
+  const input = event.currentTarget;
+  const rowIndex = Number(input.dataset.rowIndex || 0);
+  const colIndex = Number(input.dataset.colIndex || 0);
+  const sectionIndex = input.dataset.sectionIndex === undefined ? null : Number(input.dataset.sectionIndex);
+  const sheet = getEstimateDbSheet();
+  const rows = getEstimateDbRows(sheet, sectionIndex);
+  const colCount = getEstimateDbLeafColumns(sheet).length;
+
+  if (event.ctrlKey && event.key === "F9") {
+    event.preventDefault();
+    addEstimateDbRow(sectionIndex, rowIndex + 1);
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex, sectionIndex));
+    return;
+  }
+  if (event.ctrlKey && event.key === "F3") {
+    event.preventDefault();
+    duplicateEstimateDbRow(rowIndex, sectionIndex);
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex, sectionIndex));
+    return;
+  }
+  if (event.ctrlKey && (event.key === "Delete" || event.key === "Del")) {
+    event.preventDefault();
+    removeEstimateDbRow(rowIndex, sectionIndex);
+    requestAnimationFrame(() => focusEstimateDbCell(Math.max(0, rowIndex - 1), Math.min(colIndex, colCount - 1), sectionIndex));
+    return;
+  }
+  const arrowMap = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  if (!event.ctrlKey && arrowMap[event.key]) {
+    const [dr, dc] = arrowMap[event.key];
+    const nextRow = Math.max(0, Math.min(rows.length - 1, rowIndex + dr));
+    const nextCol = Math.max(0, Math.min(colCount - 1, colIndex + dc));
+    if (nextRow !== rowIndex || nextCol !== colIndex) {
+      event.preventDefault();
+      focusEstimateDbCell(nextRow, nextCol, sectionIndex);
+    }
+  }
 }
 
 function updateEstimateDbSection(sectionIndex, key, value) {
@@ -1908,31 +1998,71 @@ function updateEstimateDbSection(sectionIndex, key, value) {
 }
 function updateEstimateDbCell(rowIndex, colIndex, value, sectionIndex = null) {
   const sheet = getEstimateDbSheet();
-  const rows = sectionIndex === null ? sheet.rows : sheet.sections?.[sectionIndex]?.rows;
+  const rows = getEstimateDbRows(sheet, sectionIndex);
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = value;
 }
 
-function addEstimateDbRow() {
+function addEstimateDbRow(sectionIndex = null, insertAt = null) {
   const sheet = getEstimateDbSheet();
   const columns = getEstimateDbLeafColumns(sheet);
   const next = Array(columns.length).fill("");
   next[0] = String(new Date().getFullYear());
-  if (sheet.companyMode) {
-    const section = sheet.sections?.[0];
-    if (!section) return;
-    section.rows.push(next);
-  } else {
-    sheet.rows = sheet.rows || [];
-    sheet.rows.push(next);
-  }
+  const rows = getEstimateDbRows(sheet, sheet.companyMode ? (sectionIndex ?? 0) : null);
+  if (!rows) return;
+  if (insertAt === null || insertAt === undefined || insertAt > rows.length) rows.push(next);
+  else rows.splice(Math.max(0, insertAt), 0, next);
   renderEstimateDbManage();
 }
 
-function removeEstimateDbRow(rowIndex, sectionIndex = null) {
+function duplicateEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0, sectionIndex = estimateDbSelectedCell.sectionIndex ?? null) {
   const sheet = getEstimateDbSheet();
-  const rows = sectionIndex === null ? sheet.rows : sheet.sections?.[sectionIndex]?.rows;
+  const rows = getEstimateDbRows(sheet, sectionIndex);
+  if (!rows?.[rowIndex]) return;
+  rows.splice(rowIndex + 1, 0, [...rows[rowIndex]]);
+  renderEstimateDbManage();
+}
+
+function removeEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0, sectionIndex = estimateDbSelectedCell.sectionIndex ?? null) {
+  const sheet = getEstimateDbSheet();
+  const rows = getEstimateDbRows(sheet, sectionIndex);
   if (!rows?.[rowIndex]) return;
   rows.splice(rowIndex, 1);
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex, rowIndex: Math.max(0, rowIndex - 1), colIndex: estimateDbSelectedCell.colIndex || 0 };
   renderEstimateDbManage();
+}
+
+function escapeEstimateDbExcelCell(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function exportEstimateDbToExcel() {
+  const sheet = getEstimateDbSheet();
+  const colCount = getEstimateDbLeafColumns(sheet).length;
+  const headerHtml = (sheet.headerRows || []).map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbExcelCell(cell)}</th>`).join("")}</tr>`).join("");
+  let bodyHtml = "";
+  if (sheet.companyMode) {
+    bodyHtml = (sheet.sections || []).map(section => `
+      <tr><td colspan="${colCount}"><b>${escapeEstimateDbExcelCell(section.company || "")}</b></td></tr>
+      <tr><td colspan="${colCount}">${escapeEstimateDbExcelCell(section.account || "")}</td></tr>
+      ${(section.rows || []).map(row => `<tr>${Array.from({ length: colCount }, (_, i) => `<td>${escapeEstimateDbExcelCell(row[i] || "")}</td>`).join("")}</tr>`).join("")}
+    `).join("");
+  } else {
+    bodyHtml = (sheet.rows || []).map(row => `<tr>${Array.from({ length: colCount }, (_, i) => `<td>${escapeEstimateDbExcelCell(row[i] || "")}</td>`).join("")}</tr>`).join("");
+  }
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body><table border="1"><thead>${headerHtml}</thead><tbody>${bodyHtml}</tbody></table></body></html>`;
+  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  a.href = url;
+  a.download = `CONCOST_DB_${sheet.title || estimateDbActiveTab}_${date}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast("DB관리 데이터를 엑셀 파일로 내보냅니다.");
 }
