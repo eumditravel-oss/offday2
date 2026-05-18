@@ -2119,8 +2119,20 @@ function renderReportTable(title, headerRows, rows) {
   return `<div class="quote-report-table-block"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(cell)}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
 }
 function escapeEstimateDbExcelCell(value) { return escapeEstimateDbHtml(value); }
-function worksheetXml(name, rows) {
-  return `<Worksheet ss:Name="${escapeEstimateDbXml(name)}"><Table>${rows.map(row => `<Row>${row.map(cell => `<Cell><Data ss:Type="String">${escapeEstimateDbXml(cell)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`;
+function estimateDbXmlCell(value, styleId = "Cell", mergeAcross = 0, mergeDown = 0) {
+  const attrs = [`ss:StyleID="${styleId}"`];
+  if (mergeAcross) attrs.push(`ss:MergeAcross="${mergeAcross}"`);
+  if (mergeDown) attrs.push(`ss:MergeDown="${mergeDown}"`);
+  const raw = value ?? "";
+  const num = typeof raw === "number" ? raw : (String(raw).trim() !== "" && !String(raw).includes("%") && !String(raw).match(/[가-힣A-Za-z/:]/) && !Number.isNaN(Number(String(raw).replace(/,/g, ""))) ? Number(String(raw).replace(/,/g, "")) : null);
+  if (num !== null && Number.isFinite(num)) return `<Cell ${attrs.join(" ")}><Data ss:Type="Number">${num}</Data></Cell>`;
+  return `<Cell ${attrs.join(" ")}><Data ss:Type="String">${escapeEstimateDbXml(raw)}</Data></Cell>`;
+}
+function worksheetXml(name, rows, options = {}) {
+  const widths = options.widths || [];
+  const columns = widths.map(w => `<Column ss:Width="${w}"/>`).join("");
+  const body = rows.map((row, rowIndex) => `<Row>${row.map(cell => estimateDbXmlCell(cell, rowIndex === 0 ? "Header" : "Cell")).join("")}</Row>`).join("");
+  return `<Worksheet ss:Name="${escapeEstimateDbXml(name)}"><Table>${columns}${body}</Table></Worksheet>`;
 }
 function escapeEstimateDbXml(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -2129,19 +2141,133 @@ function getEstimateDbExportRows(tab) {
   const sheet = estimateDbSheets[tab];
   return [...(sheet.headerRows || []), ...(sheet.rows || [])];
 }
+function summarizeEstimateDbRows(rows, label, bgStyle = "Body") {
+  const colCount = rows[0]?.length || 0;
+  if (!colCount) return [];
+  const out = Array(colCount).fill("");
+  out[0] = label;
+  for (let c = 1; c < colCount; c += 1) {
+    const total = rows.reduce((sum, row) => {
+      const value = String(row[c] ?? "").replace(/,/g, "");
+      return /^-?\d+(\.\d+)?$/.test(value) ? sum + Number(value) : sum;
+    }, 0);
+    out[c] = total || "-";
+  }
+  return out;
+}
+function buildStyledSummaryData(year = getSelectedEstimateDbYear()) {
+  const monthly = buildSummaryRows(year);
+  const rowsByMonth = new Map(monthly.map(row => [parseEstimateDbMonth(row[0]), row]));
+  const blank = Array(20).fill("");
+  const getMonth = month => rowsByMonth.get(month) || [`${month}월`, 100000000, "-", "-", "-", "0%", "0%", 100000000, "-", "-", "-", "0%", "0%", 100000000, "-", "-", "-", "0%", "0%", ""];
+  const sumMonths = (label, months) => {
+    const base = Array(20).fill("");
+    base[0] = label;
+    [1,2,3,4,7,8,9,10,13,14,15,16].forEach(col => {
+      base[col] = months.reduce((sum, month) => sum + toEstimateDbNumber(getMonth(month)[col]), 0);
+    });
+    base[5] = pct(base[4], base[1]);
+    base[6] = pct(base[2], base[1]);
+    base[11] = pct(base[10], base[7]);
+    base[12] = pct(base[8], base[7]);
+    base[17] = pct(base[16], base[13]);
+    base[18] = pct(base[14], base[13]);
+    base[19] = "";
+    return base;
+  };
+  const quarter1 = sumMonths("1기예정", [1,2,3]);
+  const quarter1Fix = sumMonths("1기확정", [4,5,6]);
+  const half1 = sumMonths("1기(1~6월)", [1,2,3,4,5,6]);
+  const quarter2 = sumMonths("2기예정", [7,8,9]);
+  const quarter2Fix = sumMonths("2기확정", [10,11,12]);
+  const half2 = sumMonths("2기(7~12월)", [7,8,9,10,11,12]);
+  const total = sumMonths(`${year}년`, [1,2,3,4,5,6,7,8,9,10,11,12]);
+  return [
+    getMonth(1), getMonth(2), getMonth(3), quarter1,
+    getMonth(4), getMonth(5), getMonth(6), quarter1Fix, half1,
+    getMonth(7), getMonth(8), getMonth(9), quarter2,
+    getMonth(10), getMonth(11), getMonth(12), quarter2Fix, half2,
+    total
+  ];
+}
+function summaryStyleForLabel(label) {
+  if (String(label).includes("년")) return "Total";
+  if (String(label).includes("1기(") || String(label).includes("2기(")) return "Half";
+  if (String(label).includes("예정") || String(label).includes("확정")) return "Quarter";
+  return "Body";
+}
+function worksheetXmlStyledSummary(year = getSelectedEstimateDbYear()) {
+  const sub = ["①수주목표", "②수주달성", "③기전/외주", "②-③차액", "비율1", "비율2"];
+  const rows = buildStyledSummaryData(year);
+  const cols = [68, 96, 96, 96, 96, 78, 78, 96, 96, 96, 96, 78, 78, 96, 96, 96, 96, 78, 78, 150].map(w => `<Column ss:Width="${w}"/>`).join("");
+  let xml = `<Worksheet ss:Name="0.수주매출입금"><Table>${cols}`;
+  xml += `<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="19"><Data ss:Type="String">${escapeEstimateDbXml(year)}년 수주.매출.입금</Data></Cell></Row>`;
+  xml += `<Row ss:Height="12">${Array.from({length:20}, () => estimateDbXmlCell("", "Blank")).join("")}</Row>`;
+  xml += `<Row ss:Height="24">${estimateDbXmlCell("구분", "Group", 0, 1)}${estimateDbXmlCell("수주", "Group", 5)}${estimateDbXmlCell("매출", "Group", 5)}${estimateDbXmlCell("입금", "Group", 5)}${estimateDbXmlCell("비고", "Group", 0, 1)}</Row>`;
+  xml += `<Row ss:Height="22">${[...sub, ...sub, ...sub].map(v => estimateDbXmlCell(v, "Header")).join("")}</Row>`;
+  rows.forEach(row => {
+    const style = summaryStyleForLabel(row[0]);
+    xml += `<Row ss:Height="21">${row.map((cell, idx) => {
+      const cellStyle = idx === 0 ? `${style}Label` : style;
+      return estimateDbXmlCell(cell, cellStyle);
+    }).join("")}</Row>`;
+  });
+  xml += `</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>4</SplitHorizontal><TopRowBottomPane>4</TopRowBottomPane><ActivePane>2</ActivePane></WorksheetOptions></Worksheet>`;
+  return xml;
+}
+function worksheetXmlStyledReport(sheet) {
+  const rows = sheet.rows || [];
+  const maxCols = Math.max(...rows.map(row => row.length), 1);
+  const cols = Array.from({length: maxCols}, (_, c) => {
+    const maxLen = Math.max(8, ...rows.map(r => estimateDbDisplayLength(r[c] || "")));
+    return `<Column ss:Width="${Math.max(80, Math.min(240, Math.ceil(maxLen * 9 + 34)))}"/>`;
+  }).join("");
+  const body = rows.map((row, rowIndex) => {
+    const isTitle = rowIndex === 0;
+    const isHeader = rowIndex === 1 || rowIndex === 5 || (rows[rowIndex - 1] && rows[rowIndex - 1].length === 0);
+    const style = isTitle ? "ReportTitle" : isHeader ? "Header" : "Cell";
+    return `<Row>${row.map((cell, idx) => estimateDbXmlCell(cell, style, isTitle && idx === 0 ? Math.max(0, maxCols - 1) : 0)).join("")}</Row>`;
+  }).join("");
+  return `<Worksheet ss:Name="${escapeEstimateDbXml(sheet.name)}"><Table>${cols}${body}</Table></Worksheet>`;
+}
 function getEstimateDbReportExportSheets(year = getSelectedEstimateDbYear()) {
   const order = buildOrderRows(year);
   const sales = buildSalesRows(year);
   const deposit = buildDepositRows(year);
   return [
-    { name: "0.수주매출입금", rows: [[`${year}년 수주.매출.입금`], ["구분", "수주목표", "수주달성", "기전/외주", "차액", "비율1", "비율2", "매출목표", "매출달성", "기전/외주", "차액", "비율1", "비율2", "입금목표", "입금달성", "기전/외주", "차액", "비율1", "비율2", "비고"], ...buildSummaryRows(year)] },
-    { name: "1.수주 프로젝트", rows: [[order.title], order.header, ...order.monthly, [], order.detailHeader, ...order.detail] },
-    { name: "2.매출 프로젝트", rows: [[sales.title], sales.header, ...sales.monthly, [], sales.detailHeader, ...sales.detail] },
-    { name: "3.입금 프로젝트", rows: [[deposit.title], deposit.detailHeader, ...deposit.detail] }
+    { name: "0.수주매출입금", type: "summary", year },
+    { name: "1.수주 프로젝트", type: "report", rows: [[order.title], order.header, ...order.monthly, [], order.detailHeader, ...order.detail] },
+    { name: "2.매출 프로젝트", type: "report", rows: [[sales.title], sales.header, ...sales.monthly, [], sales.detailHeader, ...sales.detail] },
+    { name: "3.입금 프로젝트", type: "report", rows: [[deposit.title], deposit.detailHeader, ...deposit.detail] }
   ];
 }
+function getEstimateDbWorkbookStylesXml() {
+  const border = `<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>`;
+  return `<Styles>
+    <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style>
+    <Style ss:ID="Blank"><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style>
+    <Style ss:ID="Title"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="18" ss:Bold="1"/></Style>
+    <Style ss:ID="ReportTitle"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="15" ss:Bold="1"/></Style>
+    <Style ss:ID="Group"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Header"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Cell"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9"/>${border}</Style>
+    <Style ss:ID="Body"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9"/>${border}</Style>
+    <Style ss:ID="BodyLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9"/>${border}</Style>
+    <Style ss:ID="Quarter"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="QuarterLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Half"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="HalfLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Total"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1" ss:Color="#FF0000"/><Interior ss:Color="#FCE4D6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="TotalLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#FCE4D6" ss:Pattern="Solid"/>${border}</Style>
+  </Styles>`;
+}
+function worksheetXmlBySpec(sheet) {
+  if (sheet.type === "summary") return worksheetXmlStyledSummary(sheet.year || getSelectedEstimateDbYear());
+  if (sheet.type === "report") return worksheetXmlStyledReport(sheet);
+  return worksheetXml(sheet.name, sheet.rows || []);
+}
 function downloadEstimateDbWorkbook(fileName, sheets) {
-  const xml = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style></Styles>${sheets.map(s => worksheetXml(s.name, s.rows)).join("")}</Workbook>`;
+  const xml = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${getEstimateDbWorkbookStylesXml()}${sheets.map(worksheetXmlBySpec).join("")}</Workbook>`;
   const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -2166,6 +2292,6 @@ function exportEstimateDbReportsToExcel() {
   const year = getSelectedEstimateDbYear();
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   downloadEstimateDbWorkbook(`CONCOST_수주매출입금_${year}_${date}.xls`, getEstimateDbReportExportSheets(year));
-  showToast(`${year}년 0~3번 결과 시트를 엑셀 파일로 내보냅니다.`);
+  showToast(`${year}년 0~3번 결과 시트를 셀 너비·색상·테두리 형식을 포함해 엑셀 파일로 내보냅니다.`);
 }
 function handleEstimateDbYearChange() { renderEstimateDbReports(); }
