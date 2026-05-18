@@ -4364,7 +4364,32 @@ function parseEstimateDbMonth(value) {
   return null;
 }
 function getEstimateDbSheet(tab = estimateDbActiveTab) { return estimateDbSheets[tab] || estimateDbSheets.pj; }
-function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) { return sheet.headerRows?.[sheet.headerRows.length - 1] || []; }
+function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
+  const rows = sheet.headerRows || [];
+  if (!rows.length) return [];
+  if (rows.length === 1) return rows[0];
+  const top = rows[0] || [];
+  const bottom = rows[rows.length - 1] || [];
+  return Array.from({ length: Math.max(top.length, bottom.length) }, (_, i) => normalizeEstimateDbText(bottom[i]) || normalizeEstimateDbText(top[i]) || "");
+}
+function getEstimateDbDisplayColumns(sheet = getEstimateDbSheet()) {
+  const rows = sheet.headerRows || [];
+  if (!rows.length) return [];
+  if (rows.length === 1) return rows[0];
+  const top = rows[0] || [];
+  const bottom = rows[rows.length - 1] || [];
+  let group = "";
+  return Array.from({ length: Math.max(top.length, bottom.length) }, (_, i) => {
+    const main = normalizeEstimateDbText(top[i]);
+    const sub = normalizeEstimateDbText(bottom[i]);
+    if (main) group = main;
+    if (main && sub && main !== sub) return `${main}
+${sub}`;
+    if (!main && sub && group) return `${group}
+${sub}`;
+    return main || sub || "";
+  });
+}
 function getEstimateDbRows(sheet = getEstimateDbSheet()) { return sheet.rows || []; }
 function getEstimateDbYears() {
   const years = new Set();
@@ -4425,19 +4450,44 @@ function renderEstimateDbManage() {
   if (!head || !body) return;
   syncEstimateDbYearOptions();
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
-  updateEstimateDbLinkButtonState();
+  syncAllEstimateDbLinkedRows();
   const sheet = getEstimateDbSheet();
   const colCount = getEstimateDbLeafColumns(sheet).length;
-  head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
-    <tr class="quote-db-head-row quote-db-head-row-${index + 1}">
-      ${headerRow.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "")}</th>`).join("")}
-      ${index === 0 ? `<th class="quote-db-manage-col" rowspan="${Math.max(1, sheet.headerRows.length)}">관리</th>` : ""}
+  const displayColumns = getEstimateDbDisplayColumns(sheet);
+  head.innerHTML = `
+    <tr class="quote-db-head-row quote-db-head-row-1 quote-db-head-row-merged">
+      ${displayColumns.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}
+      <th class="quote-db-manage-col">관리</th>
     </tr>
-  `).join("");
+  `;
   const rows = sheet.rows || [];
-  body.innerHTML = rows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`;
+  const totalRow = renderEstimateDbTotalRow(sheet, colCount);
+  body.innerHTML = totalRow + (rows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`);
   renderEstimateDbReports();
   restoreEstimateDbFocus();
+}
+function isEstimateDbTotalEnabled(sheet = getEstimateDbSheet()) {
+  return sheet === estimateDbSheets.progress || sheet === estimateDbSheets.mep;
+}
+function renderEstimateDbTotalRow(sheet, colCount) {
+  if (!isEstimateDbTotalEnabled(sheet)) return "";
+  const rows = sheet.rows || [];
+  const totals = Array.from({ length: colCount }, (_, colIndex) => rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
+  const formatTotal = value => value ? String(value) : "";
+  return `
+    <tr class="quote-db-total-row">
+      <td class="quote-db-total-label" colspan="4">합계</td>
+      ${Array.from({ length: Math.max(0, colCount - 4) }, (_, offset) => {
+        const colIndex = offset + 4;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex]))}" readonly tabindex="-1" /></td>`;
+      }).join("")}
+      <td class="quote-db-manage-col"></td>
+    </tr>`;
+}
+function isEstimateDbOutsourceAmountCell(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "progress") return false;
+  const header = getEstimateDbColumnName(tab, colIndex);
+  return ["기계", "전기", "외주", "송무", "기타"].includes(header);
 }
 function renderEstimateDbRow(row, rowIndex, colCount) {
   const sheet = getEstimateDbSheet();
@@ -4447,9 +4497,11 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
       ${safeRow.map((value, colIndex) => {
         const request = getEstimateDbColumnRequest(estimateDbActiveTab, colIndex);
         const dropdown = isEstimateDbDropdownCell(estimateDbActiveTab, colIndex);
-        const cls = dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input";
+        const amountCell = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex);
+        const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}" value="${escapeEstimateDbHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="openEstimateDbDropdown(${rowIndex}, ${colIndex})" /></td>`;
+        const dbl = amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}" value="${escapeEstimateDbHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
@@ -4636,6 +4688,67 @@ function handleEstimateDbDropdownKeydown(event) {
   if (event.key === "Enter") { event.preventDefault(); selectEstimateDbDropdownOption(state.activeIndex || 0); return; }
 }
 
+let estimateDbAmountModalState = null;
+function parseEstimateDbAmountCellValue(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return { company: "", amount: "" };
+  const parts = raw.split(/\n|\s*\/\s*/).map(v => v.trim()).filter(Boolean);
+  if (parts.length >= 2) return { company: parts[0], amount: parts.slice(1).join(" / ") };
+  return /^[-+]?\d[\d,]*$/.test(parts[0] || "") ? { company: "", amount: parts[0] } : { company: parts[0] || "", amount: "" };
+}
+function ensureEstimateDbAmountModal() {
+  let modal = document.getElementById("estimateDbAmountModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbAmountModal";
+  modal.className = "estimate-db-dropdown-modal hidden";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-amount-box" role="dialog" aria-modal="true">
+      <div class="estimate-db-dropdown-title" id="estimateDbAmountTitle">외주 금액 입력</div>
+      <label class="estimate-db-amount-label">업체명<input id="estimateDbAmountCompany" class="estimate-db-dropdown-search" placeholder="예: (주)대신엔지니어링" /></label>
+      <label class="estimate-db-amount-label">금액<input id="estimateDbAmountValue" class="estimate-db-dropdown-search" placeholder="예: 200000" /></label>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAmountModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbAmountModal()">저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbAmountModal(); });
+  modal.querySelectorAll("input").forEach(input => input.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbAmountModal(); }
+    if (event.key === "Enter") { event.preventDefault(); saveEstimateDbAmountModal(); }
+  }));
+  return modal;
+}
+function openEstimateDbAmountModal(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
+  if (!isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) return false;
+  const modal = ensureEstimateDbAmountModal();
+  const row = getEstimateDbRows()?.[rowIndex] || [];
+  const parsed = parseEstimateDbAmountCellValue(row[colIndex]);
+  estimateDbAmountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
+  modal.classList.remove("hidden");
+  modal.querySelector("#estimateDbAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 금액 입력`;
+  modal.querySelector("#estimateDbAmountCompany").value = parsed.company || "";
+  modal.querySelector("#estimateDbAmountValue").value = parsed.amount || "";
+  setTimeout(() => modal.querySelector("#estimateDbAmountCompany")?.focus(), 0);
+  return true;
+}
+function closeEstimateDbAmountModal() {
+  document.getElementById("estimateDbAmountModal")?.classList.add("hidden");
+  const state = estimateDbAmountModalState;
+  estimateDbAmountModalState = null;
+  if (state) requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+function saveEstimateDbAmountModal() {
+  const state = estimateDbAmountModalState;
+  if (!state) return;
+  const company = normalizeEstimateDbText(document.getElementById("estimateDbAmountCompany")?.value || "");
+  const amount = normalizeEstimateDbText(document.getElementById("estimateDbAmountValue")?.value || "");
+  const value = [company, amount].filter(Boolean).join(" / ");
+  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { silentRender: true });
+  closeEstimateDbAmountModal();
+  renderEstimateDbManage();
+}
 function handleEstimateDbKeydown(event) {
   const input = event.currentTarget;
   if (!input?.classList?.contains("quote-db-cell-input")) return;
@@ -4646,6 +4759,11 @@ function handleEstimateDbKeydown(event) {
   const colIndex = Number(input.dataset.colIndex || 0);
   const rows = getEstimateDbRows();
   const colCount = getEstimateDbLeafColumns().length;
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    openEstimateDbAmountModal(rowIndex, colIndex);
+    return;
+  }
   if ((event.altKey && event.key === "ArrowDown") || (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbDropdownCell(estimateDbActiveTab, colIndex))) {
     event.preventDefault();
     openEstimateDbDropdown(rowIndex, colIndex);
@@ -4680,61 +4798,6 @@ function handleEstimateDbKeydown(event) {
     }
   }
 }
-
-function getEstimateDbPjLinkKeyFromRow(pjRow) {
-  const pjSheet = estimateDbSheets.pj;
-  const pjCols = getEstimateDbLeafColumns(pjSheet);
-  const year = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("년도")]);
-  const receiptNo = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("접수번호")]);
-  const pjNo = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("PJ NO")]);
-  const pjName = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("프로젝트명")]);
-  if (!year && !receiptNo && !pjNo && !pjName) return "";
-  return [year, receiptNo, pjNo, pjName].join("|");
-}
-function hasEstimateDbLinkedTarget(tab, pjRow) {
-  const targetSheet = estimateDbSheets[tab];
-  if (!targetSheet) return false;
-  const targetCols = getEstimateDbLeafColumns(targetSheet);
-  const pjSheet = estimateDbSheets.pj;
-  const pjCols = getEstimateDbLeafColumns(pjSheet);
-  const year = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("년도")]);
-  const pjNo = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("PJ NO")]);
-  const pjName = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("프로젝트명")]);
-  const yearIndex = targetCols.indexOf("년도");
-  const pjNoIndex = targetCols.indexOf("PJ NO");
-  const pjNameIndex = targetCols.indexOf(tab === "progress" ? "PJ명" : "PJ명");
-  return (targetSheet.rows || []).some(row => {
-    const sameYear = !year || yearIndex < 0 || normalizeEstimateDbText(row?.[yearIndex]) === year;
-    const sameNo = pjNo && pjNoIndex >= 0 && normalizeEstimateDbText(row?.[pjNoIndex]) === pjNo;
-    const sameName = pjName && pjNameIndex >= 0 && normalizeEstimateDbText(row?.[pjNameIndex]) === pjName;
-    return sameYear && (sameNo || sameName);
-  });
-}
-function getEstimateDbPendingLinkRows() {
-  const pjRows = estimateDbSheets.pj?.rows || [];
-  return pjRows
-    .map((row, index) => ({ row, index, key: getEstimateDbPjLinkKeyFromRow(row) }))
-    .filter(item => item.key)
-    .filter(item => !hasEstimateDbLinkedTarget("progress", item.row) || !hasEstimateDbLinkedTarget("mep", item.row));
-}
-function updateEstimateDbLinkButtonState() {
-  const btn = document.getElementById("estimateDbLinkNewRowsBtn");
-  if (!btn) return;
-  const pending = getEstimateDbPendingLinkRows().length;
-  btn.classList.toggle("hidden", estimateDbActiveTab !== "pj" || pending === 0);
-  btn.textContent = pending > 0 ? `기성관리·기전업체 연동 추가 (${pending}건)` : "기성관리·기전업체 연동 추가";
-}
-function syncEstimateDbNewPjRowsToLinkedSheets() {
-  const pending = getEstimateDbPendingLinkRows();
-  if (!pending.length) {
-    showToast("이미 기성관리·기전업체에 추가된 항목입니다.");
-    return;
-  }
-  pending.forEach(item => syncEstimateDbLinkedRowsFromPj(item.index));
-  renderEstimateDbManage();
-  showToast(`기성관리·기전업체에 ${pending.length}건을 추가했습니다.`);
-}
-
 function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
   const pjSheet = estimateDbSheets.pj;
   const pjCols = getEstimateDbLeafColumns(pjSheet);
@@ -4753,18 +4816,8 @@ function syncEstimateDbTargetRow(tab, pjNo, values) {
   if (!sheet) return;
   const cols = getEstimateDbLeafColumns(sheet);
   const keyIndex = cols.indexOf("PJ NO");
-  const yearIndex = cols.indexOf("년도");
-  const nameIndex = cols.indexOf("PJ명");
   if (keyIndex < 0) return;
-  const nextYear = normalizeEstimateDbText(values?.["년도"]);
-  const nextNo = normalizeEstimateDbText(pjNo || values?.["PJ NO"]);
-  const nextName = normalizeEstimateDbText(values?.["PJ명"]);
-  let target = (sheet.rows || []).find(row => {
-    const sameYear = !nextYear || yearIndex < 0 || normalizeEstimateDbText(row?.[yearIndex]) === nextYear;
-    const sameNo = nextNo && normalizeEstimateDbText(row?.[keyIndex]) === nextNo;
-    const sameName = nextName && nameIndex >= 0 && normalizeEstimateDbText(row?.[nameIndex]) === nextName;
-    return sameYear && (sameNo || sameName);
-  });
+  let target = (sheet.rows || []).find(row => normalizeEstimateDbText(row?.[keyIndex]) === normalizeEstimateDbText(pjNo));
   if (!target) {
     target = Array(cols.length).fill("");
     sheet.rows.push(target);
@@ -4787,7 +4840,7 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = value;
-  if (estimateDbActiveTab === "pj") updateEstimateDbLinkButtonState();
+  if (estimateDbActiveTab === "pj") syncEstimateDbLinkedRowsFromPj(rowIndex);
   if (!options.silentRender) renderEstimateDbReports();
 }
 function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
