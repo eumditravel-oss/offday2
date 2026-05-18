@@ -16640,3 +16640,29 @@ th.quote-db-manage-col {
 .estimate-db-dropdown-option:hover,.estimate-db-dropdown-option.active{background:#0f172a;color:#fff;}
 .estimate-db-dropdown-empty{padding:20px 12px;color:#64748b;font-weight:700;text-align:center;}
 .estimate-db-dropdown-actions{display:flex;justify-content:flex-end;gap:8px;}
+
+/* === DB관리 드롭다운/관리열/연동 보정 v20 === */
+.quote-db-table th.quote-db-manage-col,
+.quote-db-table td.quote-db-manage-col{
+  min-width:78px !important;
+  width:78px !important;
+  max-width:78px !important;
+  padding-left:6px !important;
+  padding-right:6px !important;
+  text-align:center !important;
+  box-sizing:border-box;
+}
+.quote-db-table td.quote-db-manage-col .btn,
+.quote-db-table td.quote-db-manage-col button{
+  min-width:44px;
+  width:auto;
+  padding-left:10px;
+  padding-right:10px;
+}
+.estimate-db-dropdown-empty{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1.35;
+}
