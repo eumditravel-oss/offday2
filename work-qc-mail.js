@@ -11683,6 +11683,8 @@ function focusChecklistCell(rowIndex, field = "trade") {
 }
 
 document.addEventListener("keydown", event => {
+  const target = event.target;
+  if (target?.closest?.(".quote-db-table-wrap, .quote-db-cell-input, .quote-db-panel")) return;
   const key = String(event.key || "").toLowerCase();
 
   if (event.ctrlKey && key === "f9") {
