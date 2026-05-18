@@ -4308,6 +4308,23 @@ const estimateDbSheets = {
   }
 };
 
+
+
+/* =========================================================
+   DB관리 초기 표시 행 정리
+   - PJ관리: 지정된 2개 행만 초기 표시
+   - 기성관리/기전업체: 상단 합계행은 자동 생성되므로 데이터 행 2개만 유지
+   - 사용자가 화면에서 추가한 행은 이후 렌더링에서 삭제되지 않도록 1회만 실행
+========================================================= */
+let estimateDbVisibleSeedRowsInitialized = false;
+function initializeEstimateDbVisibleSeedRows() {
+  if (estimateDbVisibleSeedRowsInitialized) return;
+  estimateDbVisibleSeedRowsInitialized = true;
+  if (estimateDbSheets?.pj?.rows) estimateDbSheets.pj.rows = estimateDbSheets.pj.rows.slice(0, 2);
+  if (estimateDbSheets?.progress?.rows) estimateDbSheets.progress.rows = estimateDbSheets.progress.rows.slice(0, 2);
+  if (estimateDbSheets?.mep?.rows) estimateDbSheets.mep.rows = estimateDbSheets.mep.rows.slice(0, 2);
+}
+
 const estimateDbReportTabs = {
   summary: "0.수주매출입금",
   order: "1.수주 프로젝트",
@@ -4568,6 +4585,7 @@ function addEstimateDbProgressStageColumns() {
 }
 
 function renderEstimateDbManage() {
+  initializeEstimateDbVisibleSeedRows();
   const head = document.getElementById("estimateDbHead");
   const body = document.getElementById("estimateDbBody");
   if (!head || !body) return;
