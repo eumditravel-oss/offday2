@@ -1947,6 +1947,8 @@ function focusEstimateDbCell(rowIndex, colIndex) {
 }
 function handleEstimateDbKeydown(event) {
   const input = event.currentTarget;
+  if (!input?.classList?.contains("quote-db-cell-input")) return;
+  if (!input.closest?.(".quote-db-table-wrap")) return;
   const rowIndex = Number(input.dataset.rowIndex || 0);
   const colIndex = Number(input.dataset.colIndex || 0);
   const rows = getEstimateDbRows();
@@ -2204,7 +2206,7 @@ function worksheetXmlStyledSummary(year = getSelectedEstimateDbYear()) {
   xml += `<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="19"><Data ss:Type="String">${escapeEstimateDbXml(year)}년 수주.매출.입금</Data></Cell></Row>`;
   xml += `<Row ss:Height="12">${Array.from({length:20}, () => estimateDbXmlCell("", "Blank")).join("")}</Row>`;
   xml += `<Row ss:Height="24">${estimateDbXmlCell("구분", "Group", 0, 1)}${estimateDbXmlCell("수주", "Group", 5)}${estimateDbXmlCell("매출", "Group", 5)}${estimateDbXmlCell("입금", "Group", 5)}${estimateDbXmlCell("비고", "Group", 0, 1)}</Row>`;
-  xml += `<Row ss:Height="22">${[...sub, ...sub, ...sub].map(v => estimateDbXmlCell(v, "Header")).join("")}</Row>`;
+  xml += `<Row ss:Height="22"><Cell ss:Index="2" ss:StyleID="Header"><Data ss:Type="String">${escapeEstimateDbXml(sub[0])}</Data></Cell>${[...sub.slice(1), ...sub, ...sub].map(v => estimateDbXmlCell(v, "Header")).join("")}</Row>`;
   rows.forEach(row => {
     const style = summaryStyleForLabel(row[0]);
     xml += `<Row ss:Height="21">${row.map((cell, idx) => {
@@ -2267,12 +2269,13 @@ function worksheetXmlBySpec(sheet) {
   return worksheetXml(sheet.name, sheet.rows || []);
 }
 function downloadEstimateDbWorkbook(fileName, sheets) {
-  const xml = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${getEstimateDbWorkbookStylesXml()}${sheets.map(worksheetXmlBySpec).join("")}</Workbook>`;
-  const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const safeName = String(fileName || "CONCOST_export.xls").replace(/\.xlsx$/i, ".xls").replace(/\.xml$/i, ".xls");
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><DocumentProperties xmlns="urn:schemas-microsoft-com:office:office"><Author>CON-COST Groupware</Author><LastAuthor>CON-COST Groupware</LastAuthor><Created>${new Date().toISOString()}</Created></DocumentProperties><ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel"><WindowHeight>12000</WindowHeight><WindowWidth>20000</WindowWidth><ProtectStructure>False</ProtectStructure><ProtectWindows>False</ProtectWindows></ExcelWorkbook>${getEstimateDbWorkbookStylesXml()}${sheets.map(worksheetXmlBySpec).join("")}</Workbook>`;
+  const blob = new Blob(["\ufeff", xml], { type: "application/vnd.ms-excel;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = fileName;
+  a.download = safeName;
   document.body.appendChild(a);
   a.click();
   a.remove();
