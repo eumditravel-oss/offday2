@@ -1966,7 +1966,8 @@ function focusEstimateDbCell(rowIndex, colIndex) {
 function handleEstimateDbKeydown(event) {
   const input = event.currentTarget;
   if (!input?.classList?.contains("quote-db-cell-input")) return;
-  if (!input.closest?.(".quote-db-table-wrap")) return;
+  if (!document.getElementById("estimateDbManage")?.classList.contains("active")) return;
+  if (!input.closest?.("#estimateDbManage .quote-db-grid-wrap")) return;
   event.stopPropagation();
   const rowIndex = Number(input.dataset.rowIndex || 0);
   const colIndex = Number(input.dataset.colIndex || 0);
