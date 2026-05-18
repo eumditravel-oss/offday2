@@ -9395,22 +9395,23 @@ function syncWorkSideAccordion(targetPanelId) {
   const isEstimateQuote = targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList";
   const isProjectReceive = targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList";
   const isPmSchedule = targetPanelId === "pmSchedule";
+  document.querySelectorAll(".side-sub").forEach(menu => menu.classList.remove("active"));
+  document.querySelectorAll(".side-main").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".side-item").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.toggle("active", isEstimateQuote));
   document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.toggle("active", isProjectReceive));
   document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.toggle("active", isPmSchedule));
-  document.querySelectorAll(".side-main[data-work-main='estimateQuote']").forEach(btn => btn.classList.toggle("active", isEstimateQuote));
+  document.querySelectorAll(".side-main[data-work-main='estimateDbManage'], .side-main[data-work-main='estimateQuote']").forEach(btn => btn.classList.toggle("active", isEstimateQuote));
   document.querySelectorAll(".side-main[data-work-main='projectReceive']").forEach(btn => btn.classList.toggle("active", isProjectReceive));
   document.querySelectorAll(".side-main[data-work-main='pmSchedule']").forEach(btn => btn.classList.toggle("active", isPmSchedule));
 }
 
 function switchWorkPanel(panelId) {
-  const targetPanelId = panelId || "projectReceive";
+  const targetPanelId = panelId || "estimateDbManage";
 
   document.querySelectorAll(".work-panel").forEach(panel => panel.classList.remove("active"));
   document.querySelectorAll("[data-work-main]").forEach(btn => btn.classList.remove("active"));
-  document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.remove("active"));
-  document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.remove("active"));
-  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
+  document.querySelectorAll(".side-sub").forEach(menu => menu.classList.remove("active"));
 
   document.getElementById(targetPanelId)?.classList.add("active");
   syncWorkSideAccordion(targetPanelId);
@@ -9426,7 +9427,7 @@ function switchWorkPanel(panelId) {
     document.querySelector(`.side-main[data-work-main="${targetPanelId}"]`)?.classList.add("active");
   }
 
-  const meta = workPageMeta[targetPanelId] || workPageMeta.projectReceive;
+  const meta = workPageMeta[targetPanelId] || workPageMeta.estimateDbManage || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
   setText("workPageDesc", meta[1]);
 
@@ -13628,3 +13629,8 @@ function importSelectedQcTeamTemplateRows() {
   renderChecklistGrid();
   showToast(`${selectedRows.length}건을 현재 프로젝트에 불러왔습니다.`);
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof bootEstimateDbDefaultScreen === "function") setTimeout(bootEstimateDbDefaultScreen, 0);
+});
