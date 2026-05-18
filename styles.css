@@ -16744,3 +16744,20 @@ th.quote-db-manage-col {
   background:#eff6ff;
   box-shadow:0 0 0 2px rgba(37,99,235,.14);
 }
+
+/* === DB관리 v25: 키보드 스크롤·수식셀·차수추가 버튼 === */
+.quote-db-cell-input.quote-db-formula-cell,
+.quote-db-total-input {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+}
+.estimate-db-stage-btn {
+  border-color: #f59e0b;
+  color: #92400e;
+  background: #fffbeb;
+  font-weight: 800;
+}
+.estimate-db-stage-btn:hover {
+  background: #fef3c7;
+}
