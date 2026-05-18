@@ -16576,12 +16576,13 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   background: #fff7ed;
 }
 .quote-db-manage-col {
-  position: static;
-  z-index: auto;
+  position: sticky;
+  right: 0;
+  z-index: 3;
   min-width: 78px !important;
   width: 78px !important;
   background: #ffffff;
-  box-shadow: none;
+  box-shadow: -8px 0 14px rgba(15, 23, 42, 0.06);
 }
 th.quote-db-manage-col {
   background: #f1f5f9;
@@ -16666,9 +16667,38 @@ th.quote-db-manage-col {
   line-height:1.35;
 }
 
-/* === DB관리 PJ 연동 버튼 / 관리열 고정 해제 v22 === */
-.quote-db-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.estimate-db-link-btn{margin-left:auto;}
-.estimate-db-link-btn.hidden{display:none!important;}
+/* === DB관리 기성/기전 표 병합형 헤더·합계행·외주금액 입력 v23 === */
+.quote-db-table .quote-db-head-row-merged th{
+  white-space:pre-line;
+  line-height:1.3;
+  vertical-align:middle;
+}
+.quote-db-total-row td{
+  background:#fff7ed;
+  border-bottom:2px solid #f97316;
+  font-weight:900;
+}
+.quote-db-total-label{
+  text-align:center!important;
+  color:#0f172a;
+  font-size:14px;
+}
+.quote-db-total-input{
+  background:#fff7ed!important;
+  border-color:transparent!important;
+  color:#0f172a;
+  text-align:right;
+}
+.quote-db-amount-cell{
+  background:#fffdf4!important;
+  border-color:#f8c471!important;
+}
+.estimate-db-amount-box{gap:14px;}
+.estimate-db-amount-label{display:flex;flex-direction:column;gap:6px;font-weight:900;color:#334155;}
 .quote-db-table th.quote-db-manage-col,
-.quote-db-table td.quote-db-manage-col{position:static!important;right:auto!important;box-shadow:none!important;}
+.quote-db-table td.quote-db-manage-col,
+.quote-db-manage-col{
+  position:static!important;
+  right:auto!important;
+  box-shadow:none!important;
+}
