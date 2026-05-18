@@ -4425,6 +4425,7 @@ function renderEstimateDbManage() {
   if (!head || !body) return;
   syncEstimateDbYearOptions();
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
+  syncAllEstimateDbLinkedRows();
   const sheet = getEstimateDbSheet();
   const colCount = getEstimateDbLeafColumns(sheet).length;
   head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
@@ -4499,6 +4500,16 @@ const estimateDbDefaultOptions = {
   "단가작업여부": ["공내역서", "비교내역서", "설계예가", "단가작업", "기타"],
   "건물용도": ["창고", "공장", "제약공장", "식품공장", "반도체공장", "물류센터", "아파트형공장", "공동주택", "오피스텔", "주상복합", "업무시설", "오피스", "근린생활시설", "지식산업센터", "기숙사", "연수원", "학교", "교육연구시설", "연구소", "역사"]
 };
+const estimateDbCustomOptions = {};
+function getEstimateDbCustomOptionKey(tab, colIndex) { return `${tab}::${colIndex}`; }
+function addEstimateDbCustomOption(tab, colIndex, value) {
+  const clean = normalizeEstimateDbText(value);
+  if (!clean) return;
+  const key = getEstimateDbCustomOptionKey(tab, colIndex);
+  if (!estimateDbCustomOptions[key]) estimateDbCustomOptions[key] = [];
+  if (!estimateDbCustomOptions[key].includes(clean)) estimateDbCustomOptions[key].push(clean);
+}
+
 const estimateDbLinkedStageOptions = {
   "개산견적": ["1회차", "2회차", "3회차", "기타"],
   "정미견적": ["선실행", "본실행", "기타"],
@@ -4514,18 +4525,18 @@ const estimateDbLinkedStageOptions = {
 function getEstimateDbDropdownOptions(tab, rowIndex, colIndex) {
   const header = getEstimateDbColumnName(tab, colIndex);
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
+  const custom = estimateDbCustomOptions[getEstimateDbCustomOptionKey(tab, colIndex)] || [];
   let options = [];
   if (tab === "pj" && header === "업무단계2") {
     const headers = getEstimateDbLeafColumns(sheet);
     const parentIndex = headers.indexOf("업무성격");
     const parentValue = normalizeEstimateDbText(sheet.rows?.[rowIndex]?.[parentIndex]);
-    options = estimateDbLinkedStageOptions[parentValue] || getEstimateDbUniqueColumnValues(tab, colIndex);
+    options = estimateDbLinkedStageOptions[parentValue] || [];
   } else if (estimateDbDefaultOptions[header]) {
-    options = [...estimateDbDefaultOptions[header], ...getEstimateDbUniqueColumnValues(tab, colIndex)];
-  } else {
-    options = getEstimateDbUniqueColumnValues(tab, colIndex);
+    options = [...estimateDbDefaultOptions[header]];
   }
-  return [...new Set(options.filter(Boolean))];
+  options = [...options, ...getEstimateDbUniqueColumnValues(tab, colIndex), ...custom];
+  return [...new Set(options.map(normalizeEstimateDbText).filter(Boolean))];
 }
 function ensureEstimateDbDropdownModal() {
   let modal = document.getElementById("estimateDbDropdownModal");
@@ -4547,19 +4558,21 @@ function ensureEstimateDbDropdownModal() {
   modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbDropdown(); });
   const search = modal.querySelector("#estimateDbDropdownSearch");
   search.addEventListener("keydown", handleEstimateDbDropdownKeydown);
-  search.addEventListener("input", renderEstimateDbDropdownList);
+  search.addEventListener("input", () => { search.dataset.fresh = "0"; if (estimateDbDropdownState) estimateDbDropdownState.fresh = false; renderEstimateDbDropdownList(); });
   return modal;
 }
 function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
   if (!isEstimateDbDropdownCell(estimateDbActiveTab, colIndex)) return false;
   const modal = ensureEstimateDbDropdownModal();
-  estimateDbDropdownState = { tab: estimateDbActiveTab, rowIndex, colIndex, activeIndex: 0, options: getEstimateDbDropdownOptions(estimateDbActiveTab, rowIndex, colIndex) };
+  estimateDbDropdownState = { tab: estimateDbActiveTab, rowIndex, colIndex, activeIndex: 0, options: getEstimateDbDropdownOptions(estimateDbActiveTab, rowIndex, colIndex), fresh: true };
   modal.classList.remove("hidden");
   modal.querySelector("#estimateDbDropdownTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 선택`;
   const search = modal.querySelector("#estimateDbDropdownSearch");
-  search.value = getEstimateDbRows()[rowIndex]?.[colIndex] || "";
+  search.value = "";
+  search.placeholder = getEstimateDbRows()[rowIndex]?.[colIndex] || "검색 또는 새 항목 입력";
+  search.dataset.fresh = "1";
   renderEstimateDbDropdownList();
-  setTimeout(() => { search.focus(); search.select(); }, 0);
+  setTimeout(() => { search.focus(); }, 0);
   return true;
 }
 function closeEstimateDbDropdown() {
@@ -4573,26 +4586,27 @@ function renderEstimateDbDropdownList() {
   const list = document.getElementById("estimateDbDropdownList");
   const search = document.getElementById("estimateDbDropdownSearch");
   if (!state || !list || !search) return;
-  const keyword = normalizeEstimateDbText(search.value).toLowerCase();
+  const rawKeyword = normalizeEstimateDbText(search.value);
+  const keyword = (search.dataset.fresh === "1" || state.fresh) ? "" : rawKeyword.toLowerCase();
   const filtered = (state.options || []).filter(v => !keyword || String(v).toLowerCase().includes(keyword));
-  const options = filtered.length ? filtered : (keyword ? [search.value] : []);
-  state.filtered = options;
-  state.activeIndex = Math.max(0, Math.min(state.activeIndex || 0, options.length - 1));
-  list.innerHTML = options.map((option, index) => `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${escapeEstimateDbHtml(option)}</button>`).join("") || `<div class="estimate-db-dropdown-empty">입력 후 목록 추가/선택을 누르세요.</div>`;
+  state.noMatch = !!keyword && !filtered.length;
+  state.filtered = filtered;
+  state.activeIndex = Math.max(0, Math.min(state.activeIndex || 0, Math.max(0, filtered.length - 1)));
+  if (state.noMatch) {
+    list.innerHTML = `<div class="estimate-db-dropdown-empty">기존 데이터에 작성된 내용이 없습니다.(Enter를 누를 시 해당 목록 추가)</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map((option, index) => `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${escapeEstimateDbHtml(option)}</button>`).join("") || `<div class="estimate-db-dropdown-empty">목록이 없습니다. 입력 후 Enter를 누르면 해당 목록에 추가됩니다.</div>`;
 }
 function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeIndex || 0) {
   const state = estimateDbDropdownState;
   if (!state) return;
-  const value = state.filtered?.[index] ?? document.getElementById("estimateDbDropdownSearch")?.value ?? "";
+  const search = document.getElementById("estimateDbDropdownSearch");
+  const typed = normalizeEstimateDbText(search?.value || "");
+  const value = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
   if (!value) return;
-  updateEstimateDbCell(state.rowIndex, state.colIndex, value);
-  const current = getEstimateDbDropdownOptions(state.tab, state.rowIndex, state.colIndex);
-  if (!current.includes(value)) {
-    const sheet = estimateDbSheets[state.tab];
-    const empty = Array(getEstimateDbLeafColumns(sheet).length).fill("");
-    empty[state.colIndex] = value;
-    sheet.rows.push(empty);
-  }
+  if (state.noMatch || !(state.options || []).includes(value)) addEstimateDbCustomOption(state.tab, state.colIndex, value);
+  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { silentRender: true });
   const header = getEstimateDbColumnName(state.tab, state.colIndex);
   const row = state.rowIndex;
   const nextCol = state.colIndex + 1;
@@ -4607,12 +4621,11 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
 function addEstimateDbDropdownOptionFromInput() {
   const search = document.getElementById("estimateDbDropdownSearch");
   const value = normalizeEstimateDbText(search?.value || "");
-  if (!value) return;
-  if (estimateDbDropdownState && !(estimateDbDropdownState.options || []).includes(value)) {
-    estimateDbDropdownState.options.push(value);
-  }
-  renderEstimateDbDropdownList();
-  selectEstimateDbDropdownOption((estimateDbDropdownState?.filtered || []).indexOf(value));
+  if (!value || !estimateDbDropdownState) return;
+  addEstimateDbCustomOption(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex, value);
+  if (!estimateDbDropdownState.options.includes(value)) estimateDbDropdownState.options.push(value);
+  estimateDbDropdownState.noMatch = true;
+  selectEstimateDbDropdownOption(0);
 }
 function handleEstimateDbDropdownKeydown(event) {
   const state = estimateDbDropdownState;
@@ -4667,11 +4680,50 @@ function handleEstimateDbKeydown(event) {
     }
   }
 }
-function updateEstimateDbCell(rowIndex, colIndex, value) {
+function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
+  const pjSheet = estimateDbSheets.pj;
+  const pjCols = getEstimateDbLeafColumns(pjSheet);
+  const pjRow = pjSheet.rows?.[pjRowIndex];
+  if (!pjRow) return;
+  const year = pjRow[pjCols.indexOf("년도")] || "";
+  const pjNo = pjRow[pjCols.indexOf("PJ NO")] || "";
+  const pjName = pjRow[pjCols.indexOf("프로젝트명")] || "";
+  const company = pjRow[pjCols.indexOf("거래처명")] || "";
+  if (!pjNo && !pjName) return;
+  syncEstimateDbTargetRow("progress", pjNo, { "년도": year, "PJ NO": pjNo, "업체명": company, "PJ명": pjName });
+  syncEstimateDbTargetRow("mep", pjNo, { "년도": year, "PJ NO": pjNo, "PJ명": pjName });
+}
+function syncEstimateDbTargetRow(tab, pjNo, values) {
+  const sheet = estimateDbSheets[tab];
+  if (!sheet) return;
+  const cols = getEstimateDbLeafColumns(sheet);
+  const keyIndex = cols.indexOf("PJ NO");
+  if (keyIndex < 0) return;
+  let target = (sheet.rows || []).find(row => normalizeEstimateDbText(row?.[keyIndex]) === normalizeEstimateDbText(pjNo));
+  if (!target) {
+    target = Array(cols.length).fill("");
+    sheet.rows.push(target);
+  }
+  Object.entries(values).forEach(([name, value]) => {
+    const idx = cols.indexOf(name);
+    if (idx >= 0) target[idx] = value || target[idx] || "";
+  });
+}
+function syncAllEstimateDbLinkedRows() {
+  const pjRows = estimateDbSheets.pj?.rows || [];
+  pjRows.forEach((row, index) => {
+    const cols = getEstimateDbLeafColumns(estimateDbSheets.pj);
+    const pjNo = row?.[cols.indexOf("PJ NO")];
+    const pjName = row?.[cols.indexOf("프로젝트명")];
+    if (normalizeEstimateDbText(pjNo) || normalizeEstimateDbText(pjName)) syncEstimateDbLinkedRowsFromPj(index);
+  });
+}
+function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = value;
-  renderEstimateDbReports();
+  if (estimateDbActiveTab === "pj") syncEstimateDbLinkedRowsFromPj(rowIndex);
+  if (!options.silentRender) renderEstimateDbReports();
 }
 function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const sheet = getEstimateDbSheet();
