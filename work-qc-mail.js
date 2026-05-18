@@ -9181,8 +9181,9 @@ function switchTopModule(moduleName) {
     work?.classList.add("active");
     document.querySelector('[data-module-tab="work"]')?.classList.add("active");
 
-    const activeWork = document.querySelector("[data-work-main].active");
-    switchWorkPanel(activeWork?.dataset.workMain || "projectReceive");
+    const activePanel = document.querySelector("#workModule .work-panel.active");
+    const activeSideItem = document.querySelector(".side-sub.active .side-item.active[data-work-main]");
+    switchWorkPanel(activePanel?.id || activeSideItem?.dataset.workMain || "estimateDbManage");
   } else {
     support?.classList.add("active");
     document.querySelector('[data-module-tab="support"]')?.classList.add("active");
@@ -11684,7 +11685,7 @@ function focusChecklistCell(rowIndex, field = "trade") {
 
 document.addEventListener("keydown", event => {
   const target = event.target;
-  if (target?.closest?.(".quote-db-table-wrap, .quote-db-cell-input, .quote-db-panel")) return;
+  if (target?.closest?.("#estimateDbManage, .quote-db-shell, .quote-db-grid-wrap, .quote-db-cell-input, .quote-db-panel")) return;
   const key = String(event.key || "").toLowerCase();
 
   if (event.ctrlKey && key === "f9") {
