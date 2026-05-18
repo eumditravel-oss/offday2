@@ -4644,6 +4644,25 @@ function refreshEstimateDbTotalRowOnly() {
     input.value = totals[colIndex] ? String(totals[colIndex]) : "";
   });
 }
+function refreshEstimateDbCalculatedCells(rowIndex) {
+  const sheet = getEstimateDbSheet();
+  const row = getEstimateDbRows()?.[rowIndex];
+  if (!sheet || !row) return;
+  const cols = getEstimateDbLeafColumns(sheet);
+  const calculatedHeaders = estimateDbActiveTab === "progress"
+    ? ["잔액", "작업대기중", "합계", "세금계산서", "입금예정일", "입금일"]
+    : estimateDbActiveTab === "mep"
+      ? ["잔액", "작업대기중"]
+      : [];
+  if (!calculatedHeaders.length) return;
+  cols.forEach((header, colIndex) => {
+    const topHeader = sheet.headerRows?.[0]?.[colIndex] || "";
+    const isStageTotal = normalizeEstimateDbText(header) === "합계" && /세금계산서|입금예정일|입금일/.test(String(topHeader));
+    if (!calculatedHeaders.includes(header) && !isStageTotal) return;
+    const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
+    if (input && input.value !== String(row[colIndex] || "")) input.value = row[colIndex] || "";
+  });
+}
 function renderEstimateDbRow(row, rowIndex, colCount) {
   const sheet = getEstimateDbSheet();
   const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
@@ -4677,18 +4696,21 @@ function restoreEstimateDbFocus() {
 }
 function focusEstimateDbCell(rowIndex, colIndex) {
   const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
-  if (input) {
-    input.focus();
-    input.select?.();
-    const row = input.closest("tr");
-    const wrap = input.closest(".quote-db-grid-wrap");
-    if (row && wrap) {
-      row.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
-      const inputLeft = input.offsetLeft;
-      const inputRight = inputLeft + input.offsetWidth;
-      if (inputLeft < wrap.scrollLeft) wrap.scrollLeft = Math.max(0, inputLeft - 24);
-      if (inputRight > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = inputRight - wrap.clientWidth + 24;
-    }
+  if (!input) return;
+  const wrap = input.closest(".quote-db-grid-wrap");
+  const row = input.closest("tr");
+  input.focus({ preventScroll: true });
+  input.select?.();
+  selectEstimateDbCell(rowIndex, colIndex);
+  if (wrap && row) {
+    const wrapRect = wrap.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    const pad = 28;
+    if (inputRect.right > wrapRect.right - pad) wrap.scrollLeft += inputRect.right - wrapRect.right + pad;
+    if (inputRect.left < wrapRect.left + pad) wrap.scrollLeft -= wrapRect.left - inputRect.left + pad;
+    const rowRect = row.getBoundingClientRect();
+    if (rowRect.bottom > wrapRect.bottom - pad) wrap.scrollTop += rowRect.bottom - wrapRect.bottom + pad;
+    if (rowRect.top < wrapRect.top + pad) wrap.scrollTop -= wrapRect.top - rowRect.top + pad;
   }
 }
 
@@ -4988,7 +5010,8 @@ function makeEstimateDbSyncKey(parts) {
   const receiptNo = normalizeEstimateDbText(parts.receiptNo);
   const pjNo = normalizeEstimateDbText(parts.pjNo);
   const pjName = normalizeEstimateDbText(parts.pjName);
-  if (year || receiptNo || pjNo) return [year, receiptNo, pjNo].join("::");
+  // 연동 기준은 년도/접수번호/PJ NO 조합이지만, "년도만 있는 빈 행"은 연동 대상으로 보지 않습니다.
+  if (pjNo || receiptNo) return [year, receiptNo, pjNo].join("::");
   return pjName ? `name::${pjName}` : "";
 }
 function getEstimateDbPjSyncPayload(pjRowIndex) {
@@ -5003,8 +5026,10 @@ function getEstimateDbPjSyncPayload(pjRowIndex) {
     pjNo: value("PJ NO"),
     pjName: value("프로젝트명"),
     company: value("거래처명"),
+    sourceIndex: pjRowIndex
   };
   payload.key = makeEstimateDbSyncKey(payload);
+  // PJ NO/접수번호/프로젝트명 중 하나도 없는 단순 빈 행은 연동하지 않습니다.
   if (!payload.key) return null;
   return payload;
 }
@@ -5026,27 +5051,46 @@ function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
     "PJ NO": payload.pjNo,
     "업체명": payload.company,
     "PJ명": payload.pjName
-  });
+  }, payload.sourceIndex);
   changed += syncEstimateDbTargetRow("mep", payload.key, {
     "년도": payload.year,
     "접수번호": payload.receiptNo,
     "PJ NO": payload.pjNo,
     "PJ명": payload.pjName
-  });
+  }, payload.sourceIndex);
   return changed;
 }
-function syncEstimateDbTargetRow(tab, syncKey, values) {
+function syncEstimateDbTargetRow(tab, syncKey, values, sourceIndex = null) {
   const sheet = estimateDbSheets[tab];
   if (!sheet || !syncKey) return 0;
   const cols = getEstimateDbLeafColumns(sheet);
   if (!sheet.rows) sheet.rows = [];
+
+  // 1) 현재 키가 완전히 일치하는 기존 행 우선 탐색
   let target = sheet.rows.find(row => estimateDbTargetRowKey(tab, row) === syncKey);
+
+  // 2) 같은 PJ관리 행에서 이전에 연동했던 행이면 PJ NO/접수번호가 바뀌어도 같은 행을 갱신
+  if (!target && sourceIndex !== null && sourceIndex !== undefined) {
+    target = sheet.rows.find(row => row && row.__sourcePjRowIndex === sourceIndex);
+  }
+
+  // 3) 이전 버전에서 __sourcePjRowIndex가 없던 행 보정: PJ관리의 유효 행 순서와 대상 탭 유효 행 순서를 맞춰 갱신
+  if (!target && sourceIndex !== null && sourceIndex !== undefined) {
+    const pjPayloads = (estimateDbSheets.pj.rows || []).map((_, i) => getEstimateDbPjSyncPayload(i)).filter(Boolean);
+    const orderIndex = pjPayloads.findIndex(payload => payload.sourceIndex === sourceIndex);
+    const linkedRows = sheet.rows.filter(row => !!estimateDbTargetRowKey(tab, row));
+    if (orderIndex >= 0 && linkedRows[orderIndex]) target = linkedRows[orderIndex];
+  }
+
   let changed = 0;
   if (!target) {
     target = Array(cols.length).fill("");
     sheet.rows.push(target);
     changed = 1;
   }
+  if (sourceIndex !== null && sourceIndex !== undefined) target.__sourcePjRowIndex = sourceIndex;
+  target.__syncKey = syncKey;
+
   Object.entries(values).forEach(([name, value]) => {
     const idx = cols.indexOf(name);
     if (idx >= 0 && normalizeEstimateDbText(value) && normalizeEstimateDbText(target[idx]) !== normalizeEstimateDbText(value)) {
@@ -5066,6 +5110,7 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
   recalcEstimateDbRow(estimateDbActiveTab, rows[rowIndex]);
   if (!options.silentRender) {
+    refreshEstimateDbCalculatedCells(rowIndex);
     refreshEstimateDbTotalRowOnly();
     renderEstimateDbReports();
   }
@@ -5098,10 +5143,19 @@ function syncEstimateDbNewPjRowsToLinkedSheets() {
   if (!document.getElementById("estimateDbManage")?.classList.contains("active")) return;
   const rows = estimateDbSheets.pj.rows || [];
   let changed = 0;
-  rows.forEach((_row, index) => { changed += syncEstimateDbLinkedRowsFromPj(index); });
+  let valid = 0;
+  rows.forEach((_row, index) => {
+    if (getEstimateDbPjSyncPayload(index)) {
+      valid += 1;
+      changed += syncEstimateDbLinkedRowsFromPj(index);
+    }
+  });
   recalcAllEstimateDbRows();
   renderEstimateDbManage();
-  if (typeof showToast === "function") showToast(changed ? `기성관리·기전업체에 ${changed}건을 연동했습니다.` : "연동할 신규/변경 항목이 없습니다.");
+  if (typeof showToast === "function") {
+    if (changed) showToast(`기성관리·기전업체에 ${changed}건을 연동했습니다.`);
+    else showToast(valid ? "기성관리·기전업체가 이미 최신 상태입니다." : "연동할 신규/변경 항목이 없습니다.");
+  }
 }
 function exportEstimateDbJsonForAi() {
   const payload = {
