@@ -16576,13 +16576,12 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   background: #fff7ed;
 }
 .quote-db-manage-col {
-  position: sticky;
-  right: 0;
-  z-index: 3;
+  position: static;
+  z-index: auto;
   min-width: 78px !important;
   width: 78px !important;
   background: #ffffff;
-  box-shadow: -8px 0 14px rgba(15, 23, 42, 0.06);
+  box-shadow: none;
 }
 th.quote-db-manage-col {
   background: #f1f5f9;
@@ -16666,3 +16665,10 @@ th.quote-db-manage-col {
   justify-content:center;
   line-height:1.35;
 }
+
+/* === DB관리 PJ 연동 버튼 / 관리열 고정 해제 v22 === */
+.quote-db-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.estimate-db-link-btn{margin-left:auto;}
+.estimate-db-link-btn.hidden{display:none!important;}
+.quote-db-table th.quote-db-manage-col,
+.quote-db-table td.quote-db-manage-col{position:static!important;right:auto!important;box-shadow:none!important;}
