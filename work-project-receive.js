@@ -3376,7 +3376,7 @@ const estimateDbSheets = {
         "납품예정일",
         "",
         "",
-        "세금계산서 (발행기준)",
+        "세금계산서 (빌행기준)",
         "",
         "",
         "",
@@ -4445,143 +4445,126 @@ function escapeEstimateDbHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-function normalizeEstimateDbCalculatedRows() {
-  ["progress", "mep"].forEach(tab => {
-    const sheet = estimateDbSheets[tab];
-    if (!sheet || sheet.__normalized) return;
-    const cols = getEstimateDbLeafColumns(sheet);
-    sheet.rows = (sheet.rows || []).filter(row => {
-      if (!row) return false;
-      const firstIdentity = row.slice(0, tab === "progress" ? 4 : 3).some(v => normalizeEstimateDbText(v));
-      const hasNumeric = row.some(v => toEstimateDbNumber(v));
-      return firstIdentity || !hasNumeric;
-    });
-    sheet.__normalized = true;
-  });
+function isEstimateDbEmbeddedTotalRow(sheet, row) {
+  if (!isEstimateDbTotalEnabled(sheet) || !row) return false;
+  const firstText = normalizeEstimateDbText(row[0]);
+  const firstFourBlank = [0, 1, 2, 3].every(i => !normalizeEstimateDbText(row[i]));
+  const hasNumericAfter = row.slice(4).some(v => toEstimateDbNumber(v) !== 0);
+  return firstText === "합계" || (firstFourBlank && hasNumericAfter);
 }
-function recalcEstimateDbProgressRow(row) {
-  if (!row) return row;
-  const n = i => toEstimateDbNumber(row[i]);
-  row[6] = String(n(4) - n(5));
-  row[10] = String(n(6) - n(7) - n(8) - n(9) - n(11));
-  row[17] = String(n(12) + n(13) + n(14) + n(15) + n(16));
-  recalcEstimateDbProgressStageTotals(row);
-  return row;
+function sanitizeEstimateDbSheetRows(sheet) {
+  if (!sheet?.rows || !isEstimateDbTotalEnabled(sheet)) return;
+  sheet.rows = sheet.rows.filter(row => !isEstimateDbEmbeddedTotalRow(sheet, row));
 }
-function recalcEstimateDbMepRow(row) {
-  if (!row) return row;
-  const n = i => toEstimateDbNumber(row[i]);
-  row[6] = String(n(3) - n(4) - n(5));
-  row[22] = String(n(20) - n(21));
-  return row;
+function sanitizeEstimateDbSheetsBeforeRender() {
+  sanitizeEstimateDbSheetRows(estimateDbSheets.progress);
+  sanitizeEstimateDbSheetRows(estimateDbSheets.mep);
 }
-function recalcEstimateDbRowByTab(tab, row) {
-  if (tab === "progress") return recalcEstimateDbProgressRow(row);
-  if (tab === "mep") return recalcEstimateDbMepRow(row);
-  return row;
+function setEstimateDbValueByHeader(tab, row, headerName, value) {
+  const cols = getEstimateDbLeafColumns(estimateDbSheets[tab]);
+  const idx = cols.indexOf(headerName);
+  if (idx >= 0) row[idx] = value;
 }
-function recalcAllEstimateDbRows() {
-  (estimateDbSheets.progress?.rows || []).forEach(recalcEstimateDbProgressRow);
-  (estimateDbSheets.mep?.rows || []).forEach(recalcEstimateDbMepRow);
-}
-function getEstimateDbProgressStageGroups() {
-  return [
-    { key: "tax", label: "세금계산서 (발행기준)", start: 26 },
-    { key: "due", label: "입금예정일", start: 32 },
-    { key: "paid", label: "입금일", start: 38 }
-  ];
-}
-function getEstimateDbProgressStageIndexes(groupStart) {
+
+function getEstimateDbProgressGroupIndexes(groupKeyword) {
   const sheet = estimateDbSheets.progress;
-  const bottom = sheet.headerRows?.[1] || [];
+  const top = sheet?.headerRows?.[0] || [];
+  let current = "";
   const indexes = [];
-  for (let i = groupStart; i < bottom.length; i += 1) {
-    const top = normalizeEstimateDbText(sheet.headerRows?.[0]?.[i]);
-    const b = normalizeEstimateDbText(bottom[i]);
-    if (i > groupStart && top && !b) break;
-    if (b === "합계") break;
-    if (b && /계약금|기성/.test(b)) indexes.push(i);
-  }
+  top.forEach((cell, i) => {
+    const text = normalizeEstimateDbText(cell);
+    if (text) current = text;
+    if (current.includes(groupKeyword)) indexes.push(i);
+  });
   return indexes;
+}
+function ensureEstimateDbProgressStageTotalColumns() {
+  const sheet = estimateDbSheets.progress;
+  if (!sheet?.headerRows || sheet.headerRows.length < 2) return;
+  const top = sheet.headerRows[0];
+  const bottom = sheet.headerRows[1];
+  ["세금계산서", "입금예정일", "입금일"].forEach(group => {
+    const indexes = getEstimateDbProgressGroupIndexes(group);
+    if (!indexes.length) return;
+    const last = Math.max(...indexes);
+    if (normalizeEstimateDbText(bottom[last]) === "합계") return;
+    const insertAt = last + 1;
+    top.splice(insertAt, 0, "");
+    bottom.splice(insertAt, 0, "합계");
+    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "계약금부터 마지막 기성 차수까지 자동 합계");
+    (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
+  });
 }
 function recalcEstimateDbProgressStageTotals(row) {
   if (!row) return;
   const sheet = estimateDbSheets.progress;
-  if (!sheet?.headerRows?.[1]) return;
-  ["세금계산서 (발행기준)", "입금예정일", "입금일"].forEach(label => {
-    const top = sheet.headerRows[0];
-    const bottom = sheet.headerRows[1];
-    const starts = top.map((v, i) => normalizeEstimateDbText(v) === label ? i : -1).filter(i => i >= 0);
-    starts.forEach(start => {
-      let sumIndex = -1;
-      let sum = 0;
-      for (let i = start; i < bottom.length; i += 1) {
-        const nextTop = i > start ? normalizeEstimateDbText(top[i]) : "";
-        if (nextTop && normalizeEstimateDbText(top[i]) !== label) break;
-        if (normalizeEstimateDbText(bottom[i]) === "합계") { sumIndex = i; break; }
-        sum += toEstimateDbNumber(row[i]);
-      }
-      if (sumIndex >= 0) row[sumIndex] = sum ? String(sum) : "";
-    });
+  const bottom = sheet?.headerRows?.[1] || [];
+  ["세금계산서", "입금예정일", "입금일"].forEach(group => {
+    const indexes = getEstimateDbProgressGroupIndexes(group);
+    if (!indexes.length) return;
+    const totalIndex = indexes.find(i => normalizeEstimateDbText(bottom[i]) === "합계");
+    if (totalIndex < 0) return;
+    const sum = indexes.reduce((acc, i) => {
+      const label = normalizeEstimateDbText(bottom[i]);
+      if (i === totalIndex || label === "합계") return acc;
+      if (label === "계약금" || /^\d+차기성$/.test(label)) return acc + toEstimateDbNumber(row[i]);
+      return acc;
+    }, 0);
+    row[totalIndex] = sum ? String(sum) : "";
   });
 }
-function ensureEstimateDbProgressStageSumColumns() {
-  const sheet = estimateDbSheets.progress;
-  if (!sheet || sheet.__stageSumsReady) return;
-  const top = sheet.headerRows?.[0] || [];
-  const bottom = sheet.headerRows?.[1] || [];
-  const insertAfterGroup = label => {
-    const starts = top.map((v, i) => normalizeEstimateDbText(v) === label ? i : -1).filter(i => i >= 0);
-    if (!starts.length) return;
-    const start = starts[0];
-    let end = start;
-    for (let i = start + 1; i < bottom.length; i += 1) {
-      const nextTop = normalizeEstimateDbText(top[i]);
-      if (nextTop && nextTop !== label) break;
-      end = i;
-    }
-    if (bottom.slice(start, end + 1).some(v => normalizeEstimateDbText(v) === "합계")) return;
-    const insertAt = end + 1;
-    top.splice(insertAt, 0, "");
-    bottom.splice(insertAt, 0, "합계");
-    sheet.requestRow?.splice(insertAt, 0, "자동 합계 열");
-    (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
-  };
-  insertAfterGroup("세금계산서 (발행기준)");
-  insertAfterGroup("세금계산서 (발행기준)");
-  insertAfterGroup("입금예정일");
-  insertAfterGroup("입금일");
-  sheet.__stageSumsReady = true;
-}
-function addEstimateDbProgressStageColumn() {
-  if (estimateDbActiveTab !== "progress") {
-    if (typeof showToast === "function") showToast("기성관리 탭에서만 차수 열을 추가할 수 있습니다.");
-    return;
+function recalcEstimateDbRow(tab, row) {
+  if (!row) return;
+  const cols = getEstimateDbLeafColumns(estimateDbSheets[tab]);
+  const idx = name => cols.indexOf(name);
+  const get = name => idx(name) >= 0 ? toEstimateDbNumber(row[idx(name)]) : 0;
+  const set = (name, value) => { const i = idx(name); if (i >= 0) row[i] = value ? String(value) : ""; };
+  if (tab === "progress") {
+    const balance = get("계약금액") - get("수령액");
+    set("잔액", balance);
+    const outsource = ["기계", "전기", "외주", "송무", "기타"].reduce((sum, name) => {
+      const i = idx(name);
+      return sum + (i >= 0 ? toEstimateDbNumber(parseEstimateDbAmountCellValue(row[i]).amount || row[i]) : 0);
+    }, 0);
+    set("합계", outsource);
+    const waiting = balance - get("발행완료") - get("납품완료") - get("작업진행중") - get("작업취소");
+    set("작업대기중", waiting);
+    recalcEstimateDbProgressStageTotals(row);
   }
+  if (tab === "mep") {
+    const balance = get("계약금액") - get("수령액");
+    set("잔액", balance);
+    const waiting = balance - get("발행완료") - get("납품완료") - get("작업진행중") - get("작업취소");
+    set("작업대기중", waiting);
+  }
+}
+function recalcAllEstimateDbRows() {
+  Object.keys(estimateDbSheets).forEach(tab => (estimateDbSheets[tab].rows || []).forEach(row => recalcEstimateDbRow(tab, row)));
+}
+function getEstimateDbStageGroups() {
+  return ["세금계산서", "입금예정일", "입금일"];
+}
+function addEstimateDbProgressStageColumns() {
   const sheet = estimateDbSheets.progress;
-  ensureEstimateDbProgressStageSumColumns();
-  ["세금계산서 (발행기준)", "입금예정일", "입금일"].forEach(label => {
-    const top = sheet.headerRows[0];
-    const bottom = sheet.headerRows[1];
-    const start = top.findIndex(v => normalizeEstimateDbText(v) === label);
-    if (start < 0) return;
-    let sumIndex = bottom.findIndex((v, i) => i >= start && normalizeEstimateDbText(v) === "합계");
-    if (sumIndex < 0) return;
-    const stages = bottom.slice(start, sumIndex).filter(v => /기성/.test(String(v))).length;
-    const nextLabel = `${stages + 1}차기성`;
-    top.splice(sumIndex, 0, "");
-    bottom.splice(sumIndex, 0, nextLabel);
-    sheet.requestRow?.splice(sumIndex, 0, "추가 차수 열");
-    (sheet.rows || []).forEach(row => row.splice(sumIndex, 0, ""));
+  if (!sheet) return;
+  const top = sheet.headerRows[0];
+  const bottom = sheet.headerRows[1];
+  const cols = getEstimateDbLeafColumns(sheet);
+  const stageNumbers = cols.map(c => (normalizeEstimateDbText(c).match(/^(\d+)차기성$/) || [])[1]).filter(Boolean).map(Number);
+  const next = (stageNumbers.length ? Math.max(...stageNumbers) : 5) + 1;
+  ensureEstimateDbProgressStageTotalColumns();
+  ["세금계산서", "입금예정일", "입금일"].forEach(group => {
+    const groupIndexes = getEstimateDbProgressGroupIndexes(group);
+    const totalIndex = groupIndexes.find(i => normalizeEstimateDbText(bottom[i]) === "합계");
+    const insertAt = totalIndex >= 0 ? totalIndex : (groupIndexes.length ? Math.max(...groupIndexes) + 1 : bottom.length);
+    top.splice(insertAt, 0, "");
+    bottom.splice(insertAt, 0, `${next}차기성`);
+    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "7열 날짜 작성란");
+    (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
   });
   recalcAllEstimateDbRows();
   renderEstimateDbManage();
-  if (typeof showToast === "function") showToast("기성 차수 열을 추가했습니다.");
-}
-function isEstimateDbReadonlyFormulaCell(tab, colIndex) {
-  if (tab === "progress") return [6, 10, 17].includes(colIndex) || ["합계"].includes(getEstimateDbColumnName(tab, colIndex));
-  if (tab === "mep") return [6, 22].includes(colIndex);
-  return false;
+  if (typeof showToast === "function") showToast(`${next}차기성 열을 추가했습니다.`);
 }
 
 function renderEstimateDbManage() {
@@ -4589,12 +4572,10 @@ function renderEstimateDbManage() {
   const body = document.getElementById("estimateDbBody");
   if (!head || !body) return;
   syncEstimateDbYearOptions();
-  normalizeEstimateDbCalculatedRows();
-  ensureEstimateDbProgressStageSumColumns();
-  recalcAllEstimateDbRows();
-  document.getElementById("estimateDbAddStageBtn")?.classList.toggle("hidden", estimateDbActiveTab !== "progress");
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
-  syncAllEstimateDbLinkedRows();
+  sanitizeEstimateDbSheetsBeforeRender();
+  ensureEstimateDbProgressStageTotalColumns();
+  recalcAllEstimateDbRows();
   const sheet = getEstimateDbSheet();
   const colCount = getEstimateDbLeafColumns(sheet).length;
   const displayColumns = getEstimateDbDisplayColumns(sheet);
@@ -4615,7 +4596,8 @@ function isEstimateDbTotalEnabled(sheet = getEstimateDbSheet()) {
 }
 function renderEstimateDbTotalRow(sheet, colCount) {
   if (!isEstimateDbTotalEnabled(sheet)) return "";
-  const rows = sheet.rows || [];
+  const rows = getEstimateDbDataRowsForTotal(sheet);
+  rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
   const totals = Array.from({ length: colCount }, (_, colIndex) => rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
   const formatTotal = value => value ? String(value) : "";
   return `
@@ -4645,13 +4627,17 @@ function normalizeEstimateDbAmountCellStorage(value) {
 ${parsed.amount}`;
   return String(value || "");
 }
+function getEstimateDbDataRowsForTotal(sheet = getEstimateDbSheet()) {
+  return (sheet.rows || []).filter(row => !isEstimateDbEmbeddedTotalRow(sheet, row));
+}
 function refreshEstimateDbTotalRowOnly() {
   const sheet = getEstimateDbSheet();
   if (!isEstimateDbTotalEnabled(sheet)) return;
   const totalRow = document.querySelector("#estimateDbBody .quote-db-total-row");
   if (!totalRow) return;
   const colCount = getEstimateDbLeafColumns(sheet).length;
-  const rows = sheet.rows || [];
+  const rows = getEstimateDbDataRowsForTotal(sheet);
+  rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
   const totals = Array.from({ length: colCount }, (_, colIndex) => rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
   totalRow.querySelectorAll(".quote-db-total-input").forEach((input, i) => {
     const colIndex = i + 4;
@@ -4670,13 +4656,10 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
         const dbl = amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`;
-        const readonly = isEstimateDbReadonlyFormulaCell(estimateDbActiveTab, colIndex);
-        const inputCls = `${cls}${readonly ? " quote-db-formula-cell" : ""}`;
-        const readonlyAttr = readonly ? ` readonly tabindex="-1"` : "";
         if (amountCell) {
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${inputCls}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}"${readonlyAttr}>${escapeEstimateDbHtml(formatEstimateDbAmountCellDisplay(value))}</textarea></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${cls}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formatEstimateDbAmountCellDisplay(value))}</textarea></td>`;
         }
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${inputCls}" value="${escapeEstimateDbHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}"${readonlyAttr} /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}" value="${escapeEstimateDbHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
@@ -4695,9 +4678,17 @@ function restoreEstimateDbFocus() {
 function focusEstimateDbCell(rowIndex, colIndex) {
   const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
   if (input) {
-    input.scrollIntoView({ block: "nearest", inline: "nearest" });
     input.focus();
     input.select?.();
+    const row = input.closest("tr");
+    const wrap = input.closest(".quote-db-grid-wrap");
+    if (row && wrap) {
+      row.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      const inputLeft = input.offsetLeft;
+      const inputRight = inputLeft + input.offsetWidth;
+      if (inputLeft < wrap.scrollLeft) wrap.scrollLeft = Math.max(0, inputLeft - 24);
+      if (inputRight > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = inputRight - wrap.clientWidth + 24;
+    }
   }
 }
 
@@ -4938,14 +4929,14 @@ function handleEstimateDbKeydown(event) {
   const colIndex = Number(input.dataset.colIndex || 0);
   const rows = getEstimateDbRows();
   const colCount = getEstimateDbLeafColumns().length;
-  if (event.ctrlKey && (event.key === "+" || event.key === "=")) {
-    event.preventDefault();
-    addEstimateDbProgressStageColumn();
-    return;
-  }
   if (event.ctrlKey && event.key === "Enter") {
     event.preventDefault();
     syncEstimateDbNewPjRowsToLinkedSheets();
+    return;
+  }
+  if (event.ctrlKey && (event.key === "+" || event.key === "=")) {
+    event.preventDefault();
+    if (estimateDbActiveTab === "progress") addEstimateDbProgressStageColumns();
     return;
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) {
@@ -4987,57 +4978,93 @@ function handleEstimateDbKeydown(event) {
     }
   }
 }
-function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
+function getEstimateDbRowValueByHeader(tab, row, headerName) {
+  const cols = getEstimateDbLeafColumns(estimateDbSheets[tab]);
+  const idx = cols.indexOf(headerName);
+  return idx >= 0 ? row?.[idx] : "";
+}
+function makeEstimateDbSyncKey(parts) {
+  const year = normalizeEstimateDbText(parts.year);
+  const receiptNo = normalizeEstimateDbText(parts.receiptNo);
+  const pjNo = normalizeEstimateDbText(parts.pjNo);
+  const pjName = normalizeEstimateDbText(parts.pjName);
+  if (year || receiptNo || pjNo) return [year, receiptNo, pjNo].join("::");
+  return pjName ? `name::${pjName}` : "";
+}
+function getEstimateDbPjSyncPayload(pjRowIndex) {
   const pjSheet = estimateDbSheets.pj;
   const pjCols = getEstimateDbLeafColumns(pjSheet);
-  const pjRow = pjSheet.rows?.[pjRowIndex];
-  if (!pjRow) return;
-  const year = pjRow[pjCols.indexOf("년도")] || "";
-  const pjNo = pjRow[pjCols.indexOf("PJ NO")] || "";
-  const pjName = pjRow[pjCols.indexOf("프로젝트명")] || "";
-  const company = pjRow[pjCols.indexOf("거래처명")] || "";
-  if (!year && !pjNo && !pjName && !company) return;
-  const key = pjNo || pjName || `${year}-${company}`;
-  syncEstimateDbTargetRow("progress", key, { "년도": year, "PJ NO": pjNo, "업체명": company, "PJ명": pjName });
-  syncEstimateDbTargetRow("mep", key, { "년도": year, "PJ NO": pjNo, "PJ명": pjName });
+  const row = pjSheet.rows?.[pjRowIndex];
+  if (!row) return null;
+  const value = name => row[pjCols.indexOf(name)] || "";
+  const payload = {
+    year: value("년도"),
+    receiptNo: value("접수번호"),
+    pjNo: value("PJ NO"),
+    pjName: value("프로젝트명"),
+    company: value("거래처명"),
+  };
+  payload.key = makeEstimateDbSyncKey(payload);
+  if (!payload.key) return null;
+  return payload;
 }
-function syncEstimateDbTargetRow(tab, pjNo, values) {
+function estimateDbTargetRowKey(tab, row) {
+  return makeEstimateDbSyncKey({
+    year: getEstimateDbRowValueByHeader(tab, row, "년도"),
+    receiptNo: getEstimateDbRowValueByHeader(tab, row, "접수번호"),
+    pjNo: getEstimateDbRowValueByHeader(tab, row, "PJ NO"),
+    pjName: getEstimateDbRowValueByHeader(tab, row, "PJ명") || getEstimateDbRowValueByHeader(tab, row, "프로젝트명")
+  });
+}
+function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
+  const payload = getEstimateDbPjSyncPayload(pjRowIndex);
+  if (!payload) return 0;
+  let changed = 0;
+  changed += syncEstimateDbTargetRow("progress", payload.key, {
+    "년도": payload.year,
+    "접수번호": payload.receiptNo,
+    "PJ NO": payload.pjNo,
+    "업체명": payload.company,
+    "PJ명": payload.pjName
+  });
+  changed += syncEstimateDbTargetRow("mep", payload.key, {
+    "년도": payload.year,
+    "접수번호": payload.receiptNo,
+    "PJ NO": payload.pjNo,
+    "PJ명": payload.pjName
+  });
+  return changed;
+}
+function syncEstimateDbTargetRow(tab, syncKey, values) {
   const sheet = estimateDbSheets[tab];
-  if (!sheet) return false;
+  if (!sheet || !syncKey) return 0;
   const cols = getEstimateDbLeafColumns(sheet);
-  const keyIndex = cols.indexOf("PJ NO");
-  if (keyIndex < 0) return false;
-  const cleanKey = normalizeEstimateDbText(pjNo || values["PJ NO"] || values["프로젝트명"] || values["PJ명"]);
-  if (!cleanKey) return false;
-  let target = (sheet.rows || []).find(row => normalizeEstimateDbText(row?.[keyIndex]) === cleanKey);
-  let created = false;
+  if (!sheet.rows) sheet.rows = [];
+  let target = sheet.rows.find(row => estimateDbTargetRowKey(tab, row) === syncKey);
+  let changed = 0;
   if (!target) {
     target = Array(cols.length).fill("");
     sheet.rows.push(target);
-    created = true;
+    changed = 1;
   }
   Object.entries(values).forEach(([name, value]) => {
     const idx = cols.indexOf(name);
-    if (idx >= 0 && normalizeEstimateDbText(value)) target[idx] = value;
+    if (idx >= 0 && normalizeEstimateDbText(value) && normalizeEstimateDbText(target[idx]) !== normalizeEstimateDbText(value)) {
+      target[idx] = value;
+      changed = 1;
+    }
   });
-  recalcEstimateDbRowByTab(tab, target);
-  return created;
+  recalcEstimateDbRow(tab, target);
+  return changed;
 }
 function syncAllEstimateDbLinkedRows() {
-  const pjRows = estimateDbSheets.pj?.rows || [];
-  pjRows.forEach((row, index) => {
-    const cols = getEstimateDbLeafColumns(estimateDbSheets.pj);
-    const pjNo = row?.[cols.indexOf("PJ NO")];
-    const pjName = row?.[cols.indexOf("프로젝트명")];
-    if (normalizeEstimateDbText(pjNo) || normalizeEstimateDbText(pjName)) syncEstimateDbLinkedRowsFromPj(index);
-  });
+  // 자동 동기화는 사용하지 않습니다. 사용자가 Ctrl+Enter 또는 버튼으로 명시 실행할 때만 반영합니다.
 }
 function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
-  recalcEstimateDbRowByTab(estimateDbActiveTab, rows[rowIndex]);
-  if (estimateDbActiveTab === "pj") syncEstimateDbLinkedRowsFromPj(rowIndex);
+  recalcEstimateDbRow(estimateDbActiveTab, rows[rowIndex]);
   if (!options.silentRender) {
     refreshEstimateDbTotalRowOnly();
     renderEstimateDbReports();
@@ -5069,23 +5096,12 @@ function removeEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
 }
 function syncEstimateDbNewPjRowsToLinkedSheets() {
   if (!document.getElementById("estimateDbManage")?.classList.contains("active")) return;
-  const pjCols = getEstimateDbLeafColumns(estimateDbSheets.pj);
   const rows = estimateDbSheets.pj.rows || [];
-  let touched = 0;
-  rows.forEach((row, index) => {
-    const year = normalizeEstimateDbText(row[pjCols.indexOf("년도")]);
-    const receiptNo = normalizeEstimateDbText(row[pjCols.indexOf("접수번호")]);
-    const pjNo = normalizeEstimateDbText(row[pjCols.indexOf("PJ NO")]);
-    const pjName = normalizeEstimateDbText(row[pjCols.indexOf("프로젝트명")]);
-    const company = normalizeEstimateDbText(row[pjCols.indexOf("거래처명")]);
-    if (!year && !receiptNo && !pjNo && !pjName && !company) return;
-    const before = JSON.stringify({ p: estimateDbSheets.progress.rows, m: estimateDbSheets.mep.rows });
-    syncEstimateDbLinkedRowsFromPj(index);
-    const after = JSON.stringify({ p: estimateDbSheets.progress.rows, m: estimateDbSheets.mep.rows });
-    if (before !== after) touched += 1;
-  });
+  let changed = 0;
+  rows.forEach((_row, index) => { changed += syncEstimateDbLinkedRowsFromPj(index); });
+  recalcAllEstimateDbRows();
   renderEstimateDbManage();
-  if (typeof showToast === "function") showToast(touched ? `기성관리·기전업체에 ${touched}건을 연동했습니다.` : "연동할 신규/변경 항목이 없습니다.");
+  if (typeof showToast === "function") showToast(changed ? `기성관리·기전업체에 ${changed}건을 연동했습니다.` : "연동할 신규/변경 항목이 없습니다.");
 }
 function exportEstimateDbJsonForAi() {
   const payload = {
