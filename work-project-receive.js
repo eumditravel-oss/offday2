@@ -1218,40 +1218,53 @@ function handleEstimateDbScopedCommand(event) {
 
   const active = document.activeElement;
   const activeInput = active?.classList?.contains("quote-db-cell-input") ? active : null;
-  if (activeInput) return;
+  const inEstimateDb = !!active?.closest?.("#estimateDbManage");
+  if (!inEstimateDb && !estimateDbSelectedCell) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation?.();
+
+  const rowIndex = activeInput ? Number(activeInput.dataset.rowIndex || 0) : (estimateDbSelectedCell?.rowIndex || 0);
+  const colIndex = activeInput ? Number(activeInput.dataset.colIndex || 0) : (estimateDbSelectedCell?.colIndex || 0);
+  const rows = getEstimateDbRows();
+  const colCount = getEstimateDbLeafColumns().length;
 
   if (commandKey) {
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation?.();
-    const cell = estimateDbSelectedCell || { rowIndex: 0, colIndex: 0 };
     if (lower === "f9") {
-      addEstimateDbRow(null, (cell.rowIndex || 0) + 1);
-      requestAnimationFrame(() => focusEstimateDbCell((cell.rowIndex || 0) + 1, cell.colIndex || 0));
+      addEstimateDbRow(null, rowIndex + 1);
+      requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex));
     } else if (lower === "f3") {
-      duplicateEstimateDbRow(cell.rowIndex || 0);
-      requestAnimationFrame(() => focusEstimateDbCell((cell.rowIndex || 0) + 1, cell.colIndex || 0));
+      duplicateEstimateDbRow(rowIndex);
+      requestAnimationFrame(() => focusEstimateDbCell(rowIndex + 1, colIndex));
     } else {
-      removeEstimateDbRow(cell.rowIndex || 0);
-      requestAnimationFrame(() => focusEstimateDbCell(Math.max(0, (cell.rowIndex || 0) - 1), cell.colIndex || 0));
+      removeEstimateDbRow(rowIndex);
+      requestAnimationFrame(() => focusEstimateDbCell(Math.max(0, rowIndex - 1), Math.min(colIndex, colCount - 1)));
     }
+    return;
   }
+
+  const arrowMap = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  const [dr, dc] = arrowMap[key] || [0, 0];
+  const nextRow = Math.max(0, Math.min(rows.length - 1, rowIndex + dr));
+  const nextCol = Math.max(0, Math.min(colCount - 1, colIndex + dc));
+  focusEstimateDbCell(nextRow, nextCol);
 }
 
 document.addEventListener("keydown", handleEstimateDbScopedCommand, true);
 
 function bootEstimateDbDefaultScreen() {
-  if (typeof switchWorkPanel === "function") {
-    switchWorkPanel("estimateDbManage");
-  }
-  estimateDbActiveTab = estimateDbActiveTab || "pj";
-  estimateDbReportActiveTab = estimateDbReportActiveTab || "summary";
+  estimateDbActiveTab = "pj";
+  estimateDbReportActiveTab = "summary";
+  if (typeof switchWorkPanel === "function") switchWorkPanel("estimateDbManage");
+  document.querySelectorAll(".side-sub").forEach(menu => menu.classList.remove("active"));
+  document.querySelectorAll(".side-main, .side-item").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
+  document.querySelector(`.side-main[data-work-main="estimateDbManage"]`)?.classList.add("active");
+  document.querySelector(`.side-item[data-work-main="estimateDbManage"]`)?.classList.add("active");
   renderEstimateDbManage();
-  document.querySelectorAll(".side-sub").forEach(menu => {
-    const isEstimate = menu.classList.contains("estimate-quote-sub-menu");
-    menu.classList.toggle("active", isEstimate);
-  });
-  document.querySelectorAll(".project-receive-sub-menu, .pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
+  setTimeout(() => renderEstimateDbManage(), 50);
+  setTimeout(() => renderEstimateDbManage(), 250);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1848,23 +1861,397 @@ function downloadEstimateQuoteTemplate() {
    - 연도별 화면 조회 및 Excel XML 다중 시트 내보내기 지원
 ========================================================= */
 const estimateDbSheets = {
-  pj: {
-    title: "DB_프로젝트",
-    excelName: "DB_프로젝트",
-    headerRows: [["년도", "접수번호", "PJ NO", "국내/해외", "거래처명", "프로젝트명", "부서명", "거래처담당자", "작업공종", "작업구분", "업무성격", "건물용도", "연면적(평)", "층수", "수주일자", "수주월", "작업착수일자", "1차납품일자", "2차납품일자", "PM(마감)", "PM(구조)", "PM(토목,조경)"]],
-    rows: [["2026", "260515", "2026002", "국내", "현대건설㈜", "00 신축공사 견적용역", "견적부", "홍길동", "마감", "실행", "개산견적", "창고", "10000", "B4/S25", "2026.01.05", "1", "2026.01.05", "2026.01.31", "2026.08월경", "", "", ""]]
+  "pj": {
+    "title": "PJ관리",
+    "excelName": "PJ 관리",
+    "requestNotes": {
+      "3": "드롭다운 방식 필요",
+      "4": "드롭다운 방식 필요(건설사 추가 가능)",
+      "18": "드롭다운 방식 필요",
+      "26": "드롭다운 방식 필요",
+      "27": "업무성격 대분류 선택 후 연관 업무단계2 표시",
+      "28": "업무성격별 업무단계2 드롭다운",
+      "29": "드롭다운 방식 필요",
+      "30": "드롭다운 방식 필요(용도 추가 가능)",
+      "42": "3,4차 납품공종 계속 추가 가능"
+    },
+    "headerRows": [
+      [
+        "년도",
+        "접수번호",
+        "PJ NO",
+        "국내/해외",
+        "거래처명",
+        "프로젝트명",
+        "부서명",
+        "거래처담당자",
+        "직급",
+        "일반전화",
+        "휴대폰",
+        "직통전화",
+        "EMAIL",
+        "EMAIL2",
+        "웹하드",
+        "ID",
+        "PW",
+        "기타",
+        "작업공종",
+        "PM(마감)",
+        "PM(구조)",
+        "PM(토목,조경)",
+        "PM(기계)",
+        "PM(전기)",
+        "PM(인테리어)",
+        "PM(철거)",
+        "작업구분",
+        "업무성격",
+        "업무단계2",
+        "단가작업여부",
+        "건물용도",
+        "연면적(m2)",
+        "연면적(평)",
+        "층수",
+        "동수",
+        "타입수",
+        "세대수",
+        "수주일자",
+        "작업착수일자",
+        "1차납품일자",
+        "1차납품공종",
+        "2차납품일자",
+        "2차납품공종",
+        "수주시 요청사항"
+      ]
+    ],
+    "rows": [
+      [
+        "2026",
+        "260515",
+        "2026002",
+        "국내",
+        "현대건설㈜",
+        "00 신축공사 견적용역",
+        "견적부",
+        "홍길동",
+        "실장",
+        "02-000-0000",
+        "010-0000-0000",
+        "070-000-0000",
+        "000@oo.co.kr",
+        "000@naver.com",
+        "https://only.webhard.co.kr/",
+        "111",
+        "2222",
+        "guest 선택",
+        "마감",
+        "홍00",
+        "김00",
+        "오00",
+        "㈜대신적산엔지니어링",
+        "㈜타임엔지니어링",
+        "홍00",
+        "홍00",
+        "실행",
+        "개산견적",
+        "1회차",
+        "공내역서",
+        "창고",
+        "3025",
+        "916",
+        "B4/S25",
+        "10",
+        "12",
+        "500",
+        "2026.01.05",
+        "2026.01.05",
+        "2026.01.31",
+        "선실행(구조)",
+        "2026.08월경",
+        "본실행(마감,구조)",
+        ""
+      ]
+    ]
   },
-  progress: {
-    title: "DB_기성",
-    excelName: "DB_기성",
-    headerRows: [["년도", "PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "외주합계", "기성조건", "견적서일자", "수주일자", "수주월", "계약일자", "총괄PM", "납품예정일", "계약금_세금계산서", "1차기성_세금계산서", "2차기성_세금계산서", "3차기성_세금계산서", "4차기성_세금계산서", "5차기성_세금계산서", "계약금_입금일", "1차기성_입금일", "2차기성_입금일", "3차기성_입금일", "4차기성_입금일", "5차기성_입금일", "특이사항", "거래처기성담당자", "기성담당자", "연락예정일"]],
-    rows: [["2026", "2026002", "(주)00건설", "00 프로젝트", "1000000", "300000", "700000", "300000", "계약분 30%\n납품후 20%\n최종 50%", "260103", "260105", "1", "260107", "박ㅇㅇ", "260131", "300000", "200000", "", "", "", "50000", "300000", "", "", "", "", "", "", "2월14일에 다시 연락하기로", "서현대실장\n010-0000-0000", "강동균"]]
+  "progress": {
+    "title": "기성관리",
+    "excelName": "PJ 기성",
+    "requestNotes": {
+      "0": "PJ관리 작성 시 자동 연동",
+      "1": "PJ관리 작성 시 자동 연동",
+      "2": "PJ관리 작성 시 자동 연동",
+      "3": "PJ관리 작성 시 자동 연동",
+      "4": "계약금액 변경 시 해당 월 수주금액 반영",
+      "12": "기전업체 입력 내용 반영 / 업체명 클릭 시 기전업체 탭 이동",
+      "20": "수주일자 기준 월별 보기",
+      "26": "7열 날짜 작성란"
+    },
+    "headerRows": [
+      [
+        "년도",
+        "PJ NO",
+        "업체명",
+        "PJ명",
+        "계약금액",
+        "수령액",
+        "잔액",
+        "발행완료",
+        "납품완료",
+        "작업진행중",
+        "작업대기중",
+        "작업취소",
+        "외주 금액",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "기성조건",
+        "견적서일자",
+        "수주일자",
+        "계약일자",
+        "총괄PM",
+        "납품예정일",
+        "",
+        "",
+        "세금계산서 (발행기준)",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "입금예정일",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "입금일",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "입금예정월",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "A",
+        "B",
+        "C (A-B)",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "기계",
+        "전기",
+        "외주",
+        "송무",
+        "기타",
+        "합계",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "1차납품",
+        "2차납품",
+        "3차납품",
+        "계약금",
+        "1차기성",
+        "2차기성",
+        "3차기성",
+        "4차기성",
+        "5차기성",
+        "계약금",
+        "1차기성",
+        "2차기성",
+        "3차기성",
+        "4차기성",
+        "5차기성",
+        "계약금",
+        "1차기성",
+        "2차기성",
+        "3차기성",
+        "4차기성",
+        "5차기성",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "rows": [
+      [
+        "2026",
+        "2026002",
+        "(주)00건설",
+        "00 프로젝트",
+        "1000000",
+        "300000",
+        "700000",
+        "",
+        "",
+        "",
+        "",
+        "700000",
+        "㈜대신엔지니어링",
+        " ",
+        "김준영",
+        "",
+        "",
+        "",
+        "계약분 30%\n납품후 20%\n최종 50%",
+        "260103",
+        "260105",
+        "260107",
+        "박ㅇㅇ",
+        "260131",
+        "",
+        "",
+        "300000",
+        "200000",
+        "",
+        "",
+        "",
+        "50000",
+        "300000",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "300000",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "200000",
+        "",
+        "400000",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ]
   },
-  mep: {
-    title: "DB기전외주",
-    excelName: "DB기전외주",
-    headerRows: [["업체명", "계좌정보", "은행명", "계좌번호", "예금주", "년도", "PJ NO", "PJ명", "계약금액", "기지급액", "금회발행요청액", "요청후잔액", "지급금액1", "지급일자1", "지급금액2", "지급일자2", "지급금액3", "지급일자3", "지급금액4", "지급일자4", "지급금액5", "지급일자5", "지급금액6", "지급일자6", "계약업체", "컨코스트계약금", "수령액", "잔액", "받은비율", "받은비율대비 미지급액", "지급합계", "지급월1", "지급월2"]],
-    rows: [["㈜AA적산엔지니어링", "계좌정보", "우리은행", "445-028489-13-001", "예금주: ㈜AA적산엔지어링", "2026", "2026001", "00 프로젝트", "2000000", "200000", "800000", "1000000", "100000", "260102", "100000", "260204", "", "", "", "", "", "", "", "", "00건설", "10000000", "5000000", "5000000", "0.5", "800000", "200000", "1", "2"]]
+  "mep": {
+    "title": "기전업체",
+    "excelName": "기전업체",
+    "requestNotes": {
+      "0": "PJ관리 작성 시 자동 연동",
+      "1": "PJ관리 작성 시 자동 연동",
+      "2": "PJ관리 작성 시 자동 연동",
+      "7": "지급금액1/지급일자1 우선 표시, 클릭 시 전체 표시",
+      "19": "PJ NO 입력 시 PJ관리 내용 자동 연결"
+    },
+    "headerRows": [
+      [
+        "년도",
+        "PJ NO",
+        "PJ명",
+        "계약금액",
+        "기지급액",
+        "금회발행요청액",
+        "요청후잔액",
+        "지급금액1",
+        "지급일자1",
+        "지급금액2",
+        "지급일자2",
+        "지급금액3",
+        "지급일자3",
+        "지급금액4",
+        "지급일자4",
+        "지급금액5",
+        "지급일자5",
+        "지급금액6",
+        "지급일자6",
+        "계약업체",
+        "컨코스트계약금",
+        "수령액",
+        "잔액",
+        "받은비율",
+        "받은비율대비 미지급액",
+        " "
+      ]
+    ],
+    "rows": [
+      [
+        "2026",
+        "2026001",
+        "00 프로젝트",
+        "2000000",
+        "200000",
+        "800000",
+        "1000000",
+        "100000",
+        "260102",
+        "100000",
+        "260204",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "00건설",
+        "10000000",
+        "5000000",
+        "5000000",
+        "0.5",
+        "800000",
+        ""
+      ]
+    ]
   }
 };
 
@@ -1901,6 +2288,16 @@ function downloadEstimateDbReportTemplateXlsx(fileName) {
 let estimateDbActiveTab = "pj";
 let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
+const estimateDbEditableTargets = {};
+function getEstimateDbTarget(year, type, month) {
+  const key = `${year}_${type}_${month}`;
+  return estimateDbEditableTargets[key] ?? 100000000;
+}
+function setEstimateDbTarget(year, type, month, value) {
+  const key = `${year}_${type}_${month}`;
+  estimateDbEditableTargets[key] = toEstimateDbNumber(value) || 0;
+  renderEstimateDbReports();
+}
 
 function normalizeEstimateDbText(value) { return String(value ?? "").trim(); }
 function toEstimateDbNumber(value) {
@@ -1988,7 +2385,7 @@ function renderEstimateDbManage() {
   const colCount = getEstimateDbLeafColumns(sheet).length;
   head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
     <tr class="quote-db-head-row quote-db-head-row-${index + 1}">
-      ${headerRow.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "")}</th>`).join("")}
+      ${headerRow.map((col, colIndex) => { const note = sheet.requestNotes?.[colIndex] || ""; return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} ${note ? `title="${escapeEstimateDbHtml(note)}"` : ""}>${escapeEstimateDbHtml(col || "")}</th>`; }).join("")}
       ${index === 0 ? `<th class="quote-db-manage-col" rowspan="${Math.max(1, sheet.headerRows.length)}">관리</th>` : ""}
     </tr>
   `).join("");
@@ -2169,7 +2566,11 @@ function buildSummaryRows(year = getSelectedEstimateDbYear()) {
     const depRows = deposit.filter(row => parseEstimateDbMonth(row[12]) === m + 1 || parseEstimateDbMonth(row[10]) === m + 1);
     const depAmount = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[13]), 0);
     const depOut = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[9]), 0);
-    return [`${m + 1}월`, 100000000, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, 100000000), pct(orderAmount, 100000000), 100000000, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, 100000000), pct(salesAmount, 100000000), 100000000, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, 100000000), pct(depAmount, 100000000), ""];
+    const month = m + 1;
+    const orderTarget = getEstimateDbTarget(year, "order", month);
+    const salesTarget = getEstimateDbTarget(year, "sales", month);
+    const depositTarget = getEstimateDbTarget(year, "deposit", month);
+    return [`${month}월`, orderTarget, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, orderTarget), pct(orderAmount, orderTarget), salesTarget, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, salesTarget), pct(salesAmount, salesTarget), depositTarget, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, depositTarget), pct(depAmount, depositTarget), ""];
   });
 }
 function pct(value, total) { return total ? Math.round((value / total) * 1000) / 10 + "%" : "0%"; }
@@ -2196,7 +2597,16 @@ function renderEstimateDbReports() {
   target.innerHTML = html;
 }
 function renderReportTable(title, headerRows, rows) {
-  return `<div class="quote-report-table-block"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(cell)}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
+  const year = getSelectedEstimateDbYear();
+  const isSummary = String(title || "").includes("수주.매출.입금");
+  const editableTargetCell = (cell, rowIndex, colIndex) => {
+    if (!isSummary || ![1, 7, 13].includes(colIndex)) return escapeEstimateDbHtml(cell);
+    const month = parseEstimateDbMonth(rows[rowIndex]?.[0]);
+    if (!month) return escapeEstimateDbHtml(cell);
+    const type = colIndex === 1 ? "order" : colIndex === 7 ? "sales" : "deposit";
+    return `<input class="quote-report-target-input" value="${escapeEstimateDbHtml(cell)}" oninput="setEstimateDbTarget('${escapeEstimateDbHtml(year)}','${type}',${month},this.value)" />`;
+  };
+  return `<div class="quote-report-table-block"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map((row, rowIndex) => `<tr>${row.map((cell, colIndex) => `<td>${editableTargetCell(cell, rowIndex, colIndex)}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
 }
 function escapeEstimateDbExcelCell(value) { return escapeEstimateDbHtml(value); }
 function estimateDbXmlCell(value, styleId = "Cell", mergeAcross = 0, mergeDown = 0) {
