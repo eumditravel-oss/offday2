@@ -17,9 +17,9 @@
       <nav class="top-tabs">
         <span data-module-tab="mail" onclick="switchTopModule('mail')">전자메일</span>
         <span data-module-tab="approvalTop" onclick="showToast('전자결재 화면은 현재 연결 예시입니다.')">전자결재</span>
-        <span data-module-tab="work" onclick="switchTopModule('work')">업무관리</span>
+        <span data-module-tab="work" class="active" onclick="switchTopModule('work')">업무관리</span>
         <span data-module-tab="schedule" onclick="showToast('일정관리 화면은 현재 연결 예시입니다.')">일정관리</span>
-        <span data-module-tab="support" class="active" onclick="switchTopModule('support')">경영지원</span>
+        <span data-module-tab="support" onclick="switchTopModule('support')">경영지원</span>
       </nav>
 
       <div class="top-right">
@@ -135,7 +135,7 @@
           </section>
         </section>
       </section>
-      <section id="supportModule" class="module-view active">
+      <section id="supportModule" class="module-view">
       <section class="workspace">
         <aside class="side-nav">
           <div class="side-title">상세화면 좌측 카테고리</div>
@@ -752,22 +752,22 @@
         </section>
       </section>
       </section>
-      <section id="workModule" class="module-view">
+      <section id="workModule" class="module-view active">
         <section class="workspace">
           <aside class="side-nav">
             <div class="side-title">업무관리 좌측 카테고리</div>
             <div class="side-group estimate-quote-side-group">
-              <button class="side-main" data-work-main="estimateQuote">견적서 관리</button>
-              <div class="side-sub estimate-quote-sub-menu">
-                <button class="side-item" data-work-main="estimateDbManage">DB관리</button>
+              <button class="side-main active" data-work-main="estimateQuote">견적서 관리</button>
+              <div class="side-sub active estimate-quote-sub-menu">
+                <button class="side-item active" data-work-main="estimateDbManage">DB관리</button>
                 <button class="side-item" data-work-main="estimateQuote">견적서 작성</button>
                 <button class="side-item" data-work-main="estimateQuoteList">견적서 관리</button>
               </div>
             </div>
             <div class="side-group project-receive-side-group">
-              <button class="side-main active" data-work-main="projectReceive">프로젝트 접수</button>
-              <div class="side-sub active project-receive-sub-menu">
-                <button class="side-item active" data-work-main="projectReceive">프로젝트 작성</button>
+              <button class="side-main" data-work-main="projectReceive">프로젝트 접수</button>
+              <div class="side-sub project-receive-sub-menu">
+                <button class="side-item" data-work-main="projectReceive">프로젝트 작성</button>
                 <button class="side-item" data-work-main="projectReceiveList">프로젝트 리스트</button>
               </div>
             </div>
@@ -786,7 +786,7 @@
           </aside>
 
           <section class="main-area">
-            <section id="estimateDbManage" class="work-panel">
+            <section id="estimateDbManage" class="work-panel active">
               <article class="quote-shell quote-db-shell">
                 <div class="project-receive-hero quote-hero">
                   <div>
@@ -940,7 +940,7 @@
               </article>
             </section>
 
-            <section id="projectReceive" class="work-panel active">
+            <section id="projectReceive" class="work-panel">
               <article class="project-receive-shell" id="projectReceiveShell">
                 <div class="project-receive-hero">
                   <div>
