@@ -4425,7 +4425,7 @@ function renderEstimateDbManage() {
   if (!head || !body) return;
   syncEstimateDbYearOptions();
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
-  syncAllEstimateDbLinkedRows();
+  updateEstimateDbLinkButtonState();
   const sheet = getEstimateDbSheet();
   const colCount = getEstimateDbLeafColumns(sheet).length;
   head.innerHTML = (sheet.headerRows || []).map((headerRow, index) => `
@@ -4680,6 +4680,61 @@ function handleEstimateDbKeydown(event) {
     }
   }
 }
+
+function getEstimateDbPjLinkKeyFromRow(pjRow) {
+  const pjSheet = estimateDbSheets.pj;
+  const pjCols = getEstimateDbLeafColumns(pjSheet);
+  const year = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("년도")]);
+  const receiptNo = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("접수번호")]);
+  const pjNo = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("PJ NO")]);
+  const pjName = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("프로젝트명")]);
+  if (!year && !receiptNo && !pjNo && !pjName) return "";
+  return [year, receiptNo, pjNo, pjName].join("|");
+}
+function hasEstimateDbLinkedTarget(tab, pjRow) {
+  const targetSheet = estimateDbSheets[tab];
+  if (!targetSheet) return false;
+  const targetCols = getEstimateDbLeafColumns(targetSheet);
+  const pjSheet = estimateDbSheets.pj;
+  const pjCols = getEstimateDbLeafColumns(pjSheet);
+  const year = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("년도")]);
+  const pjNo = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("PJ NO")]);
+  const pjName = normalizeEstimateDbText(pjRow?.[pjCols.indexOf("프로젝트명")]);
+  const yearIndex = targetCols.indexOf("년도");
+  const pjNoIndex = targetCols.indexOf("PJ NO");
+  const pjNameIndex = targetCols.indexOf(tab === "progress" ? "PJ명" : "PJ명");
+  return (targetSheet.rows || []).some(row => {
+    const sameYear = !year || yearIndex < 0 || normalizeEstimateDbText(row?.[yearIndex]) === year;
+    const sameNo = pjNo && pjNoIndex >= 0 && normalizeEstimateDbText(row?.[pjNoIndex]) === pjNo;
+    const sameName = pjName && pjNameIndex >= 0 && normalizeEstimateDbText(row?.[pjNameIndex]) === pjName;
+    return sameYear && (sameNo || sameName);
+  });
+}
+function getEstimateDbPendingLinkRows() {
+  const pjRows = estimateDbSheets.pj?.rows || [];
+  return pjRows
+    .map((row, index) => ({ row, index, key: getEstimateDbPjLinkKeyFromRow(row) }))
+    .filter(item => item.key)
+    .filter(item => !hasEstimateDbLinkedTarget("progress", item.row) || !hasEstimateDbLinkedTarget("mep", item.row));
+}
+function updateEstimateDbLinkButtonState() {
+  const btn = document.getElementById("estimateDbLinkNewRowsBtn");
+  if (!btn) return;
+  const pending = getEstimateDbPendingLinkRows().length;
+  btn.classList.toggle("hidden", estimateDbActiveTab !== "pj" || pending === 0);
+  btn.textContent = pending > 0 ? `기성관리·기전업체 연동 추가 (${pending}건)` : "기성관리·기전업체 연동 추가";
+}
+function syncEstimateDbNewPjRowsToLinkedSheets() {
+  const pending = getEstimateDbPendingLinkRows();
+  if (!pending.length) {
+    showToast("이미 기성관리·기전업체에 추가된 항목입니다.");
+    return;
+  }
+  pending.forEach(item => syncEstimateDbLinkedRowsFromPj(item.index));
+  renderEstimateDbManage();
+  showToast(`기성관리·기전업체에 ${pending.length}건을 추가했습니다.`);
+}
+
 function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
   const pjSheet = estimateDbSheets.pj;
   const pjCols = getEstimateDbLeafColumns(pjSheet);
@@ -4698,8 +4753,18 @@ function syncEstimateDbTargetRow(tab, pjNo, values) {
   if (!sheet) return;
   const cols = getEstimateDbLeafColumns(sheet);
   const keyIndex = cols.indexOf("PJ NO");
+  const yearIndex = cols.indexOf("년도");
+  const nameIndex = cols.indexOf("PJ명");
   if (keyIndex < 0) return;
-  let target = (sheet.rows || []).find(row => normalizeEstimateDbText(row?.[keyIndex]) === normalizeEstimateDbText(pjNo));
+  const nextYear = normalizeEstimateDbText(values?.["년도"]);
+  const nextNo = normalizeEstimateDbText(pjNo || values?.["PJ NO"]);
+  const nextName = normalizeEstimateDbText(values?.["PJ명"]);
+  let target = (sheet.rows || []).find(row => {
+    const sameYear = !nextYear || yearIndex < 0 || normalizeEstimateDbText(row?.[yearIndex]) === nextYear;
+    const sameNo = nextNo && normalizeEstimateDbText(row?.[keyIndex]) === nextNo;
+    const sameName = nextName && nameIndex >= 0 && normalizeEstimateDbText(row?.[nameIndex]) === nextName;
+    return sameYear && (sameNo || sameName);
+  });
   if (!target) {
     target = Array(cols.length).fill("");
     sheet.rows.push(target);
@@ -4722,7 +4787,7 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
   rows[rowIndex][colIndex] = value;
-  if (estimateDbActiveTab === "pj") syncEstimateDbLinkedRowsFromPj(rowIndex);
+  if (estimateDbActiveTab === "pj") updateEstimateDbLinkButtonState();
   if (!options.silentRender) renderEstimateDbReports();
 }
 function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
