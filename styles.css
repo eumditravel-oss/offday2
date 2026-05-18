@@ -16626,3 +16626,23 @@ th.quote-db-manage-col {
 .quote-report-table tr:hover td{background:#f8fbff;}
 .quote-db-table th,.quote-db-table td{white-space:nowrap;}
 .quote-db-cell-input{min-width:100%;}
+
+/* === v18 DB관리: 매출/수주/입금 목표 직접 수정 입력 === */
+.quote-report-target-input {
+  width: 100%;
+  min-width: 96px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: #fffdf7;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  box-sizing: border-box;
+}
+.quote-report-target-input:focus {
+  outline: 2px solid #ff8a2a;
+  border-color: #ff8a2a;
+  background: #fff;
+}
