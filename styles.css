@@ -16761,3 +16761,10 @@ th.quote-db-manage-col {
 .estimate-db-stage-btn:hover {
   background: #fef3c7;
 }
+
+/* DB관리 검색/정렬 보강 */
+.quote-db-search-row{display:flex;justify-content:flex-end;gap:8px;margin:10px 0 12px;}
+.quote-db-search-input{width:min(420px,100%);height:42px;border:1px solid #d8e2ef;border-radius:14px;padding:0 14px;font-weight:700;background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
+.quote-db-search-input:focus{outline:none;border-color:#ff8a1c;box-shadow:0 0 0 3px rgba(255,122,24,.12);}
+.quote-db-sortable-head{cursor:pointer;user-select:none;white-space:pre-line;}
+.quote-db-sortable-head:hover{background:#eef4ff;}
