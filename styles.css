@@ -16702,3 +16702,45 @@ th.quote-db-manage-col {
   right:auto!important;
   box-shadow:none!important;
 }
+
+/* === DB관리 v24: 연동 버튼/외주금액 표시/더미데이터 내보내기 === */
+.quote-db-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.estimate-db-link-btn{
+  margin-left:auto;
+  background:#2563eb!important;
+  border-color:#2563eb!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(37,99,235,.18);
+}
+.estimate-db-link-btn:hover{background:#1d4ed8!important;border-color:#1d4ed8!important;}
+.estimate-db-json-btn{margin-left:8px;}
+.quote-db-amount-cell{
+  min-height:48px!important;
+  height:auto!important;
+  line-height:1.35!important;
+  white-space:pre-line!important;
+  resize:none;
+  overflow:hidden;
+  padding-top:7px!important;
+  padding-bottom:7px!important;
+}
+.quote-db-total-input{font-weight:900!important;}
+.quote-db-table textarea.quote-db-cell-input{
+  width:100%;
+  min-width:100%;
+  min-height:42px;
+  padding:5px 7px;
+  font-size:13px;
+  font-weight:800;
+  border:1px solid transparent;
+  border-radius:8px;
+  background:transparent;
+  box-sizing:border-box;
+  font-family:inherit;
+}
+.quote-db-table textarea.quote-db-cell-input:focus{
+  outline:none;
+  border-color:#2563eb;
+  background:#eff6ff;
+  box-shadow:0 0 0 2px rgba(37,99,235,.14);
+}
