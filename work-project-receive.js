@@ -4317,12 +4317,32 @@ const estimateDbSheets = {
    - 사용자가 화면에서 추가한 행은 이후 렌더링에서 삭제되지 않도록 1회만 실행
 ========================================================= */
 let estimateDbVisibleSeedRowsInitialized = false;
+let estimateDbPjReceiptColumnRemoved = false;
+let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
+let estimateDbSearchKeyword = "";
+const ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL = "Alt+Insert";
+
 function initializeEstimateDbVisibleSeedRows() {
+  removeEstimateDbPjReceiptColumnOnce();
   if (estimateDbVisibleSeedRowsInitialized) return;
   estimateDbVisibleSeedRowsInitialized = true;
   if (estimateDbSheets?.pj?.rows) estimateDbSheets.pj.rows = estimateDbSheets.pj.rows.slice(0, 2);
   if (estimateDbSheets?.progress?.rows) estimateDbSheets.progress.rows = estimateDbSheets.progress.rows.slice(0, 2);
   if (estimateDbSheets?.mep?.rows) estimateDbSheets.mep.rows = estimateDbSheets.mep.rows.slice(0, 2);
+}
+
+function removeEstimateDbPjReceiptColumnOnce() {
+  if (estimateDbPjReceiptColumnRemoved) return;
+  const sheet = estimateDbSheets?.pj;
+  if (!sheet) return;
+  const header = sheet.headerRows?.[0] || [];
+  const receiptIndex = header.findIndex(col => normalizeEstimateDbText(col) === "접수번호");
+  if (receiptIndex >= 0) {
+    (sheet.headerRows || []).forEach(row => row.splice(receiptIndex, 1));
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(receiptIndex, 1);
+    (sheet.rows || []).forEach(row => row.splice(receiptIndex, 1));
+  }
+  estimateDbPjReceiptColumnRemoved = true;
 }
 
 const estimateDbReportTabs = {
@@ -4380,7 +4400,7 @@ function parseEstimateDbMonth(value) {
   if (date) return Number(date[1]);
   return null;
 }
-function getEstimateDbSheet(tab = estimateDbActiveTab) { return estimateDbSheets[tab] || estimateDbSheets.pj; }
+function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   const rows = sheet.headerRows || [];
   if (!rows.length) return [];
@@ -4584,6 +4604,73 @@ function addEstimateDbProgressStageColumns() {
   if (typeof showToast === "function") showToast(`${next}차기성 열을 추가했습니다.`);
 }
 
+
+function normalizeEstimateDbSortValue(value) {
+  const text = normalizeEstimateDbText(value);
+  const numeric = Number(String(text).replace(/[,원\s]/g, ""));
+  if (text && !Number.isNaN(numeric) && /^-?[0-9,\.]+원?$/.test(text)) return { type: "number", value: numeric };
+  return { type: "text", value: text.toLowerCase() };
+}
+
+function compareEstimateDbValues(a, b, direction = "asc") {
+  const av = normalizeEstimateDbSortValue(a);
+  const bv = normalizeEstimateDbSortValue(b);
+  let result = 0;
+  if (av.type === "number" && bv.type === "number") result = av.value - bv.value;
+  else result = String(av.value).localeCompare(String(bv.value), "ko", { numeric: true, sensitivity: "base" });
+  return direction === "desc" ? -result : result;
+}
+
+function getEstimateDbEffectiveSortState(tab = estimateDbActiveTab) {
+  const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
+  const cols = getEstimateDbLeafColumns(sheet);
+  if (estimateDbSortState?.tab === tab && cols[estimateDbSortState.colIndex]) return estimateDbSortState;
+  if (tab === "pj") {
+    const pjIndex = Math.max(0, cols.indexOf("PJ NO"));
+    return { tab, colIndex: pjIndex, direction: "desc" };
+  }
+  return { tab, colIndex: 0, direction: "asc" };
+}
+
+function toggleEstimateDbSort(colIndex) {
+  const current = getEstimateDbEffectiveSortState(estimateDbActiveTab);
+  const direction = current.tab === estimateDbActiveTab && current.colIndex === colIndex && current.direction === "asc" ? "desc" : "asc";
+  estimateDbSortState = { tab: estimateDbActiveTab, colIndex, direction };
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex: 0, colIndex };
+  renderEstimateDbManage();
+}
+
+function setEstimateDbSearchKeyword(value) {
+  estimateDbSearchKeyword = String(value || "");
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex: 0, colIndex: estimateDbSelectedCell?.colIndex || 0 };
+  renderEstimateDbManage();
+}
+
+function rowMatchesEstimateDbSearch(row, keyword) {
+  const q = normalizeEstimateDbText(keyword).toLowerCase();
+  if (!q) return true;
+  return (row || []).some(cell => normalizeEstimateDbText(cell).toLowerCase().includes(q));
+}
+
+function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
+  const keyword = estimateDbSearchKeyword;
+  const sort = getEstimateDbEffectiveSortState(tab);
+  return (sheet.rows || [])
+    .map((row, sourceIndex) => ({ row, sourceIndex }))
+    .filter(entry => rowMatchesEstimateDbSearch(entry.row, keyword))
+    .sort((a, b) => {
+      const result = compareEstimateDbValues(a.row?.[sort.colIndex], b.row?.[sort.colIndex], sort.direction);
+      return result || a.sourceIndex - b.sourceIndex;
+    });
+}
+
+function renderEstimateDbSearchBox() {
+  const box = document.getElementById("estimateDbSearchBox");
+  if (!box) return;
+  box.value = estimateDbSearchKeyword || "";
+  box.placeholder = `${getEstimateDbSheet().title || "DB"} 검색`;
+}
+
 function renderEstimateDbManage() {
   initializeEstimateDbVisibleSeedRows();
   const head = document.getElementById("estimateDbHead");
@@ -4594,18 +4681,25 @@ function renderEstimateDbManage() {
   sanitizeEstimateDbSheetsBeforeRender();
   ensureEstimateDbProgressStageTotalColumns();
   recalcAllEstimateDbRows();
+  renderEstimateDbSearchBox();
+  const stageBtn = document.getElementById("estimateDbAddStageBtn");
+  if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   const sheet = getEstimateDbSheet();
   const colCount = getEstimateDbLeafColumns(sheet).length;
   const displayColumns = getEstimateDbDisplayColumns(sheet);
+  const sort = getEstimateDbEffectiveSortState(estimateDbActiveTab);
   head.innerHTML = `
     <tr class="quote-db-head-row quote-db-head-row-1 quote-db-head-row-merged">
-      ${displayColumns.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}
+      ${displayColumns.map((col, colIndex) => {
+        const sortMark = sort.colIndex === colIndex ? (sort.direction === "asc" ? " ▲" : " ▼") : "";
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} class="quote-db-sortable-head" onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다.">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</th>`;
+      }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
   `;
-  const rows = sheet.rows || [];
+  const entries = getEstimateDbDisplayRowEntries(sheet, estimateDbActiveTab);
   const totalRow = renderEstimateDbTotalRow(sheet, colCount);
-  body.innerHTML = totalRow + (rows.map((row, rowIndex) => renderEstimateDbRow(row, rowIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">등록된 DB 행이 없습니다.</td></tr>`);
+  body.innerHTML = totalRow + (entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">검색 조건에 맞는 DB 행이 없습니다.</td></tr>`);
   renderEstimateDbReports();
   restoreEstimateDbFocus();
 }
@@ -4974,7 +5068,7 @@ function handleEstimateDbKeydown(event) {
     syncEstimateDbNewPjRowsToLinkedSheets();
     return;
   }
-  if (event.ctrlKey && (event.key === "+" || event.key === "=")) {
+  if (event.altKey && event.key === "Insert") {
     event.preventDefault();
     if (estimateDbActiveTab === "progress") addEstimateDbProgressStageColumns();
     return;
