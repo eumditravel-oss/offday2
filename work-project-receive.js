@@ -5182,13 +5182,48 @@ function handleEstimateDbKeydown(event) {
   const arrowMap = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
   if (!event.ctrlKey && arrowMap[event.key]) {
     const [dr, dc] = arrowMap[event.key];
-    const nextRow = Math.max(0, Math.min(rows.length - 1, rowIndex + dr));
-    const nextCol = Math.max(0, Math.min(colCount - 1, colIndex + dc));
-    if (nextRow !== rowIndex || nextCol !== colIndex) {
+    const nextCell = getEstimateDbNextVisibleCell(rowIndex, colIndex, dr, dc, colCount);
+    if (nextCell && (nextCell.rowIndex !== rowIndex || nextCell.colIndex !== colIndex)) {
       event.preventDefault();
-      focusEstimateDbCell(nextRow, nextCol);
+      focusEstimateDbCell(nextCell.rowIndex, nextCell.colIndex);
     }
   }
+}
+
+function getEstimateDbNextVisibleCell(rowIndex, colIndex, rowDelta, colDelta, colCount = getEstimateDbLeafColumns().length) {
+  const nextCol = Math.max(0, Math.min(colCount - 1, colIndex + colDelta));
+
+  // 좌우 이동은 같은 데이터 행 안에서만 이동합니다.
+  if (!rowDelta) {
+    return { rowIndex, colIndex: nextCol };
+  }
+
+  // PJ NO 기본 내림차순처럼 화면 정렬 순서와 원본 배열 순서가 다를 수 있으므로,
+  // 위/아래 방향키는 현재 DOM에 표시된 행 순서를 기준으로 다음 행을 찾습니다.
+  const visibleRows = Array.from(document.querySelectorAll("#estimateDbBody .quote-db-data-row"));
+  if (!visibleRows.length) {
+    const rows = getEstimateDbRows();
+    return {
+      rowIndex: Math.max(0, Math.min(rows.length - 1, rowIndex + rowDelta)),
+      colIndex: nextCol
+    };
+  }
+
+  let domIndex = visibleRows.findIndex(row => Number(row.dataset.rowIndex) === Number(rowIndex));
+
+  // 포커스 정보가 정렬 직후 잠깐 어긋난 경우, 현재 활성 input 기준으로 보정합니다.
+  if (domIndex < 0) {
+    const activeRow = document.activeElement?.closest?.("#estimateDbBody .quote-db-data-row");
+    if (activeRow) domIndex = visibleRows.indexOf(activeRow);
+  }
+
+  if (domIndex < 0) return { rowIndex, colIndex: nextCol };
+
+  const nextDomIndex = Math.max(0, Math.min(visibleRows.length - 1, domIndex + rowDelta));
+  const nextRowIndex = Number(visibleRows[nextDomIndex]?.dataset.rowIndex);
+
+  if (!Number.isFinite(nextRowIndex)) return { rowIndex, colIndex: nextCol };
+  return { rowIndex: nextRowIndex, colIndex: nextCol };
 }
 function getEstimateDbRowValueByHeader(tab, row, headerName) {
   const idx = getEstimateDbColumnIndexByHeader(tab, headerName);
