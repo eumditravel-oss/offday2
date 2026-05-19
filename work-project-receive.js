@@ -1213,10 +1213,11 @@ function handleEstimateDbScopedCommand(event) {
   const key = String(event.key || "");
   const lower = key.toLowerCase();
   const saveKey = event.ctrlKey && lower === "s";
+  const linkSaveKey = event.ctrlKey && key === "Enter";
   const commandKey = event.ctrlKey && ["f9", "f3", "delete", "del"].includes(lower);
   const stageAddKey = event.altKey && (key === "Insert" || lower === "insert");
   const arrowKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key);
-  if (!saveKey && !commandKey && !stageAddKey && !arrowKey) return;
+  if (!saveKey && !linkSaveKey && !commandKey && !stageAddKey && !arrowKey) return;
 
   const active = document.activeElement;
   const activeInput = active?.classList?.contains("quote-db-cell-input") ? active : null;
@@ -1225,6 +1226,13 @@ function handleEstimateDbScopedCommand(event) {
     event.stopPropagation();
     event.stopImmediatePropagation?.();
     commitEstimateDbPendingEdits();
+    return;
+  }
+  if (linkSaveKey) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    syncEstimateDbNewPjRowsToLinkedSheets();
     return;
   }
   if (activeInput && !stageAddKey) return;
@@ -4770,10 +4778,13 @@ function setEstimateDbSearchKeyword(value) {
   renderEstimateDbManage();
 }
 
-function rowMatchesEstimateDbSearch(row, keyword) {
+function rowMatchesEstimateDbSearch(row, keyword, tab = estimateDbActiveTab, rowIndex = -1) {
   const q = normalizeEstimateDbText(keyword).toLowerCase();
   if (!q) return true;
-  return (row || []).some(cell => normalizeEstimateDbText(cell).toLowerCase().includes(q));
+  return (row || []).some((cell, colIndex) => {
+    const value = rowIndex >= 0 ? getEstimateDbCellDisplayValue(tab, rowIndex, colIndex, cell) : cell;
+    return normalizeEstimateDbText(value).toLowerCase().includes(q);
+  });
 }
 
 function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
@@ -4781,9 +4792,11 @@ function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = esti
   const sort = getEstimateDbEffectiveSortState(tab);
   return (sheet.rows || [])
     .map((row, sourceIndex) => ({ row, sourceIndex }))
-    .filter(entry => rowMatchesEstimateDbSearch(entry.row, keyword))
+    .filter(entry => rowMatchesEstimateDbSearch(entry.row, keyword, tab, entry.sourceIndex))
     .sort((a, b) => {
-      const result = compareEstimateDbValues(a.row?.[sort.colIndex], b.row?.[sort.colIndex], sort.direction);
+      const aValue = getEstimateDbCellDisplayValue(tab, a.sourceIndex, sort.colIndex, a.row?.[sort.colIndex]);
+      const bValue = getEstimateDbCellDisplayValue(tab, b.sourceIndex, sort.colIndex, b.row?.[sort.colIndex]);
+      const result = compareEstimateDbValues(aValue, bValue, sort.direction);
       return result || a.sourceIndex - b.sourceIndex;
     });
 }
@@ -5250,7 +5263,6 @@ function handleEstimateDbKeydown(event) {
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex)) {
     event.preventDefault();
-    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     applyEstimateDbPjDefaultSort();
     estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
     renderEstimateDbManage();
