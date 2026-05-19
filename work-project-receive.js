@@ -4507,8 +4507,7 @@ function sanitizeEstimateDbSheetsBeforeRender() {
   sanitizeEstimateDbSheetRows(estimateDbSheets.mep);
 }
 function setEstimateDbValueByHeader(tab, row, headerName, value) {
-  const cols = getEstimateDbLeafColumns(estimateDbSheets[tab]);
-  const idx = cols.indexOf(headerName);
+  const idx = getEstimateDbColumnIndexByHeader(tab, headerName);
   if (idx >= 0) row[idx] = value;
 }
 
@@ -4561,8 +4560,7 @@ function recalcEstimateDbProgressStageTotals(row) {
 }
 function recalcEstimateDbRow(tab, row) {
   if (!row) return;
-  const cols = getEstimateDbLeafColumns(estimateDbSheets[tab]);
-  const idx = name => cols.indexOf(name);
+  const idx = name => getEstimateDbColumnIndexByHeader(tab, name);
   const get = name => idx(name) >= 0 ? toEstimateDbNumber(row[idx(name)]) : 0;
   const set = (name, value) => { const i = idx(name); if (i >= 0) row[i] = value ? String(value) : ""; };
   if (tab === "progress") {
@@ -4802,7 +4800,8 @@ function refreshEstimateDbCalculatedCells(rowIndex) {
   cols.forEach((header, colIndex) => {
     const topHeader = sheet.headerRows?.[0]?.[colIndex] || "";
     const isStageTotal = normalizeEstimateDbText(header) === "합계" && /세금계산서|입금예정일|입금일/.test(String(topHeader));
-    if (!calculatedHeaders.includes(header) && !isStageTotal) return;
+    const isCalculated = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, calculatedHeaders);
+    if (!isCalculated && !isStageTotal) return;
     const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
     if (input && input.value !== String(row[colIndex] || "")) input.value = row[colIndex] || "";
   });
@@ -4865,6 +4864,30 @@ function getEstimateDbColumnRequest(tab, colIndex) {
 function getEstimateDbColumnName(tab, colIndex) {
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
   return getEstimateDbLeafColumns(sheet)[colIndex] || "";
+}
+function getEstimateDbColumnIndexByHeader(tab, headerName) {
+  const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
+  const target = normalizeEstimateDbText(headerName);
+  if (!sheet || !target) return -1;
+  const top = sheet.headerRows?.[0] || [];
+  const leaf = getEstimateDbLeafColumns(sheet);
+  const display = getEstimateDbDisplayColumns(sheet);
+  let idx = top.findIndex(v => normalizeEstimateDbText(v) === target);
+  if (idx >= 0) return idx;
+  idx = leaf.findIndex(v => normalizeEstimateDbText(v) === target);
+  if (idx >= 0) return idx;
+  idx = display.findIndex(v => normalizeEstimateDbText(v).split(/\n/)[0] === target);
+  return idx;
+}
+function isEstimateDbColumnHeaderMatch(tab, colIndex, headerNames = []) {
+  const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
+  const targets = headerNames.map(normalizeEstimateDbText);
+  const values = [
+    sheet.headerRows?.[0]?.[colIndex],
+    getEstimateDbLeafColumns(sheet)[colIndex],
+    getEstimateDbDisplayColumns(sheet)[colIndex]?.split(/\n/)[0]
+  ].map(normalizeEstimateDbText);
+  return values.some(value => targets.includes(value));
 }
 function isEstimateDbDropdownCell(tab, colIndex) {
   const request = getEstimateDbColumnRequest(tab, colIndex);
@@ -5145,8 +5168,7 @@ function handleEstimateDbKeydown(event) {
   }
 }
 function getEstimateDbRowValueByHeader(tab, row, headerName) {
-  const cols = getEstimateDbLeafColumns(estimateDbSheets[tab]);
-  const idx = cols.indexOf(headerName);
+  const idx = getEstimateDbColumnIndexByHeader(tab, headerName);
   return idx >= 0 ? row?.[idx] : "";
 }
 function makeEstimateDbSyncKey(parts) {
@@ -5236,7 +5258,7 @@ function syncEstimateDbTargetRow(tab, syncKey, values, sourceIndex = null) {
   target.__syncKey = syncKey;
 
   Object.entries(values).forEach(([name, value]) => {
-    const idx = cols.indexOf(name);
+    const idx = getEstimateDbColumnIndexByHeader(tab, name);
     if (idx >= 0 && normalizeEstimateDbText(value) && normalizeEstimateDbText(target[idx]) !== normalizeEstimateDbText(value)) {
       target[idx] = value;
       changed = 1;
@@ -5285,6 +5307,12 @@ function removeEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
 }
 function syncEstimateDbNewPjRowsToLinkedSheets() {
   if (!document.getElementById("estimateDbManage")?.classList.contains("active")) return;
+  const focusBeforeSync = { ...(estimateDbSelectedCell || {}), tab: estimateDbActiveTab };
+  const activeElement = document.activeElement;
+  if (activeElement?.classList?.contains("quote-db-cell-input")) {
+    focusBeforeSync.rowIndex = Number(activeElement.dataset.rowIndex || focusBeforeSync.rowIndex || 0);
+    focusBeforeSync.colIndex = Number(activeElement.dataset.colIndex || focusBeforeSync.colIndex || 0);
+  }
   const rows = estimateDbSheets.pj.rows || [];
   let changed = 0;
   let valid = 0;
@@ -5295,7 +5323,15 @@ function syncEstimateDbNewPjRowsToLinkedSheets() {
     }
   });
   recalcAllEstimateDbRows();
+  estimateDbActiveTab = focusBeforeSync.tab || estimateDbActiveTab;
+  estimateDbSelectedCell = {
+    tab: estimateDbActiveTab,
+    sectionIndex: null,
+    rowIndex: focusBeforeSync.rowIndex || 0,
+    colIndex: focusBeforeSync.colIndex || 0
+  };
   renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(estimateDbSelectedCell.rowIndex, estimateDbSelectedCell.colIndex));
   if (typeof showToast === "function") {
     if (changed) showToast(`기성관리·기전업체에 ${changed}건을 연동했습니다.`);
     else showToast(valid ? "기성관리·기전업체가 이미 최신 상태입니다." : "연동할 신규/변경 항목이 없습니다.");
