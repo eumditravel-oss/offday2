@@ -4381,7 +4381,11 @@ function commitEstimateDbPendingEdits(options = {}) {
     const sheet = estimateDbSheets[tab];
     const row = sheet?.rows?.[rowIndex];
     if (!row) return;
-    row[colIndex] = isEstimateDbOutsourceAmountCell(tab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
+    const sheetForCommit = estimateDbSheets[tab];
+    const storedValue = isEstimateDbOutsourceAmountCell(tab, colIndex)
+      ? normalizeEstimateDbAmountCellStorage(value)
+      : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForCommit) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
+    row[colIndex] = storedValue;
     recalcEstimateDbRow(tab, row);
     changed += 1;
   });
@@ -4401,7 +4405,11 @@ function commitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}
   const sheet = estimateDbSheets[tab];
   const row = sheet?.rows?.[rowIndex];
   if (!row) return 0;
-  row[colIndex] = isEstimateDbOutsourceAmountCell(tab, colIndex) ? normalizeEstimateDbAmountCellStorage(pending.value) : pending.value;
+  const sheetForSingleCommit = estimateDbSheets[tab];
+  const storedValue = isEstimateDbOutsourceAmountCell(tab, colIndex)
+    ? normalizeEstimateDbAmountCellStorage(pending.value)
+    : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForSingleCommit) && isEstimateDbPureNumber(pending.value) ? String(pending.value).replace(/,/g, "") : pending.value);
+  row[colIndex] = storedValue;
   recalcEstimateDbRow(tab, row);
   delete estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
   estimateDbHasUnsavedChanges = Object.keys(estimateDbPendingEdits).length > 0;
@@ -4988,6 +4996,25 @@ function refreshEstimateDbCalculatedCells(rowIndex) {
     if (input && input.value !== String(nextValue || "")) input.value = nextValue || "";
   });
 }
+function handleEstimateDbCellInput(event, rowIndex, colIndex, amountCell = false) {
+  const input = event?.currentTarget;
+  if (!input) return;
+  let value = input.value;
+  const sheet = getEstimateDbSheet();
+
+  // DB관리 내 금액성 컬럼은 입력 중에도 3자리 콤마를 즉시 반영합니다.
+  // 예: 400000 -> 400,000 / 100000 -> 100,000
+  if (!amountCell && isEstimateDbMoneyLikeColumn(estimateDbActiveTab, colIndex, sheet)) {
+    const selectionFromEnd = String(input.value || "").length - (input.selectionStart || 0);
+    value = formatEstimateDbCommaNumber(String(value || "").replace(/,/g, ""));
+    input.value = value;
+    const nextCaret = Math.max(0, String(value).length - selectionFromEnd);
+    try { input.setSelectionRange(nextCaret, nextCaret); } catch (_) {}
+  }
+
+  updateEstimateDbCell(rowIndex, colIndex, value, { pending: true });
+}
+
 function renderEstimateDbRow(row, rowIndex, colCount) {
   const sheet = getEstimateDbSheet();
   const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
@@ -5004,9 +5031,9 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const formattedDisplayValue = amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet);
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         if (amountCell) {
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, { pending: true })" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea></td>`;
         }
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, { pending: true })" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
@@ -5517,7 +5544,11 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
     return;
   }
 
-  rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(tab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
+  const sheetForUpdate = estimateDbSheets[tab];
+  const storedValue = isEstimateDbOutsourceAmountCell(tab, colIndex)
+    ? normalizeEstimateDbAmountCellStorage(value)
+    : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForUpdate) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
+  rows[rowIndex][colIndex] = storedValue;
   recalcEstimateDbRow(tab, rows[rowIndex]);
   if (!options.silentRender) {
     refreshEstimateDbCalculatedCells(rowIndex);
