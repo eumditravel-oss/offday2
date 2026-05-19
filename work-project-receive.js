@@ -6029,3 +6029,20 @@ function exportEstimateDbReportsToExcel() {
   showToast(`${year}년 0~3번 시트만 현재 화면 계산값으로 내보냅니다.`);
 }
 function handleEstimateDbYearChange() { renderEstimateDbReports(); }
+
+```
+
+
+let estimateDbLiveCommaBinding = true;
+document.addEventListener("input", function(event) {
+  const target = event.target;
+  if (!target || !target.classList || !target.classList.contains("quote-db-cell-input")) return;
+
+  const raw = String(target.value || "").replace(/[^0-9.-]/g, "");
+  if (raw === "") {
+    target.value = "";
+    return;
+  }
+
+  target.value = Number(raw).toLocaleString("en-US");
+});
