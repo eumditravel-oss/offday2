@@ -4344,6 +4344,9 @@ const estimateDbSheets = {
 let estimateDbVisibleSeedRowsInitialized = false;
 let estimateDbPjReceiptColumnRemoved = false;
 let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
+let estimateDbColumnResizeMode = false;
+let estimateDbColumnWidthOverrides = { pj: {}, progress: {}, mep: {} };
+let estimateDbColumnResizeState = null;
 let estimateDbSearchKeyword = "";
 const ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL = "Alt+Insert";
 const ESTIMATE_DB_MANUAL_SAVE_SHORTCUT_LABEL = "Ctrl+S";
@@ -4621,17 +4624,64 @@ function setEstimateDbReportTab(tab) {
 function estimateDbDisplayLength(value) {
   return String(value ?? "").split("").reduce((sum, ch) => sum + (ch.charCodeAt(0) > 127 ? 1.65 : 1), 0);
 }
-function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet()) {
+function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
+  const override = estimateDbColumnWidthOverrides?.[tab]?.[colIndex];
+  if (Number.isFinite(Number(override)) && Number(override) > 0) return Number(override);
   const values = [];
   (sheet.headerRows || []).forEach(row => values.push(row[colIndex] || ""));
   (sheet.rows || []).slice(0, 30).forEach(row => values.push(row[colIndex] || ""));
   const maxLen = Math.max(8, ...values.map(estimateDbDisplayLength));
   return Math.max(140, Math.min(520, Math.ceil(maxLen * 11 + 56)));
 }
-function makeEstimateDbCellStyle(colIndex, sheet = getEstimateDbSheet()) {
-  const width = getEstimateDbColumnWidth(colIndex, sheet);
-  return `style="min-width:${width}px;width:${width}px;"`;
+function setEstimateDbColumnWidth(tab, colIndex, width) {
+  const safeTab = estimateDbSheets[tab] ? tab : estimateDbActiveTab;
+  if (!estimateDbColumnWidthOverrides[safeTab]) estimateDbColumnWidthOverrides[safeTab] = {};
+  estimateDbColumnWidthOverrides[safeTab][colIndex] = Math.max(72, Math.min(760, Math.round(Number(width) || 140)));
 }
+function makeEstimateDbCellStyle(colIndex, sheet = getEstimateDbSheet()) {
+  const width = getEstimateDbColumnWidth(colIndex, sheet, estimateDbActiveTab);
+  return `style="min-width:${width}px;width:${width}px;max-width:${width}px;"`;
+}
+function toggleEstimateDbColumnResizeMode() {
+  estimateDbColumnResizeMode = !estimateDbColumnResizeMode;
+  renderEstimateDbManage();
+  if (typeof showToast === "function") showToast(estimateDbColumnResizeMode ? "열 너비 조절 모드를 켰습니다. 헤더 오른쪽 선을 드래그하세요." : "열 너비 조절 모드를 껐습니다.");
+}
+function renderEstimateDbColumnResizeHandle(colIndex) {
+  return estimateDbColumnResizeMode ? `<span class="quote-db-col-resize-handle" title="드래그해서 열 너비 조절" onmousedown="startEstimateDbColumnResize(event, ${colIndex})"></span>` : "";
+}
+function startEstimateDbColumnResize(event, colIndex) {
+  event.preventDefault();
+  event.stopPropagation();
+  const th = event.currentTarget?.closest?.("th");
+  const sheet = getEstimateDbSheet();
+  estimateDbColumnResizeState = {
+    tab: estimateDbActiveTab,
+    colIndex,
+    startX: event.clientX,
+    startWidth: th?.offsetWidth || getEstimateDbColumnWidth(colIndex, sheet, estimateDbActiveTab)
+  };
+  document.body.classList.add("estimate-db-resizing");
+}
+function handleEstimateDbColumnResizeMove(event) {
+  const state = estimateDbColumnResizeState;
+  if (!state) return;
+  const nextWidth = state.startWidth + (event.clientX - state.startX);
+  setEstimateDbColumnWidth(state.tab, state.colIndex, nextWidth);
+  document.querySelectorAll(`.quote-db-table [data-resize-col="${state.colIndex}"]`).forEach(cell => {
+    const width = getEstimateDbColumnWidth(state.colIndex, getEstimateDbSheet(state.tab), state.tab);
+    cell.style.minWidth = `${width}px`;
+    cell.style.width = `${width}px`;
+    cell.style.maxWidth = `${width}px`;
+  });
+}
+function stopEstimateDbColumnResize() {
+  if (!estimateDbColumnResizeState) return;
+  estimateDbColumnResizeState = null;
+  document.body.classList.remove("estimate-db-resizing");
+}
+document.addEventListener("mousemove", handleEstimateDbColumnResizeMove);
+document.addEventListener("mouseup", stopEstimateDbColumnResize);
 function escapeEstimateDbHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -4897,6 +4947,11 @@ function renderEstimateDbManage() {
   recalcAllEstimateDbRows();
   renderEstimateDbSearchBox();
   updateEstimateDbSaveButtonState();
+  const resizeBtn = document.getElementById("estimateDbColumnResizeBtn");
+  if (resizeBtn) {
+    resizeBtn.textContent = estimateDbColumnResizeMode ? "열 조절 종료" : "열 너비 조절하기";
+    resizeBtn.classList.toggle("active", estimateDbColumnResizeMode);
+  }
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   const sheet = getEstimateDbSheet();
@@ -4907,7 +4962,7 @@ function renderEstimateDbManage() {
     <tr class="quote-db-head-row quote-db-head-row-1 quote-db-head-row-merged">
       ${displayColumns.map((col, colIndex) => {
         const sortMark = sort.colIndex === colIndex ? (sort.direction === "asc" ? " ▲" : " ▼") : "";
-        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} class="quote-db-sortable-head" onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다.">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</th>`;
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}" onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
@@ -4933,7 +4988,7 @@ function renderEstimateDbTotalRow(sheet, colCount) {
       <td class="quote-db-total-label" colspan="4">합계</td>
       ${Array.from({ length: Math.max(0, colCount - 4) }, (_, offset) => {
         const colIndex = offset + 4;
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"></td>
     </tr>`;
@@ -5032,9 +5087,9 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const formattedDisplayValue = amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet);
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         if (amountCell) {
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea></td>`;
         }
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
@@ -5786,15 +5841,17 @@ function saveEstimateDbSalesTargetModal() {
 }
 
 function ensureEstimateDbReportActionHost() {
+  const head = document.querySelector("#estimateDbManage .quote-db-report-head");
   const tabs = document.getElementById("estimateDbReportTabs");
-  const body = document.getElementById("estimateDbReportBody");
-  if (!tabs || !body) return null;
+  if (!head || !tabs) return null;
   let host = document.getElementById("estimateDbReportActionHost");
   if (!host) {
     host = document.createElement("div");
     host.id = "estimateDbReportActionHost";
     host.className = "estimate-db-report-action-host";
-    body.parentNode.insertBefore(host, body);
+  }
+  if (host.parentNode !== head.parentNode || host.previousElementSibling !== head) {
+    head.parentNode.insertBefore(host, head.nextSibling);
   }
   return host;
 }
@@ -5817,7 +5874,7 @@ function normalizeEstimateDbReportScrollArea() {
 
 function renderEstimateDbReportActions() {
   if (estimateDbReportActiveTab !== "summary") return "";
-  return `<div class="estimate-db-report-action-row" style="display:flex;justify-content:flex-end;align-items:center;margin:0 0 12px 0;">
+  return `<div class="estimate-db-report-action-row" style="display:flex;justify-content:flex-end;align-items:center;margin:-8px 0 12px 0;">
     <button type="button" class="btn btn-primary btn-sm" onclick="openEstimateDbSalesTargetModal()">월별 매출목표 설정하기</button>
   </div>`;
 }
