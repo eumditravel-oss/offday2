@@ -5243,6 +5243,7 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
 }
 
 const ESTIMATE_DB_CONTACT_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2"];
+const ESTIMATE_DB_CONTACT_FIELDS = ["name", "role", "tel", "mobile", "direct", "email", "email2"];
 
 function isEstimateDbContactColumn(tab = estimateDbActiveTab, colIndex = 0) {
   return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "거래처담당자";
@@ -5344,18 +5345,65 @@ function openEstimateDbContactModal(rowIndex = estimateDbSelectedCell.rowIndex |
     return `
       <tr>
         <td>${index + 1}</td>
-        <td><input data-contact-field="name" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.name || "")}" /></td>
-        <td><input data-contact-field="role" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.role || "")}" /></td>
-        <td><input data-contact-field="tel" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.tel || "")}" /></td>
-        <td><input data-contact-field="mobile" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.mobile || "")}" /></td>
-        <td><input data-contact-field="direct" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.direct || "")}" /></td>
-        <td><input data-contact-field="email" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email || "")}" /></td>
-        <td><input data-contact-field="email2" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email2 || "")}" /></td>
+        <td><input data-contact-field="name" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.name || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="role" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.role || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="tel" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.tel || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="mobile" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.mobile || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="direct" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.direct || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="email" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="email2" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email2 || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
       </tr>`;
   }).join("");
   modal.classList.remove("hidden");
   setTimeout(() => modal.querySelector('input[data-contact-index="0"][data-contact-field="name"]')?.focus(), 0);
   return true;
+}
+
+function focusEstimateDbContactModalCell(rowIndex, fieldIndex) {
+  const row = Math.max(0, Math.min(9, Number(rowIndex) || 0));
+  const field = ESTIMATE_DB_CONTACT_FIELDS[Math.max(0, Math.min(ESTIMATE_DB_CONTACT_FIELDS.length - 1, Number(fieldIndex) || 0))];
+  const input = document.querySelector(`#estimateDbContactRows input[data-contact-index="${row}"][data-contact-field="${field}"]`);
+  if (!input) return;
+  input.focus({ preventScroll: true });
+  input.select?.();
+}
+
+function handleEstimateDbContactModalKeydown(event) {
+  if (!event || event.isComposing) return;
+  const input = event.currentTarget;
+  const key = event.key;
+  if (!input?.dataset) return;
+  if (key === "Enter") {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    saveEstimateDbContactModal();
+    return;
+  }
+  if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation?.();
+
+  let nextRow = Number(input.dataset.contactIndex) || 0;
+  let nextFieldIndex = ESTIMATE_DB_CONTACT_FIELDS.indexOf(input.dataset.contactField);
+  if (nextFieldIndex < 0) nextFieldIndex = 0;
+
+  if (key === "ArrowUp") nextRow -= 1;
+  if (key === "ArrowDown") nextRow += 1;
+  if (key === "ArrowLeft") nextFieldIndex -= 1;
+  if (key === "ArrowRight") nextFieldIndex += 1;
+
+  if (nextFieldIndex < 0) {
+    nextFieldIndex = ESTIMATE_DB_CONTACT_FIELDS.length - 1;
+    nextRow -= 1;
+  }
+  if (nextFieldIndex >= ESTIMATE_DB_CONTACT_FIELDS.length) {
+    nextFieldIndex = 0;
+    nextRow += 1;
+  }
+  nextRow = Math.max(0, Math.min(9, nextRow));
+  focusEstimateDbContactModalCell(nextRow, nextFieldIndex);
 }
 
 function closeEstimateDbContactModal() {
