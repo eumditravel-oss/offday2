@@ -5740,9 +5740,39 @@ function saveEstimateDbSalesTargetModal() {
   if (typeof showToast === "function") showToast(`${year}년 월별 매출목표를 저장했습니다.`);
 }
 
+function ensureEstimateDbReportActionHost() {
+  const tabs = document.getElementById("estimateDbReportTabs");
+  const body = document.getElementById("estimateDbReportBody");
+  if (!tabs || !body) return null;
+  let host = document.getElementById("estimateDbReportActionHost");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "estimateDbReportActionHost";
+    host.className = "estimate-db-report-action-host";
+    body.parentNode.insertBefore(host, body);
+  }
+  return host;
+}
+
+function normalizeEstimateDbReportScrollArea() {
+  const body = document.getElementById("estimateDbReportBody");
+  if (!body) return;
+  body.style.overflowY = "visible";
+  body.style.maxHeight = "none";
+  body.style.height = "auto";
+  body.style.paddingTop = "0";
+  body.style.position = "relative";
+
+  const reportCard = body.closest(".quote-report-card, .estimate-db-report-card, .card, .panel, .work-card");
+  if (reportCard) {
+    reportCard.style.overflowY = "visible";
+    reportCard.style.maxHeight = "none";
+  }
+}
+
 function renderEstimateDbReportActions() {
   if (estimateDbReportActiveTab !== "summary") return "";
-  return `<div class="estimate-db-report-action-row" style="display:flex;justify-content:flex-end;margin:0 0 10px 0;">
+  return `<div class="estimate-db-report-action-row" style="display:flex;justify-content:flex-end;align-items:center;margin:0 0 12px 0;">
     <button type="button" class="btn btn-primary btn-sm" onclick="openEstimateDbSalesTargetModal()">월별 매출목표 설정하기</button>
   </div>`;
 }
@@ -5752,6 +5782,10 @@ function renderEstimateDbReports() {
   const target = document.getElementById("estimateDbReportBody");
   if (!tabs || !target) return;
   tabs.querySelectorAll("button").forEach(btn => btn.classList.toggle("active", btn.dataset.reportTab === estimateDbReportActiveTab));
+  ensureEstimateDbReportLayoutStyle();
+  normalizeEstimateDbReportScrollArea();
+  const actionHost = ensureEstimateDbReportActionHost();
+  if (actionHost) actionHost.innerHTML = renderEstimateDbReportActions();
   const year = getSelectedEstimateDbYear();
   let html = "";
   if (estimateDbReportActiveTab === "summary") {
@@ -5767,10 +5801,23 @@ function renderEstimateDbReports() {
     const data = buildDepositRows(year);
     html = renderReportTable(data.title, [data.detailHeader], data.detail);
   }
-  target.innerHTML = renderEstimateDbReportActions() + html;
+  target.innerHTML = html;
 }
 function renderReportTable(title, headerRows, rows) {
-  return `<div class="quote-report-table-block"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(formatEstimateDbReportCell(cell))}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
+  return `<div class="quote-report-table-block" style="overflow-x:auto;overflow-y:visible;max-height:none;"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(formatEstimateDbReportCell(cell))}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
+}
+
+function ensureEstimateDbReportLayoutStyle() {
+  if (document.getElementById("estimateDbReportLayoutStyle")) return;
+  const style = document.createElement("style");
+  style.id = "estimateDbReportLayoutStyle";
+  style.textContent = `
+    #estimateDbReportActionHost { display:flex; justify-content:flex-end; align-items:center; margin:0 0 12px 0; }
+    #estimateDbReportBody { overflow-y:visible !important; max-height:none !important; height:auto !important; }
+    #estimateDbReportBody .quote-report-table-block { overflow-x:auto !important; overflow-y:visible !important; max-height:none !important; }
+    #estimateDbReportBody .quote-report-table { width:max-content; min-width:100%; }
+  `;
+  document.head.appendChild(style);
 }
 function escapeEstimateDbExcelCell(value) { return escapeEstimateDbHtml(value); }
 function estimateDbXmlCell(value, styleId = "Cell", mergeAcross = 0, mergeDown = 0) {
