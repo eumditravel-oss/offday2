@@ -825,18 +825,20 @@
                   <div class="quote-db-report-head">
                     <div>
                       <strong>연도별 수주·매출·입금 연결 화면</strong>
-                      <span>DB_프로젝트, DB_기성, DB기전외주 값을 기준으로 0~3번 시트를 웹에서 확인하고 내보냅니다.</span>
                     </div>
                     <div class="quote-db-report-actions">
-                      <label>년도 <select id="estimateDbYearSelect" onchange="handleEstimateDbYearChange()"></select></label>
+                      <label class="quote-db-year-label">년도 <select id="estimateDbYearSelect" onchange="handleEstimateDbYearChange()"></select></label>
                       <button class="btn btn-line" type="button" onclick="exportEstimateDbReportsToExcel()">0~3 시트 엑셀 내보내기</button>
                     </div>
                   </div>
-                  <div class="quote-db-tabs quote-db-report-tabs" id="estimateDbReportTabs">
-                    <button class="quote-db-tab active" type="button" data-report-tab="summary" onclick="setEstimateDbReportTab('summary')">0.수주매출입금</button>
-                    <button class="quote-db-tab" type="button" data-report-tab="order" onclick="setEstimateDbReportTab('order')">1.수주 프로젝트</button>
-                    <button class="quote-db-tab" type="button" data-report-tab="sales" onclick="setEstimateDbReportTab('sales')">2.매출 프로젝트</button>
-                    <button class="quote-db-tab" type="button" data-report-tab="deposit" onclick="setEstimateDbReportTab('deposit')">3.입금 프로젝트</button>
+                  <div class="quote-db-report-tab-row">
+                    <div class="quote-db-tabs quote-db-report-tabs" id="estimateDbReportTabs">
+                      <button class="quote-db-tab active" type="button" data-report-tab="summary" onclick="setEstimateDbReportTab('summary')">수주매출입금</button>
+                      <button class="quote-db-tab" type="button" data-report-tab="order" onclick="setEstimateDbReportTab('order')">수주 프로젝트</button>
+                      <button class="quote-db-tab" type="button" data-report-tab="sales" onclick="setEstimateDbReportTab('sales')">매출 프로젝트</button>
+                      <button class="quote-db-tab" type="button" data-report-tab="deposit" onclick="setEstimateDbReportTab('deposit')">입금 프로젝트</button>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm estimate-db-sales-target-inline-btn" onclick="openEstimateDbSalesTargetModal()">월별 매출목표 설정하기</button>
                   </div>
                   <div class="quote-db-report-wrap" id="estimateDbReportBody"></div>
                 </section>
