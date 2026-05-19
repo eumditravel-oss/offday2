@@ -5873,10 +5873,7 @@ function normalizeEstimateDbReportScrollArea() {
 }
 
 function renderEstimateDbReportActions() {
-  if (estimateDbReportActiveTab !== "summary") return "";
-  return `<div class="estimate-db-report-action-row" style="display:flex;justify-content:flex-end;align-items:center;margin:-8px 0 12px 0;">
-    <button type="button" class="btn btn-primary btn-sm" onclick="openEstimateDbSalesTargetModal()">월별 매출목표 설정하기</button>
-  </div>`;
+  return "";
 }
 
 function renderEstimateDbReports() {
