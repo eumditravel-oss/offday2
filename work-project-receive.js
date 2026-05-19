@@ -5143,6 +5143,14 @@ function handleEstimateDbKeydown(event) {
     if (estimateDbActiveTab === "progress") addEstimateDbProgressStageColumns();
     return;
   }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    applyEstimateDbPjDefaultSort();
+    estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
+    renderEstimateDbManage();
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+    return;
+  }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) {
     event.preventDefault();
     openEstimateDbAmountModal(rowIndex, colIndex);
@@ -5288,16 +5296,8 @@ function syncAllEstimateDbLinkedRows() {
 function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
-  const shouldResortPjNo = isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex) && !options.silentRender;
   rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
   recalcEstimateDbRow(estimateDbActiveTab, rows[rowIndex]);
-  if (shouldResortPjNo) {
-    applyEstimateDbPjDefaultSort();
-    estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
-    renderEstimateDbManage();
-    requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
-    return;
-  }
   if (!options.silentRender) {
     refreshEstimateDbCalculatedCells(rowIndex);
     refreshEstimateDbTotalRowOnly();
