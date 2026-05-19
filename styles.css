@@ -16612,9 +16612,12 @@ th.quote-db-manage-col {
 .quote-db-report-head strong{display:block;font-size:18px;color:#0f172a;margin-bottom:6px;}
 .quote-db-report-head span{display:block;font-size:13px;color:#64748b;}
 .quote-db-report-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.quote-db-report-actions label{display:flex;align-items:center;gap:8px;font-weight:800;color:#0f172a;}
+.quote-db-report-actions label{display:flex;align-items:center;gap:8px;font-weight:800;color:#0f172a;white-space:nowrap;}
+.quote-db-year-label{white-space:nowrap;min-width:max-content;}
 .quote-db-report-actions select{height:38px;border:1px solid #d7e2ee;border-radius:10px;padding:0 30px 0 12px;font-weight:800;background:#fff;}
-.quote-db-report-tabs{margin-top:4px;margin-bottom:14px;}
+.quote-db-report-tab-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:4px 0 14px;}
+.quote-db-report-tabs{margin-top:0;margin-bottom:0;flex:1 1 auto;}
+.estimate-db-sales-target-inline-btn{flex:0 0 auto;white-space:nowrap;}
 .quote-db-report-wrap{overflow:auto;border:1px solid #dbe5f0;border-radius:14px;background:#fff;max-height:560px;}
 .quote-report-table-block{padding:12px 12px 18px;min-width:max-content;}
 .quote-report-table-block + .quote-report-table-block{border-top:8px solid #f1f5f9;}
@@ -16825,10 +16828,8 @@ body.estimate-db-resizing{
   user-select:none!important;
 }
 #estimateDbReportActionHost{
-  display:flex!important;
-  justify-content:flex-end!important;
-  align-items:center!important;
-  margin:-8px 0 12px 0!important;
+  display:none!important;
+  margin:0!important;
 }
 #estimateDbReportActionHost .estimate-db-report-action-row{
   margin:0!important;
