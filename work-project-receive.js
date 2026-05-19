@@ -4343,6 +4343,8 @@ const estimateDbSheets = {
 ========================================================= */
 let estimateDbVisibleSeedRowsInitialized = false;
 let estimateDbPjReceiptColumnRemoved = false;
+let estimateDbPjProjectLinkColumnEnsured = false;
+const ESTIMATE_DB_PROJECT_LINK_HEADER = "프로젝트 연결";
 let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
 let estimateDbColumnResizeMode = false;
 let estimateDbColumnWidthOverrides = { pj: {}, progress: {}, mep: {} };
@@ -4452,6 +4454,23 @@ function removeEstimateDbPjReceiptColumnOnce() {
   estimateDbPjReceiptColumnRemoved = true;
 }
 
+function ensureEstimateDbPjProjectLinkColumnOnce() {
+  if (estimateDbPjProjectLinkColumnEnsured) return;
+  const sheet = estimateDbSheets?.pj;
+  if (!sheet) return;
+  const header = sheet.headerRows?.[0] || [];
+  if (header.some(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER)) {
+    estimateDbPjProjectLinkColumnEnsured = true;
+    return;
+  }
+  const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
+  const insertIndex = pjNoIndex >= 0 ? pjNoIndex + 1 : Math.min(2, header.length);
+  (sheet.headerRows || []).forEach(row => row.splice(insertIndex, 0, ESTIMATE_DB_PROJECT_LINK_HEADER));
+  if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(insertIndex, 0, "기존 DB 프로젝트와 연결할 경우 Enter로 프로젝트 리스트를 열어 선택");
+  (sheet.rows || []).forEach(row => row.splice(insertIndex, 0, ""));
+  estimateDbPjProjectLinkColumnEnsured = true;
+}
+
 const estimateDbReportTabs = {
   summary: "0.수주매출입금",
   order: "1.수주 프로젝트",
@@ -4497,7 +4516,7 @@ function isEstimateDbMoneyLikeColumn(tab = estimateDbActiveTab, colIndex = 0, sh
   const topHeader = normalizeEstimateDbText(sheet?.headerRows?.[0]?.[colIndex] || "");
   const label = `${topHeader} ${header}`;
   if (!header && !topHeader) return false;
-  if (/년도|PJ\s*NO|접수번호|일자|날짜|예정일|연락|전화|휴대폰|직통|EMAIL|ID|PW|층수|동수|타입수|세대수|연면적|비율|퍼센트|구분|비고|담당자|직급|부서명|프로젝트명|거래처명|업체명|국내\/해외/.test(label)) return false;
+  if (/년도|PJ\s*NO|프로젝트 연결|접수번호|일자|날짜|예정일|연락|전화|휴대폰|직통|EMAIL|ID|PW|층수|동수|타입수|세대수|연면적|비율|퍼센트|구분|비고|담당자|직급|부서명|프로젝트명|거래처명|업체명|국내\/해외/.test(label)) return false;
   return /금액|목표|달성|차액|잔액|합계|기성|입금|매출|수주|계약금|수령액|발행완료|납품완료|작업진행중|작업대기중|작업취소|기계|전기|외주|송무|기타|\bA\b|\bB\b|\bC\b|\bC1\b|\bC2\b|\bC3\b|\bC4\b|\bC5\b/.test(label);
 }
 
@@ -4561,7 +4580,7 @@ function parseEstimateDbMonth(value) {
   if (date) return Number(date[1]);
   return null;
 }
-function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
+function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjProjectLinkColumnOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   const rows = sheet.headerRows || [];
   if (!rows.length) return [];
@@ -5170,10 +5189,60 @@ function isEstimateDbColumnHeaderMatch(tab, colIndex, headerNames = []) {
   ].map(normalizeEstimateDbText);
   return values.some(value => targets.includes(value));
 }
+function isEstimateDbProjectLinkColumn(tab, colIndex) {
+  return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === ESTIMATE_DB_PROJECT_LINK_HEADER;
+}
+
+function getEstimateDbProjectLinkOptions(rowIndex = -1) {
+  const sheet = estimateDbSheets.pj;
+  const columns = getEstimateDbLeafColumns(sheet);
+  const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
+  const clientIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "거래처명");
+  const projectNameIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "프로젝트명");
+  return (sheet.rows || [])
+    .map((row, sourceIndex) => {
+      const pjNo = normalizeEstimateDbText(row?.[pjNoIndex]);
+      if (!pjNo || sourceIndex === rowIndex) return null;
+      const client = normalizeEstimateDbText(row?.[clientIndex]);
+      const projectName = normalizeEstimateDbText(row?.[projectNameIndex]);
+      return {
+        sourceIndex,
+        pjNo,
+        label: [pjNo, client, projectName].filter(Boolean).join(" | ")
+      };
+    })
+    .filter(Boolean);
+}
+
+function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
+  const sheet = estimateDbSheets.pj;
+  const rows = sheet.rows || [];
+  const columns = getEstimateDbLeafColumns(sheet);
+  const linkIndex = columns.findIndex(c => normalizeEstimateDbText(c) === ESTIMATE_DB_PROJECT_LINK_HEADER);
+  const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
+  const yearIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "년도");
+  const selected = getEstimateDbProjectLinkOptions(rowIndex).find(item => item.label === selectedLabel || item.pjNo === selectedLabel || selectedLabel.startsWith(`${item.pjNo} |`));
+  const target = rows[rowIndex];
+  const source = selected ? rows[selected.sourceIndex] : null;
+  if (!target) return false;
+  if (!source) {
+    if (linkIndex >= 0) target[linkIndex] = selectedLabel || "";
+    return false;
+  }
+  const keepIndexes = new Set([yearIndex, pjNoIndex, linkIndex].filter(i => i >= 0));
+  columns.forEach((_col, index) => {
+    if (keepIndexes.has(index)) return;
+    target[index] = source[index] || "";
+  });
+  if (linkIndex >= 0) target[linkIndex] = selected.pjNo;
+  recalcEstimateDbRow("pj", target);
+  return true;
+}
+
 function isEstimateDbDropdownCell(tab, colIndex) {
   const request = getEstimateDbColumnRequest(tab, colIndex);
   const header = getEstimateDbColumnName(tab, colIndex);
-  return /드롭다운|대분류|소분류|추가 가능|선택/i.test(request) || ["국내/해외", "거래처명", "작업공종", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도"].includes(header);
+  return isEstimateDbProjectLinkColumn(tab, colIndex) || /드롭다운|대분류|소분류|추가 가능|선택/i.test(request) || ["국내/해외", "거래처명", "작업공종", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도"].includes(header);
 }
 function getEstimateDbUniqueColumnValues(tab, colIndex) {
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
@@ -5219,7 +5288,9 @@ function getEstimateDbDropdownOptions(tab, rowIndex, colIndex) {
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
   const custom = estimateDbCustomOptions[getEstimateDbCustomOptionKey(tab, colIndex)] || [];
   let options = [];
-  if (tab === "pj" && header === "업무단계2") {
+  if (tab === "pj" && header === ESTIMATE_DB_PROJECT_LINK_HEADER) {
+    options = getEstimateDbProjectLinkOptions(rowIndex).map(item => item.label);
+  } else if (tab === "pj" && header === "업무단계2") {
     const headers = getEstimateDbLeafColumns(sheet);
     const parentIndex = headers.indexOf("업무성격");
     const parentValue = normalizeEstimateDbText(sheet.rows?.[rowIndex]?.[parentIndex]);
@@ -5285,7 +5356,7 @@ function renderEstimateDbDropdownList() {
   state.filtered = filtered;
   state.activeIndex = Math.max(0, Math.min(state.activeIndex || 0, Math.max(0, filtered.length - 1)));
   if (state.noMatch) {
-    list.innerHTML = `<div class="estimate-db-dropdown-empty">기존 데이터에 작성된 내용이 없습니다.(Enter를 누를 시 해당 목록 추가)</div>`;
+    list.innerHTML = `<div class="estimate-db-dropdown-empty">${state.tab === "pj" && getEstimateDbColumnName(state.tab, state.colIndex) === ESTIMATE_DB_PROJECT_LINK_HEADER ? "연결할 프로젝트가 없습니다." : "기존 데이터에 작성된 내용이 없습니다.(Enter를 누를 시 해당 목록 추가)"}</div>`;
     return;
   }
   list.innerHTML = filtered.map((option, index) => `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${escapeEstimateDbHtml(option)}</button>`).join("") || `<div class="estimate-db-dropdown-empty">목록이 없습니다. 입력 후 Enter를 누르면 해당 목록에 추가됩니다.</div>`;
@@ -5297,11 +5368,15 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
   const typed = normalizeEstimateDbText(search?.value || "");
   const value = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
   if (!value) return;
-  if (state.noMatch || !(state.options || []).includes(value)) addEstimateDbCustomOption(state.tab, state.colIndex, value);
-  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { silentRender: true });
   const header = getEstimateDbColumnName(state.tab, state.colIndex);
   const row = state.rowIndex;
   const nextCol = state.colIndex + 1;
+  if (state.tab === "pj" && header === ESTIMATE_DB_PROJECT_LINK_HEADER) {
+    applyEstimateDbProjectLink(state.rowIndex, value);
+  } else {
+    if (state.noMatch || !(state.options || []).includes(value)) addEstimateDbCustomOption(state.tab, state.colIndex, value);
+    updateEstimateDbCell(state.rowIndex, state.colIndex, value, { silentRender: true });
+  }
   closeEstimateDbDropdown();
   renderEstimateDbManage();
   if (header === "업무성격" && getEstimateDbColumnName(state.tab, nextCol) === "업무단계2") {
@@ -5684,6 +5759,8 @@ function syncEstimateDbNewPjRowsToLinkedSheets() {
   }
 }
 function exportEstimateDbJsonForAi() {
+  removeEstimateDbPjReceiptColumnOnce();
+  ensureEstimateDbPjProjectLinkColumnOnce();
   const payload = {
     exportedAt: new Date().toISOString(),
     note: "DB관리 더미데이터 요청용 JSON입니다. 이 값을 수정/추가해서 다시 전달하면 동일 구조로 반영할 수 있습니다.",
