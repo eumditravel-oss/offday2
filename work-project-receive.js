@@ -1212,13 +1212,21 @@ function handleEstimateDbScopedCommand(event) {
   if (!isEstimateDbManageActive()) return;
   const key = String(event.key || "");
   const lower = key.toLowerCase();
+  const saveKey = event.ctrlKey && lower === "s";
   const commandKey = event.ctrlKey && ["f9", "f3", "delete", "del"].includes(lower);
   const stageAddKey = event.altKey && (key === "Insert" || lower === "insert");
   const arrowKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key);
-  if (!commandKey && !stageAddKey && !arrowKey) return;
+  if (!saveKey && !commandKey && !stageAddKey && !arrowKey) return;
 
   const active = document.activeElement;
   const activeInput = active?.classList?.contains("quote-db-cell-input") ? active : null;
+  if (saveKey) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    commitEstimateDbPendingEdits();
+    return;
+  }
   if (activeInput && !stageAddKey) return;
 
   if (stageAddKey) {
@@ -4330,6 +4338,77 @@ let estimateDbPjReceiptColumnRemoved = false;
 let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
 let estimateDbSearchKeyword = "";
 const ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL = "Alt+Insert";
+const ESTIMATE_DB_MANUAL_SAVE_SHORTCUT_LABEL = "Ctrl+S";
+const estimateDbPendingEdits = {};
+let estimateDbHasUnsavedChanges = false;
+
+function makeEstimateDbPendingKey(tab, rowIndex, colIndex) {
+  return `${tab}::${Number(rowIndex)}::${Number(colIndex)}`;
+}
+
+function setEstimateDbPendingEdit(tab, rowIndex, colIndex, value) {
+  const key = makeEstimateDbPendingKey(tab, rowIndex, colIndex);
+  estimateDbPendingEdits[key] = { tab, rowIndex: Number(rowIndex), colIndex: Number(colIndex), value };
+  estimateDbHasUnsavedChanges = true;
+}
+
+function getEstimateDbPendingEdit(tab, rowIndex, colIndex) {
+  return estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
+}
+
+function getEstimateDbCellDisplayValue(tab, rowIndex, colIndex, fallback = "") {
+  const pending = getEstimateDbPendingEdit(tab, rowIndex, colIndex);
+  return pending ? pending.value : fallback;
+}
+
+function commitEstimateDbPendingEdits(options = {}) {
+  const entries = Object.values(estimateDbPendingEdits);
+  if (!entries.length) {
+    if (!options.silent && typeof showToast === "function") showToast("저장할 변경사항이 없습니다.");
+    return 0;
+  }
+
+  let changed = 0;
+  entries.forEach(({ tab, rowIndex, colIndex, value }) => {
+    const sheet = estimateDbSheets[tab];
+    const row = sheet?.rows?.[rowIndex];
+    if (!row) return;
+    row[colIndex] = isEstimateDbOutsourceAmountCell(tab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
+    recalcEstimateDbRow(tab, row);
+    changed += 1;
+  });
+
+  Object.keys(estimateDbPendingEdits).forEach(key => delete estimateDbPendingEdits[key]);
+  estimateDbHasUnsavedChanges = false;
+  recalcAllEstimateDbRows();
+  if (estimateDbActiveTab === "pj") applyEstimateDbPjDefaultSort();
+  renderEstimateDbManage();
+  if (!options.silent && typeof showToast === "function") showToast(`DB관리 변경사항 ${changed}건을 저장했습니다.`);
+  return changed;
+}
+
+function commitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}) {
+  const pending = getEstimateDbPendingEdit(tab, rowIndex, colIndex);
+  if (!pending) return 0;
+  const sheet = estimateDbSheets[tab];
+  const row = sheet?.rows?.[rowIndex];
+  if (!row) return 0;
+  row[colIndex] = isEstimateDbOutsourceAmountCell(tab, colIndex) ? normalizeEstimateDbAmountCellStorage(pending.value) : pending.value;
+  recalcEstimateDbRow(tab, row);
+  delete estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
+  estimateDbHasUnsavedChanges = Object.keys(estimateDbPendingEdits).length > 0;
+  if (!options.skipRecalc) recalcAllEstimateDbRows();
+  return 1;
+}
+
+function updateEstimateDbSaveButtonState() {
+  const btn = document.getElementById("estimateDbManualSaveBtn");
+  if (!btn) return;
+  btn.classList.toggle("btn-primary", estimateDbHasUnsavedChanges);
+  btn.classList.toggle("btn-line", !estimateDbHasUnsavedChanges);
+  btn.textContent = estimateDbHasUnsavedChanges ? `저장 필요(${ESTIMATE_DB_MANUAL_SAVE_SHORTCUT_LABEL})` : `저장(${ESTIMATE_DB_MANUAL_SAVE_SHORTCUT_LABEL})`;
+}
+
 
 function initializeEstimateDbVisibleSeedRows() {
   removeEstimateDbPjReceiptColumnOnce();
@@ -4716,17 +4795,33 @@ function renderEstimateDbSearchBox() {
   box.placeholder = `${getEstimateDbSheet().title || "DB"} 검색`;
 }
 
+function ensureEstimateDbManualSaveButton() {
+  if (document.getElementById("estimateDbManualSaveBtn")) return;
+  const stageBtn = document.getElementById("estimateDbAddStageBtn");
+  const exportBtn = Array.from(document.querySelectorAll("button")).find(btn => normalizeEstimateDbText(btn.textContent).includes("엑셀 내보내기"));
+  const anchor = stageBtn || exportBtn;
+  if (!anchor?.parentElement) return;
+  const btn = document.createElement("button");
+  btn.id = "estimateDbManualSaveBtn";
+  btn.type = "button";
+  btn.className = "btn btn-line";
+  btn.onclick = () => commitEstimateDbPendingEdits();
+  anchor.parentElement.insertBefore(btn, anchor);
+}
+
 function renderEstimateDbManage() {
   initializeEstimateDbVisibleSeedRows();
   const head = document.getElementById("estimateDbHead");
   const body = document.getElementById("estimateDbBody");
   if (!head || !body) return;
   syncEstimateDbYearOptions();
+  ensureEstimateDbManualSaveButton();
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
   sanitizeEstimateDbSheetsBeforeRender();
   ensureEstimateDbProgressStageTotalColumns();
   recalcAllEstimateDbRows();
   renderEstimateDbSearchBox();
+  updateEstimateDbSaveButtonState();
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   const sheet = getEstimateDbSheet();
@@ -4833,10 +4928,12 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
         const dbl = amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`;
+        const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
+        const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         if (amountCell) {
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${cls}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formatEstimateDbAmountCellDisplay(value))}</textarea></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, { pending: true })" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formatEstimateDbAmountCellDisplay(displayValue))}</textarea></td>`;
         }
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}" value="${escapeEstimateDbHtml(value)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(displayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="updateEstimateDbCell(${rowIndex}, ${colIndex}, this.value, { pending: true })" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
@@ -5133,8 +5230,16 @@ function handleEstimateDbKeydown(event) {
   const colIndex = Number(input.dataset.colIndex || 0);
   const rows = getEstimateDbRows();
   const colCount = getEstimateDbLeafColumns().length;
+  const keyLower = String(event.key || "").toLowerCase();
+  if (event.ctrlKey && keyLower === "s") {
+    event.preventDefault();
+    commitEstimateDbPendingEdits();
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+    return;
+  }
   if (event.ctrlKey && event.key === "Enter") {
     event.preventDefault();
+    commitEstimateDbPendingEdits({ silent: true });
     syncEstimateDbNewPjRowsToLinkedSheets();
     return;
   }
@@ -5145,6 +5250,7 @@ function handleEstimateDbKeydown(event) {
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex)) {
     event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     applyEstimateDbPjDefaultSort();
     estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
     renderEstimateDbManage();
@@ -5331,8 +5437,16 @@ function syncAllEstimateDbLinkedRows() {
 function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
-  rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
-  recalcEstimateDbRow(estimateDbActiveTab, rows[rowIndex]);
+  const tab = options.tab || estimateDbActiveTab;
+
+  if (options.pending || !options.commit) {
+    setEstimateDbPendingEdit(tab, rowIndex, colIndex, value);
+    updateEstimateDbSaveButtonState();
+    return;
+  }
+
+  rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(tab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
+  recalcEstimateDbRow(tab, rows[rowIndex]);
   if (!options.silentRender) {
     refreshEstimateDbCalculatedCells(rowIndex);
     refreshEstimateDbTotalRowOnly();
@@ -5365,6 +5479,7 @@ function removeEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
   renderEstimateDbManage();
 }
 function syncEstimateDbNewPjRowsToLinkedSheets() {
+  commitEstimateDbPendingEdits({ silent: true });
   if (!document.getElementById("estimateDbManage")?.classList.contains("active")) return;
   const focusBeforeSync = { ...(estimateDbSelectedCell || {}), tab: estimateDbActiveTab };
   const activeElement = document.activeElement;
