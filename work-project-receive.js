@@ -1213,12 +1213,21 @@ function handleEstimateDbScopedCommand(event) {
   const key = String(event.key || "");
   const lower = key.toLowerCase();
   const commandKey = event.ctrlKey && ["f9", "f3", "delete", "del"].includes(lower);
+  const stageAddKey = event.altKey && (key === "Insert" || lower === "insert");
   const arrowKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key);
-  if (!commandKey && !arrowKey) return;
+  if (!commandKey && !stageAddKey && !arrowKey) return;
 
   const active = document.activeElement;
   const activeInput = active?.classList?.contains("quote-db-cell-input") ? active : null;
-  if (activeInput) return;
+  if (activeInput && !stageAddKey) return;
+
+  if (stageAddKey) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    if (estimateDbActiveTab === "progress") addEstimateDbProgressStageColumns();
+    return;
+  }
 
   if (commandKey) {
     event.preventDefault();
@@ -4581,26 +4590,49 @@ function recalcAllEstimateDbRows() {
 function getEstimateDbStageGroups() {
   return ["세금계산서", "입금예정일", "입금일"];
 }
+function getEstimateDbProgressGroupNameByColumn(colIndex) {
+  const sheet = estimateDbSheets.progress;
+  const top = sheet?.headerRows?.[0] || [];
+  let current = "";
+  for (let i = 0; i <= colIndex; i += 1) {
+    const text = normalizeEstimateDbText(top[i]);
+    if (text) current = text;
+  }
+  return current;
+}
 function addEstimateDbProgressStageColumns() {
   const sheet = estimateDbSheets.progress;
   if (!sheet) return;
+  if (estimateDbActiveTab !== "progress") estimateDbActiveTab = "progress";
+
+  const selected = estimateDbSelectedCell || { rowIndex: 0, colIndex: 0 };
+  const selectedGroup = getEstimateDbProgressGroupNameByColumn(selected.colIndex || 0);
+
+  ensureEstimateDbProgressStageTotalColumns();
   const top = sheet.headerRows[0];
   const bottom = sheet.headerRows[1];
   const cols = getEstimateDbLeafColumns(sheet);
   const stageNumbers = cols.map(c => (normalizeEstimateDbText(c).match(/^(\d+)차기성$/) || [])[1]).filter(Boolean).map(Number);
   const next = (stageNumbers.length ? Math.max(...stageNumbers) : 5) + 1;
-  ensureEstimateDbProgressStageTotalColumns();
-  ["세금계산서", "입금예정일", "입금일"].forEach(group => {
+  const insertedIndexes = {};
+
+  getEstimateDbStageGroups().forEach(group => {
     const groupIndexes = getEstimateDbProgressGroupIndexes(group);
     const totalIndex = groupIndexes.find(i => normalizeEstimateDbText(bottom[i]) === "합계");
     const insertAt = totalIndex >= 0 ? totalIndex : (groupIndexes.length ? Math.max(...groupIndexes) + 1 : bottom.length);
     top.splice(insertAt, 0, "");
     bottom.splice(insertAt, 0, `${next}차기성`);
-    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "7열 날짜 작성란");
+    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "추가된 기성 차수 입력란");
     (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
+    insertedIndexes[group] = insertAt;
   });
+
+  const focusGroup = getEstimateDbStageGroups().includes(selectedGroup) ? selectedGroup : "세금계산서";
+  const focusCol = insertedIndexes[focusGroup] ?? Object.values(insertedIndexes)[0] ?? 0;
+  estimateDbSelectedCell = { tab: "progress", sectionIndex: null, rowIndex: selected.rowIndex || 0, colIndex: focusCol };
   recalcAllEstimateDbRows();
   renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(estimateDbSelectedCell.rowIndex || 0, focusCol));
   if (typeof showToast === "function") showToast(`${next}차기성 열을 추가했습니다.`);
 }
 
@@ -5574,9 +5606,8 @@ function exportEstimateDbToExcel() {
 function exportEstimateDbReportsToExcel() {
   const year = getSelectedEstimateDbYear();
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  // 0~3번 시트는 업로드된 기준 엑셀의 실제 .xlsx 패키지를 사용해 다운로드합니다.
-  // XML 기반 .xls 방식은 Excel 보안/손상 경고가 발생할 수 있어, 원본 xlsx 템플릿 형식을 그대로 보존합니다.
-  downloadEstimateDbReportTemplateXlsx(`CONCOST_0_3_sheets_${year}_${date}.xlsx`);
-  showToast(`${year}년 0~3번 결과 시트를 원본 엑셀 형식 그대로 내보냅니다.`);
+  const sheets = getEstimateDbReportExportSheets(year);
+  downloadEstimateDbWorkbook(`CONCOST_0_3_sheets_${year}_${date}.xls`, sheets);
+  showToast(`${year}년 0~3번 시트만 현재 화면 계산값으로 내보냅니다.`);
 }
 function handleEstimateDbYearChange() { renderEstimateDbReports(); }
