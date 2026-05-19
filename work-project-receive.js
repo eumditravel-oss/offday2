@@ -4651,15 +4651,30 @@ function compareEstimateDbValues(a, b, direction = "asc") {
   return direction === "desc" ? -result : result;
 }
 
-function getEstimateDbEffectiveSortState(tab = estimateDbActiveTab) {
+function getEstimateDbDefaultSortState(tab = estimateDbActiveTab) {
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
   const cols = getEstimateDbLeafColumns(sheet);
-  if (estimateDbSortState?.tab === tab && cols[estimateDbSortState.colIndex]) return estimateDbSortState;
   if (tab === "pj") {
     const pjIndex = Math.max(0, cols.indexOf("PJ NO"));
     return { tab, colIndex: pjIndex, direction: "desc" };
   }
   return { tab, colIndex: 0, direction: "asc" };
+}
+
+function getEstimateDbEffectiveSortState(tab = estimateDbActiveTab) {
+  const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
+  const cols = getEstimateDbLeafColumns(sheet);
+  if (estimateDbSortState?.tab === tab && cols[estimateDbSortState.colIndex]) return estimateDbSortState;
+  return getEstimateDbDefaultSortState(tab);
+}
+
+function isEstimateDbPjNoColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "PJ NO";
+}
+
+function applyEstimateDbPjDefaultSort() {
+  if (estimateDbActiveTab !== "pj") return;
+  estimateDbSortState = getEstimateDbDefaultSortState("pj");
 }
 
 function toggleEstimateDbSort(colIndex) {
@@ -5273,8 +5288,16 @@ function syncAllEstimateDbLinkedRows() {
 function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
   if (!rows?.[rowIndex]) return;
+  const shouldResortPjNo = isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex) && !options.silentRender;
   rows[rowIndex][colIndex] = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex) ? normalizeEstimateDbAmountCellStorage(value) : value;
   recalcEstimateDbRow(estimateDbActiveTab, rows[rowIndex]);
+  if (shouldResortPjNo) {
+    applyEstimateDbPjDefaultSort();
+    estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
+    renderEstimateDbManage();
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+    return;
+  }
   if (!options.silentRender) {
     refreshEstimateDbCalculatedCells(rowIndex);
     refreshEstimateDbTotalRowOnly();
@@ -5290,6 +5313,7 @@ function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const rows = getEstimateDbRows(sheet);
   if (insertAt === null || insertAt === undefined || insertAt > rows.length) rows.push(next);
   else rows.splice(Math.max(0, insertAt), 0, next);
+  if (estimateDbActiveTab === "pj") applyEstimateDbPjDefaultSort();
   renderEstimateDbManage();
 }
 function duplicateEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
