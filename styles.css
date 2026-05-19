@@ -16768,3 +16768,68 @@ th.quote-db-manage-col {
 .quote-db-search-input:focus{outline:none;border-color:#ff8a1c;box-shadow:0 0 0 3px rgba(255,122,24,.12);}
 .quote-db-sortable-head{cursor:pointer;user-select:none;white-space:pre-line;}
 .quote-db-sortable-head:hover{background:#eef4ff;}
+
+
+/* === DB관리 v26: 열 너비 조절 버튼/핸들 + 매출목표 버튼 위치 보정 === */
+.estimate-db-resize-btn{
+  margin-left:auto;
+  border-color:#d8e2ef;
+  background:#fff;
+  color:#0f172a;
+  font-weight:900;
+}
+.estimate-db-resize-btn.active{
+  background:#ffedd5;
+  border-color:#f97316;
+  color:#9a3412;
+}
+.estimate-db-resize-btn + .estimate-db-link-btn{
+  margin-left:4px;
+}
+.quote-db-sortable-head{
+  position:relative;
+}
+.quote-db-sortable-head.resize-mode{
+  padding-right:14px!important;
+}
+.quote-db-head-label{
+  display:block;
+  pointer-events:none;
+}
+.quote-db-col-resize-handle{
+  position:absolute;
+  top:0;
+  right:-4px;
+  width:9px;
+  height:100%;
+  cursor:col-resize;
+  z-index:8;
+}
+.quote-db-col-resize-handle::after{
+  content:"";
+  position:absolute;
+  top:8px;
+  bottom:8px;
+  left:4px;
+  width:2px;
+  border-radius:2px;
+  background:#f59e0b;
+  opacity:.9;
+}
+.quote-db-col-resize-handle:hover::after{
+  background:#ea580c;
+  width:3px;
+}
+body.estimate-db-resizing{
+  cursor:col-resize!important;
+  user-select:none!important;
+}
+#estimateDbReportActionHost{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  margin:-8px 0 12px 0!important;
+}
+#estimateDbReportActionHost .estimate-db-report-action-row{
+  margin:0!important;
+}
