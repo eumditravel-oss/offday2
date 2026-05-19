@@ -4495,7 +4495,7 @@ function isEstimateDbMoneyLikeColumn(tab = estimateDbActiveTab, colIndex = 0, sh
   const label = `${topHeader} ${header}`;
   if (!header && !topHeader) return false;
   if (/년도|PJ\s*NO|접수번호|일자|날짜|예정일|연락|전화|휴대폰|직통|EMAIL|ID|PW|층수|동수|타입수|세대수|연면적|비율|퍼센트|구분|비고|담당자|직급|부서명|프로젝트명|거래처명|업체명|국내\/해외/.test(label)) return false;
-  return /금액|목표|달성|차액|잔액|합계|기성|입금|매출|수주|계약금|기계|전기|외주|송무|기타|작업대기중/.test(label);
+  return /금액|목표|달성|차액|잔액|합계|기성|입금|매출|수주|계약금|수령액|발행완료|납품완료|작업진행중|작업대기중|작업취소|기계|전기|외주|송무|기타|\bA\b|\bB\b|\bC\b|\bC1\b|\bC2\b|\bC3\b|\bC4\b|\bC5\b/.test(label);
 }
 
 function formatEstimateDbMoneyDisplay(value, tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
@@ -4915,6 +4915,7 @@ function renderEstimateDbManage() {
   const entries = getEstimateDbDisplayRowEntries(sheet, estimateDbActiveTab);
   const totalRow = renderEstimateDbTotalRow(sheet, colCount);
   body.innerHTML = totalRow + (entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">검색 조건에 맞는 DB 행이 없습니다.</td></tr>`);
+  applyEstimateDbCommaFormatToRenderedInputs();
   renderEstimateDbReports();
   restoreEstimateDbFocus();
 }
@@ -5044,6 +5045,19 @@ function selectEstimateDbCell(rowIndex, colIndex) {
   document.querySelectorAll(".quote-db-data-row").forEach(row => row.classList.remove("selected"));
   document.querySelector(`.quote-db-data-row[data-row-index="${rowIndex}"]`)?.classList.add("selected");
 }
+function applyEstimateDbCommaFormatToRenderedInputs() {
+  const sheet = getEstimateDbSheet();
+  document.querySelectorAll(".quote-db-cell-input[data-col-index]").forEach(input => {
+    if (input.classList.contains("quote-db-amount-cell")) return;
+    const colIndex = Number(input.dataset.colIndex);
+    if (!Number.isFinite(colIndex)) return;
+    if (!isEstimateDbMoneyLikeColumn(estimateDbActiveTab, colIndex, sheet)) return;
+    const raw = String(input.value || "").replace(/,/g, "");
+    if (!isEstimateDbPureNumber(raw)) return;
+    input.value = formatEstimateDbCommaNumber(raw);
+  });
+}
+
 function restoreEstimateDbFocus() {
   const cell = estimateDbSelectedCell;
   if (cell.tab !== estimateDbActiveTab) return;
@@ -6029,20 +6043,3 @@ function exportEstimateDbReportsToExcel() {
   showToast(`${year}년 0~3번 시트만 현재 화면 계산값으로 내보냅니다.`);
 }
 function handleEstimateDbYearChange() { renderEstimateDbReports(); }
-
-```
-
-
-let estimateDbLiveCommaBinding = true;
-document.addEventListener("input", function(event) {
-  const target = event.target;
-  if (!target || !target.classList || !target.classList.contains("quote-db-cell-input")) return;
-
-  const raw = String(target.value || "").replace(/[^0-9.-]/g, "");
-  if (raw === "") {
-    target.value = "";
-    return;
-  }
-
-  target.value = Number(raw).toLocaleString("en-US");
-});
