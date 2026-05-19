@@ -4398,7 +4398,7 @@ function commitEstimateDbPendingEdits(options = {}) {
   Object.keys(estimateDbPendingEdits).forEach(key => delete estimateDbPendingEdits[key]);
   estimateDbHasUnsavedChanges = false;
   recalcAllEstimateDbRows();
-  if (estimateDbActiveTab === "pj") applyEstimateDbPjDefaultSort();
+  applyEstimateDbPjDefaultSort();
   renderEstimateDbManage();
   if (!options.silent && typeof showToast === "function") showToast(`DB관리 변경사항 ${changed}건을 저장했습니다.`);
   return changed;
@@ -4872,10 +4872,13 @@ function compareEstimateDbValues(a, b, direction = "asc") {
 function getEstimateDbDefaultSortState(tab = estimateDbActiveTab) {
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
   const cols = getEstimateDbLeafColumns(sheet);
-  if (tab === "pj") {
-    const pjIndex = Math.max(0, cols.indexOf("PJ NO"));
-    return { tab, colIndex: pjIndex, direction: "desc" };
-  }
+  const pjIndex = cols.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
+
+  // PJ관리, 기성관리, 기전업체 모두 기본 정렬은 PJ NO 내림차순입니다.
+  // 사용자가 다른 헤더를 클릭하면 해당 정렬을 우선 적용하지만,
+  // 탭 최초 진입/저장/Enter 확정 시에는 다시 PJ NO 기준으로 정렬됩니다.
+  if (pjIndex >= 0) return { tab, colIndex: pjIndex, direction: "desc" };
+
   return { tab, colIndex: 0, direction: "asc" };
 }
 
@@ -4887,12 +4890,12 @@ function getEstimateDbEffectiveSortState(tab = estimateDbActiveTab) {
 }
 
 function isEstimateDbPjNoColumn(tab = estimateDbActiveTab, colIndex = 0) {
-  return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "PJ NO";
+  return normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "PJ NO";
 }
 
 function applyEstimateDbPjDefaultSort() {
-  if (estimateDbActiveTab !== "pj") return;
-  estimateDbSortState = getEstimateDbDefaultSortState("pj");
+  const defaultSort = getEstimateDbDefaultSortState(estimateDbActiveTab);
+  if (defaultSort) estimateDbSortState = defaultSort;
 }
 
 function toggleEstimateDbSort(colIndex) {
@@ -5101,7 +5104,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const amountCell = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex);
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
-        const dbl = amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`;
+        const dbl = amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`);
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet);
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
@@ -5239,9 +5242,150 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
   return true;
 }
 
+const ESTIMATE_DB_CONTACT_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2"];
+
+function isEstimateDbContactColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "거래처담당자";
+}
+
+function getEstimateDbContactColumnIndexes() {
+  const columns = getEstimateDbLeafColumns(estimateDbSheets.pj);
+  return Object.fromEntries(ESTIMATE_DB_CONTACT_HEADERS.map(name => [name, columns.findIndex(col => normalizeEstimateDbText(col) === name)]));
+}
+
+function getEstimateDbRowContacts(row) {
+  if (!row) return [];
+  if (Array.isArray(row.__contacts) && row.__contacts.length) return row.__contacts;
+  const idx = getEstimateDbContactColumnIndexes();
+  const first = {
+    name: idx["거래처담당자"] >= 0 ? row[idx["거래처담당자"]] || "" : "",
+    role: idx["직급"] >= 0 ? row[idx["직급"]] || "" : "",
+    tel: idx["일반전화"] >= 0 ? row[idx["일반전화"]] || "" : "",
+    mobile: idx["휴대폰"] >= 0 ? row[idx["휴대폰"]] || "" : "",
+    direct: idx["직통전화"] >= 0 ? row[idx["직통전화"]] || "" : "",
+    email: idx["EMAIL"] >= 0 ? row[idx["EMAIL"]] || "" : "",
+    email2: idx["EMAIL2"] >= 0 ? row[idx["EMAIL2"]] || "" : ""
+  };
+  return Object.values(first).some(value => normalizeEstimateDbText(value)) ? [first] : [];
+}
+
+function setEstimateDbRowContacts(row, contacts) {
+  if (!row) return;
+  const clean = (contacts || [])
+    .map(contact => ({
+      name: normalizeEstimateDbText(contact.name),
+      role: normalizeEstimateDbText(contact.role),
+      tel: normalizeEstimateDbText(contact.tel),
+      mobile: normalizeEstimateDbText(contact.mobile),
+      direct: normalizeEstimateDbText(contact.direct),
+      email: normalizeEstimateDbText(contact.email),
+      email2: normalizeEstimateDbText(contact.email2)
+    }))
+    .filter(contact => Object.values(contact).some(Boolean))
+    .slice(0, 10);
+
+  row.__contacts = clean;
+  const first = clean[0] || {};
+  const idx = getEstimateDbContactColumnIndexes();
+  const valueMap = {
+    "거래처담당자": clean.length > 1 && first.name ? `${first.name} 외 ${clean.length - 1}명` : (first.name || ""),
+    "직급": first.role || "",
+    "일반전화": first.tel || "",
+    "휴대폰": first.mobile || "",
+    "직통전화": first.direct || "",
+    "EMAIL": first.email || "",
+    "EMAIL2": first.email2 || ""
+  };
+  Object.entries(valueMap).forEach(([name, value]) => {
+    if (idx[name] >= 0) row[idx[name]] = value;
+  });
+}
+
+let estimateDbContactModalState = null;
+
+function ensureEstimateDbContactModal() {
+  let modal = document.getElementById("estimateDbContactModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbContactModal";
+  modal.className = "estimate-db-dropdown-modal hidden estimate-db-contact-modal";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-contact-box" role="dialog" aria-modal="true">
+      <div class="estimate-db-dropdown-title">거래처 담당자 관리</div>
+      <div class="estimate-db-contact-help">최대 10명까지 입력할 수 있습니다. 저장하면 첫 번째 담당자는 기존 열에 표시되고, 2명 이상이면 담당자명 뒤에 외 n명으로 표시됩니다.</div>
+      <div class="estimate-db-contact-grid-wrap">
+        <table class="estimate-db-contact-grid">
+          <thead>
+            <tr><th>No</th><th>담당자</th><th>직급</th><th>일반전화</th><th>휴대폰</th><th>직통전화</th><th>EMAIL</th><th>EMAIL2</th></tr>
+          </thead>
+          <tbody id="estimateDbContactRows"></tbody>
+        </table>
+      </div>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContactModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContactModal()">담당자 저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbContactModal(); });
+  return modal;
+}
+
+function openEstimateDbContactModal(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
+  if (estimateDbActiveTab !== "pj") return false;
+  const row = estimateDbSheets.pj.rows?.[rowIndex];
+  if (!row) return false;
+  const modal = ensureEstimateDbContactModal();
+  const contacts = getEstimateDbRowContacts(row);
+  estimateDbContactModalState = { rowIndex, colIndex };
+  const body = modal.querySelector("#estimateDbContactRows");
+  body.innerHTML = Array.from({ length: 10 }, (_, index) => {
+    const contact = contacts[index] || {};
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td><input data-contact-field="name" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.name || "")}" /></td>
+        <td><input data-contact-field="role" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.role || "")}" /></td>
+        <td><input data-contact-field="tel" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.tel || "")}" /></td>
+        <td><input data-contact-field="mobile" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.mobile || "")}" /></td>
+        <td><input data-contact-field="direct" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.direct || "")}" /></td>
+        <td><input data-contact-field="email" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email || "")}" /></td>
+        <td><input data-contact-field="email2" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email2 || "")}" /></td>
+      </tr>`;
+  }).join("");
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector('input[data-contact-index="0"][data-contact-field="name"]')?.focus(), 0);
+  return true;
+}
+
+function closeEstimateDbContactModal() {
+  document.getElementById("estimateDbContactModal")?.classList.add("hidden");
+  const state = estimateDbContactModalState;
+  estimateDbContactModalState = null;
+  if (state) requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+
+function saveEstimateDbContactModal() {
+  const state = estimateDbContactModalState;
+  if (!state) return;
+  const row = estimateDbSheets.pj.rows?.[state.rowIndex];
+  if (!row) return;
+  const contacts = Array.from({ length: 10 }, () => ({}));
+  document.querySelectorAll("#estimateDbContactRows input[data-contact-index]").forEach(input => {
+    const index = Number(input.dataset.contactIndex);
+    const field = input.dataset.contactField;
+    if (contacts[index] && field) contacts[index][field] = input.value;
+  });
+  setEstimateDbRowContacts(row, contacts);
+  recalcEstimateDbRow("pj", row);
+  closeEstimateDbContactModal();
+  renderEstimateDbManage();
+}
+
 function isEstimateDbDropdownCell(tab, colIndex) {
   const request = getEstimateDbColumnRequest(tab, colIndex);
   const header = getEstimateDbColumnName(tab, colIndex);
+  if (isEstimateDbContactColumn(tab, colIndex)) return true;
   return isEstimateDbProjectLinkColumn(tab, colIndex) || /드롭다운|대분류|소분류|추가 가능|선택/i.test(request) || ["국내/해외", "거래처명", "작업공종", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도"].includes(header);
 }
 function getEstimateDbUniqueColumnValues(tab, colIndex) {
@@ -5494,6 +5638,7 @@ function handleEstimateDbKeydown(event) {
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex)) {
     event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     applyEstimateDbPjDefaultSort();
     estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
     renderEstimateDbManage();
@@ -5503,6 +5648,12 @@ function handleEstimateDbKeydown(event) {
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) {
     event.preventDefault();
     openEstimateDbAmountModal(rowIndex, colIndex);
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbContactColumn(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbContactModal(rowIndex, colIndex);
     return;
   }
   if ((event.altKey && event.key === "ArrowDown") || (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbDropdownCell(estimateDbActiveTab, colIndex))) {
@@ -5709,7 +5860,7 @@ function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const rows = getEstimateDbRows(sheet);
   if (insertAt === null || insertAt === undefined || insertAt > rows.length) rows.push(next);
   else rows.splice(Math.max(0, insertAt), 0, next);
-  if (estimateDbActiveTab === "pj") applyEstimateDbPjDefaultSort();
+  applyEstimateDbPjDefaultSort();
   renderEstimateDbManage();
 }
 function duplicateEstimateDbRow(rowIndex = estimateDbSelectedCell.rowIndex || 0) {
