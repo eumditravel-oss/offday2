@@ -4387,9 +4387,11 @@ function commitEstimateDbPendingEdits(options = {}) {
     const row = sheet?.rows?.[rowIndex];
     if (!row) return;
     const sheetForCommit = estimateDbSheets[tab];
-    const storedValue = isEstimateDbOutsourceAmountCell(tab, colIndex)
-      ? normalizeEstimateDbAmountCellStorage(value)
-      : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForCommit) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
+    const storedValue = parseEstimateDbRichCellValue(value)
+      ? value
+      : isEstimateDbOutsourceAmountCell(tab, colIndex)
+        ? normalizeEstimateDbAmountCellStorage(value)
+        : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForCommit) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
     row[colIndex] = storedValue;
     recalcEstimateDbRow(tab, row);
     changed += 1;
@@ -4411,9 +4413,11 @@ function commitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}
   const row = sheet?.rows?.[rowIndex];
   if (!row) return 0;
   const sheetForSingleCommit = estimateDbSheets[tab];
-  const storedValue = isEstimateDbOutsourceAmountCell(tab, colIndex)
-    ? normalizeEstimateDbAmountCellStorage(pending.value)
-    : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForSingleCommit) && isEstimateDbPureNumber(pending.value) ? String(pending.value).replace(/,/g, "") : pending.value);
+  const storedValue = parseEstimateDbRichCellValue(pending.value)
+    ? pending.value
+    : isEstimateDbOutsourceAmountCell(tab, colIndex)
+      ? normalizeEstimateDbAmountCellStorage(pending.value)
+      : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForSingleCommit) && isEstimateDbPureNumber(pending.value) ? String(pending.value).replace(/,/g, "") : pending.value);
   row[colIndex] = storedValue;
   recalcEstimateDbRow(tab, row);
   delete estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
@@ -4538,6 +4542,7 @@ function isEstimateDbMoneyLikeColumn(tab = estimateDbActiveTab, colIndex = 0, sh
 }
 
 function formatEstimateDbMoneyDisplay(value, tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
+  value = getEstimateDbRichDisplayValue(value);
   if (!isEstimateDbMoneyLikeColumn(tab, colIndex, sheet)) return String(value ?? "");
   if (!isEstimateDbPureNumber(value)) return String(value ?? "");
   return formatEstimateDbCommaNumber(value);
@@ -4579,6 +4584,8 @@ let estimateDbDropdownState = null;
 
 function normalizeEstimateDbText(value) { return String(value ?? "").trim(); }
 function toEstimateDbNumber(value) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich && rich.type === "stageFormula") value = rich.amount || 0;
   const raw = normalizeEstimateDbText(value).replace(/,/g, "").replace(/원/g, "");
   const num = Number(raw);
   return Number.isFinite(num) ? num : 0;
@@ -4737,7 +4744,186 @@ function sanitizeEstimateDbSheetRows(sheet) {
   if (!sheet?.rows || !isEstimateDbTotalEnabled(sheet)) return;
   sheet.rows = sheet.rows.filter(row => !isEstimateDbEmbeddedTotalRow(sheet, row));
 }
+
+function parseEstimateDbRichCellValue(value) {
+  const raw = String(value ?? "");
+  if (!raw.startsWith("__ESTIMATE_DB_RICH__")) return null;
+  try {
+    return JSON.parse(raw.replace(/^__ESTIMATE_DB_RICH__/, ""));
+  } catch (_) {
+    return null;
+  }
+}
+function stringifyEstimateDbRichCellValue(data) {
+  return `__ESTIMATE_DB_RICH__${JSON.stringify(data || {})}`;
+}
+function getEstimateDbRichDisplayValue(value) {
+  const parsed = parseEstimateDbRichCellValue(value);
+  if (!parsed) return value;
+  if (parsed.type === "stageFormula") return parsed.amount ? String(parsed.amount) : "";
+  if (parsed.type === "progressStory") return parsed.summary || parsed.full || "";
+  return value;
+}
+function getEstimateDbStoryColumnIndex() {
+  return getEstimateDbColumnIndexByHeader("progress", "기성스토리");
+}
+function isEstimateDbStoryCell(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "progress" && colIndex === getEstimateDbStoryColumnIndex();
+}
+function isEstimateDbStageEntryCell(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "progress") return false;
+  const sheet = estimateDbSheets.progress;
+  const bottom = sheet?.headerRows?.[1] || [];
+  const label = normalizeEstimateDbText(bottom[colIndex]);
+  if (!/^\d+차기성$/.test(label)) return false;
+  const group = getEstimateDbProgressGroupNameByColumn(colIndex);
+  return /세금계산서|입금예정일|입금일/.test(group);
+}
+function pruneEstimateDbProgressInitialStageColumns() {
+  const sheet = estimateDbSheets.progress;
+  if (!sheet || sheet.__stagePrunedToThree) return;
+  const top = sheet.headerRows?.[0] || [];
+  const bottom = sheet.headerRows?.[1] || [];
+  let current = "";
+  for (let i = bottom.length - 1; i >= 0; i -= 1) {
+    const main = normalizeEstimateDbText(top[i]);
+    if (main) current = "";
+  }
+  let group = "";
+  const removeIndexes = [];
+  top.forEach((cell, i) => {
+    const main = normalizeEstimateDbText(cell);
+    if (main) group = main;
+    const sub = normalizeEstimateDbText(bottom[i]);
+    if (/세금계산서|입금예정일|입금일/.test(group) && /^[45]차기성$/.test(sub)) removeIndexes.push(i);
+  });
+  removeIndexes.reverse().forEach(i => {
+    top.splice(i, 1);
+    bottom.splice(i, 1);
+    if (sheet.requestRow) sheet.requestRow.splice(i, 1);
+    (sheet.rows || []).forEach(row => row.splice(i, 1));
+  });
+  sheet.__stagePrunedToThree = true;
+}
+function evaluateEstimateDbFormulaExpression(expr) {
+  const raw = String(expr || "").replace(/,/g, "").trim();
+  if (!raw) return 0;
+  if (!/^[0-9+\-*/().\s]+$/.test(raw)) throw new Error("허용되지 않는 문자가 포함되어 있습니다.");
+  const result = Function(`"use strict"; return (${raw});`)();
+  if (!Number.isFinite(result)) throw new Error("계산 결과가 올바르지 않습니다.");
+  return Math.round(result);
+}
+function ensureEstimateDbStoryModal() {
+  let modal = document.getElementById("estimateDbStoryModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbStoryModal";
+  modal.className = "estimate-db-dropdown-modal hidden";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-story-box" role="dialog" aria-modal="true" style="max-width:820px;">
+      <div class="estimate-db-dropdown-title">기성스토리 상세 입력</div>
+      <label class="estimate-db-amount-label">요약본<input id="estimateDbStorySummary" class="estimate-db-dropdown-search" placeholder="표 셀에 보일 간략 내용을 입력" /></label>
+      <label class="estimate-db-amount-label">풀 스토리<textarea id="estimateDbStoryFull" class="estimate-db-dropdown-search" style="min-height:220px;resize:vertical;" placeholder="상세 내용을 입력합니다. 줄바꿈은 Shift+Enter"></textarea></label>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbStoryModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbStoryModal()">저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbStoryModal(); });
+  modal.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbStoryModal(); }
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); saveEstimateDbStoryModal(); }
+  });
+  return modal;
+}
+let estimateDbStoryModalState = null;
+function openEstimateDbStoryModal(rowIndex, colIndex) {
+  commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+  const row = getEstimateDbRows()?.[rowIndex];
+  const raw = row?.[colIndex] || "";
+  const parsed = parseEstimateDbRichCellValue(raw) || { type: "progressStory", summary: String(raw || ""), full: String(raw || "") };
+  estimateDbStoryModalState = { rowIndex, colIndex };
+  const modal = ensureEstimateDbStoryModal();
+  modal.querySelector("#estimateDbStorySummary").value = parsed.summary || "";
+  modal.querySelector("#estimateDbStoryFull").value = parsed.full || "";
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector("#estimateDbStoryFull")?.focus(), 0);
+}
+function closeEstimateDbStoryModal() {
+  document.getElementById("estimateDbStoryModal")?.classList.add("hidden");
+  estimateDbStoryModalState = null;
+}
+function saveEstimateDbStoryModal() {
+  const state = estimateDbStoryModalState;
+  if (!state) return;
+  const summary = document.getElementById("estimateDbStorySummary")?.value || "";
+  const full = document.getElementById("estimateDbStoryFull")?.value || "";
+  const value = stringifyEstimateDbRichCellValue({ type: "progressStory", summary, full });
+  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
+  closeEstimateDbStoryModal();
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+function ensureEstimateDbStageFormulaModal() {
+  let modal = document.getElementById("estimateDbStageFormulaModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbStageFormulaModal";
+  modal.className = "estimate-db-dropdown-modal hidden";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-stage-formula-box" role="dialog" aria-modal="true" style="max-width:760px;">
+      <div class="estimate-db-dropdown-title">N차 기성 계산 입력</div>
+      <label class="estimate-db-amount-label">계산식<input id="estimateDbStageFormulaExpr" class="estimate-db-dropdown-search" placeholder="예: 100000+200000*0.5" /></label>
+      <label class="estimate-db-amount-label">비고<textarea id="estimateDbStageFormulaNote" class="estimate-db-dropdown-search" style="min-height:150px;resize:vertical;" placeholder="기성 상세 스토리 또는 비고를 입력합니다."></textarea></label>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbStageFormulaModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbStageFormulaModal()">계산 반영</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbStageFormulaModal(); });
+  modal.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbStageFormulaModal(); return; }
+    if (event.key === "ArrowDown" && event.target?.id === "estimateDbStageFormulaExpr") { event.preventDefault(); modal.querySelector("#estimateDbStageFormulaNote")?.focus(); return; }
+    if (event.key === "ArrowUp" && event.target?.id === "estimateDbStageFormulaNote") { event.preventDefault(); modal.querySelector("#estimateDbStageFormulaExpr")?.focus(); return; }
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); saveEstimateDbStageFormulaModal(); }
+  });
+  return modal;
+}
+let estimateDbStageFormulaModalState = null;
+function openEstimateDbStageFormulaModal(rowIndex, colIndex) {
+  commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+  const row = getEstimateDbRows()?.[rowIndex];
+  const raw = row?.[colIndex] || "";
+  const parsed = parseEstimateDbRichCellValue(raw) || { type: "stageFormula", formula: String(raw || "").replace(/,/g, ""), note: "", amount: toEstimateDbNumber(raw) };
+  estimateDbStageFormulaModalState = { rowIndex, colIndex };
+  const modal = ensureEstimateDbStageFormulaModal();
+  modal.querySelector("#estimateDbStageFormulaExpr").value = parsed.formula || parsed.amount || "";
+  modal.querySelector("#estimateDbStageFormulaNote").value = parsed.note || "";
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector("#estimateDbStageFormulaExpr")?.focus(), 0);
+}
+function closeEstimateDbStageFormulaModal() {
+  document.getElementById("estimateDbStageFormulaModal")?.classList.add("hidden");
+  estimateDbStageFormulaModalState = null;
+}
+function saveEstimateDbStageFormulaModal() {
+  const state = estimateDbStageFormulaModalState;
+  if (!state) return;
+  const expr = document.getElementById("estimateDbStageFormulaExpr")?.value || "";
+  const note = document.getElementById("estimateDbStageFormulaNote")?.value || "";
+  let amount = 0;
+  try { amount = evaluateEstimateDbFormulaExpression(expr); }
+  catch (error) { if (typeof showToast === "function") showToast(error.message || "계산식을 확인해주세요."); return; }
+  const value = stringifyEstimateDbRichCellValue({ type: "stageFormula", formula: expr, note, amount: String(amount) });
+  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
+  closeEstimateDbStageFormulaModal();
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
 function sanitizeEstimateDbSheetsBeforeRender() {
+  pruneEstimateDbProgressInitialStageColumns();
   sanitizeEstimateDbSheetRows(estimateDbSheets.progress);
   sanitizeEstimateDbSheetRows(estimateDbSheets.mep);
 }
@@ -4804,8 +4990,8 @@ function recalcEstimateDbRow(tab, row) {
     if (m2Index >= 0 && pyIndex >= 0) {
       const m2Value = toEstimateDbNumber(row[m2Index]);
       if (m2Value) {
-        const pyValue = Math.round(m2Value * 0.3025 * 10000) / 10000;
-        row[pyIndex] = String(pyValue).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+        const pyValue = Math.ceil(m2Value * 0.3025);
+        row[pyIndex] = String(pyValue);
       } else if (!normalizeEstimateDbText(row[m2Index])) {
         row[pyIndex] = "";
       }
@@ -5136,7 +5322,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const amountCell = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex);
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
-        const dbl = amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`);
+        const dbl = isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`)));
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet);
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
@@ -5725,6 +5911,24 @@ function handleEstimateDbKeydown(event) {
     requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
     return;
   }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbStoryCell(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    const summary = input.value || "";
+    const row = getEstimateDbRows()?.[rowIndex];
+    const current = parseEstimateDbRichCellValue(row?.[colIndex]) || {};
+    updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbRichCellValue({ type: "progressStory", summary, full: current.full || summary }), { commit: true, silentRender: true });
+    openEstimateDbStoryModal(rowIndex, colIndex);
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    const currentText = String(input.value || "").replace(/,/g, "");
+    if (currentText && !parseEstimateDbRichCellValue(getEstimateDbRows()?.[rowIndex]?.[colIndex])) {
+      updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbRichCellValue({ type: "stageFormula", formula: currentText, note: "", amount: String(toEstimateDbNumber(currentText)) }), { commit: true, silentRender: true });
+    }
+    openEstimateDbStageFormulaModal(rowIndex, colIndex);
+    return;
+  }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) {
     event.preventDefault();
     openEstimateDbAmountModal(rowIndex, colIndex);
@@ -5930,9 +6134,11 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   }
 
   const sheetForUpdate = estimateDbSheets[tab];
-  const storedValue = isEstimateDbOutsourceAmountCell(tab, colIndex)
-    ? normalizeEstimateDbAmountCellStorage(value)
-    : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForUpdate) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
+  const storedValue = parseEstimateDbRichCellValue(value)
+    ? value
+    : isEstimateDbOutsourceAmountCell(tab, colIndex)
+      ? normalizeEstimateDbAmountCellStorage(value)
+      : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForUpdate) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
   rows[rowIndex][colIndex] = storedValue;
   recalcEstimateDbRow(tab, rows[rowIndex]);
   if (!options.silentRender) {
