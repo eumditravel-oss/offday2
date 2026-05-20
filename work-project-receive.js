@@ -3436,7 +3436,8 @@ const estimateDbSheets = {
         "특이사항",
         "거래처기성담당자",
         "기성담당자",
-        "연락예정일"
+        "연락예정일",
+        "기성청구완료"
       ],
       [
         "",
@@ -3495,7 +3496,8 @@ const estimateDbSheets = {
         "10",
         "11",
         "12",
-        "미정"
+        "미정",
+        ""
       ]
     ],
     "requestRow": [
@@ -3542,7 +3544,8 @@ const estimateDbSheets = {
       "7열 날짜 작성란",
       "7열 날짜 작성란",
       "7열 날짜 작성란",
-      "7열 날짜 작성란"
+      "7열 날짜 작성란",
+      "기성청구가 완료되어 더 이상 확인이 필요 없는 행을 체크합니다."
     ],
     "rows": [
       [
@@ -4415,8 +4418,39 @@ function normalizeEstimateDbCellForStorage(tab, colIndex, value) {
   if (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForStorage) && isEstimateDbPureNumber(value)) return String(value).replace(/,/g, "");
   return value;
 }
+function isEstimateDbProgressDoneColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "기성청구완료";
+}
+
+function parseEstimateDbProgressDoneValue(value) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "progressDone") return { checked: !!rich.checked, history: String(rich.history || "") };
+  const raw = normalizeEstimateDbText(value);
+  return { checked: raw.includes("확인완료") || raw === "true" || raw === "1", history: raw.includes("확인완료") ? raw : "" };
+}
+
+function stringifyEstimateDbProgressDoneValue(checked, history = "") {
+  return stringifyEstimateDbRichCellValue({ type: "progressDone", checked: !!checked, history: checked ? history : "" });
+}
+
+function formatEstimateDbProgressDoneTimestamp(date = new Date()) {
+  const pad = value => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getEstimateDbProgressDoneHistory() {
+  return `강동균 실장 확인완료_${formatEstimateDbProgressDoneTimestamp()}`;
+}
+
+function isEstimateDbProgressDoneRow(row) {
+  const idx = getEstimateDbColumnIndexByHeader("progress", "기성청구완료");
+  if (idx < 0) return false;
+  return parseEstimateDbProgressDoneValue(row?.[idx]).checked;
+}
+
 
 function isEstimateDbTotalExcludedColumn(tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
+  if (isEstimateDbProgressDoneColumn(tab, colIndex)) return true;
   if (isEstimateDbDateInputColumn(tab, colIndex)) return true;
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   const group = normalizeEstimateDbText(getEstimateDbColumnGroupName(tab, colIndex));
@@ -4717,6 +4751,7 @@ function estimateDbDisplayLength(value) {
 }
 function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
   const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "progressDone") return rich.history || "기성청구완료";
   if (rich?.type === "stageFormula") {
     const displayAmount = rich.amount ? formatEstimateDbCommaNumber(rich.amount) : "";
     return displayAmount || "0";
@@ -4983,7 +5018,18 @@ function saveEstimateDbStageFormulaModal() {
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
 }
+function ensureEstimateDbProgressDoneColumn() {
+  const sheet = estimateDbSheets.progress;
+  if (!sheet?.headerRows?.length) return;
+  const idx = getEstimateDbColumnIndexByHeader("progress", "기성청구완료");
+  if (idx >= 0) return;
+  sheet.headerRows.forEach((row, rowIndex) => row.push(rowIndex === 0 ? "기성청구완료" : ""));
+  if (Array.isArray(sheet.requestRow)) sheet.requestRow.push("기성청구가 완료되어 더 이상 확인이 필요 없는 행을 체크합니다.");
+  (sheet.rows || []).forEach(row => row.push(""));
+}
+
 function sanitizeEstimateDbSheetsBeforeRender() {
+  ensureEstimateDbProgressDoneColumn();
   pruneEstimateDbProgressInitialStageColumns();
   sanitizeEstimateDbSheetRows(estimateDbSheets.progress);
   sanitizeEstimateDbSheetRows(estimateDbSheets.mep);
@@ -5377,8 +5423,9 @@ function handleEstimateDbCellInput(event, rowIndex, colIndex, amountCell = false
 function renderEstimateDbRow(row, rowIndex, colCount) {
   const sheet = getEstimateDbSheet();
   const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
+  const doneRowClass = isEstimateDbProgressDoneRow(row) ? " quote-db-row-complete" : "";
   return `
-    <tr class="quote-db-data-row" data-row-index="${rowIndex}">
+    <tr class="quote-db-data-row${doneRowClass}" data-row-index="${rowIndex}">
       ${safeRow.map((value, colIndex) => {
         const request = getEstimateDbColumnRequest(estimateDbActiveTab, colIndex);
         const dropdown = isEstimateDbDropdownCell(estimateDbActiveTab, colIndex);
@@ -5390,6 +5437,10 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet);
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
+        if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
+          const done = parseEstimateDbProgressDoneValue(value);
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
+        }
         if (amountCell) {
           return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea></td>`;
         }
@@ -5399,6 +5450,16 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
     </tr>
   `;
 }
+function toggleEstimateDbProgressDone(event, rowIndex, colIndex) {
+  const checked = !!event?.currentTarget?.checked;
+  const row = getEstimateDbRows()?.[rowIndex];
+  const current = parseEstimateDbProgressDoneValue(row?.[colIndex]);
+  const history = checked ? (current.history || getEstimateDbProgressDoneHistory()) : "";
+  updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbProgressDoneValue(checked, history), { commit: true, silentRender: true });
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+}
+
 function selectEstimateDbCell(rowIndex, colIndex) {
   estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
   document.querySelectorAll(".quote-db-data-row").forEach(row => row.classList.remove("selected"));
@@ -5423,7 +5484,9 @@ function restoreEstimateDbFocus() {
   requestAnimationFrame(() => selectEstimateDbCell(cell.rowIndex || 0, cell.colIndex || 0));
 }
 function focusEstimateDbCell(rowIndex, colIndex) {
-  const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
+  const rowEl = document.querySelector(`.quote-db-data-row[data-row-index="${rowIndex}"]`);
+  const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`)
+    || rowEl?.querySelector(`.quote-db-done-cell[data-resize-col="${colIndex}"] input[type="checkbox"]`);
   if (!input) return;
   const wrap = input.closest(".quote-db-grid-wrap");
   const row = input.closest("tr");
