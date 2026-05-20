@@ -4715,14 +4715,27 @@ function setEstimateDbReportTab(tab) {
 function estimateDbDisplayLength(value) {
   return String(value ?? "").split("").reduce((sum, ch) => sum + (ch.charCodeAt(0) > 127 ? 1.65 : 1), 0);
 }
+function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "stageFormula") {
+    const displayAmount = rich.amount ? formatEstimateDbCommaNumber(rich.amount) : "";
+    return displayAmount || "0";
+  }
+  if (rich?.type === "progressStory") return rich.summary || "기성스토리";
+  const display = getEstimateDbRichDisplayValue(value);
+  if (isEstimateDbDateInputColumn(tab, colIndex)) return formatEstimateDbCompactDate(display);
+  if (isEstimateDbMoneyLikeColumn(tab, colIndex, sheet) && isEstimateDbPureNumber(display)) return formatEstimateDbCommaNumber(display);
+  return display || "";
+}
+
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
   const override = estimateDbColumnWidthOverrides?.[tab]?.[colIndex];
   if (Number.isFinite(Number(override)) && Number(override) > 0) return Number(override);
   const values = [];
   (sheet.headerRows || []).forEach(row => values.push(row[colIndex] || ""));
-  (sheet.rows || []).slice(0, 30).forEach(row => values.push(row[colIndex] || ""));
+  (sheet.rows || []).slice(0, 30).forEach(row => values.push(getEstimateDbColumnWidthMeasureValue(row[colIndex] || "", tab, colIndex, sheet)));
   const maxLen = Math.max(8, ...values.map(estimateDbDisplayLength));
-  return Math.max(140, Math.min(520, Math.ceil(maxLen * 11 + 56)));
+  return Math.max(140, Math.min(260, Math.ceil(maxLen * 11 + 56)));
 }
 function setEstimateDbColumnWidth(tab, colIndex, width) {
   const safeTab = estimateDbSheets[tab] ? tab : estimateDbActiveTab;
