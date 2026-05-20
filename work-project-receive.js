@@ -5999,6 +5999,15 @@ function handleEstimateDbKeydown(event) {
   if (!event.ctrlKey && !event.altKey && event.key === "Enter") {
     event.preventDefault();
     commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex);
+
+    // 날짜 입력 컬럼은 저장 대기값을 확정한 직후 현재 선택된 입력칸에도
+    // 260105 → 26년1월5일 형식으로 즉시 반영합니다.
+    // 적용 범위: 견적서일자, 수주일자, 계약일자, 납품예정일 1~3차납품.
+    if (isEstimateDbDateInputColumn(estimateDbActiveTab, colIndex)) {
+      const storedValue = getEstimateDbRows()?.[rowIndex]?.[colIndex] || "";
+      input.value = formatEstimateDbCompactDate(storedValue);
+    }
+
     refreshEstimateDbCalculatedCells(rowIndex);
     refreshEstimateDbTotalRowOnly();
     renderEstimateDbReports();
