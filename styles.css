@@ -16870,3 +16870,52 @@ body.estimate-db-resizing{
 .estimate-db-story-box textarea{
   line-height:1.45;
 }
+
+/* === DB관리 v32: 기성청구 완료 체크/이력 표시 === */
+.quote-db-table tr.quote-db-row-complete td{
+  background:#e5e7eb!important;
+  color:#475569;
+}
+.quote-db-table tr.quote-db-row-complete input,
+.quote-db-table tr.quote-db-row-complete textarea{
+  background:#f1f5f9!important;
+  color:#475569!important;
+  border-color:#cbd5e1!important;
+}
+.quote-db-done-cell{
+  min-width:150px;
+  text-align:center;
+  vertical-align:middle!important;
+  white-space:normal!important;
+}
+.quote-db-done-box{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  height:24px;
+  margin:0;
+  font-size:12px;
+  font-weight:900;
+  color:#0f172a;
+  cursor:pointer;
+}
+.quote-db-done-box input{
+  width:16px;
+  height:16px;
+  accent-color:#f97316;
+  cursor:pointer;
+}
+.quote-db-done-history{
+  margin-top:2px;
+  min-height:14px;
+  font-size:11px;
+  line-height:1.25;
+  font-weight:800;
+  color:#64748b;
+  white-space:normal;
+  word-break:keep-all;
+}
+.quote-db-row-complete .quote-db-done-history{
+  color:#334155;
+}
