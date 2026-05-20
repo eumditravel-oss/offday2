@@ -4374,6 +4374,63 @@ function getEstimateDbCellDisplayValue(tab, rowIndex, colIndex, fallback = "") {
   return pending ? pending.value : fallback;
 }
 
+function getEstimateDbColumnGroupName(tab = estimateDbActiveTab, colIndex = 0) {
+  const sheet = getEstimateDbSheet(tab);
+  const top = sheet?.headerRows?.[0] || [];
+  let current = "";
+  for (let i = 0; i <= colIndex; i += 1) {
+    const text = normalizeEstimateDbText(top[i]);
+    if (text) current = text;
+  }
+  return current;
+}
+
+function isEstimateDbDateInputColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "progress") return false;
+  const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  const group = normalizeEstimateDbText(getEstimateDbColumnGroupName(tab, colIndex));
+  if (["견적서일자", "수주일자", "계약일자"].includes(header)) return true;
+  return group.includes("납품예정일") && /^\d+차납품$/.test(header);
+}
+
+function formatEstimateDbCompactDate(value) {
+  const raw = normalizeEstimateDbText(value);
+  if (!raw) return "";
+  if (/^\d{2}년\s*\d{1,2}월\s*\d{1,2}일$/.test(raw)) return raw.replace(/\s+/g, "");
+  const digits = raw.replace(/[^0-9]/g, "");
+  const match = digits.match(/^(\d{2})(\d{2})(\d{2})$/);
+  if (!match) return raw;
+  const yy = Number(match[1]);
+  const mm = Number(match[2]);
+  const dd = Number(match[3]);
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return raw;
+  return `${String(yy).padStart(2, "0")}년${mm}월${dd}일`;
+}
+
+function normalizeEstimateDbCellForStorage(tab, colIndex, value) {
+  if (parseEstimateDbRichCellValue(value)) return value;
+  if (isEstimateDbDateInputColumn(tab, colIndex)) return formatEstimateDbCompactDate(value);
+  const sheetForStorage = estimateDbSheets[tab];
+  if (isEstimateDbOutsourceAmountCell(tab, colIndex)) return normalizeEstimateDbAmountCellStorage(value);
+  if (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForStorage) && isEstimateDbPureNumber(value)) return String(value).replace(/,/g, "");
+  return value;
+}
+
+function isEstimateDbTotalExcludedColumn(tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
+  if (isEstimateDbDateInputColumn(tab, colIndex)) return true;
+  const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  const group = normalizeEstimateDbText(getEstimateDbColumnGroupName(tab, colIndex));
+  return /일자|날짜|예정일|연락|전화|담당자|스토리|특이사항|조건|PM/.test(`${group} ${header}`);
+}
+
+function isEstimateDbEnterCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
+  return isEstimateDbStoryCell(tab, colIndex)
+    || isEstimateDbStageEntryCell(tab, colIndex)
+    || isEstimateDbOutsourceAmountCell(tab, colIndex)
+    || isEstimateDbContactColumn(tab, colIndex)
+    || isEstimateDbDropdownCell(tab, colIndex);
+}
+
 function commitEstimateDbPendingEdits(options = {}) {
   const entries = Object.values(estimateDbPendingEdits);
   if (!entries.length) {
@@ -4386,12 +4443,7 @@ function commitEstimateDbPendingEdits(options = {}) {
     const sheet = estimateDbSheets[tab];
     const row = sheet?.rows?.[rowIndex];
     if (!row) return;
-    const sheetForCommit = estimateDbSheets[tab];
-    const storedValue = parseEstimateDbRichCellValue(value)
-      ? value
-      : isEstimateDbOutsourceAmountCell(tab, colIndex)
-        ? normalizeEstimateDbAmountCellStorage(value)
-        : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForCommit) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
+    const storedValue = normalizeEstimateDbCellForStorage(tab, colIndex, value);
     row[colIndex] = storedValue;
     recalcEstimateDbRow(tab, row);
     changed += 1;
@@ -4412,12 +4464,7 @@ function commitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}
   const sheet = estimateDbSheets[tab];
   const row = sheet?.rows?.[rowIndex];
   if (!row) return 0;
-  const sheetForSingleCommit = estimateDbSheets[tab];
-  const storedValue = parseEstimateDbRichCellValue(pending.value)
-    ? pending.value
-    : isEstimateDbOutsourceAmountCell(tab, colIndex)
-      ? normalizeEstimateDbAmountCellStorage(pending.value)
-      : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForSingleCommit) && isEstimateDbPureNumber(pending.value) ? String(pending.value).replace(/,/g, "") : pending.value);
+  const storedValue = normalizeEstimateDbCellForStorage(tab, colIndex, pending.value);
   row[colIndex] = storedValue;
   recalcEstimateDbRow(tab, row);
   delete estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
@@ -4543,6 +4590,7 @@ function isEstimateDbMoneyLikeColumn(tab = estimateDbActiveTab, colIndex = 0, sh
 
 function formatEstimateDbMoneyDisplay(value, tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
   value = getEstimateDbRichDisplayValue(value);
+  if (isEstimateDbDateInputColumn(tab, colIndex)) return formatEstimateDbCompactDate(value);
   if (!isEstimateDbMoneyLikeColumn(tab, colIndex, sheet)) return String(value ?? "");
   if (!isEstimateDbPureNumber(value)) return String(value ?? "");
   return formatEstimateDbCommaNumber(value);
@@ -5219,7 +5267,8 @@ function renderEstimateDbTotalRow(sheet, colCount) {
   if (!isEstimateDbTotalEnabled(sheet)) return "";
   const rows = getEstimateDbDataRowsForTotal(sheet);
   rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
-  const totals = Array.from({ length: colCount }, (_, colIndex) => rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
+  const tabName = sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab;
+  const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
   const formatTotal = (value, colIndex) => value ? formatEstimateDbMoneyDisplay(value, sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
   return `
     <tr class="quote-db-total-row">
@@ -5263,7 +5312,8 @@ function refreshEstimateDbTotalRowOnly() {
   const colCount = getEstimateDbLeafColumns(sheet).length;
   const rows = getEstimateDbDataRowsForTotal(sheet);
   rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
-  const totals = Array.from({ length: colCount }, (_, colIndex) => rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
+  const tabName = sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab;
+  const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
   totalRow.querySelectorAll(".quote-db-total-input").forEach((input, i) => {
     const colIndex = i + 4;
     input.value = totals[colIndex] ? formatEstimateDbMoneyDisplay(totals[colIndex], sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
@@ -5320,7 +5370,8 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const request = getEstimateDbColumnRequest(estimateDbActiveTab, colIndex);
         const dropdown = isEstimateDbDropdownCell(estimateDbActiveTab, colIndex);
         const amountCell = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex);
-        const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}`;
+        const commandCell = isEstimateDbEnterCommandCell(estimateDbActiveTab, colIndex);
+        const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}${commandCell ? " quote-db-enter-command-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
         const dbl = isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`)));
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
@@ -6133,12 +6184,7 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
     return;
   }
 
-  const sheetForUpdate = estimateDbSheets[tab];
-  const storedValue = parseEstimateDbRichCellValue(value)
-    ? value
-    : isEstimateDbOutsourceAmountCell(tab, colIndex)
-      ? normalizeEstimateDbAmountCellStorage(value)
-      : (isEstimateDbMoneyLikeColumn(tab, colIndex, sheetForUpdate) && isEstimateDbPureNumber(value) ? String(value).replace(/,/g, "") : value);
+  const storedValue = normalizeEstimateDbCellForStorage(tab, colIndex, value);
   rows[rowIndex][colIndex] = storedValue;
   recalcEstimateDbRow(tab, rows[rowIndex]);
   if (!options.silentRender) {
