@@ -4478,20 +4478,37 @@ const estimateDbReportTabs = {
   deposit: "3.입금 프로젝트"
 };
 
-const estimateDbMonthlySalesTargets = {};
+const estimateDbMonthlyTargets = { order: {}, sales: {}, deposit: {} };
+const estimateDbMonthlySalesTargets = estimateDbMonthlyTargets.sales;
+const ESTIMATE_DB_TARGET_TYPES = [
+  { key: "order", label: "수주목표" },
+  { key: "sales", label: "매출목표" },
+  { key: "deposit", label: "입금목표" }
+];
 
-function getEstimateDbMonthlySalesTarget(year, month) {
+function getEstimateDbMonthlyTarget(type, year, month) {
+  const targetType = ESTIMATE_DB_TARGET_TYPES.some(item => item.key === type) ? type : "sales";
   const y = String(year || getSelectedEstimateDbYear());
   const m = Number(month);
-  const saved = estimateDbMonthlySalesTargets[y]?.[m];
+  const saved = estimateDbMonthlyTargets[targetType]?.[y]?.[m];
   return toEstimateDbNumber(saved) || 100000000;
 }
 
-function setEstimateDbMonthlySalesTarget(year, month, value) {
+function setEstimateDbMonthlyTarget(type, year, month, value) {
+  const targetType = ESTIMATE_DB_TARGET_TYPES.some(item => item.key === type) ? type : "sales";
   const y = String(year || getSelectedEstimateDbYear());
   const m = Number(month);
-  if (!estimateDbMonthlySalesTargets[y]) estimateDbMonthlySalesTargets[y] = {};
-  estimateDbMonthlySalesTargets[y][m] = toEstimateDbNumber(value);
+  if (!estimateDbMonthlyTargets[targetType]) estimateDbMonthlyTargets[targetType] = {};
+  if (!estimateDbMonthlyTargets[targetType][y]) estimateDbMonthlyTargets[targetType][y] = {};
+  estimateDbMonthlyTargets[targetType][y][m] = toEstimateDbNumber(value);
+}
+
+function getEstimateDbMonthlySalesTarget(year, month) {
+  return getEstimateDbMonthlyTarget("sales", year, month);
+}
+
+function setEstimateDbMonthlySalesTarget(year, month, value) {
+  setEstimateDbMonthlyTarget("sales", year, month, value);
 }
 
 function formatEstimateDbCommaNumber(value) {
@@ -4781,6 +4798,19 @@ function recalcEstimateDbRow(tab, row) {
   const idx = name => getEstimateDbColumnIndexByHeader(tab, name);
   const get = name => idx(name) >= 0 ? toEstimateDbNumber(row[idx(name)]) : 0;
   const set = (name, value) => { const i = idx(name); if (i >= 0) row[i] = value ? String(value) : ""; };
+  if (tab === "pj") {
+    const m2Index = idx("연면적(m2)");
+    const pyIndex = idx("연면적(평)");
+    if (m2Index >= 0 && pyIndex >= 0) {
+      const m2Value = toEstimateDbNumber(row[m2Index]);
+      if (m2Value) {
+        const pyValue = Math.round(m2Value * 0.3025 * 10000) / 10000;
+        row[pyIndex] = String(pyValue).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+      } else if (!normalizeEstimateDbText(row[m2Index])) {
+        row[pyIndex] = "";
+      }
+    }
+  }
   if (tab === "progress") {
     const balance = get("계약금액") - get("수령액");
     set("잔액", balance);
@@ -5062,7 +5092,9 @@ function refreshEstimateDbCalculatedCells(rowIndex) {
     ? ["잔액", "작업대기중", "합계", "세금계산서", "입금예정일", "입금일"]
     : estimateDbActiveTab === "mep"
       ? ["잔액", "작업대기중"]
-      : [];
+      : estimateDbActiveTab === "pj"
+        ? ["연면적(평)"]
+        : [];
   if (!calculatedHeaders.length) return;
   cols.forEach((header, colIndex) => {
     const topHeader = sheet.headerRows?.[0]?.[colIndex] || "";
@@ -5709,6 +5741,16 @@ function handleEstimateDbKeydown(event) {
     openEstimateDbDropdown(rowIndex, colIndex);
     return;
   }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter") {
+    event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex);
+    refreshEstimateDbCalculatedCells(rowIndex);
+    refreshEstimateDbTotalRowOnly();
+    renderEstimateDbReports();
+    updateEstimateDbSaveButtonState();
+    requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+    return;
+  }
   if (event.ctrlKey && event.key === "F9") {
     event.preventDefault();
     addEstimateDbRow(null, rowIndex + 1);
@@ -6061,9 +6103,9 @@ function buildSummaryRows(year = getSelectedEstimateDbYear()) {
     const depRows = deposit.filter(row => parseEstimateDbMonth(row[12]) === m + 1 || parseEstimateDbMonth(row[10]) === m + 1);
     const depAmount = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[13]), 0);
     const depOut = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[9]), 0);
-    const orderTarget = 100000000;
-    const salesTarget = getEstimateDbMonthlySalesTarget(year, m + 1);
-    const depositTarget = 100000000;
+    const orderTarget = getEstimateDbMonthlyTarget("order", year, m + 1);
+    const salesTarget = getEstimateDbMonthlyTarget("sales", year, m + 1);
+    const depositTarget = getEstimateDbMonthlyTarget("deposit", year, m + 1);
     return [`${m + 1}월`, orderTarget, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, orderTarget), pct(orderAmount, orderTarget), salesTarget, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, salesTarget), pct(salesAmount, salesTarget), depositTarget, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, depositTarget), pct(depAmount, depositTarget), ""];
   });
 }
@@ -6077,7 +6119,7 @@ function ensureEstimateDbSalesTargetModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-sales-target-box" role="dialog" aria-modal="true" style="max-width:760px;">
-      <div class="estimate-db-dropdown-title">월별 매출목표 설정</div>
+      <div class="estimate-db-dropdown-title">월별 목표 설정</div>
       <div id="estimateDbSalesTargetGrid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0;"></div>
       <div class="estimate-db-dropdown-actions">
         <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbSalesTargetModal()">닫기</button>
@@ -6095,8 +6137,10 @@ function openEstimateDbSalesTargetModal() {
   const grid = modal.querySelector("#estimateDbSalesTargetGrid");
   grid.innerHTML = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1;
-    const value = getEstimateDbMonthlySalesTarget(year, month);
-    return `<label class="estimate-db-amount-label">${month}월 매출목표<input class="estimate-db-dropdown-search estimate-db-sales-target-input" data-month="${month}" value="${escapeEstimateDbHtml(formatEstimateDbCommaNumber(value))}" oninput="this.value = formatEstimateDbCommaNumber(this.value.replace(/[^0-9.-]/g, ''))" /></label>`;
+    return ESTIMATE_DB_TARGET_TYPES.map(type => {
+      const value = getEstimateDbMonthlyTarget(type.key, year, month);
+      return `<label class="estimate-db-amount-label">${month}월 ${type.label}<input class="estimate-db-dropdown-search estimate-db-sales-target-input" data-target-type="${type.key}" data-month="${month}" value="${escapeEstimateDbHtml(formatEstimateDbCommaNumber(value))}" oninput="this.value = formatEstimateDbCommaNumber(this.value.replace(/[^0-9.-]/g, ''))" /></label>`;
+    }).join("");
   }).join("");
   modal.classList.remove("hidden");
   setTimeout(() => modal.querySelector(".estimate-db-sales-target-input")?.focus(), 0);
@@ -6109,11 +6153,11 @@ function closeEstimateDbSalesTargetModal() {
 function saveEstimateDbSalesTargetModal() {
   const year = getSelectedEstimateDbYear();
   document.querySelectorAll("#estimateDbSalesTargetModal .estimate-db-sales-target-input").forEach(input => {
-    setEstimateDbMonthlySalesTarget(year, Number(input.dataset.month), input.value);
+    setEstimateDbMonthlyTarget(input.dataset.targetType || "sales", year, Number(input.dataset.month), input.value);
   });
   closeEstimateDbSalesTargetModal();
   renderEstimateDbReports();
-  if (typeof showToast === "function") showToast(`${year}년 월별 매출목표를 저장했습니다.`);
+  if (typeof showToast === "function") showToast(`${year}년 월별 목표를 저장했습니다.`);
 }
 
 function ensureEstimateDbReportActionHost() {
