@@ -16845,3 +16845,28 @@ body.estimate-db-resizing{
 .estimate-db-contact-grid td:first-child{width:42px;font-weight:900;color:#64748b;background:#f8fafc;}
 .estimate-db-contact-grid input{width:100%;height:34px;border:1px solid #cfdbe8;border-radius:9px;padding:0 9px;font-weight:800;outline:none;}
 .estimate-db-contact-grid input:focus{border-color:#ff9f2e;box-shadow:0 0 0 3px rgba(255,159,46,.14);}
+
+/* === DB관리 v31: Enter 특수셀 표시 / 행 높이 고정 / 날짜합계 제외 보정 === */
+.quote-db-table td{
+  height:42px;
+  max-height:42px;
+  vertical-align:middle;
+}
+.quote-db-table input.quote-db-cell-input{
+  height:32px;
+  line-height:30px;
+  box-sizing:border-box;
+}
+.quote-db-cell-input.quote-db-enter-command-cell{
+  border-color:#fb923c!important;
+  box-shadow:inset 0 0 0 1px rgba(249,115,22,.34);
+  background-image:linear-gradient(90deg, rgba(249,115,22,.16), rgba(249,115,22,0) 42px);
+}
+.quote-db-cell-input.quote-db-enter-command-cell:focus{
+  border-color:#f97316!important;
+  box-shadow:0 0 0 2px rgba(249,115,22,.16), inset 0 0 0 1px rgba(249,115,22,.45)!important;
+}
+.estimate-db-stage-formula-box textarea,
+.estimate-db-story-box textarea{
+  line-height:1.45;
+}
