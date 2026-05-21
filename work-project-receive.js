@@ -4664,6 +4664,40 @@ let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
 let estimateDbDropdownState = null;
 
+
+function insertEstimateDbColumn(sheet, insertAt, topLabel, leafLabel, requestText = "") {
+  if (!sheet?.headerRows?.length) return;
+  sheet.headerRows.forEach((headerRow, index) => {
+    headerRow.splice(insertAt, 0, index === 0 ? topLabel : leafLabel);
+  });
+  if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, requestText);
+  (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
+}
+function ensureEstimateDbPjDeliveryPlanColumnsOnce() {
+  const sheet = estimateDbSheets.pj;
+  if (!sheet?.headerRows?.[0]) return;
+  const cols = getEstimateDbLeafColumns(sheet);
+  const hasFirstPlan = cols.some(v => normalizeEstimateDbText(v) === "1차납품예정일");
+  if (!hasFirstPlan) {
+    const firstActualIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "1차납품일자");
+    if (firstActualIndex >= 0) insertEstimateDbColumn(sheet, firstActualIndex, "1차납품예정일", "", "1차 납품 예정일 입력란");
+  }
+  const colsAfterFirst = getEstimateDbLeafColumns(sheet);
+  const hasSecondPlan = colsAfterFirst.some(v => normalizeEstimateDbText(v) === "2차납품예정일");
+  if (!hasSecondPlan) {
+    const secondActualIndex = colsAfterFirst.findIndex(v => normalizeEstimateDbText(v) === "2차납품일자");
+    if (secondActualIndex >= 0) insertEstimateDbColumn(sheet, secondActualIndex, "2차납품예정일", "", "2차 납품 예정일 입력란");
+  }
+}
+function getEstimateDbNumericValueForTotal(row, colIndex, tabName, sheet) {
+  const isProgress = sheet === estimateDbSheets.progress || tabName === "progress";
+  if (isProgress && isEstimateDbOutsourceAmountCell("progress", colIndex)) {
+    const parsed = parseEstimateDbAmountCellValue(row?.[colIndex]);
+    return toEstimateDbNumber(parsed.amount || row?.[colIndex]);
+  }
+  return toEstimateDbNumber(row?.[colIndex]);
+}
+
 function normalizeEstimateDbText(value) { return String(value ?? "").trim(); }
 function toEstimateDbNumber(value) {
   const rich = parseEstimateDbRichCellValue(value);
@@ -4686,7 +4720,7 @@ function parseEstimateDbMonth(value) {
   if (date) return Number(date[1]);
   return null;
 }
-function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjProjectLinkColumnOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
+function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjProjectLinkColumnOnce(); ensureEstimateDbPjDeliveryPlanColumnsOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   const rows = sheet.headerRows || [];
   if (!rows.length) return [];
@@ -5327,7 +5361,7 @@ function renderEstimateDbTotalRow(sheet, colCount) {
   const rows = getEstimateDbDataRowsForTotal(sheet);
   rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
   const tabName = sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab;
-  const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
+  const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + getEstimateDbNumericValueForTotal(row, colIndex, tabName, sheet), 0));
   const formatTotal = (value, colIndex) => value ? formatEstimateDbMoneyDisplay(value, sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
   return `
     <tr class="quote-db-total-row">
@@ -5372,7 +5406,7 @@ function refreshEstimateDbTotalRowOnly() {
   const rows = getEstimateDbDataRowsForTotal(sheet);
   rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
   const tabName = sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab;
-  const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + toEstimateDbNumber(row?.[colIndex]), 0));
+  const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + getEstimateDbNumericValueForTotal(row, colIndex, tabName, sheet), 0));
   totalRow.querySelectorAll(".quote-db-total-input").forEach((input, i) => {
     const colIndex = i + 4;
     input.value = totals[colIndex] ? formatEstimateDbMoneyDisplay(totals[colIndex], sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
@@ -6476,11 +6510,36 @@ function openEstimateDbSalesTargetModal() {
     const month = i + 1;
     return ESTIMATE_DB_TARGET_TYPES.map(type => {
       const value = getEstimateDbMonthlyTarget(type.key, year, month);
-      return `<label class="estimate-db-amount-label">${month}월 ${type.label}<input class="estimate-db-dropdown-search estimate-db-sales-target-input" data-target-type="${type.key}" data-month="${month}" value="${escapeEstimateDbHtml(formatEstimateDbCommaNumber(value))}" oninput="this.value = formatEstimateDbCommaNumber(this.value.replace(/[^0-9.-]/g, ''))" /></label>`;
+      return `<label class="estimate-db-amount-label">${month}월 ${type.label}<input class="estimate-db-dropdown-search estimate-db-sales-target-input" onkeydown="handleEstimateDbSalesTargetKeydown(event)" data-target-type="${type.key}" data-month="${month}" value="${escapeEstimateDbHtml(formatEstimateDbCommaNumber(value))}" oninput="this.value = formatEstimateDbCommaNumber(this.value.replace(/[^0-9.-]/g, ''))" /></label>`;
     }).join("");
   }).join("");
   modal.classList.remove("hidden");
   setTimeout(() => modal.querySelector(".estimate-db-sales-target-input")?.focus(), 0);
+}
+
+
+function handleEstimateDbSalesTargetKeydown(event) {
+  const input = event?.currentTarget;
+  if (!input?.classList?.contains("estimate-db-sales-target-input")) return;
+  const inputs = Array.from(document.querySelectorAll("#estimateDbSalesTargetModal .estimate-db-sales-target-input"));
+  const index = inputs.indexOf(input);
+  if (index < 0) return;
+  const columns = 3;
+  let nextIndex = index;
+  if (event.key === "ArrowRight") nextIndex = Math.min(inputs.length - 1, index + 1);
+  else if (event.key === "ArrowLeft") nextIndex = Math.max(0, index - 1);
+  else if (event.key === "ArrowDown") nextIndex = Math.min(inputs.length - 1, index + columns);
+  else if (event.key === "ArrowUp") nextIndex = Math.max(0, index - columns);
+  else if (event.key === "Enter") {
+    event.preventDefault();
+    saveEstimateDbSalesTargetModal();
+    return;
+  } else {
+    return;
+  }
+  event.preventDefault();
+  inputs[nextIndex]?.focus();
+  inputs[nextIndex]?.select?.();
 }
 
 function closeEstimateDbSalesTargetModal() {
@@ -6754,3 +6813,19 @@ function exportEstimateDbReportsToExcel() {
   showToast(`${year}년 0~3번 시트만 현재 화면 계산값으로 내보냅니다.`);
 }
 function handleEstimateDbYearChange() { renderEstimateDbReports(); }
+
+/* DB관리/프로젝트 접수 사이드 메뉴 접힘 보정 */
+
+document.addEventListener("click", event => {
+  const workBtn = event.target?.closest?.("[data-work-main]");
+  if (!workBtn) return;
+  requestAnimationFrame(() => {
+    const targetPanelId = workBtn.dataset.workMain;
+    if (typeof syncWorkSideAccordion === "function") syncWorkSideAccordion(targetPanelId);
+    if (targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
+      document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+    } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
+      document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+    }
+  });
+}, true);
