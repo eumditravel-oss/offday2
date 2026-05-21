@@ -4591,6 +4591,7 @@ let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
 let estimateDbColumnResizeMode = false;
 let estimateDbColumnReorderMode = false;
 let estimateDbColumnReorderSource = null;
+let estimateDbColumnReorderPointerState = null;
 let estimateDbRowHeightPx = Math.max(28, Math.min(120, Number(localStorage.getItem("estimateDbRowHeightPx") || 44)));
 let estimateDbColumnWidthOverrides = { pj: {}, progress: {}, mep: {} };
 let estimateDbColumnResizeState = null;
@@ -5653,16 +5654,56 @@ function toggleEstimateDbColumnReorderMode() {
 function confirmEstimateDbColumnReorder() {
   estimateDbColumnReorderMode = false;
   estimateDbColumnReorderSource = null;
+  estimateDbColumnReorderPointerState = null;
+  document.removeEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
   saveEstimateDbToStorage?.();
   if (typeof showToast === "function") showToast("열 위치 변경을 저장했습니다.");
   renderEstimateDbManage();
 }
+
 function startEstimateDbColumnReorder(event, colIndex) {
   if (!estimateDbColumnReorderMode) return;
   estimateDbColumnReorderSource = colIndex;
   event.dataTransfer?.setData("text/plain", String(colIndex));
+  event.dataTransfer?.setDragImage?.(event.currentTarget, 12, 12);
   event.currentTarget?.classList?.add("quote-db-col-dragging");
 }
+
+function startEstimateDbColumnReorderPointer(event, colIndex) {
+  if (!estimateDbColumnReorderMode || event.button !== 0) return;
+  const th = event.currentTarget;
+  estimateDbColumnReorderSource = colIndex;
+  estimateDbColumnReorderPointerState = {
+    sourceIndex: colIndex,
+    startX: event.clientX,
+    startY: event.clientY,
+    sourceEl: th
+  };
+  th?.classList?.add("quote-db-col-dragging");
+  document.removeEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
+  document.addEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
+}
+
+function finishEstimateDbColumnReorderPointer(event) {
+  if (!estimateDbColumnReorderMode || !estimateDbColumnReorderPointerState) return;
+  document.removeEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
+  const state = estimateDbColumnReorderPointerState;
+  state.sourceEl?.classList?.remove("quote-db-col-dragging");
+  estimateDbColumnReorderPointerState = null;
+
+  const dx = Math.abs((event.clientX || 0) - (state.startX || 0));
+  const dy = Math.abs((event.clientY || 0) - (state.startY || 0));
+  if (dx < 4 && dy < 4) return;
+
+  const targetEl = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("th[data-col-index]");
+  const targetIndex = Number(targetEl?.dataset?.colIndex);
+  if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex === state.sourceIndex) return;
+
+  swapEstimateDbColumns(state.sourceIndex, targetIndex);
+  estimateDbColumnReorderSource = null;
+  renderEstimateDbManage();
+}
+
 function endEstimateDbColumnReorder(event) { event.currentTarget?.classList?.remove("quote-db-col-dragging"); }
 function allowEstimateDbColumnDrop(event) { if (estimateDbColumnReorderMode) event.preventDefault(); }
 function dropEstimateDbColumn(event, targetIndex) {
@@ -5672,17 +5713,38 @@ function dropEstimateDbColumn(event, targetIndex) {
   if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex === targetIndex) return;
   swapEstimateDbColumns(sourceIndex, targetIndex);
   estimateDbColumnReorderSource = null;
+  estimateDbColumnReorderPointerState = null;
   renderEstimateDbManage();
 }
 function swapEstimateDbColumns(a, b) {
   const sheet = getEstimateDbSheet();
-  if (!sheet) return;
-  (sheet.headerRows || []).forEach(row => { const tmp = row[a]; row[a] = row[b]; row[b] = tmp; });
-  if (sheet.requestRow) { const tmp = sheet.requestRow[a]; sheet.requestRow[a] = sheet.requestRow[b]; sheet.requestRow[b] = tmp; }
-  (sheet.rows || []).forEach(row => { const tmp = row[a]; row[a] = row[b]; row[b] = tmp; });
-  const widthA = estimateDbColumnWidths[`${estimateDbActiveTab}:${a}`];
-  estimateDbColumnWidths[`${estimateDbActiveTab}:${a}`] = estimateDbColumnWidths[`${estimateDbActiveTab}:${b}`];
-  estimateDbColumnWidths[`${estimateDbActiveTab}:${b}`] = widthA;
+  if (!sheet || a === b) return;
+  [a, b] = [Number(a), Number(b)];
+  if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0) return;
+
+  const swapCells = row => {
+    if (!row) return;
+    const max = Math.max(a, b);
+    while (row.length <= max) row.push("");
+    const tmp = row[a];
+    row[a] = row[b];
+    row[b] = tmp;
+  };
+
+  (sheet.headerRows || []).forEach(swapCells);
+  swapCells(sheet.requestRow);
+  (sheet.rows || []).forEach(swapCells);
+
+  const tab = estimateDbActiveTab;
+  if (estimateDbColumnWidthOverrides?.[tab]) {
+    const widthA = estimateDbColumnWidthOverrides[tab][a];
+    estimateDbColumnWidthOverrides[tab][a] = estimateDbColumnWidthOverrides[tab][b];
+    estimateDbColumnWidthOverrides[tab][b] = widthA;
+    localStorage.setItem("estimateDbColumnWidthOverrides", JSON.stringify(estimateDbColumnWidthOverrides));
+  }
+  estimateDbSortState = getEstimateDbDefaultSortState(tab);
+  estimateDbSelectedCell = { tab, sectionIndex: null, rowIndex: 0, colIndex: b };
+  updateEstimateDbSaveButtonState?.();
 }
 
 function renderEstimateDbManage() {
@@ -5725,7 +5787,7 @@ function renderEstimateDbManage() {
         const sortMark = sort.colIndex === colIndex ? (sort.direction === "asc" ? " ▲" : " ▼") : "";
         const reorderClass = estimateDbColumnReorderMode ? " reorder-mode" : "";
         const reorderAttrs = estimateDbColumnReorderMode
-          ? `draggable="true" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="드래그해서 다른 헤더 위치에 놓으면 열 위치가 서로 바뀝니다."`
+          ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="헤더를 좌클릭 드래그해서 바꿀 열 위치에 놓으면 두 열이 서로 바뀝니다."`
           : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
         return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
