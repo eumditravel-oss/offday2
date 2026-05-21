@@ -1844,6 +1844,146 @@ function startProjectFromEstimateQuote(index) {
   renderProjectReceiveDashboard();
   showToast("견적서 기록을 프로젝트 작성 화면으로 불러왔습니다. 미비된 내용만 추가 작성하세요.");
 }
+
+/* =========================================================
+   프로젝트 작성: DB관리(PJ관리) 행 불러오기
+   - DB관리에서 작성한 PJ관리 행을 프로젝트 작성 화면으로 선택 반영
+   - 동일/중복되는 항목만 자동 입력하고, 나머지는 기존 입력값 유지
+========================================================= */
+function getEstimateDbPjCell(row, headerName) {
+  const idx = getEstimateDbColumnIndexByHeader("pj", headerName);
+  if (idx < 0) return "";
+  return String(row?.[idx] || "").trim();
+}
+
+function normalizeEstimateQuoteDbText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function setEstimateQuoteScopeByDbWorkType(workType) {
+  const text = normalizeEstimateQuoteDbText(workType);
+  if (!text || !Array.isArray(estimateQuoteState.scopes)) return;
+  estimateQuoteState.scopes.forEach(item => {
+    const label = normalizeEstimateQuoteDbText(item.label);
+    if (!label) return;
+    const match = text.includes(label)
+      || (label.includes("구조") && text.includes("구조"))
+      || (label.includes("마감") && text.includes("마감"))
+      || (label.includes("토목") && (text.includes("토목") || text.includes("조경")))
+      || (label.includes("인테리어") && (text.includes("인테리어") || text.includes("철거")))
+      || (label.includes("골조성") && text.includes("골조성"));
+    if (match) item.checked = true;
+  });
+}
+
+function mergeEstimateQuoteDbMemo(row) {
+  const parts = [];
+  const request = getEstimateDbPjCell(row, "수주시 요청사항");
+  const workType = getEstimateDbPjCell(row, "작업공종");
+  const workCategory = getEstimateDbPjCell(row, "작업구분");
+  const businessType = getEstimateDbPjCell(row, "업무성격");
+  const businessStage = getEstimateDbPjCell(row, "업무단계2");
+  const unitWork = getEstimateDbPjCell(row, "단가작업여부");
+  const delivery1 = [getEstimateDbPjCell(row, "1차납품일자"), getEstimateDbPjCell(row, "1차납품공종")].filter(Boolean).join(" / ");
+  const delivery2 = [getEstimateDbPjCell(row, "2차납품일자"), getEstimateDbPjCell(row, "2차납품공종")].filter(Boolean).join(" / ");
+  if (request) parts.push(`수주시 요청사항: ${request}`);
+  if (workType) parts.push(`작업공종: ${workType}`);
+  if (workCategory || businessType || businessStage || unitWork) parts.push(`작업정보: ${[workCategory, businessType, businessStage, unitWork].filter(Boolean).join(" / ")}`);
+  if (delivery1) parts.push(`1차 납품: ${delivery1}`);
+  if (delivery2) parts.push(`2차 납품: ${delivery2}`);
+  return parts.join("\n");
+}
+
+function applyEstimateDbPjRowToQuote(rowIndex) {
+  if (estimateDbHasUnsavedChanges) commitEstimateDbPendingEdits({ silent: true });
+  const row = estimateDbSheets?.pj?.rows?.[rowIndex];
+  if (!row) {
+    showToast("불러올 DB 행을 찾을 수 없습니다.");
+    return;
+  }
+
+  syncEstimateQuoteInputsToState();
+  const next = JSON.parse(JSON.stringify(estimateQuoteState));
+  const assign = (key, value) => {
+    const text = String(value || "").trim();
+    if (text) next[key] = text;
+  };
+
+  assign("projectNo", getEstimateDbPjCell(row, "PJ NO"));
+  assign("projectName", getEstimateDbPjCell(row, "프로젝트명"));
+  assign("client", getEstimateDbPjCell(row, "거래처명"));
+  assign("usage", getEstimateDbPjCell(row, "건물용도"));
+  assign("areaM2", getEstimateDbPjCell(row, "연면적(m2)") || getEstimateDbPjCell(row, "연면적(㎡)"));
+  assign("areaPy", getEstimateDbPjCell(row, "연면적(평)"));
+  assign("floors", getEstimateDbPjCell(row, "층수"));
+  assign("buildings", getEstimateDbPjCell(row, "동수"));
+  assign("downloadUrl", getEstimateDbPjCell(row, "웹하드"));
+  assign("webhardId", getEstimateDbPjCell(row, "ID"));
+  assign("webhardPw", getEstimateDbPjCell(row, "PW"));
+  assign("accessKey", getEstimateDbPjCell(row, "기타"));
+  assign("requesterName", getEstimateDbPjCell(row, "거래처담당자"));
+  assign("requesterDept", [getEstimateDbPjCell(row, "부서명"), getEstimateDbPjCell(row, "직급")].filter(Boolean).join(" / "));
+  assign("requesterPhone", getEstimateDbPjCell(row, "휴대폰") || getEstimateDbPjCell(row, "일반전화") || getEstimateDbPjCell(row, "직통전화"));
+  assign("requesterEmail", getEstimateDbPjCell(row, "EMAIL") || getEstimateDbPjCell(row, "EMAIL2"));
+
+  estimateQuoteState = next;
+  setEstimateQuoteScopeByDbWorkType(getEstimateDbPjCell(row, "작업공종"));
+  const dbMemo = mergeEstimateQuoteDbMemo(row);
+  if (dbMemo) {
+    estimateQuoteState.notes = [estimateQuoteState.notes, dbMemo].filter(Boolean).join("\n\n");
+  }
+  estimateQuoteEditingIndex = null;
+  closeEstimateQuoteDbImportModal();
+  switchWorkPanel("estimateQuote");
+  renderEstimateQuoteDashboard();
+  showToast("DB관리의 PJ관리 행을 프로젝트 작성 화면으로 불러왔습니다.");
+}
+
+function getEstimateQuoteDbImportRows() {
+  if (estimateDbHasUnsavedChanges) commitEstimateDbPendingEdits({ silent: true });
+  const rows = estimateDbSheets?.pj?.rows || [];
+  return rows
+    .map((row, rowIndex) => ({ row, rowIndex }))
+    .filter(({ row }) => ["PJ NO", "프로젝트명", "거래처명", "건물용도", "웹하드"].some(header => getEstimateDbPjCell(row, header)));
+}
+
+function openEstimateQuoteDbImportModal() {
+  initializeEstimateDbVisibleSeedRows();
+  const old = document.getElementById("estimateQuoteDbImportModal");
+  if (old) old.remove();
+  const rows = getEstimateQuoteDbImportRows();
+  const html = `
+    <div class="quote-db-import-backdrop" id="estimateQuoteDbImportModal" onclick="if(event.target===this) closeEstimateQuoteDbImportModal();">
+      <div class="quote-db-import-modal" role="dialog" aria-modal="true" aria-label="DB에서 프로젝트 불러오기">
+        <div class="quote-db-import-head">
+          <div>
+            <strong>DB관리에서 프로젝트 불러오기</strong>
+            <p>PJ관리 행을 선택하면 프로젝트 작성 화면의 중복 항목만 자동 입력됩니다.</p>
+          </div>
+          <button class="btn btn-line btn-sm" type="button" onclick="closeEstimateQuoteDbImportModal()">닫기</button>
+        </div>
+        <div class="quote-db-import-list">
+          ${rows.length ? rows.map(({ row, rowIndex }) => {
+            const pjNo = getEstimateDbPjCell(row, "PJ NO") || "PJ NO 미입력";
+            const projectName = getEstimateDbPjCell(row, "프로젝트명") || "프로젝트명 미입력";
+            const client = getEstimateDbPjCell(row, "거래처명") || "거래처 미입력";
+            const usage = getEstimateDbPjCell(row, "건물용도") || "용도 미입력";
+            const area = [getEstimateDbPjCell(row, "연면적(m2)"), getEstimateDbPjCell(row, "연면적(평)")].filter(Boolean).join(" / ");
+            return `<button class="quote-db-import-row" type="button" onclick="applyEstimateDbPjRowToQuote(${rowIndex})">
+              <span class="quote-db-import-main"><b>${escapeEstimateDbHtml(pjNo)}</b>${escapeEstimateDbHtml(projectName)}</span>
+              <span class="quote-db-import-sub">${escapeEstimateDbHtml([client, usage, area].filter(Boolean).join(" · "))}</span>
+            </button>`;
+          }).join("") : `<div class="empty-cell">불러올 PJ관리 데이터가 없습니다.</div>`}
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML("beforeend", html);
+}
+
+function closeEstimateQuoteDbImportModal() {
+  document.getElementById("estimateQuoteDbImportModal")?.remove();
+}
+
 function downloadEstimateQuoteTemplate() {
   try {
     const byteChars = atob(estimateQuoteTemplateBase64);
