@@ -5599,6 +5599,18 @@ function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = esti
     });
 }
 
+
+function getEstimateDbGroupBoundaryClass(tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet()) {
+  const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  const boundaryHeadersByTab = {
+    pj: ["프로젝트명", "작업공종", "PM(철거)", "세대수"],
+    progress: ["작업취소", "외주금액합계", "2차납품공종"],
+    mep: ["작업취소", "외주금액합계", "2차납품공종"]
+  };
+  const boundaryHeaders = boundaryHeadersByTab[tab] || [];
+  return boundaryHeaders.includes(header) ? " quote-db-group-boundary" : "";
+}
+
 function renderEstimateDbSearchBox() {
   const box = document.getElementById("estimateDbSearchBox");
   if (!box) return;
@@ -5823,7 +5835,7 @@ function renderEstimateDbManage() {
         const reorderAttrs = estimateDbColumnReorderMode
           ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="헤더를 좌클릭 드래그해서 바꿀 열 위치에 놓으면 두 열이 서로 바뀝니다."`
           : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
-        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}${getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
@@ -5850,7 +5862,7 @@ function renderEstimateDbTotalRow(sheet, colCount) {
       <td class="quote-db-total-label" colspan="4">합계</td>
       ${Array.from({ length: Math.max(0, colCount - 4) }, (_, offset) => {
         const colIndex = offset + 4;
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${getEstimateDbGroupBoundaryClass(tabName, colIndex, sheet).trim()}"><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"></td>
     </tr>`;
@@ -5955,20 +5967,21 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex);
+        const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
         const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
           const done = parseEstimateDbProgressDoneValue(value);
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}${boundaryClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
         }
         if (amountCell) {
           const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}${boundaryClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
         }
         const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
         if (wrapTextCell) {
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-wrap-text-td${commandCell ? " quote-db-command-td" : ""}${cellExtraClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass} quote-db-wrap-text-cell" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-wrap-text-td${commandCell ? " quote-db-command-td" : ""}${cellExtraClass}${boundaryClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass} quote-db-wrap-text-cell" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
         }
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}"><div class="quote-db-command-wrap"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" />${opener}</div></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}${boundaryClass}"><div class="quote-db-command-wrap"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" />${opener}</div></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
