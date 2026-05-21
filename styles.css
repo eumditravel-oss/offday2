@@ -16966,3 +16966,85 @@ body.estimate-db-resizing{
   gap: 8px;
   padding: 8px 0 0 10px;
 }
+
+/* === 프로젝트 작성: DB관리 PJ행 불러오기 모달 === */
+.quote-db-import-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+}
+.quote-db-import-modal {
+  width: min(880px, 96vw);
+  max-height: min(760px, 88vh);
+  overflow: hidden;
+  border: 1px solid #d9e2ef;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+}
+.quote-db-import-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid #e5edf7;
+}
+.quote-db-import-head strong {
+  display: block;
+  font-size: 20px;
+  color: #0f172a;
+}
+.quote-db-import-head p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+.quote-db-import-list {
+  max-height: 560px;
+  overflow: auto;
+  padding: 14px 18px 20px;
+}
+.quote-db-import-row {
+  width: 100%;
+  display: block;
+  margin: 0 0 10px;
+  padding: 14px 16px;
+  border: 1px solid #d9e2ef;
+  border-radius: 16px;
+  background: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+}
+.quote-db-import-row:hover,
+.quote-db-import-row:focus {
+  border-color: #ff6b1a;
+  background: #fff7ed;
+  outline: none;
+}
+.quote-db-import-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 900;
+}
+.quote-db-import-main b {
+  min-width: 82px;
+  color: #2563eb;
+}
+.quote-db-import-sub {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
