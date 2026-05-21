@@ -17518,7 +17518,32 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* DB관리 표 세로 구분선 색상 회색 변경 */
-.quote-db-manage-col {
-  box-shadow: -6px 0 0 #c4c9d1 !important;
+/* =========================
+   DB관리 세로 구분선 회색 변경
+   ========================= */
+
+/* 기존 검정 구분선 제거 */
+.db-divider,
+.vertical-divider,
+.quote-db-manage-col::before{
+  background:none !important;
+  box-shadow:none !important;
+  border:none !important;
+}
+
+/* 새 회색 구분선 */
+.quote-db-manage-col{
+  position:relative;
+}
+
+.quote-db-manage-col::after{
+  content:"";
+  position:absolute;
+  top:-1px;
+  bottom:-1px;
+  left:-4px;
+  width:8px;
+  background:#9aa0a8;
+  border-radius:4px;
+  z-index:20;
 }
