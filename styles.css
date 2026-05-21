@@ -17354,3 +17354,20 @@ body.quote-db-modal-open {
 .quote-db-command-wrap .quote-db-cell-input{
   padding-right:18px !important;
 }
+
+/* project/DB patch: contact detail collapse + wrapping project names */
+.quote-db-contact-detail-collapsed{display:none!important;}
+.estimate-db-contact-grid{min-width:1180px;}
+.quote-db-table .quote-db-wrap-text-cell{
+  width:100%;
+  min-height:var(--estimate-db-row-height,34px);
+  height:100%;
+  resize:none;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  line-height:1.35;
+  padding-top:8px;
+  padding-bottom:8px;
+}
+.quote-db-table .quote-db-wrap-text-td{vertical-align:top;}
