@@ -1894,6 +1894,85 @@ function mergeEstimateQuoteDbMemo(row) {
   return parts.join("\n");
 }
 
+
+function isEstimateDbPjMemoColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "pj" && getEstimateDbColumnName(tab, colIndex) === "상담 / 이메일 / 특기사항";
+}
+function parseEstimateDbPjMemoCell(value) {
+  const fallback = { callMemo: "", emailMemo: "", notes: "" };
+  try {
+    const raw = String(value || "").trim();
+    if (!raw) return fallback;
+    if (raw.startsWith("{")) return { ...fallback, ...JSON.parse(raw) };
+    const parts = raw.split(/\n-{3,}\n/);
+    if (parts.length >= 3) return { callMemo: parts[0] || "", emailMemo: parts[1] || "", notes: parts.slice(2).join("\n---\n") || "" };
+    return { ...fallback, notes: raw };
+  } catch (_) { return fallback; }
+}
+function stringifyEstimateDbPjMemoCell(obj = {}) {
+  const data = {
+    callMemo: String(obj.callMemo || ""),
+    emailMemo: String(obj.emailMemo || ""),
+    notes: String(obj.notes || "")
+  };
+  return JSON.stringify(data);
+}
+function summarizeEstimateDbPjMemoCell(value) {
+  const data = parseEstimateDbPjMemoCell(value);
+  return [
+    data.callMemo ? `통화: ${data.callMemo}` : "",
+    data.emailMemo ? `이메일: ${data.emailMemo}` : "",
+    data.notes ? `특기: ${data.notes}` : ""
+  ].filter(Boolean).join("\n");
+}
+function openEstimateDbPjMemoModal(rowIndex, colIndex) {
+  const row = getEstimateDbRows()?.[rowIndex];
+  const data = parseEstimateDbPjMemoCell(row?.[colIndex]);
+  document.getElementById("estimateDbPjMemoModal")?.remove();
+  const html = `
+    <div class="quote-db-modal-backdrop" id="estimateDbPjMemoModal">
+      <div class="quote-db-modal quote-db-pj-memo-modal">
+        <div class="quote-db-modal-head">
+          <h3>상담 / 이메일 / 특기사항</h3>
+          <button type="button" class="btn btn-line btn-xs" onclick="closeEstimateDbPjMemoModal()">닫기</button>
+        </div>
+        <div class="quote-db-pj-memo-grid">
+          <label>통화내용 기록<textarea id="estimateDbPjMemoCall" onkeydown="handleEstimateDbPjMemoModalKeydown(event)">${escapeEstimateDbHtml(data.callMemo)}</textarea></label>
+          <label>중요 이메일 내용 기록<textarea id="estimateDbPjMemoEmail" onkeydown="handleEstimateDbPjMemoModalKeydown(event)">${escapeEstimateDbHtml(data.emailMemo)}</textarea></label>
+          <label class="wide">견적 특기사항 / 착수 조건<textarea id="estimateDbPjMemoNotes" onkeydown="handleEstimateDbPjMemoModalKeydown(event)">${escapeEstimateDbHtml(data.notes)}</textarea></label>
+        </div>
+        <div class="quote-db-modal-actions">
+          <button type="button" class="btn btn-primary" onclick="saveEstimateDbPjMemoModal(${rowIndex}, ${colIndex})">저장</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML("beforeend", html);
+  requestAnimationFrame(() => document.getElementById("estimateDbPjMemoCall")?.focus());
+}
+function closeEstimateDbPjMemoModal() { document.getElementById("estimateDbPjMemoModal")?.remove(); }
+function saveEstimateDbPjMemoModal(rowIndex, colIndex) {
+  const value = stringifyEstimateDbPjMemoCell({
+    callMemo: document.getElementById("estimateDbPjMemoCall")?.value || "",
+    emailMemo: document.getElementById("estimateDbPjMemoEmail")?.value || "",
+    notes: document.getElementById("estimateDbPjMemoNotes")?.value || ""
+  });
+  updateEstimateDbCell(rowIndex, colIndex, value, { commit: true, silentRender: true });
+  closeEstimateDbPjMemoModal();
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+}
+function handleEstimateDbPjMemoModalKeydown(event) {
+  if (event.key === "Escape") { event.preventDefault(); closeEstimateDbPjMemoModal(); }
+  if (event.ctrlKey && String(event.key).toLowerCase() === "s") {
+    event.preventDefault();
+    const modal = event.currentTarget?.closest?.("#estimateDbPjMemoModal");
+    const focused = document.activeElement;
+    // save button remains available; Ctrl+S clicks it for quick entry.
+    modal?.querySelector(".quote-db-modal-actions .btn-primary")?.click();
+    focused?.focus?.();
+  }
+}
+
 function applyEstimateDbPjRowToQuote(rowIndex) {
   if (estimateDbHasUnsavedChanges) commitEstimateDbPendingEdits({ silent: true });
   const row = estimateDbSheets?.pj?.rows?.[rowIndex];
@@ -1921,6 +2000,7 @@ function applyEstimateDbPjRowToQuote(rowIndex) {
   assign("webhardId", getEstimateDbPjCell(row, "ID"));
   assign("webhardPw", getEstimateDbPjCell(row, "PW"));
   assign("accessKey", getEstimateDbPjCell(row, "기타"));
+  assign("folderName", getEstimateDbPjCell(row, "폴더명 / 자료위치"));
   assign("requesterName", getEstimateDbPjCell(row, "거래처담당자"));
   assign("requesterDept", [getEstimateDbPjCell(row, "부서명"), getEstimateDbPjCell(row, "직급")].filter(Boolean).join(" / "));
   assign("requesterPhone", getEstimateDbPjCell(row, "휴대폰") || getEstimateDbPjCell(row, "일반전화") || getEstimateDbPjCell(row, "직통전화"));
@@ -1929,6 +2009,10 @@ function applyEstimateDbPjRowToQuote(rowIndex) {
   estimateQuoteState = next;
   setEstimateQuoteScopeByDbWorkType(getEstimateDbPjCell(row, "작업공종"));
   const dbMemo = mergeEstimateQuoteDbMemo(row);
+  const richMemo = parseEstimateDbPjMemoCell(getEstimateDbPjCell(row, "상담 / 이메일 / 특기사항"));
+  if (richMemo.callMemo && !estimateQuoteState.callMemo) estimateQuoteState.callMemo = richMemo.callMemo;
+  if (richMemo.emailMemo && !estimateQuoteState.emailMemo) estimateQuoteState.emailMemo = richMemo.emailMemo;
+  if (richMemo.notes && !estimateQuoteState.notes) estimateQuoteState.notes = richMemo.notes;
   if (dbMemo) {
     estimateQuoteState.notes = [estimateQuoteState.notes, dbMemo].filter(Boolean).join("\n\n");
   }
@@ -1948,6 +2032,7 @@ function getEstimateQuoteDbImportRows() {
 }
 
 function openEstimateQuoteDbImportModal() {
+  migrateEstimateDbPjColumns();
   initializeEstimateDbVisibleSeedRows();
   const old = document.getElementById("estimateQuoteDbImportModal");
   if (old) old.remove();
@@ -2037,6 +2122,7 @@ const estimateDbSheets = {
         "PW",
         "기타",
         "작업공종",
+        "폴더명 / 자료위치",
         "PM(마감)",
         "PM(구조)",
         "PM(토목,조경)",
@@ -2057,10 +2143,13 @@ const estimateDbSheets = {
         "세대수",
         "수주일자",
         "작업착수일자",
+        "1차납품예정일",
         "1차납품일자",
         "1차납품공종",
+        "2차납품예정일",
         "2차납품일자",
         "2차납품공종",
+        "상담 / 이메일 / 특기사항",
         "수주시 요청사항"
       ]
     ],
@@ -2084,6 +2173,7 @@ const estimateDbSheets = {
       "",
       "",
       "드롭다운 방식 필요",
+      "프로젝트 작성 > 도면/웹하드 정보의 폴더명 / 자료위치와 연결",
       "\"PM 배정\" 카테고리에서 PM 선정되면 자동 입력 필요",
       "\"PM 배정\" 카테고리에서 PM 선정되면 자동 입력 필요",
       "\"PM 배정\" 카테고리에서 PM 선정되면 자동 입력 필요",
@@ -2107,6 +2197,9 @@ const estimateDbSheets = {
       "",
       "",
       "",
+      "",
+      "",
+      "Enter 키로 통화내용 기록, 중요 이메일 내용 기록, 견적특기사항 / 착수 조건 입력",
       "3,4차 납품공종도 계속 추가가 될 수 있게 해야함."
     ],
     "rows": [
@@ -2130,6 +2223,7 @@ const estimateDbSheets = {
         "2222",
         "guest 선택",
         "마감",
+        "260406 포항 AI DC",
         "홍00",
         "김00",
         "오00",
@@ -2175,6 +2269,7 @@ const estimateDbSheets = {
         "",
         "",
         "골조성",
+        "",
         "",
         "",
         "",
@@ -4490,6 +4585,8 @@ let estimateDbPjProjectLinkColumnEnsured = false;
 const ESTIMATE_DB_PROJECT_LINK_HEADER = "프로젝트 연결";
 let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
 let estimateDbColumnResizeMode = false;
+let estimateDbColumnReorderMode = false;
+let estimateDbColumnReorderSource = null;
 let estimateDbColumnWidthOverrides = { pj: {}, progress: {}, mep: {} };
 let estimateDbColumnResizeState = null;
 let estimateDbSearchKeyword = "";
@@ -5441,6 +5538,13 @@ function renderEstimateDbSearchBox() {
 
 function ensureEstimateDbManualSaveButton() {
   if (document.getElementById("estimateDbManualSaveBtn")) return;
+  const reorderBtn = document.getElementById("estimateDbColumnReorderBtn");
+  const reorderOkBtn = document.getElementById("estimateDbColumnReorderOkBtn");
+  if (reorderBtn) {
+    reorderBtn.textContent = estimateDbColumnReorderMode ? "열 위치 변경 중" : "열 위치 변경";
+    reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
+  }
+  if (reorderOkBtn) reorderOkBtn.style.display = estimateDbColumnReorderMode ? "inline-flex" : "none";
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   const exportBtn = Array.from(document.querySelectorAll("button")).find(btn => normalizeEstimateDbText(btn.textContent).includes("엑셀 내보내기"));
   const anchor = stageBtn || exportBtn;
@@ -5451,6 +5555,65 @@ function ensureEstimateDbManualSaveButton() {
   btn.className = "btn btn-line";
   btn.onclick = () => commitEstimateDbPendingEdits();
   anchor.parentElement.insertBefore(btn, anchor);
+}
+
+
+function migrateEstimateDbPjColumns() {
+  const sheet = estimateDbSheets?.pj;
+  if (!sheet?.headerRows?.[0]) return;
+  const desired = [
+    "년도","접수번호","PJ NO","국내/해외","거래처명","프로젝트명","부서명","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
+  ];
+  const current = sheet.headerRows[0];
+  if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
+  const oldIndex = new Map(current.map((h, i) => [h, i]));
+  const remap = row => desired.map(h => {
+    const i = oldIndex.get(h);
+    return i == null ? "" : (row?.[i] || "");
+  });
+  sheet.headerRows[0] = desired;
+  sheet.requestRow = remap(sheet.requestRow || []);
+  sheet.rows = (sheet.rows || []).map(remap);
+}
+function toggleEstimateDbColumnReorderMode() {
+  estimateDbColumnReorderMode = !estimateDbColumnReorderMode;
+  estimateDbColumnReorderSource = null;
+  if (typeof showToast === "function") showToast(estimateDbColumnReorderMode ? "열 위치 변경 모드입니다. 이동할 헤더를 드래그해 바꿀 위치에 놓고 확인을 누르세요." : "열 위치 변경 모드를 종료했습니다.");
+  renderEstimateDbManage();
+}
+function confirmEstimateDbColumnReorder() {
+  estimateDbColumnReorderMode = false;
+  estimateDbColumnReorderSource = null;
+  saveEstimateDbToStorage?.();
+  if (typeof showToast === "function") showToast("열 위치 변경을 저장했습니다.");
+  renderEstimateDbManage();
+}
+function startEstimateDbColumnReorder(event, colIndex) {
+  if (!estimateDbColumnReorderMode) return;
+  estimateDbColumnReorderSource = colIndex;
+  event.dataTransfer?.setData("text/plain", String(colIndex));
+  event.currentTarget?.classList?.add("quote-db-col-dragging");
+}
+function endEstimateDbColumnReorder(event) { event.currentTarget?.classList?.remove("quote-db-col-dragging"); }
+function allowEstimateDbColumnDrop(event) { if (estimateDbColumnReorderMode) event.preventDefault(); }
+function dropEstimateDbColumn(event, targetIndex) {
+  if (!estimateDbColumnReorderMode) return;
+  event.preventDefault();
+  const sourceIndex = Number(event.dataTransfer?.getData("text/plain") || estimateDbColumnReorderSource);
+  if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex === targetIndex) return;
+  swapEstimateDbColumns(sourceIndex, targetIndex);
+  estimateDbColumnReorderSource = null;
+  renderEstimateDbManage();
+}
+function swapEstimateDbColumns(a, b) {
+  const sheet = getEstimateDbSheet();
+  if (!sheet) return;
+  (sheet.headerRows || []).forEach(row => { const tmp = row[a]; row[a] = row[b]; row[b] = tmp; });
+  if (sheet.requestRow) { const tmp = sheet.requestRow[a]; sheet.requestRow[a] = sheet.requestRow[b]; sheet.requestRow[b] = tmp; }
+  (sheet.rows || []).forEach(row => { const tmp = row[a]; row[a] = row[b]; row[b] = tmp; });
+  const widthA = estimateDbColumnWidths[`${estimateDbActiveTab}:${a}`];
+  estimateDbColumnWidths[`${estimateDbActiveTab}:${a}`] = estimateDbColumnWidths[`${estimateDbActiveTab}:${b}`];
+  estimateDbColumnWidths[`${estimateDbActiveTab}:${b}`] = widthA;
 }
 
 function renderEstimateDbManage() {
@@ -5471,6 +5634,13 @@ function renderEstimateDbManage() {
     resizeBtn.textContent = estimateDbColumnResizeMode ? "열 조절 종료" : "열 너비 조절하기";
     resizeBtn.classList.toggle("active", estimateDbColumnResizeMode);
   }
+  const reorderBtn = document.getElementById("estimateDbColumnReorderBtn");
+  const reorderOkBtn = document.getElementById("estimateDbColumnReorderOkBtn");
+  if (reorderBtn) {
+    reorderBtn.textContent = estimateDbColumnReorderMode ? "열 위치 변경 중" : "열 위치 변경";
+    reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
+  }
+  if (reorderOkBtn) reorderOkBtn.style.display = estimateDbColumnReorderMode ? "inline-flex" : "none";
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   const sheet = getEstimateDbSheet();
@@ -5604,12 +5774,13 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const request = getEstimateDbColumnRequest(estimateDbActiveTab, colIndex);
         const dropdown = isEstimateDbDropdownCell(estimateDbActiveTab, colIndex);
         const amountCell = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex);
-        const commandCell = isEstimateDbEnterCommandCell(estimateDbActiveTab, colIndex);
+        const memoCell = isEstimateDbPjMemoColumn(estimateDbActiveTab, colIndex);
+        const commandCell = isEstimateDbEnterCommandCell(estimateDbActiveTab, colIndex) || memoCell;
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}${commandCell ? " quote-db-enter-command-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
-        const dbl = isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`)));
+        const dbl = memoCell ? `openEstimateDbPjMemoModal(${rowIndex}, ${colIndex})` : (isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`))));
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
-        const formattedDisplayValue = amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet);
+        const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
           const done = parseEstimateDbProgressDoneValue(value);
@@ -6210,6 +6381,11 @@ function handleEstimateDbKeydown(event) {
     estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex, colIndex };
     renderEstimateDbManage();
     requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbPjMemoColumn(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    openEstimateDbPjMemoModal(rowIndex, colIndex);
     return;
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbStoryCell(estimateDbActiveTab, colIndex)) {
