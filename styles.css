@@ -1,7 +1,7 @@
 :root{
   --bg:#f4f6fb;
   --panel:#ffffff;
-  --text:#6b7280;
+  --text:#111827;
   --muted:#64748b;
   --line:#e5e7eb;
   --line2:#dbe3ef;
@@ -131,9 +131,9 @@ button,input,select,textarea{font-family:inherit}
 }
 
 .side-main.active{
-  background:#6b7280;
+  background:#111827;
   color:#fff;
-  border-color:#6b7280;
+  border-color:#111827;
 }
 
 .side-sub{
@@ -384,7 +384,7 @@ tr:hover td{background:#fbfdff}
   cursor:pointer;
 }
 
-.inner-tab.active{background:#6b7280;color:#fff;border-color:#6b7280}
+.inner-tab.active{background:#111827;color:#fff;border-color:#111827}
 .detail-panel{display:none}
 .detail-panel.active{display:block}
 
@@ -9247,7 +9247,6 @@ body.checklist-target-modal-open{
   }
 }
 
-```
 
 /* === QC 대상 선택 모달: 외부 큰 세로 스크롤 제거 최종 보정 === */
 #checklistTargetModal .org-target-modal-card,
@@ -15092,7 +15091,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 :root{
   --bg:#f3f6f9;
   --panel:#ffffff;
-  --text:#6b7280;
+  --text:#111827;
   --muted:#6b7280;
   --line:#e7eaee;
   --line2:#dfe5ec;
@@ -15107,7 +15106,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 body{
   background:#f3f6f9 !important;
-  color:#6b7280;
+  color:#111827;
   font-size:14px;
 }
 
@@ -15240,17 +15239,17 @@ body{
 .side-main,.side-item{
   border-radius:12px !important;
   background:#fff !important;
-  color:#6b7280 !important;
+  color:#111827 !important;
   border:1px solid #e1e7ef !important;
   font-weight:900 !important;
 }
 .side-main:hover,.side-item:hover{border-color:#ffb26b !important;background:#fff8f1 !important;}
-.side-main.active,.side-item.active{background:#6b7280 !important;color:#fff !important;border-color:#6b7280 !important;}
+.side-main.active,.side-item.active{background:#111827 !important;color:#fff !important;border-color:#111827 !important;}
 
 .btn-primary{background:#f97316 !important;color:#fff !important;border:1px solid #f97316 !important;}
 .btn-primary:hover{background:#ea580c !important;}
 .btn-line{background:#fff !important;border:1px solid #e1e7ef !important;color:#6b7280 !important;box-shadow:0 1px 4px rgba(15,23,42,.04);}
-.inner-tab.active,.pm-filter-chip.active,.mail-filter.active{background:#6b7280 !important;border-color:#6b7280 !important;color:#fff !important;}
+.inner-tab.active,.pm-filter-chip.active,.mail-filter.active{background:#111827 !important;border-color:#111827 !important;color:#fff !important;}
 .badge.blue,.company-chip.concost,.status-pill{background:#fff4e8 !important;color:#f97316 !important;}
 .badge.green,.company-chip.vietqs{background:#e8f7ef !important;color:#12925f !important;}
 
@@ -15774,17 +15773,17 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 
 /* 프로젝트 접수 하위 카테고리 선택 보정 */
 .project-receive-side-group > .side-main.active{
-  background:#f8fafc;
-  color:#6b7280;
-  border-color:var(--line2);
+  background:#111827 !important;
+  color:#fff !important;
+  border-color:#111827 !important;
 }
 .project-receive-sub-menu.active{
   display:grid;
 }
 .project-receive-sub-menu .side-item.active{
-  background:#6b7280;
+  background:#111827;
   color:#fff;
-  border-color:#6b7280;
+  border-color:#111827;
 }
 
 /* 프로젝트 리스트 뷰어 */
@@ -16483,9 +16482,9 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   cursor: pointer;
 }
 .quote-db-tab.active {
-  background: #6b7280;
+  background: #111827;
   color: #fff;
-  border-color: #6b7280;
+  border-color: #111827;
 }
 .quote-db-grid-wrap {
   overflow: auto;
@@ -17378,8 +17377,8 @@ body.quote-db-modal-open {
    기성관리/기전업체 기준: 작업취소 | 외주금액합계 | 2차납품공종 뒤에 진한 구분선을 표시합니다. */
 .quote-db-table th.quote-db-group-boundary,
 .quote-db-table td.quote-db-group-boundary{
-  border-right:4px solid #334155!important;
-  box-shadow:inset -3px 0 0 #334155!important;
+  border-right:6px solid #cbd5e1!important;
+  box-shadow:none!important;
 }
 .quote-db-table th.quote-db-group-boundary{
   position:sticky;
@@ -17463,9 +17462,6 @@ body.quote-db-modal-open {
   border-color: #6b7280 !important;
 }
 
-```
-
-
 
 /* ===== DB관리 영역 구분선 밝은 회색 변경 ===== */
 
@@ -17546,4 +17542,41 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:#9aa0a8;
   border-radius:4px;
   z-index:20;
+}
+
+
+/* === 2026-05-22 요청 반영: 텍스트/카테고리는 검정, DB 세로 구분선만 회색 === */
+:root{
+  --text:#111827;
+}
+body{
+  color:#111827 !important;
+}
+.side-main,
+.side-item,
+.quote-db-tab{
+  color:#111827 !important;
+}
+.side-main.active,
+.side-item.active,
+.project-receive-side-group > .side-main.active,
+.project-receive-sub-menu .side-item.active,
+.inner-tab.active,
+.quote-db-tab.active{
+  background:#111827 !important;
+  border-color:#111827 !important;
+  color:#fff !important;
+}
+.quote-db-table th.quote-db-group-boundary,
+.quote-db-table td.quote-db-group-boundary{
+  border-right:6px solid #cbd5e1 !important;
+  box-shadow:none !important;
+}
+.quote-db-col-resize-handle::after,
+body.estimate-db-resizing .quote-db-col-resize-handle::after{
+  background:#cbd5e1 !important;
+  opacity:1 !important;
+}
+.quote-db-col-resize-handle:hover::after{
+  background:#94a3b8 !important;
 }
