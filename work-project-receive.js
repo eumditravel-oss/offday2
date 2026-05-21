@@ -1947,9 +1947,13 @@ function openEstimateDbPjMemoModal(rowIndex, colIndex) {
       </div>
     </div>`;
   document.body.insertAdjacentHTML("beforeend", html);
+  document.body.classList.add("quote-db-modal-open");
   requestAnimationFrame(() => document.getElementById("estimateDbPjMemoCall")?.focus());
 }
-function closeEstimateDbPjMemoModal() { document.getElementById("estimateDbPjMemoModal")?.remove(); }
+function closeEstimateDbPjMemoModal() {
+  document.getElementById("estimateDbPjMemoModal")?.remove();
+  document.body.classList.remove("quote-db-modal-open");
+}
 function saveEstimateDbPjMemoModal(rowIndex, colIndex) {
   const value = stringifyEstimateDbPjMemoCell({
     callMemo: document.getElementById("estimateDbPjMemoCall")?.value || "",
