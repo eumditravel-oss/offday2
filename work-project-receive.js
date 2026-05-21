@@ -5612,7 +5612,8 @@ function ensureEstimateDbManualSaveButton() {
     reorderBtn.textContent = estimateDbColumnReorderMode ? "열 위치 변경 중" : "열 위치 변경";
     reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
   }
-  if (reorderOkBtn) reorderOkBtn.style.display = estimateDbColumnReorderMode ? "inline-flex" : "none";
+  if (reorderOkBtn) reorderOkBtn.style.setProperty("display", estimateDbColumnReorderMode ? "inline-flex" : "none", "important");
+  bindEstimateDbColumnReorderOkButton();
   const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
   if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
@@ -5661,6 +5662,27 @@ function confirmEstimateDbColumnReorder() {
   renderEstimateDbManage();
 }
 
+function bindEstimateDbColumnReorderOkButton() {
+  const btn = document.getElementById("estimateDbColumnReorderOkBtn");
+  if (!btn) return;
+  btn.type = "button";
+  btn.style.pointerEvents = "auto";
+  btn.style.position = "relative";
+  btn.style.zIndex = "30";
+  btn.onclick = function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    confirmEstimateDbColumnReorder();
+    return false;
+  };
+  btn.onmousedown = function(event) {
+    event.stopPropagation();
+  };
+  btn.onmouseup = function(event) {
+    event.stopPropagation();
+  };
+}
+
 function startEstimateDbColumnReorder(event, colIndex) {
   if (!estimateDbColumnReorderMode) return;
   estimateDbColumnReorderSource = colIndex;
@@ -5685,6 +5707,7 @@ function startEstimateDbColumnReorderPointer(event, colIndex) {
 }
 
 function finishEstimateDbColumnReorderPointer(event) {
+  if (event?.target?.closest?.("#estimateDbColumnReorderOkBtn")) return;
   if (!estimateDbColumnReorderMode || !estimateDbColumnReorderPointerState) return;
   document.removeEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
   const state = estimateDbColumnReorderPointerState;
@@ -5771,7 +5794,8 @@ function renderEstimateDbManage() {
     reorderBtn.textContent = estimateDbColumnReorderMode ? "열 위치 변경 중" : "열 위치 변경";
     reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
   }
-  if (reorderOkBtn) reorderOkBtn.style.display = estimateDbColumnReorderMode ? "inline-flex" : "none";
+  if (reorderOkBtn) reorderOkBtn.style.setProperty("display", estimateDbColumnReorderMode ? "inline-flex" : "none", "important");
+  bindEstimateDbColumnReorderOkButton();
   const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
   if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
@@ -7285,3 +7309,16 @@ document.addEventListener("click", event => {
     }
   });
 }, true);
+
+
+(function installEstimateDbColumnReorderOkDelegatedClickInstalled(){
+  if (window.estimateDbColumnReorderOkDelegatedClickInstalled) return;
+  window.estimateDbColumnReorderOkDelegatedClickInstalled = true;
+  document.addEventListener("click", function(event){
+    const btn = event.target?.closest?.("#estimateDbColumnReorderOkBtn");
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof confirmEstimateDbColumnReorder === "function") confirmEstimateDbColumnReorder();
+  }, true);
+})();
