@@ -1879,18 +1879,9 @@ function setEstimateQuoteScopeByDbWorkType(workType) {
 function mergeEstimateQuoteDbMemo(row) {
   const parts = [];
   const request = getEstimateDbPjCell(row, "수주시 요청사항");
-  const workType = getEstimateDbPjCell(row, "작업공종");
-  const workCategory = getEstimateDbPjCell(row, "작업구분");
-  const businessType = getEstimateDbPjCell(row, "업무성격");
-  const businessStage = getEstimateDbPjCell(row, "업무단계2");
-  const unitWork = getEstimateDbPjCell(row, "단가작업여부");
-  const delivery1 = [getEstimateDbPjCell(row, "1차납품일자"), getEstimateDbPjCell(row, "1차납품공종")].filter(Boolean).join(" / ");
-  const delivery2 = [getEstimateDbPjCell(row, "2차납품일자"), getEstimateDbPjCell(row, "2차납품공종")].filter(Boolean).join(" / ");
+
   if (request) parts.push(`수주시 요청사항: ${request}`);
-  if (workType) parts.push(`작업공종: ${workType}`);
-  if (workCategory || businessType || businessStage || unitWork) parts.push(`작업정보: ${[workCategory, businessType, businessStage, unitWork].filter(Boolean).join(" / ")}`);
-  if (delivery1) parts.push(`1차 납품: ${delivery1}`);
-  if (delivery2) parts.push(`2차 납품: ${delivery2}`);
+
   return parts.join("\n");
 }
 
