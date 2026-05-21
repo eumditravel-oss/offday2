@@ -16919,3 +16919,34 @@ body.estimate-db-resizing{
 .quote-db-row-complete .quote-db-done-history{
   color:#334155;
 }
+
+
+/* === DB관리 v33: 월별 목표 모달 스크롤/입력 정렬 보정 === */
+.estimate-db-sales-target-box{
+  width:min(760px,calc(100vw - 40px));
+  max-height:min(82vh,760px);
+  overflow:auto;
+  box-sizing:border-box;
+}
+#estimateDbSalesTargetGrid{
+  align-items:start;
+}
+#estimateDbSalesTargetGrid .estimate-db-amount-label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+  font-size:13px;
+  font-weight:900;
+  color:#334155;
+}
+#estimateDbSalesTargetGrid .estimate-db-sales-target-input{
+  width:100%;
+  min-width:0;
+  height:44px;
+  box-sizing:border-box;
+  border-radius:12px;
+}
+@media (max-width:720px){
+  #estimateDbSalesTargetGrid{grid-template-columns:1fr!important;}
+}
