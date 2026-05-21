@@ -17152,14 +17152,14 @@ body.quote-db-modal-open {
 }
 .quote-db-command-wrap .quote-db-cell-input {
   width: 100%;
-  padding-right: 30px !important;
+  padding-right: 32px !important;
 }
 .quote-db-command-open-btn {
   position: absolute;
-  right: 8px;
+  right: 0;
   top: 50%;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 32px;
   transform: translateY(-50%);
   border: 0;
   background: transparent;
@@ -17167,29 +17167,22 @@ body.quote-db-modal-open {
   z-index: 4;
   padding: 0;
 }
-.quote-db-command-open-btn span,
-.quote-db-command-open-btn::before,
-.quote-db-command-open-btn::after {
+.quote-db-command-open-btn::before {
   content: "";
   position: absolute;
-  left: 2px;
-  top: 8px;
-  width: 15px;
-  height: 4px;
-  border-radius: 999px;
-  background: #f20f0f;
-  transform-origin: center;
+  right: 0;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: translateY(-50%);
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-right: 22px solid #f20f0f;
 }
-.quote-db-command-open-btn::before {
-  transform: rotate(45deg);
-}
-.quote-db-command-open-btn::after {
-  transform: rotate(-45deg);
-}
+.quote-db-command-open-btn::after,
 .quote-db-command-open-btn span {
   display: none;
 }
-.quote-db-command-open-btn:hover::before,
-.quote-db-command-open-btn:hover::after {
-  background: #c90000;
+.quote-db-command-open-btn:hover::before {
+  border-right-color: #c90000;
 }
