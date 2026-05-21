@@ -17462,3 +17462,41 @@ body.quote-db-modal-open {
   background: #6b7280 !important;
   border-color: #6b7280 !important;
 }
+
+```
+
+
+
+/* ===== DB관리 영역 구분선 밝은 회색 변경 ===== */
+
+.db-divider,
+.db-section-divider,
+td.divider-cell,
+th.divider-cell{
+  background:#9ca3af !important;
+  border-color:#9ca3af !important;
+}
+
+/* PJ관리 프로젝트명 ↔ 부서명 구분선 */
+.pj-table td:nth-child(7),
+.pj-table th:nth-child(7){
+  border-left:6px solid #9ca3af !important;
+}
+
+/* 기성관리 작업공종 구분선 */
+.gisung-table td:nth-child(6),
+.gisung-table th:nth-child(6){
+  border-left:6px solid #9ca3af !important;
+}
+
+/* 기전업체 작업구분 구분선 */
+.machine-table td:nth-child(5),
+.machine-table th:nth-child(5){
+  border-left:6px solid #9ca3af !important;
+}
+
+/* 연도별 수주 데이터 구분선 */
+.sales-table td:nth-child(7),
+.sales-table th:nth-child(7){
+  border-left:6px solid #9ca3af !important;
+}
