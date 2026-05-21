@@ -17048,3 +17048,49 @@ body.estimate-db-resizing{
   font-size: 12px;
   font-weight: 800;
 }
+
+
+.quote-db-sortable-head.reorder-mode {
+  cursor: grab;
+  background: #fff7ed;
+  outline: 1px dashed #fb923c;
+}
+.quote-db-sortable-head.quote-db-col-dragging {
+  opacity: .55;
+  cursor: grabbing;
+}
+.estimate-db-reorder-btn.active,
+.estimate-db-reorder-ok-btn {
+  box-shadow: 0 8px 20px rgba(37, 99, 235, .18);
+}
+.quote-db-pj-memo-modal {
+  width: min(980px, calc(100vw - 48px));
+}
+.quote-db-pj-memo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.quote-db-pj-memo-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 800;
+  color: #111827;
+}
+.quote-db-pj-memo-grid label.wide {
+  grid-column: 1 / -1;
+}
+.quote-db-pj-memo-grid textarea {
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+  outline: none;
+}
+.quote-db-pj-memo-grid label.wide textarea {
+  min-height: 150px;
+}
