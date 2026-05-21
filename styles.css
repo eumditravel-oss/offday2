@@ -17303,17 +17303,54 @@ body.quote-db-modal-open {
   background:transparent !important;
 }
 .quote-db-command-open-btn::before{
+  content:"" !important;
+  position:absolute !important;
   right:0 !important;
-  top:50% !important;
-  transform:translateY(-50%) !important;
-  border-top:10px solid transparent !important;
-  border-bottom:10px solid transparent !important;
-  border-right:16px solid #f97316 !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:12px !important;
+  height:auto !important;
+  transform:none !important;
+  border:0 !important;
+  background:#f97316 !important;
+  border-radius:0 !important;
 }
 .quote-db-command-open-btn:hover::before{
-  border-right-color:#ea580c !important;
+  background:#ea580c !important;
 }
 .quote-db-table tr.quote-db-row-complete input,
 .quote-db-table tr.quote-db-row-complete textarea{
   background:transparent !important;
+}
+
+
+
+/* === DB관리 v36: Enter 특수옵션 표시를 삼각형에서 주황색 띠지로 변경 === */
+.quote-db-command-open-btn{
+  width:14px !important;
+  right:0 !important;
+  overflow:hidden !important;
+}
+.quote-db-command-open-btn::before{
+  content:"" !important;
+  position:absolute !important;
+  right:0 !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:10px !important;
+  height:auto !important;
+  transform:none !important;
+  border:0 !important;
+  background:#f97316 !important;
+  border-radius:0 !important;
+}
+.quote-db-command-open-btn::after,
+.quote-db-command-open-btn span{
+  display:none !important;
+}
+.quote-db-command-open-btn:hover::before{
+  background:#ea580c !important;
+}
+.quote-db-command-wrap .quote-db-cell-input{
+  padding-right:18px !important;
 }
