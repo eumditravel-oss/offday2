@@ -17140,32 +17140,37 @@ body.quote-db-modal-open {
   margin-top: 16px;
 }
 
-/* DB관리 Enter 명령 셀: 클릭형 열기 아이콘 */
+/* DB관리 Enter 명령 셀: 클릭형 열기 삼각 표시 */
 .quote-db-command-td {
   position: relative;
+  overflow: hidden;
 }
 .quote-db-command-wrap {
   position: relative;
   display: flex;
   align-items: stretch;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 10px;
 }
 .quote-db-command-wrap .quote-db-cell-input {
   width: 100%;
-  padding-right: 32px !important;
+  padding-right: 28px !important;
 }
 .quote-db-command-open-btn {
   position: absolute;
-  right: 0;
+  right: 1px;
   top: 50%;
-  width: 28px;
-  height: 32px;
+  width: 21px;
+  height: 30px;
   transform: translateY(-50%);
   border: 0;
   background: transparent;
   cursor: pointer;
   z-index: 4;
   padding: 0;
+  overflow: hidden;
 }
 .quote-db-command-open-btn::before {
   content: "";
@@ -17175,14 +17180,14 @@ body.quote-db-modal-open {
   width: 0;
   height: 0;
   transform: translateY(-50%);
-  border-top: 11px solid transparent;
-  border-bottom: 11px solid transparent;
-  border-right: 22px solid #f20f0f;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 16px solid #f97316;
 }
 .quote-db-command-open-btn::after,
 .quote-db-command-open-btn span {
   display: none;
 }
 .quote-db-command-open-btn:hover::before {
-  border-right-color: #c90000;
+  border-right-color: #ea580c;
 }
