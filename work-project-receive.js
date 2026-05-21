@@ -1567,8 +1567,8 @@ function ensureProjectReceiveListViewerModal() {
 
 
 /* =========================================================
-   견적서 관리 v1
-   - 견적서 작성 / 견적서 관리 세부 카테고리
+   프로젝트 관리 v1
+   - 프로젝트 작성 / 프로젝트 관리 세부 카테고리
    - 견적 기록 저장, 수정, 프로젝트 접수 화면 불러오기
    - 업로드된 견적서 XLSX 양식 다운로드
 ========================================================= */
@@ -1764,7 +1764,7 @@ function resetEstimateQuoteForm() {
   estimateQuoteState = JSON.parse(JSON.stringify(estimateQuoteDefaultData));
   estimateQuoteEditingIndex = null;
   renderEstimateQuoteDashboard();
-  showToast("견적서 작성 화면을 초기화했습니다.");
+  showToast("프로젝트 작성 화면을 초기화했습니다.");
 }
 function loadEstimateQuoteSample() {
   estimateQuoteState = JSON.parse(JSON.stringify(estimateQuoteSampleData));
@@ -1832,11 +1832,11 @@ function startProjectFromEstimateQuote(index) {
     floors: row.floors,
     basementFloors: parsed.basementFloors,
     groundFloors: parsed.groundFloors,
-    unitPrice: "견적서 관리에서 착수 전환",
+    unitPrice: "프로젝트 관리에서 착수 전환",
     scopes: JSON.parse(JSON.stringify(row.scopes || projectReceiveDefaultData.scopes)),
     contacts: [{ name: row.requesterName, role: row.requesterDept, dept: "", tel: row.requesterPhone, mobile: row.requesterPhone, email: row.requesterEmail }],
-    materials: createProjectReceiveDummyMaterials("견적서 관리"),
-    workContent: `견적서 관리에서 착수 전환: ${row.structureContract || "구조 계약 미입력"} / ${row.finishContract || "마감 계약 미입력"}`,
+    materials: createProjectReceiveDummyMaterials("프로젝트 관리"),
+    workContent: `프로젝트 관리에서 착수 전환: ${row.structureContract || "구조 계약 미입력"} / ${row.finishContract || "마감 계약 미입력"}`,
     notes: row.notes,
     request: [row.callMemo, row.emailMemo, row.downloadUrl ? `자료주소: ${row.downloadUrl} / ID: ${row.webhardId} / PW: ${row.webhardPw} / KEY: ${row.accessKey}` : ""].filter(Boolean).join("\n\n")
   }));
@@ -1867,7 +1867,7 @@ function downloadEstimateQuoteTemplate() {
 
 
 /* =========================================================
-   견적서 관리 > DB관리 / 연도별 0~3 시트 연결 화면 v12
+   프로젝트 관리 > DB관리 / 연도별 0~3 시트 연결 화면 v12
    - DB_프로젝트 / DB_기성 / DB기전외주 형식 적용
    - DB 값을 기준으로 0.수주매출입금, 1.수주 프로젝트, 2.매출 프로젝트, 3.입금 프로젝트 산출
    - 연도별 화면 조회 및 Excel XML 다중 시트 내보내기 지원
