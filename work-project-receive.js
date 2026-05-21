@@ -7322,3 +7322,60 @@ document.addEventListener("click", event => {
     if (typeof confirmEstimateDbColumnReorder === "function") confirmEstimateDbColumnReorder();
   }, true);
 })();
+
+/* Final hard fix: DB column reorder confirm button click guard */
+(function installEstimateDbReorderConfirmHardFix(){
+  if (window.__estimateDbReorderConfirmHardFixInstalled) return;
+  window.__estimateDbReorderConfirmHardFixInstalled = true;
+
+  function getConfirmBtn(){
+    return document.getElementById("estimateDbColumnReorderOkBtn");
+  }
+
+  function isPointInsideBtn(event, btn){
+    if (!btn || event.clientX == null || event.clientY == null) return false;
+    const rect = btn.getBoundingClientRect();
+    return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+  }
+
+  function forceConfirm(event){
+    if (!window.estimateDbColumnReorderMode && typeof estimateDbColumnReorderMode !== "undefined" && !estimateDbColumnReorderMode) return false;
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+    }
+    if (typeof confirmEstimateDbColumnReorder === "function") {
+      confirmEstimateDbColumnReorder();
+      return true;
+    }
+    return false;
+  }
+
+  function handleAnyPointer(event){
+    const btn = getConfirmBtn();
+    if (!btn) return;
+    const direct = event.target?.closest?.("#estimateDbColumnReorderOkBtn");
+    const inside = isPointInsideBtn(event, btn);
+    if (direct || inside) forceConfirm(event);
+  }
+
+  ["pointerdown", "mousedown", "mouseup", "click"].forEach(type => {
+    document.addEventListener(type, handleAnyPointer, true);
+  });
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #estimateDbColumnReorderOkBtn {
+      position: relative !important;
+      z-index: 2147483647 !important;
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+    .quote-db-col-dragging,
+    .quote-db-col-reorder-mode th {
+      pointer-events: auto !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
