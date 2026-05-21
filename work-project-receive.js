@@ -7387,3 +7387,114 @@ document.addEventListener("click", event => {
   `;
   document.head.appendChild(style);
 })();
+
+
+/* =========================================================
+   FIX: DB관리 열 위치 변경 확인 버튼 종료 보정
+   - 열 위치 변경 중 상태는 그대로 유지 버튼 역할만 수행
+   - 실제 종료/저장은 확인 버튼에서만 처리
+   - 다른 요소가 버튼 위를 덮어도 좌표 기준으로 확인 버튼 클릭을 감지
+========================================================= */
+(function installEstimateDbColumnReorderConfirmFinalPatch(){
+  if (window.__estimateDbColumnReorderConfirmFinalPatchInstalled) return;
+  window.__estimateDbColumnReorderConfirmFinalPatchInstalled = true;
+
+  function isReorderModeOn(){
+    try { return typeof estimateDbColumnReorderMode !== "undefined" && !!estimateDbColumnReorderMode; }
+    catch (error) { return false; }
+  }
+
+  function getVisibleConfirmButtons(){
+    return Array.from(document.querySelectorAll("#estimateDbColumnReorderOkBtn, button"))
+      .filter(btn => {
+        const text = (btn.textContent || "").trim();
+        if (btn.id !== "estimateDbColumnReorderOkBtn" && text !== "확인") return false;
+        const rect = btn.getBoundingClientRect();
+        const style = window.getComputedStyle(btn);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      });
+  }
+
+  function isInsideButton(event, btn){
+    if (!event || event.clientX == null || event.clientY == null || !btn) return false;
+    const rect = btn.getBoundingClientRect();
+    return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+  }
+
+  function findConfirmButtonFromEvent(event){
+    const direct = event?.target?.closest?.("#estimateDbColumnReorderOkBtn");
+    if (direct) return direct;
+    return getVisibleConfirmButtons().find(btn => isInsideButton(event, btn));
+  }
+
+  window.forceEstimateDbColumnReorderConfirm = function(event){
+    if (!isReorderModeOn()) return false;
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+    }
+
+    estimateDbColumnReorderMode = false;
+    estimateDbColumnReorderSource = null;
+    estimateDbColumnReorderPointerState = null;
+    document.removeEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
+
+    if (typeof saveEstimateDbToStorage === "function") saveEstimateDbToStorage();
+    if (typeof updateEstimateDbSaveButtonState === "function") updateEstimateDbSaveButtonState();
+    if (typeof showToast === "function") showToast("열 위치 변경을 저장했습니다.");
+    if (typeof renderEstimateDbManage === "function") renderEstimateDbManage();
+    return true;
+  };
+
+  const originalConfirm = typeof confirmEstimateDbColumnReorder === "function" ? confirmEstimateDbColumnReorder : null;
+  confirmEstimateDbColumnReorder = function(){
+    if (isReorderModeOn()) return window.forceEstimateDbColumnReorderConfirm();
+    if (originalConfirm) return originalConfirm();
+    return false;
+  };
+
+  function handleConfirmPointer(event){
+    if (!isReorderModeOn()) return;
+    const btn = findConfirmButtonFromEvent(event);
+    if (!btn) return;
+    window.forceEstimateDbColumnReorderConfirm(event);
+  }
+
+  ["pointerdown", "mousedown", "mouseup", "click"].forEach(type => {
+    document.addEventListener(type, handleConfirmPointer, true);
+  });
+
+  const originalToggle = typeof toggleEstimateDbColumnReorderMode === "function" ? toggleEstimateDbColumnReorderMode : null;
+  toggleEstimateDbColumnReorderMode = function(){
+    if (isReorderModeOn()) {
+      if (typeof showToast === "function") showToast("열 위치 변경 모드입니다. 종료하려면 확인 버튼을 누르세요.");
+      return false;
+    }
+    return originalToggle ? originalToggle.apply(this, arguments) : false;
+  };
+
+  function bindCurrentConfirmButton(){
+    const btn = document.getElementById("estimateDbColumnReorderOkBtn");
+    if (!btn) return;
+    btn.type = "button";
+    btn.style.setProperty("pointer-events", "auto", "important");
+    btn.style.setProperty("position", "relative", "important");
+    btn.style.setProperty("z-index", "2147483647", "important");
+    btn.onpointerdown = window.forceEstimateDbColumnReorderConfirm;
+    btn.onmousedown = window.forceEstimateDbColumnReorderConfirm;
+    btn.onclick = window.forceEstimateDbColumnReorderConfirm;
+  }
+
+  const originalRender = typeof renderEstimateDbManage === "function" ? renderEstimateDbManage : null;
+  if (originalRender) {
+    renderEstimateDbManage = function(){
+      const result = originalRender.apply(this, arguments);
+      bindCurrentConfirmButton();
+      return result;
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", bindCurrentConfirmButton);
+  setTimeout(bindCurrentConfirmButton, 0);
+})();
