@@ -5647,9 +5647,17 @@ function migrateEstimateDbPjColumns() {
   sheet.rows = (sheet.rows || []).map(remap);
 }
 function toggleEstimateDbColumnReorderMode() {
-  estimateDbColumnReorderMode = !estimateDbColumnReorderMode;
+  // "열 위치 변경 중" 버튼은 편집모드 재진입/상태표시 용도로만 사용합니다.
+  // 편집모드 종료와 저장은 반드시 "확인" 버튼에서만 처리합니다.
+  if (estimateDbColumnReorderMode) {
+    estimateDbColumnReorderSource = null;
+    if (typeof showToast === "function") showToast("열 위치 변경 모드입니다. 종료하려면 확인 버튼을 누르세요.");
+    renderEstimateDbManage();
+    return;
+  }
+  estimateDbColumnReorderMode = true;
   estimateDbColumnReorderSource = null;
-  if (typeof showToast === "function") showToast(estimateDbColumnReorderMode ? "열 위치 변경 모드입니다. 이동할 헤더를 드래그해 바꿀 위치에 놓고 확인을 누르세요." : "열 위치 변경 모드를 종료했습니다.");
+  if (typeof showToast === "function") showToast("열 위치 변경 모드입니다. 이동할 헤더를 드래그해 바꿀 위치에 놓고 확인을 누르세요.");
   renderEstimateDbManage();
 }
 function confirmEstimateDbColumnReorder() {
