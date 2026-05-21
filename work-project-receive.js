@@ -4591,6 +4591,7 @@ let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
 let estimateDbColumnResizeMode = false;
 let estimateDbColumnReorderMode = false;
 let estimateDbColumnReorderSource = null;
+let estimateDbRowHeightPx = Math.max(28, Math.min(120, Number(localStorage.getItem("estimateDbRowHeightPx") || 44)));
 let estimateDbColumnWidthOverrides = { pj: {}, progress: {}, mep: {} };
 let estimateDbColumnResizeState = null;
 let estimateDbSearchKeyword = "";
@@ -5103,6 +5104,21 @@ function makeEstimateDbCellStyle(colIndex, sheet = getEstimateDbSheet()) {
   const width = getEstimateDbColumnWidth(colIndex, sheet, estimateDbActiveTab);
   return `style="min-width:${width}px;width:${width}px;max-width:${width}px;"`;
 }
+
+function openEstimateDbRowHeightPrompt() {
+  const current = Number(estimateDbRowHeightPx) || 44;
+  const input = prompt("DB관리 행 세로길이를 px 단위로 입력하세요.\n예: 44, 52, 60", String(current));
+  if (input == null) return;
+  const next = Math.round(Number(String(input).replace(/[^0-9.]/g, "")));
+  if (!Number.isFinite(next) || next < 28 || next > 120) {
+    if (typeof showToast === "function") showToast("행 세로길이는 28~120px 사이로 입력해 주세요.");
+    return;
+  }
+  estimateDbRowHeightPx = next;
+  localStorage.setItem("estimateDbRowHeightPx", String(next));
+  renderEstimateDbManage();
+  if (typeof showToast === "function") showToast(`DB관리 행 세로길이를 ${next}px로 변경했습니다.`);
+}
 function toggleEstimateDbColumnResizeMode() {
   estimateDbColumnResizeMode = !estimateDbColumnResizeMode;
   renderEstimateDbManage();
@@ -5596,6 +5612,8 @@ function ensureEstimateDbManualSaveButton() {
     reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
   }
   if (reorderOkBtn) reorderOkBtn.style.display = estimateDbColumnReorderMode ? "inline-flex" : "none";
+  const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
+  if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   const exportBtn = Array.from(document.querySelectorAll("button")).find(btn => normalizeEstimateDbText(btn.textContent).includes("엑셀 내보내기"));
   const anchor = stageBtn || exportBtn;
@@ -5692,9 +5710,12 @@ function renderEstimateDbManage() {
     reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
   }
   if (reorderOkBtn) reorderOkBtn.style.display = estimateDbColumnReorderMode ? "inline-flex" : "none";
+  const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
+  if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   const sheet = getEstimateDbSheet();
+  document.querySelectorAll(".quote-db-table").forEach(table => table.style.setProperty("--estimate-db-row-height", `${estimateDbRowHeightPx}px`));
   const colCount = getEstimateDbLeafColumns(sheet).length;
   const displayColumns = getEstimateDbDisplayColumns(sheet);
   const sort = getEstimateDbEffectiveSortState(estimateDbActiveTab);
@@ -5702,7 +5723,11 @@ function renderEstimateDbManage() {
     <tr class="quote-db-head-row quote-db-head-row-1 quote-db-head-row-merged">
       ${displayColumns.map((col, colIndex) => {
         const sortMark = sort.colIndex === colIndex ? (sort.direction === "asc" ? " ▲" : " ▼") : "";
-        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}" onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
+        const reorderClass = estimateDbColumnReorderMode ? " reorder-mode" : "";
+        const reorderAttrs = estimateDbColumnReorderMode
+          ? `draggable="true" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="드래그해서 다른 헤더 위치에 놓으면 열 위치가 서로 바뀝니다."`
+          : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
@@ -5725,7 +5750,7 @@ function renderEstimateDbTotalRow(sheet, colCount) {
   const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + getEstimateDbNumericValueForTotal(row, colIndex, tabName, sheet), 0));
   const formatTotal = (value, colIndex) => value ? formatEstimateDbMoneyDisplay(value, sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
   return `
-    <tr class="quote-db-total-row">
+    <tr class="quote-db-total-row" style="height:${estimateDbRowHeightPx}px;">
       <td class="quote-db-total-label" colspan="4">합계</td>
       ${Array.from({ length: Math.max(0, colCount - 4) }, (_, offset) => {
         const colIndex = offset + 4;
@@ -5820,7 +5845,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
   const safeRow = Array.from({ length: colCount }, (_, i) => row?.[i] || "");
   const doneRowClass = isEstimateDbProgressDoneRow(row) ? " quote-db-row-complete" : "";
   return `
-    <tr class="quote-db-data-row${doneRowClass}" data-row-index="${rowIndex}">
+    <tr class="quote-db-data-row${doneRowClass}" data-row-index="${rowIndex}" style="height:${estimateDbRowHeightPx}px;">
       ${safeRow.map((value, colIndex) => {
         const request = getEstimateDbColumnRequest(estimateDbActiveTab, colIndex);
         const dropdown = isEstimateDbDropdownCell(estimateDbActiveTab, colIndex);
