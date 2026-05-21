@@ -17516,3 +17516,9 @@ th.divider-cell{
 body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:#94a3b8!important;
 }
+
+
+/* DB관리 표 세로 구분선 색상 회색 변경 */
+.quote-db-manage-col {
+  box-shadow: -6px 0 0 #c4c9d1 !important;
+}
