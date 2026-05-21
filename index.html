@@ -757,11 +757,11 @@
           <aside class="side-nav">
             <div class="side-title">업무관리 좌측 카테고리</div>
             <div class="side-group estimate-quote-side-group">
-              <button class="side-main active" data-work-main="estimateDbManage">견적서 관리</button>
+              <button class="side-main active" data-work-main="estimateDbManage">프로젝트 관리</button>
               <div class="side-sub active estimate-quote-sub-menu">
                 <button class="side-item active" data-work-main="estimateDbManage">DB관리</button>
-                <button class="side-item" data-work-main="estimateQuote">견적서 작성</button>
-                <button class="side-item" data-work-main="estimateQuoteList">견적서 관리</button>
+                <button class="side-item" data-work-main="estimateQuote">프로젝트 작성</button>
+                <button class="side-item" data-work-main="estimateQuoteList">프로젝트 관리</button>
               </div>
             </div>
             <div class="side-group project-receive-side-group">
@@ -791,7 +791,7 @@
                 <div class="project-receive-hero quote-hero">
                   <div>
                     <h2>DB관리</h2>
-                    <p class="subcopy">견적서 작성에 사용할 기준 DB를 엑셀 형식으로 관리합니다. 세부 구분명은 추후 지정 기준에 맞춰 확장합니다.</p>
+                    <p class="subcopy">프로젝트 작성에 사용할 기준 DB를 엑셀 형식으로 관리합니다. 세부 구분명은 추후 지정 기준에 맞춰 확장합니다.</p>
                   </div>
                   <div class="project-receive-actions">
                     <button class="btn btn-line" type="button" onclick="renderEstimateDbManage()">새로고침</button>
@@ -849,7 +849,7 @@
               <article class="quote-shell" id="estimateQuoteShell">
                 <div class="project-receive-hero quote-hero">
                   <div>
-                    <h2>견적서 작성</h2>
+                    <h2>프로젝트 작성</h2>
                     <p class="subcopy">최초 견적 문의 내용을 기록하고, 착수 확정 시 프로젝트 작성 화면으로 불러올 수 있습니다.</p>
                   </div>
                   <div class="project-receive-actions">
@@ -914,13 +914,13 @@
               <article class="quote-shell quote-list-shell">
                 <div class="project-receive-hero quote-hero">
                   <div>
-                    <h2>견적서 관리</h2>
+                    <h2>프로젝트 관리</h2>
                     <p class="subcopy">견적 기록을 수정하고, 담당자 요청 시 견적서 양식을 다운로드합니다.</p>
                   </div>
                   <div class="project-receive-actions">
                     <button class="btn btn-line" type="button" onclick="renderEstimateQuoteList()">새로고침</button>
                     <button class="btn btn-line" type="button" onclick="downloadEstimateQuoteTemplate()">견적서 양식 다운로드</button>
-                    <button class="btn btn-primary" type="button" onclick="switchWorkPanel('estimateQuote')">+ 견적서 작성</button>
+                    <button class="btn btn-primary" type="button" onclick="switchWorkPanel('estimateQuote')">+ 프로젝트 작성</button>
                   </div>
                 </div>
                 <article class="project-list-card">
