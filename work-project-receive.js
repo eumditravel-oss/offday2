@@ -1611,7 +1611,7 @@ const estimateQuoteDefaultData = {
   callMemo: "",
   emailMemo: "",
   notes: "",
-  status: "견적작성중"
+  status: "작성중"
 };
 
 const estimateQuoteSampleData = {
@@ -1650,7 +1650,7 @@ const estimateQuoteSampleData = {
   callMemo: "26/05/14 0차 구조라고 표현한 이유 확인. 구조 선착수 일정은 5/18, 1차 구조/마감 착수는 5/29 목표로 공유됨. 일정 변경 시 견적서 회신 요청.",
   emailMemo: "아래 프로젝트 적산 가능여부 문의. 포항 AI 데이터센터, 연면적 19,460㎡(5,887평), 적산범위 마감 2회 구조 2회 VE 적산 1회. 웹하드 접속 정보 및 폴더 접속KEY 공유.",
   notes: "도면 수령 후 구조 적산 선 투입 요청. 가능여부 및 일정 변경 요청 필요 시 회신.",
-  status: "견적작성중"
+  status: "작성중"
 };
 
 let estimateQuoteState = JSON.parse(JSON.stringify(estimateQuoteDefaultData));
@@ -1744,10 +1744,21 @@ function syncEstimateQuoteInputsToState() {
   estimateQuoteState.emailMemo = getEstimateQuoteValue("quoteEmailMemo");
   estimateQuoteState.notes = getEstimateQuoteValue("quoteNotes");
 }
+function validateEstimateQuoteSkeletonScope() {
+  const skeleton = (estimateQuoteState.scopes || []).find(item => item.label === "골조성");
+  if (!skeleton || !skeleton.checked) return true;
+  return (skeleton.children || []).some(child => child.checked);
+}
+
 function saveEstimateQuoteDraft() {
   syncEstimateQuoteInputsToState();
+  if (!validateEstimateQuoteSkeletonScope()) {
+    showToast("골조성을 선택한 경우 가설, 단열, 견출, 방수턱 중 최소 1개를 선택해야 프로젝트 저장이 가능합니다.");
+    renderEstimateQuoteScopeChips();
+    return;
+  }
   if (!estimateQuoteState.projectName) {
-    showToast("프로젝트명을 입력해야 견적서를 저장할 수 있습니다.");
+    showToast("프로젝트명을 입력해야 프로젝트를 저장할 수 있습니다.");
     return;
   }
   const record = JSON.parse(JSON.stringify(estimateQuoteState));
@@ -1757,7 +1768,7 @@ function saveEstimateQuoteDraft() {
     estimateQuoteRecords[estimateQuoteEditingIndex] = record;
   }
   estimateQuoteEditingIndex = null;
-  showToast("견적서 기록을 저장했습니다.");
+  showToast("프로젝트 기록을 저장했습니다.");
   switchWorkPanel("estimateQuoteList");
 }
 function resetEstimateQuoteForm() {
@@ -1780,7 +1791,7 @@ function renderEstimateQuoteList() {
   const rows = estimateQuoteRecords.filter(row => {
     const scopeText = (row.scopes || []).map(estimateQuoteScopeText).filter(Boolean).join(" ");
     const hay = [row.projectNo, row.projectName, row.client, row.requesterName, scopeText, row.areaM2, row.areaPy].join(" ").toLowerCase();
-    return (!keyword || hay.includes(keyword)) && (status === "전체" || row.status === status);
+    return (!keyword || hay.includes(keyword)) && (status === "전체" || row.status === status || (status === "작성중" && row.status === "견적작성중"));
   });
   body.innerHTML = rows.map(row => {
     const index = estimateQuoteRecords.indexOf(row);
@@ -1794,7 +1805,7 @@ function renderEstimateQuoteList() {
       <td>${row.floors || "-"}</td>
       <td>${scopeText}</td>
       <td>${row.requesterName || "-"}<br><small>${row.requesterEmail || ""}</small></td>
-      <td><span class="quote-status-badge">${row.status || "견적작성중"}</span></td>
+      <td><span class="quote-status-badge">${row.status || "작성중"}</span></td>
       <td class="quote-action-cell" onclick="event.stopPropagation();">
         <button class="btn btn-line btn-xs" type="button" onclick="editEstimateQuoteRecord(${index})">수정</button>
         <button class="btn btn-line btn-xs" type="button" onclick="markEstimateQuoteSent(${index})">발송</button>
@@ -5812,7 +5823,7 @@ function renderEstimateDbManage() {
         const reorderAttrs = estimateDbColumnReorderMode
           ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="헤더를 좌클릭 드래그해서 바꿀 열 위치에 놓으면 두 열이 서로 바뀝니다."`
           : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
-        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
@@ -5943,16 +5954,21 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
+        const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex);
+        const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
           const done = parseEstimateDbProgressDoneValue(value);
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
         }
         if (amountCell) {
           const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
         }
         const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}"><div class="quote-db-command-wrap"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" />${opener}</div></td>`;
+        if (wrapTextCell) {
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-wrap-text-td${commandCell ? " quote-db-command-td" : ""}${cellExtraClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass} quote-db-wrap-text-cell" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
+        }
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}"><div class="quote-db-command-wrap"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" />${opener}</div></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
@@ -6095,8 +6111,25 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
   return true;
 }
 
+let estimateDbContactDetailsCollapsed = false;
+
+function isEstimateDbContactDetailColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "pj") return false;
+  const name = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  return ["직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2"].includes(name);
+}
+
+function getEstimateDbContactDetailClass(tab = estimateDbActiveTab, colIndex = 0) {
+  return estimateDbContactDetailsCollapsed && isEstimateDbContactDetailColumn(tab, colIndex) ? " quote-db-contact-detail-collapsed" : "";
+}
+
+function toggleEstimateDbContactDetailColumns() {
+  estimateDbContactDetailsCollapsed = !estimateDbContactDetailsCollapsed;
+  renderEstimateDbManage();
+}
+
 const ESTIMATE_DB_CONTACT_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2"];
-const ESTIMATE_DB_CONTACT_FIELDS = ["name", "role", "tel", "mobile", "direct", "email", "email2"];
+const ESTIMATE_DB_CONTACT_FIELDS = ["name", "role", "tel", "mobile", "direct", "email", "email2", "note"];
 
 function isEstimateDbContactColumn(tab = estimateDbActiveTab, colIndex = 0) {
   return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "거래처담당자";
@@ -6118,7 +6151,8 @@ function getEstimateDbRowContacts(row) {
     mobile: idx["휴대폰"] >= 0 ? row[idx["휴대폰"]] || "" : "",
     direct: idx["직통전화"] >= 0 ? row[idx["직통전화"]] || "" : "",
     email: idx["EMAIL"] >= 0 ? row[idx["EMAIL"]] || "" : "",
-    email2: idx["EMAIL2"] >= 0 ? row[idx["EMAIL2"]] || "" : ""
+    email2: idx["EMAIL2"] >= 0 ? row[idx["EMAIL2"]] || "" : "",
+    note: ""
   };
   return Object.values(first).some(value => normalizeEstimateDbText(value)) ? [first] : [];
 }
@@ -6133,7 +6167,8 @@ function setEstimateDbRowContacts(row, contacts) {
       mobile: normalizeEstimateDbText(contact.mobile),
       direct: normalizeEstimateDbText(contact.direct),
       email: normalizeEstimateDbText(contact.email),
-      email2: normalizeEstimateDbText(contact.email2)
+      email2: normalizeEstimateDbText(contact.email2),
+      note: normalizeEstimateDbText(contact.note)
     }))
     .filter(contact => Object.values(contact).some(Boolean))
     .slice(0, 10);
@@ -6170,12 +6205,13 @@ function ensureEstimateDbContactModal() {
       <div class="estimate-db-contact-grid-wrap">
         <table class="estimate-db-contact-grid">
           <thead>
-            <tr><th>No</th><th>담당자</th><th>직급</th><th>일반전화</th><th>휴대폰</th><th>직통전화</th><th>EMAIL</th><th>EMAIL2</th></tr>
+            <tr><th>No</th><th>담당자</th><th>직급</th><th>일반전화</th><th>휴대폰</th><th>직통전화</th><th>EMAIL</th><th>EMAIL2</th><th>비고</th></tr>
           </thead>
           <tbody id="estimateDbContactRows"></tbody>
         </table>
       </div>
       <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="toggleEstimateDbContactDetailColumns()">상세열 접기/펼치기</button>
         <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContactModal()">닫기</button>
         <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContactModal()">담당자 저장</button>
       </div>
@@ -6205,6 +6241,7 @@ function openEstimateDbContactModal(rowIndex = estimateDbSelectedCell.rowIndex |
         <td><input data-contact-field="direct" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.direct || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="email" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="email2" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email2 || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="note" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.note || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
       </tr>`;
   }).join("");
   modal.classList.remove("hidden");
