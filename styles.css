@@ -16327,7 +16327,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 #projectReceiveSaveBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.2);}
 
 
-/* === 견적서 관리 카테고리 / 견적서 작성 화면 === */
+/* === 프로젝트 관리 카테고리 / 프로젝트 작성 화면 === */
 .estimate-quote-sub-menu,
 .project-receive-sub-menu,
 .pm-schedule-sub-menu {
