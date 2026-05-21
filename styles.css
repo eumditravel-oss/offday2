@@ -17191,3 +17191,39 @@ body.quote-db-modal-open {
 .quote-db-command-open-btn:hover::before {
   border-right-color: #ea580c;
 }
+
+
+/* === DB관리 열 위치 변경 / 행 높이 조절 보정 === */
+.quote-db-table {
+  --estimate-db-row-height: 44px;
+}
+.quote-db-table .quote-db-data-row td,
+.quote-db-table .quote-db-total-row td {
+  height: var(--estimate-db-row-height);
+  box-sizing: border-box;
+}
+.quote-db-table .quote-db-data-row .quote-db-cell-input,
+.quote-db-table .quote-db-total-row .quote-db-cell-input {
+  min-height: calc(var(--estimate-db-row-height) - 12px);
+  height: calc(var(--estimate-db-row-height) - 12px);
+  box-sizing: border-box;
+}
+.quote-db-sortable-head.reorder-mode {
+  cursor: grab !important;
+  user-select: none;
+}
+.quote-db-sortable-head.reorder-mode .quote-db-head-label {
+  pointer-events: none;
+}
+.quote-db-sortable-head.reorder-mode:hover {
+  background: #fff7ed !important;
+  outline: 2px dashed #f97316;
+  outline-offset: -3px;
+}
+.quote-db-sortable-head.quote-db-col-dragging {
+  opacity: .48;
+  cursor: grabbing !important;
+}
+.estimate-db-row-height-btn {
+  min-width: 96px;
+}
