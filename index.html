@@ -806,6 +806,8 @@
                     <button class="quote-db-tab" type="button" data-db-tab="progress" onclick="setEstimateDbTab('progress')">기성관리</button>
                     <button class="quote-db-tab" type="button" data-db-tab="mep" onclick="setEstimateDbTab('mep')">기전업체</button>
                     <button id="estimateDbExportJsonBtn" class="btn btn-line btn-sm estimate-db-json-btn" type="button" onclick="exportEstimateDbJsonForAi()">DB 더미데이터 JSON 내보내기</button>
+                    <button id="estimateDbColumnReorderBtn" class="btn btn-line btn-sm estimate-db-reorder-btn" type="button" onclick="toggleEstimateDbColumnReorderMode()">열 위치 변경</button>
+                    <button id="estimateDbColumnReorderOkBtn" class="btn btn-primary btn-sm estimate-db-reorder-ok-btn" type="button" onclick="confirmEstimateDbColumnReorder()" style="display:none;">확인</button>
                     <button id="estimateDbColumnResizeBtn" class="btn btn-line btn-sm estimate-db-resize-btn" type="button" onclick="toggleEstimateDbColumnResizeMode()">열 너비 조절하기</button>
                     <button id="estimateDbLinkNewRowsBtn" class="btn btn-sm estimate-db-link-btn hidden" type="button" onclick="syncEstimateDbNewPjRowsToLinkedSheets()">기성관리·기전업체 연동 추가(Ctrl+Enter)</button>
                     <button id="estimateDbAddStageBtn" class="btn btn-line btn-sm" type="button" onclick="addEstimateDbProgressStageColumns()">+차수 추가(Alt+Insert)</button>
