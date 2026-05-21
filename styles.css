@@ -17500,3 +17500,19 @@ th.divider-cell{
 .sales-table th:nth-child(7){
   border-left:6px solid #9ca3af !important;
 }
+
+
+/* === DB관리 v34: 열 너비 조절 구분선 색상 보정 ===
+   - DB관리 표에서 열 너비 조절 모드 시 보이는 세로 구분선을
+     검정/주황 계열이 아닌 밝은 회색으로 고정합니다.
+*/
+.quote-db-col-resize-handle::after{
+  background:#cbd5e1!important;
+  opacity:1!important;
+}
+.quote-db-col-resize-handle:hover::after{
+  background:#94a3b8!important;
+}
+body.estimate-db-resizing .quote-db-col-resize-handle::after{
+  background:#94a3b8!important;
+}
