@@ -4706,6 +4706,53 @@ function isEstimateDbEnterCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
     || isEstimateDbDropdownCell(tab, colIndex);
 }
 
+
+function openEstimateDbCommandCellFromButton(event, rowIndex, colIndex) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
+  if (input) {
+    selectEstimateDbCell(rowIndex, colIndex);
+    input.focus({ preventScroll: true });
+  }
+  if (isEstimateDbPjMemoColumn(estimateDbActiveTab, colIndex)) {
+    openEstimateDbPjMemoModal(rowIndex, colIndex);
+    return;
+  }
+  if (isEstimateDbStoryCell(estimateDbActiveTab, colIndex)) {
+    const summary = input?.value || "";
+    const row = getEstimateDbRows()?.[rowIndex];
+    const current = parseEstimateDbRichCellValue(row?.[colIndex]) || {};
+    updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbRichCellValue({ type: "progressStory", summary, full: current.full || summary }), { commit: true, silentRender: true });
+    openEstimateDbStoryModal(rowIndex, colIndex);
+    return;
+  }
+  if (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex)) {
+    const currentText = String(input?.value || "").replace(/,/g, "");
+    if (currentText && !parseEstimateDbRichCellValue(getEstimateDbRows()?.[rowIndex]?.[colIndex])) {
+      updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbRichCellValue({ type: "stageFormula", formula: currentText, note: "", amount: String(toEstimateDbNumber(currentText)) }), { commit: true, silentRender: true });
+    }
+    openEstimateDbStageFormulaModal(rowIndex, colIndex);
+    return;
+  }
+  if (isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex)) {
+    openEstimateDbAmountModal(rowIndex, colIndex);
+    return;
+  }
+  if (isEstimateDbContactColumn(estimateDbActiveTab, colIndex)) {
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbContactModal(rowIndex, colIndex);
+    return;
+  }
+  if (isEstimateDbDropdownCell(estimateDbActiveTab, colIndex)) {
+    openEstimateDbDropdown(rowIndex, colIndex);
+  }
+}
+
+function renderEstimateDbCommandOpenButton(rowIndex, colIndex) {
+  return `<button type="button" class="quote-db-command-open-btn" title="입력창 열기" aria-label="입력창 열기" onclick="openEstimateDbCommandCellFromButton(event, ${rowIndex}, ${colIndex})"><span></span></button>`;
+}
+
 function commitEstimateDbPendingEdits(options = {}) {
   const entries = Object.values(estimateDbPendingEdits);
   if (!entries.length) {
@@ -5791,9 +5838,11 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
           return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
         }
         if (amountCell) {
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea></td>`;
+          const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
         }
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" /></td>`;
+        const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}"><div class="quote-db-command-wrap"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" />${opener}</div></td>`;
       }).join("")}
       <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
     </tr>
