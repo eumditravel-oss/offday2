@@ -17139,3 +17139,57 @@ body.quote-db-modal-open {
   gap: 10px;
   margin-top: 16px;
 }
+
+/* DB관리 Enter 명령 셀: 클릭형 열기 아이콘 */
+.quote-db-command-td {
+  position: relative;
+}
+.quote-db-command-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+.quote-db-command-wrap .quote-db-cell-input {
+  width: 100%;
+  padding-right: 30px !important;
+}
+.quote-db-command-open-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 4;
+  padding: 0;
+}
+.quote-db-command-open-btn span,
+.quote-db-command-open-btn::before,
+.quote-db-command-open-btn::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 15px;
+  height: 4px;
+  border-radius: 999px;
+  background: #f20f0f;
+  transform-origin: center;
+}
+.quote-db-command-open-btn::before {
+  transform: rotate(45deg);
+}
+.quote-db-command-open-btn::after {
+  transform: rotate(-45deg);
+}
+.quote-db-command-open-btn span {
+  display: none;
+}
+.quote-db-command-open-btn:hover::before,
+.quote-db-command-open-btn:hover::after {
+  background: #c90000;
+}
