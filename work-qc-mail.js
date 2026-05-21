@@ -9392,18 +9392,36 @@ function updateBellReviewCount() {
 
 
 function syncWorkSideAccordion(targetPanelId) {
-  const isEstimateQuote = targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList";
-  const isProjectReceive = targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList";
-  const isPmSchedule = targetPanelId === "pmSchedule";
-  document.querySelectorAll(".side-sub").forEach(menu => menu.classList.remove("active"));
-  document.querySelectorAll(".side-main").forEach(btn => btn.classList.remove("active"));
-  document.querySelectorAll(".side-item").forEach(btn => btn.classList.remove("active"));
-  document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.toggle("active", isEstimateQuote));
-  document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.toggle("active", isProjectReceive));
-  document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.toggle("active", isPmSchedule));
-  document.querySelectorAll(".side-main[data-work-main='estimateDbManage'], .side-main[data-work-main='estimateQuote']").forEach(btn => btn.classList.toggle("active", isEstimateQuote));
-  document.querySelectorAll(".side-main[data-work-main='projectReceive']").forEach(btn => btn.classList.toggle("active", isProjectReceive));
-  document.querySelectorAll(".side-main[data-work-main='pmSchedule']").forEach(btn => btn.classList.toggle("active", isPmSchedule));
+  const target = String(targetPanelId || "estimateDbManage");
+  const estimatePanels = ["estimateDbManage", "estimateQuote", "estimateQuoteList"];
+  const projectReceivePanels = ["projectReceive", "projectReceiveList"];
+  const pmSchedulePanels = ["pmSchedule"];
+  const isEstimateQuote = estimatePanels.includes(target);
+  const isProjectReceive = projectReceivePanels.includes(target);
+  const isPmSchedule = pmSchedulePanels.includes(target);
+
+  // 모든 대분류/중분류 상태를 먼저 완전히 초기화합니다.
+  // 기존에는 다른 버튼 클릭 후에도 .project-receive-sub-menu의 active 상태가 남아
+  // "프로젝트 작성 / 프로젝트 리스트"가 계속 펼쳐지는 문제가 발생할 수 있었습니다.
+  document.querySelectorAll(".side-sub, .estimate-quote-sub-menu, .project-receive-sub-menu, .pm-schedule-sub-menu").forEach(menu => {
+    menu.classList.remove("active");
+  });
+  document.querySelectorAll(".side-main, .side-item, [data-work-main]").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  if (isEstimateQuote) {
+    document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelectorAll(".side-main[data-work-main='estimateDbManage']").forEach(btn => btn.classList.add("active"));
+  } else if (isProjectReceive) {
+    document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelectorAll(".side-main[data-work-main='projectReceive']").forEach(btn => btn.classList.add("active"));
+  } else if (isPmSchedule) {
+    document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelectorAll(".side-main[data-work-main='pmSchedule']").forEach(btn => btn.classList.add("active"));
+  } else {
+    document.querySelector(`.side-main[data-work-main="${target}"]`)?.classList.add("active");
+  }
 }
 
 function switchWorkPanel(panelId) {
@@ -12455,17 +12473,28 @@ function markQuestionCategorySent(category) {
 
 
 
-document.querySelectorAll("[data-work-main]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
-      setPmScheduleSection(btn.dataset.pmSection);
-    }
-    switchWorkPanel(btn.dataset.workMain);
-    if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
-      setPmScheduleSection(btn.dataset.pmSection);
-    }
-  });
-});
+document.addEventListener("click", event => {
+  const btn = event.target?.closest?.("[data-work-main]");
+  if (!btn) return;
+
+  const targetPanelId = btn.dataset.workMain || "estimateDbManage";
+
+  if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
+    setPmScheduleSection(btn.dataset.pmSection);
+  }
+
+  switchWorkPanel(targetPanelId);
+
+  // 클릭한 대분류 외의 하위 카테고리는 즉시 접습니다.
+  // DB관리 클릭 시 프로젝트 접수 하위 메뉴가 남아 있는 현상을 방지합니다.
+  if (typeof syncWorkSideAccordion === "function") {
+    syncWorkSideAccordion(targetPanelId);
+  }
+
+  if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
+    setPmScheduleSection(btn.dataset.pmSection);
+  }
+}, true);
 renderChecklistGrid();
 
 
