@@ -17373,33 +17373,27 @@ body.quote-db-modal-open {
 .quote-db-table .quote-db-wrap-text-td{vertical-align:top;}
 
 
-/* === DB관리 영역 구분선 강화 === */
-.db-table-wrap table td.section-divider-right,
-.db-table-wrap table th.section-divider-right{
-  border-right: 4px solid #8b949e !important;
+/* === DB관리 그룹 구분선 보강 ===
+   PJ관리 기준: 프로젝트명 | 작업공종 | PM(철거) | 세대수 뒤에 진한 구분선을 표시합니다.
+   기성관리/기전업체 기준: 작업취소 | 외주금액합계 | 2차납품공종 뒤에 진한 구분선을 표시합니다. */
+.quote-db-table th.quote-db-group-boundary,
+.quote-db-table td.quote-db-group-boundary{
+  border-right:4px solid #334155!important;
+  box-shadow:inset -3px 0 0 #334155!important;
 }
-
-.db-table-wrap table td.section-divider-left,
-.db-table-wrap table th.section-divider-left{
-  border-left: 4px solid #8b949e !important;
+.quote-db-table th.quote-db-group-boundary{
+  position:sticky;
+  z-index:4;
 }
-
-/* PJ관리 */
-.db-management-section:nth-of-type(1) table tr > *:nth-child(7){
-  border-right: 4px solid #7f8794 !important;
+.quote-db-table td.quote-db-group-boundary{
+  position:relative;
 }
-
-/* 웹하드 / 작업공종 */
-.db-management-section:nth-of-type(2) table tr > *:nth-child(7){
-  border-right: 4px solid #7f8794 !important;
+.quote-db-table td.quote-db-group-boundary > .quote-db-command-wrap,
+.quote-db-table td.quote-db-group-boundary > input,
+.quote-db-table td.quote-db-group-boundary > textarea{
+  width:calc(100% - 4px)!important;
+  max-width:calc(100% - 4px)!important;
 }
-
-/* 작업구분 */
-.db-management-section:nth-of-type(3) table tr > *:nth-child(5){
-  border-right: 4px solid #7f8794 !important;
-}
-
-/* 작업착수일자 */
-.db-management-section:nth-of-type(4) table tr > *:nth-child(7){
-  border-right: 4px solid #7f8794 !important;
+.quote-db-table td.quote-db-group-boundary .quote-db-cell-input.quote-db-enter-command-cell{
+  box-shadow:inset 0 0 0 1px rgba(249,115,22,.34)!important;
 }
