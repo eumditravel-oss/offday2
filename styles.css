@@ -17580,3 +17580,59 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .quote-db-col-resize-handle:hover::after{
   background:#94a3b8 !important;
 }
+
+/* === 2026-05-22 추가 수정: DB관리 프로젝트명 폭/프로젝트 연결 테두리/회색 글씨 복구 === */
+#estimateDbManage,
+#estimateDbManage .work-section-title,
+#estimateDbManage .quote-db-report-head,
+#estimateDbManage .quote-db-report-head *:not(.btn-primary):not(.btn-orange),
+#estimateDbManage #estimateDbYearSelect,
+#estimateDbManage #estimateDbExportReportBtn,
+#estimateDbManage #estimateDbReportTabs button:not(.active),
+#estimateDbManage .quote-report-table-block h3,
+#estimateDbManage .quote-report-table th,
+#estimateDbManage .quote-report-table td,
+#estimateDbManage .quote-db-table th,
+#estimateDbManage .quote-db-table td,
+#estimateDbManage .quote-db-cell-input,
+#estimateDbManage .quote-db-wrap-text-cell{
+  color:#111827 !important;
+}
+
+#estimateDbManage .quote-db-tab.active,
+#estimateDbManage #estimateDbReportTabs button.active,
+#estimateDbManage .btn-primary,
+#estimateDbManage .btn-orange{
+  color:#fff !important;
+}
+
+/* 프로젝트명 셀: 2줄 사용은 유지하되 폭과 줄높이를 컴팩트하게 고정 */
+#estimateDbManage .quote-db-table .quote-db-wrap-text-td,
+#estimateDbManage .quote-db-table .quote-db-wrap-text-cell{
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  word-break:keep-all !important;
+  line-height:1.18 !important;
+}
+#estimateDbManage .quote-db-table .quote-db-wrap-text-cell{
+  padding:6px 8px !important;
+}
+
+/* 프로젝트 연결 셀: 우측 Enter 띠지는 유지하고, 셀 전체 주황색 테두리만 제거 */
+#estimateDbManage .quote-db-table .quote-db-project-link-td,
+#estimateDbManage .quote-db-table .quote-db-project-link-td:focus-within{
+  box-shadow:none !important;
+  background:#fffdf4 !important;
+}
+#estimateDbManage .quote-db-table .quote-db-project-link-td .quote-db-cell-input,
+#estimateDbManage .quote-db-table .quote-db-project-link-td .quote-db-cell-input:focus{
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+/* DB관리 영역 세로 구분선은 밝은 회색으로 유지 */
+#estimateDbManage .quote-db-table th.quote-db-group-boundary,
+#estimateDbManage .quote-db-table td.quote-db-group-boundary{
+  border-right:6px solid #cbd5e1 !important;
+  box-shadow:none !important;
+}
