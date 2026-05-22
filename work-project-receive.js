@@ -1611,6 +1611,14 @@ const estimateQuoteDefaultData = {
   callMemo: "",
   emailMemo: "",
   notes: "",
+  attachmentCategories: [
+    { key: "statement", label: "내역서 접수", fixed: true, files: [] },
+    { key: "drawingArchitecture", label: "도면접수 - 건축", fixed: true, files: [] },
+    { key: "drawingStructure", label: "도면접수 - 구조", fixed: true, files: [] },
+    { key: "drawingCivil", label: "도면접수 - 토목", fixed: true, files: [] },
+    { key: "estimate", label: "견적서 저장", fixed: true, files: [] },
+    { key: "extra1", label: "기타자료", fixed: false, files: [] }
+  ],
   status: "작성중"
 };
 
@@ -1650,6 +1658,14 @@ const estimateQuoteSampleData = {
   callMemo: "26/05/14 0차 구조라고 표현한 이유 확인. 구조 선착수 일정은 5/18, 1차 구조/마감 착수는 5/29 목표로 공유됨. 일정 변경 시 견적서 회신 요청.",
   emailMemo: "아래 프로젝트 적산 가능여부 문의. 포항 AI 데이터센터, 연면적 19,460㎡(5,887평), 적산범위 마감 2회 구조 2회 VE 적산 1회. 웹하드 접속 정보 및 폴더 접속KEY 공유.",
   notes: "도면 수령 후 구조 적산 선 투입 요청. 가능여부 및 일정 변경 요청 필요 시 회신.",
+  attachmentCategories: [
+    { key: "statement", label: "내역서 접수", fixed: true, files: [] },
+    { key: "drawingArchitecture", label: "도면접수 - 건축", fixed: true, files: [] },
+    { key: "drawingStructure", label: "도면접수 - 구조", fixed: true, files: [] },
+    { key: "drawingCivil", label: "도면접수 - 토목", fixed: true, files: [] },
+    { key: "estimate", label: "견적서 저장", fixed: true, files: [] },
+    { key: "extra1", label: "기타자료", fixed: false, files: [] }
+  ],
   status: "작성중"
 };
 
@@ -1685,6 +1701,7 @@ function toggleEstimateQuoteScope(index) {
   item.checked = !item.checked;
   if (!item.checked && item.children) item.children.forEach(child => child.checked = false);
   renderEstimateQuoteScopeChips();
+  renderEstimateQuoteAttachmentCard();
 }
 function toggleEstimateQuoteScopeChild(index, childIndex) {
   const item = estimateQuoteState.scopes?.[index];
@@ -1693,6 +1710,156 @@ function toggleEstimateQuoteScopeChild(index, childIndex) {
   item.checked = true;
   child.checked = !child.checked;
   renderEstimateQuoteScopeChips();
+}
+
+function defaultEstimateQuoteAttachmentCategories() {
+  return [
+    { key: "statement", label: "내역서 접수", fixed: true, files: [] },
+    { key: "drawingArchitecture", label: "도면접수 - 건축", fixed: true, files: [] },
+    { key: "drawingStructure", label: "도면접수 - 구조", fixed: true, files: [] },
+    { key: "drawingCivil", label: "도면접수 - 토목", fixed: true, files: [] },
+    { key: "estimate", label: "견적서 저장", fixed: true, files: [] },
+    { key: "extra1", label: "기타자료", fixed: false, files: [] }
+  ];
+}
+function ensureEstimateQuoteAttachments() {
+  if (!Array.isArray(estimateQuoteState.attachmentCategories)) {
+    estimateQuoteState.attachmentCategories = defaultEstimateQuoteAttachmentCategories();
+  }
+  const required = defaultEstimateQuoteAttachmentCategories().filter(item => item.fixed);
+  required.forEach(item => {
+    if (!estimateQuoteState.attachmentCategories.some(cat => cat.key === item.key)) {
+      estimateQuoteState.attachmentCategories.push(JSON.parse(JSON.stringify(item)));
+    }
+  });
+  estimateQuoteState.attachmentCategories.forEach(cat => {
+    if (!Array.isArray(cat.files)) cat.files = [];
+  });
+}
+function getEstimateQuoteAttachmentCategory(key) {
+  ensureEstimateQuoteAttachments();
+  return estimateQuoteState.attachmentCategories.find(cat => cat.key === key);
+}
+function countEstimateQuoteAttachments(keys) {
+  ensureEstimateQuoteAttachments();
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  return estimateQuoteState.attachmentCategories
+    .filter(cat => keyList.includes(cat.key))
+    .reduce((sum, cat) => sum + (cat.files?.length || 0), 0);
+}
+function renderEstimateQuoteAttachmentCard() {
+  ensureEstimateQuoteAttachments();
+  const countStatement = document.getElementById("quoteAttachCountStatement");
+  const countDrawing = document.getElementById("quoteAttachCountDrawing");
+  const countEstimate = document.getElementById("quoteAttachCountEstimate");
+  if (countStatement) countStatement.textContent = `${countEstimateQuoteAttachments("statement")}건`;
+  if (countDrawing) countDrawing.textContent = `${countEstimateQuoteAttachments(["drawingArchitecture", "drawingStructure", "drawingCivil"])}건`;
+  if (countEstimate) countEstimate.textContent = `${countEstimateQuoteAttachments("estimate")}건`;
+  const extraWrap = document.getElementById("quoteExtraAttachmentCategories");
+  if (!extraWrap) return;
+  const extraCategories = estimateQuoteState.attachmentCategories.filter(cat => !cat.fixed);
+  extraWrap.innerHTML = extraCategories.map(cat => `
+    <div class="quote-attachment-extra-row">
+      <input value="${escapeProjectReceiveHtml(cat.label)}" onchange="renameEstimateQuoteAttachmentCategory('${cat.key}', this.value)" />
+      <button type="button" onclick="openEstimateQuoteAttachmentModal('${cat.key}')">자료 ${cat.files?.length || 0}건</button>
+      <button type="button" onclick="removeEstimateQuoteExtraAttachmentCategory('${cat.key}')">삭제</button>
+    </div>
+  `).join("");
+}
+function toggleQuoteDrawingAttachButtons() {
+  document.getElementById("quoteDrawingAttachButtons")?.classList.toggle("hidden");
+}
+function addEstimateQuoteExtraAttachmentCategory() {
+  ensureEstimateQuoteAttachments();
+  const key = `extra${Date.now()}`;
+  estimateQuoteState.attachmentCategories.push({ key, label: "기타자료", fixed: false, files: [] });
+  renderEstimateQuoteAttachmentCard();
+}
+function renameEstimateQuoteAttachmentCategory(key, label) {
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  if (!cat || cat.fixed) return;
+  cat.label = String(label || "기타자료").trim() || "기타자료";
+  renderEstimateQuoteAttachmentCard();
+}
+function removeEstimateQuoteExtraAttachmentCategory(key) {
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  if (!cat || cat.fixed) return;
+  estimateQuoteState.attachmentCategories = estimateQuoteState.attachmentCategories.filter(item => item.key !== key);
+  document.getElementById("estimateQuoteAttachmentModal")?.remove();
+  renderEstimateQuoteAttachmentCard();
+}
+function openEstimateQuoteAttachmentModal(key) {
+  syncEstimateQuoteInputsToState();
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  if (!cat) return;
+  document.getElementById("estimateQuoteAttachmentModal")?.remove();
+  const rows = (cat.files || []).map(file => `
+    <div class="quote-attachment-file-row">
+      <div><strong>${escapeProjectReceiveHtml(file.name)}</strong><span>${escapeProjectReceiveHtml(file.sizeText || "")} · ${escapeProjectReceiveHtml(file.addedAt || "")}</span></div>
+      <textarea placeholder="관련 메모를 작성하세요." onchange="updateEstimateQuoteAttachmentMemo('${cat.key}', '${file.id}', this.value)">${escapeProjectReceiveHtml(file.memo || "")}</textarea>
+      <button type="button" onclick="removeEstimateQuoteAttachmentFile('${cat.key}', '${file.id}')">삭제</button>
+    </div>
+  `).join("") || `<div class="quote-attachment-empty">아직 저장된 첨부자료가 없습니다.</div>`;
+  const nameEditor = cat.fixed ? "" : `<label class="quote-attachment-name-edit"><span>기타자료 명칭</span><input value="${escapeProjectReceiveHtml(cat.label)}" onchange="renameEstimateQuoteAttachmentCategory('${cat.key}', this.value); openEstimateQuoteAttachmentModal('${cat.key}');" /></label>`;
+  const modal = document.createElement("div");
+  modal.className = "quote-db-import-backdrop quote-attachment-modal-backdrop";
+  modal.id = "estimateQuoteAttachmentModal";
+  modal.onclick = event => { if (event.target === modal) closeEstimateQuoteAttachmentModal(); };
+  modal.innerHTML = `
+    <div class="quote-db-import-modal quote-attachment-modal">
+      <div class="quote-db-import-head">
+        <div><strong>${escapeProjectReceiveHtml(cat.label)}</strong><p>첨부자료 리스트와 관련 메모를 분류별로 관리합니다.</p></div>
+        <button class="btn btn-line" type="button" onclick="closeEstimateQuoteAttachmentModal()">닫기</button>
+      </div>
+      <div class="quote-attachment-modal-body">
+        ${nameEditor}
+        <label class="quote-attachment-upload"><span>첨부자료 저장</span><input type="file" multiple onchange="handleEstimateQuoteAttachmentFiles('${cat.key}', this.files)" /></label>
+        <div class="quote-attachment-file-list">${rows}</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+function closeEstimateQuoteAttachmentModal() {
+  document.getElementById("estimateQuoteAttachmentModal")?.remove();
+  renderEstimateQuoteAttachmentCard();
+}
+function estimateQuoteFileSizeText(size) {
+  const bytes = Number(size || 0);
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)}KB`;
+  return `${bytes}B`;
+}
+function handleEstimateQuoteAttachmentFiles(key, files) {
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  if (!cat || !files?.length) return;
+  const now = new Date();
+  const pad = value => String(value).padStart(2, "0");
+  const stamp = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  Array.from(files).forEach(file => {
+    cat.files.push({
+      id: `file${Date.now()}${Math.random().toString(16).slice(2)}`,
+      name: file.name,
+      size: file.size,
+      sizeText: estimateQuoteFileSizeText(file.size),
+      memo: "",
+      addedAt: stamp
+    });
+  });
+  openEstimateQuoteAttachmentModal(key);
+  renderEstimateQuoteAttachmentCard();
+}
+function updateEstimateQuoteAttachmentMemo(key, fileId, memo) {
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  const file = cat?.files?.find(item => item.id === fileId);
+  if (file) file.memo = memo || "";
+}
+function removeEstimateQuoteAttachmentFile(key, fileId) {
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  if (!cat) return;
+  cat.files = (cat.files || []).filter(item => item.id !== fileId);
+  openEstimateQuoteAttachmentModal(key);
+  renderEstimateQuoteAttachmentCard();
 }
 function renderEstimateQuoteDashboard() {
   if (!document.getElementById("estimateQuoteShell")) return;
@@ -1719,6 +1886,7 @@ function renderEstimateQuoteDashboard() {
   setEstimateQuoteValue("quoteEmailMemo", estimateQuoteState.emailMemo);
   setEstimateQuoteValue("quoteNotes", estimateQuoteState.notes);
   renderEstimateQuoteScopeChips();
+  renderEstimateQuoteAttachmentCard();
 }
 function syncEstimateQuoteInputsToState() {
   estimateQuoteState.projectName = getEstimateQuoteValue("quoteProjectName");
@@ -1743,6 +1911,7 @@ function syncEstimateQuoteInputsToState() {
   estimateQuoteState.callMemo = getEstimateQuoteValue("quoteCallMemo");
   estimateQuoteState.emailMemo = getEstimateQuoteValue("quoteEmailMemo");
   estimateQuoteState.notes = getEstimateQuoteValue("quoteNotes");
+  ensureEstimateQuoteAttachments();
 }
 function validateEstimateQuoteSkeletonScope() {
   const skeleton = (estimateQuoteState.scopes || []).find(item => item.label === "골조성");
