@@ -17948,3 +17948,237 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .quote-attachment-modal .quote-attachment-note span {
   color: #0f172a;
 }
+
+
+/* === 견적서관리 v1: 4종 견적서 엑셀 양식 웹 구현 === */
+.estimate-sheet-shell {
+  gap: 18px;
+}
+.estimate-sheet-card,
+.estimate-sheet-editor {
+  overflow: hidden;
+}
+.estimate-sheet-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.estimate-sheet-tab {
+  min-height: 42px;
+  padding: 0 20px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 900;
+  cursor: pointer;
+}
+.estimate-sheet-tab.active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+.estimate-sheet-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+.estimate-sheet-filter {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+}
+.estimate-sheet-filter input {
+  height: 42px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  padding: 0 13px;
+  color: #0f172a;
+  font-weight: 800;
+  outline: none;
+}
+.estimate-sheet-list-wrap {
+  overflow: auto;
+  border: 1px solid #d8e2ef;
+  border-radius: 16px;
+}
+.estimate-sheet-list-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+  color: #0f172a;
+}
+.estimate-sheet-list-table th,
+.estimate-sheet-list-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  color: #0f172a;
+  text-align: left;
+  font-weight: 800;
+  vertical-align: middle;
+}
+.estimate-sheet-list-table th {
+  background: #f8fafc;
+  font-weight: 900;
+  text-align: center;
+}
+.estimate-sheet-list-table tr {
+  cursor: pointer;
+}
+.estimate-sheet-list-table tr:hover td {
+  background: #fff7ed;
+}
+.estimate-sheet-list-table td small {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-weight: 700;
+}
+.estimate-sheet-type-badge {
+  display: inline-flex;
+  min-width: 76px;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+}
+.estimate-sheet-editor.hidden {
+  display: none;
+}
+.estimate-sheet-editor-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.estimate-sheet-editor-head strong {
+  display: block;
+  color: #0f172a;
+  font-size: 19px;
+  font-weight: 900;
+}
+.estimate-sheet-editor-head span {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+}
+.estimate-sheet-editor-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.estimate-sheet-caution {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+}
+.estimate-sheet-grid-wrap {
+  overflow: auto;
+  max-height: 72vh;
+  border: 1px solid #d8e2ef;
+  border-radius: 16px;
+  background: #fff;
+}
+.estimate-sheet-grid {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  color: #0f172a;
+  table-layout: fixed;
+}
+.estimate-sheet-grid th,
+.estimate-sheet-grid td {
+  border: 1px solid #d8e2ef;
+  min-width: 104px;
+  height: 32px;
+  padding: 6px 8px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  background: #fff;
+}
+.estimate-sheet-grid thead th,
+.estimate-sheet-row-head,
+.estimate-sheet-corner {
+  position: sticky;
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  text-align: center;
+  z-index: 2;
+}
+.estimate-sheet-grid thead th {
+  top: 0;
+}
+.estimate-sheet-row-head,
+.estimate-sheet-corner {
+  left: 0;
+  min-width: 44px !important;
+  width: 44px !important;
+  z-index: 3;
+}
+.estimate-sheet-grid td:focus {
+  outline: 2px solid #ff6b1a;
+  outline-offset: -2px;
+  background: #fff7ed;
+}
+.estimate-sheet-grid .title-cell {
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 4px;
+}
+.estimate-sheet-grid .label-cell {
+  background: #f8fafc;
+  font-weight: 900;
+  text-align: center;
+}
+.estimate-sheet-grid .header-cell {
+  background: #e2e8f0;
+  font-weight: 900;
+  text-align: center;
+}
+.estimate-sheet-grid .amount-cell {
+  background: #fffaf0;
+}
+.estimate-sheet-grid .condition-cell {
+  min-width: 300px;
+}
+.estimate-sheet-grid .verify-cell {
+  background: #f8fbff;
+  min-width: 118px;
+}
+.estimate-sheet-grid .blank-cell {
+  color: transparent;
+}
+@media (max-width: 1100px) {
+  .estimate-sheet-toolbar,
+  .estimate-sheet-editor-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .estimate-sheet-editor-actions {
+    justify-content: flex-start;
+  }
+}
