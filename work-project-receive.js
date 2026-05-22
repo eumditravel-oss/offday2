@@ -1612,12 +1612,11 @@ const estimateQuoteDefaultData = {
   emailMemo: "",
   notes: "",
   attachmentCategories: [
-    { key: "statement", label: "내역서 접수", fixed: true, files: [] },
-    { key: "drawingArchitecture", label: "도면접수 - 건축", fixed: true, files: [] },
-    { key: "drawingStructure", label: "도면접수 - 구조", fixed: true, files: [] },
-    { key: "drawingCivil", label: "도면접수 - 토목", fixed: true, files: [] },
-    { key: "estimate", label: "견적서 저장", fixed: true, files: [] },
-    { key: "extra1", label: "기타자료", fixed: false, files: [] }
+    { key: "drawing", label: "도면", fixed: true, files: [], note: "" },
+    { key: "specification", label: "시방서", fixed: true, files: [], note: "" },
+    { key: "siteDescription", label: "현장설명서", fixed: true, files: [], note: "" },
+    { key: "statement", label: "내역서", fixed: true, files: [], note: "" },
+    { key: "extra1", label: "기타자료", fixed: false, files: [], note: "" }
   ],
   status: "작성중"
 };
@@ -1659,12 +1658,11 @@ const estimateQuoteSampleData = {
   emailMemo: "아래 프로젝트 적산 가능여부 문의. 포항 AI 데이터센터, 연면적 19,460㎡(5,887평), 적산범위 마감 2회 구조 2회 VE 적산 1회. 웹하드 접속 정보 및 폴더 접속KEY 공유.",
   notes: "도면 수령 후 구조 적산 선 투입 요청. 가능여부 및 일정 변경 요청 필요 시 회신.",
   attachmentCategories: [
-    { key: "statement", label: "내역서 접수", fixed: true, files: [] },
-    { key: "drawingArchitecture", label: "도면접수 - 건축", fixed: true, files: [] },
-    { key: "drawingStructure", label: "도면접수 - 구조", fixed: true, files: [] },
-    { key: "drawingCivil", label: "도면접수 - 토목", fixed: true, files: [] },
-    { key: "estimate", label: "견적서 저장", fixed: true, files: [] },
-    { key: "extra1", label: "기타자료", fixed: false, files: [] }
+    { key: "drawing", label: "도면", fixed: true, files: [], note: "" },
+    { key: "specification", label: "시방서", fixed: true, files: [], note: "" },
+    { key: "siteDescription", label: "현장설명서", fixed: true, files: [], note: "" },
+    { key: "statement", label: "내역서", fixed: true, files: [], note: "" },
+    { key: "extra1", label: "기타자료", fixed: false, files: [], note: "" }
   ],
   status: "작성중"
 };
@@ -1714,12 +1712,11 @@ function toggleEstimateQuoteScopeChild(index, childIndex) {
 
 function defaultEstimateQuoteAttachmentCategories() {
   return [
-    { key: "statement", label: "내역서 접수", fixed: true, files: [] },
-    { key: "drawingArchitecture", label: "도면접수 - 건축", fixed: true, files: [] },
-    { key: "drawingStructure", label: "도면접수 - 구조", fixed: true, files: [] },
-    { key: "drawingCivil", label: "도면접수 - 토목", fixed: true, files: [] },
-    { key: "estimate", label: "견적서 저장", fixed: true, files: [] },
-    { key: "extra1", label: "기타자료", fixed: false, files: [] }
+    { key: "drawing", label: "도면", fixed: true, files: [], note: "" },
+    { key: "specification", label: "시방서", fixed: true, files: [], note: "" },
+    { key: "siteDescription", label: "현장설명서", fixed: true, files: [], note: "" },
+    { key: "statement", label: "내역서", fixed: true, files: [], note: "" },
+    { key: "extra1", label: "기타자료", fixed: false, files: [], note: "" }
   ];
 }
 function ensureEstimateQuoteAttachments() {
@@ -1734,6 +1731,7 @@ function ensureEstimateQuoteAttachments() {
   });
   estimateQuoteState.attachmentCategories.forEach(cat => {
     if (!Array.isArray(cat.files)) cat.files = [];
+    if (typeof cat.note !== "string") cat.note = "";
   });
 }
 function getEstimateQuoteAttachmentCategory(key) {
@@ -1749,12 +1747,14 @@ function countEstimateQuoteAttachments(keys) {
 }
 function renderEstimateQuoteAttachmentCard() {
   ensureEstimateQuoteAttachments();
-  const countStatement = document.getElementById("quoteAttachCountStatement");
   const countDrawing = document.getElementById("quoteAttachCountDrawing");
-  const countEstimate = document.getElementById("quoteAttachCountEstimate");
+  const countSpecification = document.getElementById("quoteAttachCountSpecification");
+  const countSiteDescription = document.getElementById("quoteAttachCountSiteDescription");
+  const countStatement = document.getElementById("quoteAttachCountStatement");
+  if (countDrawing) countDrawing.textContent = `${countEstimateQuoteAttachments("drawing")}건`;
+  if (countSpecification) countSpecification.textContent = `${countEstimateQuoteAttachments("specification")}건`;
+  if (countSiteDescription) countSiteDescription.textContent = `${countEstimateQuoteAttachments("siteDescription")}건`;
   if (countStatement) countStatement.textContent = `${countEstimateQuoteAttachments("statement")}건`;
-  if (countDrawing) countDrawing.textContent = `${countEstimateQuoteAttachments(["drawingArchitecture", "drawingStructure", "drawingCivil"])}건`;
-  if (countEstimate) countEstimate.textContent = `${countEstimateQuoteAttachments("estimate")}건`;
   const extraWrap = document.getElementById("quoteExtraAttachmentCategories");
   if (!extraWrap) return;
   const extraCategories = estimateQuoteState.attachmentCategories.filter(cat => !cat.fixed);
@@ -1772,7 +1772,7 @@ function toggleQuoteDrawingAttachButtons() {
 function addEstimateQuoteExtraAttachmentCategory() {
   ensureEstimateQuoteAttachments();
   const key = `extra${Date.now()}`;
-  estimateQuoteState.attachmentCategories.push({ key, label: "기타자료", fixed: false, files: [] });
+  estimateQuoteState.attachmentCategories.push({ key, label: "기타자료", fixed: false, files: [], note: "" });
   renderEstimateQuoteAttachmentCard();
 }
 function renameEstimateQuoteAttachmentCategory(key, label) {
@@ -1808,12 +1808,14 @@ function openEstimateQuoteAttachmentModal(key) {
   modal.innerHTML = `
     <div class="quote-db-import-modal quote-attachment-modal">
       <div class="quote-db-import-head">
-        <div><strong>${escapeProjectReceiveHtml(cat.label)}</strong><p>첨부자료 리스트와 관련 메모를 분류별로 관리합니다.</p></div>
+        <div><strong>${escapeProjectReceiveHtml(cat.label)}</strong><p>관련자료 리스트와 비고를 분류별로 관리합니다.</p></div>
         <button class="btn btn-line" type="button" onclick="closeEstimateQuoteAttachmentModal()">닫기</button>
       </div>
       <div class="quote-attachment-modal-body">
         ${nameEditor}
+        <label class="quote-attachment-note"><span>비고</span><textarea placeholder="해당 분류의 수령 상태, 특이사항, 확인 메모를 입력하세요." onchange="updateEstimateQuoteAttachmentNote('${cat.key}', this.value)">${escapeProjectReceiveHtml(cat.note || "")}</textarea></label>
         <label class="quote-attachment-upload"><span>첨부자료 저장</span><input type="file" multiple onchange="handleEstimateQuoteAttachmentFiles('${cat.key}', this.files)" /></label>
+        <div class="quote-attachment-section-title">관련자료 리스트</div>
         <div class="quote-attachment-file-list">${rows}</div>
       </div>
     </div>
@@ -1853,6 +1855,10 @@ function updateEstimateQuoteAttachmentMemo(key, fileId, memo) {
   const cat = getEstimateQuoteAttachmentCategory(key);
   const file = cat?.files?.find(item => item.id === fileId);
   if (file) file.memo = memo || "";
+}
+function updateEstimateQuoteAttachmentNote(key, note) {
+  const cat = getEstimateQuoteAttachmentCategory(key);
+  if (cat) cat.note = note || "";
 }
 function removeEstimateQuoteAttachmentFile(key, fileId) {
   const cat = getEstimateQuoteAttachmentCategory(key);
