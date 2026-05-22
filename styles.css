@@ -17915,3 +17915,36 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
     grid-template-columns: 1fr;
   }
 }
+
+/* === 프로젝트 작성: 첨부파일 관리 v2 - 접수자료 분류 통일 === */
+.quote-attachment-note {
+  display: grid;
+  gap: 8px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+.quote-attachment-note textarea {
+  min-height: 88px;
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 700;
+  resize: vertical;
+  outline: none;
+}
+.quote-attachment-section-title {
+  margin-top: 2px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+.quote-attachment-card .quote-attachment-row strong,
+.quote-attachment-card .quote-attachment-extra-head strong,
+.quote-attachment-card .quote-attachment-extra-row input,
+.quote-attachment-modal .quote-attachment-section-title,
+.quote-attachment-modal .quote-attachment-note span {
+  color: #0f172a;
+}
