@@ -18343,3 +18343,88 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-exact-formula {
   background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
 }
+
+/* === 견적서관리: 엑셀 원본 1:1 렌더링 보정 === */
+.estimate-sheet-editor {
+  overflow: hidden;
+}
+.estimate-sheet-grid-wrap.estimate-excel-grid-wrap {
+  position: relative;
+  overflow: auto;
+  max-height: 760px;
+  background: #ffffff;
+  border: 1px solid #d9e3ef;
+  border-radius: 12px;
+  padding: 0;
+}
+.estimate-sheet-grid.estimate-excel-grid {
+  position: relative;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #ffffff;
+  color: #000000;
+  font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+}
+.estimate-sheet-grid.estimate-excel-grid col {
+  box-sizing: border-box;
+}
+.estimate-excel-corner,
+.estimate-excel-col-head,
+.estimate-excel-row-head {
+  background: #eef3f9 !important;
+  color: #000000 !important;
+  border: 1px solid #cfd9e6 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 !important;
+  position: sticky;
+  z-index: 8;
+}
+.estimate-excel-corner {
+  left: 0;
+  top: 0;
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  z-index: 10;
+}
+.estimate-excel-col-head {
+  top: 0;
+}
+.estimate-excel-row-head {
+  left: 0;
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+}
+.estimate-excel-cell {
+  color: #000000 !important;
+  background-clip: padding-box;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  line-height: 1.2;
+  outline: none;
+}
+.estimate-excel-cell.outside-print {
+  background-color: #a6a6a6 !important;
+}
+.estimate-excel-cell.formula-cell {
+  cursor: cell;
+}
+.estimate-excel-cell:focus {
+  box-shadow: inset 0 0 0 2px #2563eb !important;
+  position: relative;
+  z-index: 6;
+}
+.estimate-excel-image {
+  position: absolute;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 5;
+}
+.estimate-sheet-caution {
+  color: #000000 !important;
+}
