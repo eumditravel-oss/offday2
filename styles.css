@@ -18260,3 +18260,86 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-sheet-caution {
   color: #000000 !important;
 }
+
+/* =========================================================
+   견적서관리 - 엑셀 원본 정밀 표시 보정
+   - 분할 JS 적용 후 이미지가 일반 흐름으로 밀려 보이는 현상 방지
+   - 엑셀의 행/열 치수를 우선 적용하기 위해 기존 grid 공통 min-width/padding 무력화
+   ========================================================= */
+.estimate-sheet-grid.estimate-exact-grid {
+  position: relative;
+  display: block;
+  width: max-content;
+  min-width: 0;
+  border-collapse: separate;
+  table-layout: auto;
+  background: #fff;
+}
+
+.estimate-exact-canvas {
+  position: relative;
+  display: inline-block;
+  width: max-content;
+  min-width: 0;
+  background: #fff;
+  overflow: visible;
+}
+
+.estimate-exact-table {
+  position: relative;
+  z-index: 1;
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: max-content;
+  min-width: 0;
+  background: #fff;
+}
+
+.estimate-sheet-grid.estimate-exact-grid .estimate-exact-table th,
+.estimate-sheet-grid.estimate-exact-grid .estimate-exact-table td {
+  box-sizing: border-box;
+  min-width: 0 !important;
+  padding: 0 4px;
+  line-height: 1.15;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  color: #000 !important;
+  font-family: Arial, '맑은 고딕', Malgun Gothic, sans-serif;
+}
+
+.estimate-sheet-grid.estimate-exact-grid .estimate-exact-table thead th,
+.estimate-sheet-grid.estimate-exact-grid .estimate-sheet-row-head,
+.estimate-sheet-grid.estimate-exact-grid .estimate-sheet-corner {
+  position: static !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 24px !important;
+  padding: 0;
+  background: #f1f5f9 !important;
+  color: #000 !important;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  z-index: 1;
+}
+
+.estimate-exact-image {
+  position: absolute !important;
+  display: block;
+  object-fit: contain;
+  z-index: 5;
+  pointer-events: none;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.estimate-exact-cell[contenteditable="true"]:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  background: #fffef2 !important;
+}
+
+.estimate-exact-formula {
+  background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
+}
