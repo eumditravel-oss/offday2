@@ -757,9 +757,10 @@
           <aside class="side-nav">
             <div class="side-title">업무관리 좌측 카테고리</div>
             <div class="side-group estimate-quote-side-group">
-              <button class="side-main active" data-work-main="estimateDbManage">프로젝트 관리</button>
+              <button class="side-main active" data-work-main="estimateSheetManage">프로젝트 관리</button>
               <div class="side-sub active estimate-quote-sub-menu">
-                <button class="side-item active" data-work-main="estimateDbManage">DB관리</button>
+                <button class="side-item active" data-work-main="estimateSheetManage">견적서관리</button>
+                <button class="side-item" data-work-main="estimateDbManage">DB관리</button>
                 <button class="side-item" data-work-main="estimateQuote">프로젝트 작성</button>
                 <button class="side-item" data-work-main="estimateQuoteList">프로젝트 관리</button>
               </div>
@@ -786,7 +787,79 @@
           </aside>
 
           <section class="main-area">
-            <section id="estimateDbManage" class="work-panel active">
+
+            <section id="estimateSheetManage" class="work-panel active">
+              <article class="quote-shell estimate-sheet-shell">
+                <div class="project-receive-hero quote-hero">
+                  <div>
+                    <h2>견적서관리</h2>
+                    <p class="subcopy">업로드된 견적서 엑셀 형식을 웹 화면에 그대로 옮겨 작성·저장합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="renderEstimateSheetManage()">새로고침</button>
+                    <button class="btn btn-line" type="button" onclick="exportEstimateSheetCurrentHtml()">현재 견적서 내보내기</button>
+                    <button class="btn btn-primary" type="button" onclick="openEstimateSheetEditor()">+ 항목 추가</button>
+                  </div>
+                </div>
+
+                <section class="project-receive-card quote-card quote-card-full estimate-sheet-card">
+                  <div class="estimate-sheet-tabs" id="estimateSheetTypeTabs">
+                    <button class="estimate-sheet-tab active" type="button" data-sheet-type="개산견적" onclick="setEstimateSheetType('개산견적')">개산견적</button>
+                    <button class="estimate-sheet-tab" type="button" data-sheet-type="공내역서" onclick="setEstimateSheetType('공내역서')">공내역서</button>
+                    <button class="estimate-sheet-tab" type="button" data-sheet-type="설계예가" onclick="setEstimateSheetType('설계예가')">설계예가</button>
+                    <button class="estimate-sheet-tab" type="button" data-sheet-type="공사비검증" onclick="setEstimateSheetType('공사비검증')">공사비검증</button>
+                  </div>
+
+                  <div class="estimate-sheet-toolbar">
+                    <div class="estimate-sheet-filter">
+                      <label>검색</label>
+                      <input id="estimateSheetSearch" type="search" placeholder="공사명, 수신처, 작성자 검색" oninput="renderEstimateSheetList()" />
+                    </div>
+                    <button class="btn btn-primary" type="button" onclick="openEstimateSheetEditor()">선택 항목 추가</button>
+                  </div>
+
+                  <div class="estimate-sheet-list-wrap">
+                    <table class="estimate-sheet-list-table">
+                      <thead>
+                        <tr>
+                          <th>구분</th>
+                          <th>견적서명</th>
+                          <th>수신</th>
+                          <th>공사명</th>
+                          <th>용역내용</th>
+                          <th>합계금액</th>
+                          <th>상태</th>
+                          <th>관리</th>
+                        </tr>
+                      </thead>
+                      <tbody id="estimateSheetListBody"></tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section class="project-receive-card quote-card quote-card-full estimate-sheet-editor hidden" id="estimateSheetEditor">
+                  <div class="estimate-sheet-editor-head">
+                    <div>
+                      <strong id="estimateSheetEditorTitle">견적서 작성</strong>
+                      <span id="estimateSheetEditorSub">엑셀 견적서 양식 기준</span>
+                    </div>
+                    <div class="estimate-sheet-editor-actions">
+                      <button class="btn btn-line" type="button" onclick="closeEstimateSheetEditor()">닫기</button>
+                      <button class="btn btn-line" type="button" onclick="resetEstimateSheetEditor()">양식 초기화</button>
+                      <button class="btn btn-primary" type="button" onclick="saveEstimateSheetRecord()">견적서 저장</button>
+                    </div>
+                  </div>
+                  <div class="estimate-sheet-caution">
+                    셀을 직접 클릭해서 수정할 수 있습니다. 공사비검증 양식은 우측 검증 계산 영역까지 포함되어 가로 스크롤로 확인합니다.
+                  </div>
+                  <div class="estimate-sheet-grid-wrap">
+                    <table class="estimate-sheet-grid" id="estimateSheetGrid"></table>
+                  </div>
+                </section>
+              </article>
+            </section>
+
+            <section id="estimateDbManage" class="work-panel">
               <article class="quote-shell quote-db-shell">
                 <div class="project-receive-hero quote-hero">
                   <div>
