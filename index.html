@@ -884,18 +884,12 @@
                     <div class="quote-inline-note">골조성을 선택하면 가설, 단열, 견출, 방수턱 중 해당 항목을 같이 기록합니다.</div>
                   </section>
                   <section class="project-receive-card quote-card quote-attachment-card">
-                    <div class="project-receive-card-head"><div><strong>첨부파일 관리</strong><span>내역서, 도면, 견적서, 기타자료를 분류별로 저장합니다.</span></div><em>03</em></div>
+                    <div class="project-receive-card-head"><div><strong>첨부파일 관리</strong><span>접수자료와 동일한 분류로 첨부자료를 관리합니다.</span></div><em>03</em></div>
                     <div class="quote-attachment-list">
-                      <button class="quote-attachment-row" type="button" onclick="openEstimateQuoteAttachmentModal('statement')"><strong>내역서 접수</strong><span id="quoteAttachCountStatement">0건</span></button>
-                      <div class="quote-attachment-drawing">
-                        <button class="quote-attachment-row" type="button" onclick="toggleQuoteDrawingAttachButtons()"><strong>도면접수</strong><span id="quoteAttachCountDrawing">0건</span></button>
-                        <div class="quote-attachment-subbuttons hidden" id="quoteDrawingAttachButtons">
-                          <button type="button" onclick="openEstimateQuoteAttachmentModal('drawingArchitecture')">건축</button>
-                          <button type="button" onclick="openEstimateQuoteAttachmentModal('drawingStructure')">구조</button>
-                          <button type="button" onclick="openEstimateQuoteAttachmentModal('drawingCivil')">토목</button>
-                        </div>
-                      </div>
-                      <button class="quote-attachment-row" type="button" onclick="openEstimateQuoteAttachmentModal('estimate')"><strong>견적서 저장</strong><span id="quoteAttachCountEstimate">0건</span></button>
+                      <button class="quote-attachment-row" type="button" onclick="openEstimateQuoteAttachmentModal('drawing')"><strong>도면</strong><span id="quoteAttachCountDrawing">0건</span></button>
+                      <button class="quote-attachment-row" type="button" onclick="openEstimateQuoteAttachmentModal('specification')"><strong>시방서</strong><span id="quoteAttachCountSpecification">0건</span></button>
+                      <button class="quote-attachment-row" type="button" onclick="openEstimateQuoteAttachmentModal('siteDescription')"><strong>현장설명서</strong><span id="quoteAttachCountSiteDescription">0건</span></button>
+                      <button class="quote-attachment-row" type="button" onclick="openEstimateQuoteAttachmentModal('statement')"><strong>내역서</strong><span id="quoteAttachCountStatement">0건</span></button>
                       <div class="quote-attachment-extra-head"><strong>기타자료</strong><button type="button" onclick="addEstimateQuoteExtraAttachmentCategory()">+ 기타자료 추가</button></div>
                       <div class="quote-attachment-extra-list" id="quoteExtraAttachmentCategories"></div>
                     </div>
