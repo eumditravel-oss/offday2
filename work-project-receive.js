@@ -5092,6 +5092,15 @@ function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, 
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
   const override = estimateDbColumnWidthOverrides?.[tab]?.[colIndex];
   if (Number.isFinite(Number(override)) && Number(override) > 0) return Number(override);
+
+  const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  if (tab === "pj") {
+    // 프로젝트명은 2줄 표기를 유지하되 가로폭이 과도하게 커지지 않도록 고정합니다.
+    if (headerName === "프로젝트명") return 220;
+    // 프로젝트 연결은 Enter 명령 셀이므로 최소 폭만 확보합니다.
+    if (headerName === ESTIMATE_DB_PROJECT_LINK_HEADER) return 130;
+  }
+
   const values = [];
   (sheet.headerRows || []).forEach(row => values.push(row[colIndex] || ""));
   (sheet.rows || []).slice(0, 30).forEach(row => values.push(getEstimateDbColumnWidthMeasureValue(row[colIndex] || "", tab, colIndex, sheet)));
@@ -5960,13 +5969,14 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const amountCell = isEstimateDbOutsourceAmountCell(estimateDbActiveTab, colIndex);
         const memoCell = isEstimateDbPjMemoColumn(estimateDbActiveTab, colIndex);
         const commandCell = isEstimateDbEnterCommandCell(estimateDbActiveTab, colIndex) || memoCell;
+        const projectLinkCell = isEstimateDbProjectLinkColumn(estimateDbActiveTab, colIndex);
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}${commandCell ? " quote-db-enter-command-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
         const dbl = memoCell ? `openEstimateDbPjMemoModal(${rowIndex}, ${colIndex})` : (isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`))));
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
-        const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex);
+        const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
         const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
         const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
