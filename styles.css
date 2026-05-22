@@ -17734,3 +17734,184 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .bell::after{
   color:inherit;
 }
+
+/* === 프로젝트 작성: 첨부파일 관리 카드 / 모달 === */
+.quote-attachment-card {
+  align-self: stretch;
+}
+.quote-attachment-list {
+  display: grid;
+  gap: 10px;
+}
+.quote-attachment-row {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 900;
+  cursor: pointer;
+}
+.quote-attachment-row:hover,
+.quote-attachment-row:focus {
+  border-color: #ff6b1a;
+  background: #fff7ed;
+  outline: none;
+}
+.quote-attachment-row span {
+  flex: 0 0 auto;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+}
+.quote-attachment-subbuttons.hidden {
+  display: none;
+}
+.quote-attachment-subbuttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.quote-attachment-subbuttons button,
+.quote-attachment-extra-head button,
+.quote-attachment-extra-row button {
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 900;
+  cursor: pointer;
+}
+.quote-attachment-subbuttons button {
+  min-height: 36px;
+}
+.quote-attachment-extra-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+.quote-attachment-extra-head button {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.quote-attachment-extra-list {
+  display: grid;
+  gap: 8px;
+}
+.quote-attachment-extra-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 7px;
+  align-items: center;
+}
+.quote-attachment-extra-row input {
+  min-width: 0;
+  height: 36px;
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  padding: 0 10px;
+  color: #0f172a;
+  font-weight: 900;
+  outline: none;
+}
+.quote-attachment-extra-row button {
+  height: 36px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.quote-attachment-modal {
+  width: min(920px, 96vw);
+}
+.quote-attachment-modal-body {
+  display: grid;
+  gap: 14px;
+  max-height: 62vh;
+  overflow: auto;
+  padding: 18px 22px 22px;
+}
+.quote-attachment-name-edit,
+.quote-attachment-upload {
+  display: grid;
+  gap: 8px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+.quote-attachment-name-edit input,
+.quote-attachment-upload input {
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #0f172a;
+  font-weight: 800;
+}
+.quote-attachment-file-list {
+  display: grid;
+  gap: 10px;
+}
+.quote-attachment-file-row {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(260px, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+.quote-attachment-file-row strong,
+.quote-attachment-file-row span {
+  display: block;
+  color: #0f172a;
+  font-weight: 900;
+}
+.quote-attachment-file-row span {
+  margin-top: 4px;
+  font-size: 12px;
+}
+.quote-attachment-file-row textarea {
+  min-height: 72px;
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  padding: 10px;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 700;
+  resize: vertical;
+  outline: none;
+}
+.quote-attachment-file-row button {
+  min-height: 38px;
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 900;
+  cursor: pointer;
+}
+.quote-attachment-empty {
+  padding: 18px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 900;
+  text-align: center;
+}
+@media (max-width: 1100px) {
+  .quote-attachment-file-row {
+    grid-template-columns: 1fr;
+  }
+}
