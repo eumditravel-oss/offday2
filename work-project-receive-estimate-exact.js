@@ -58,10 +58,15 @@ function estimateExactEvalFormula(formula, rows) {
   }
   let expr = f.replace(/^=/, "");
   expr = expr.replace(/SUM\(([A-Z]+\d+):([A-Z]+\d+)\)/gi, (_, a, b) => String(estimateExactRangeSum(rows, a, b)));
+  expr = expr.replace(/ROUND\(([^,]+),\s*(\d+)\)/gi, (_, inner, digits) => {
+    const d = Number(digits) || 0;
+    return `(Math.round((${inner}) * ${10 ** d}) / ${10 ** d})`;
+  });
+  expr = expr.replace(/INT\(([^)]+)\)/gi, (_, inner) => `(Math.floor(${inner}))`);
   expr = expr.replace(/([A-Z]+\d+)/g, (m) => String(estimateExactGetValue(rows, m)));
-  if (!/^[0-9+\-*/().\s]+$/.test(expr)) return rows;
+  if (!/^[0-9+\-*/().,\sA-Za-z]+$/.test(expr)) return 0;
   try {
-    const result = Function("return (" + expr + ")")();
+    const result = Function("Math", "return (" + expr + ")")(Math);
     return Number.isFinite(result) ? Math.round(result * 100) / 100 : 0;
   } catch (e) {
     return 0;
@@ -112,6 +117,39 @@ function estimateExactImageStyle(img, spec) {
   return `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
 }
 
+function estimateExactMoveFocus(cell, dr, dc) {
+  const grid = document.getElementById("estimateSheetGrid");
+  if (!grid || !cell) return;
+  const r = Number(cell.dataset.row || 0) + dr;
+  const c = Number(cell.dataset.col || 0) + dc;
+  const next = grid.querySelector(`.estimate-exact-cell[data-row="${r}"][data-col="${c}"]`);
+  if (next && next.getAttribute("contenteditable") === "true") {
+    next.focus();
+    const range = document.createRange();
+    range.selectNodeContents(next);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+function bindEstimateExactKeyboard() {
+  const grid = document.getElementById("estimateSheetGrid");
+  if (!grid || grid.dataset.excelKeyBound === "1") return;
+  grid.dataset.excelKeyBound = "1";
+  grid.addEventListener("keydown", (event) => {
+    const cell = event.target.closest?.(".estimate-exact-cell");
+    if (!cell) return;
+    if (event.key === "Enter") { event.preventDefault(); updateEstimateSheetCell(cell); estimateExactMoveFocus(cell, event.shiftKey ? -1 : 1, 0); }
+    if (event.key === "Tab") { event.preventDefault(); updateEstimateSheetCell(cell); estimateExactMoveFocus(cell, 0, event.shiftKey ? -1 : 1); }
+    if (event.key === "ArrowDown" && !event.shiftKey) { event.preventDefault(); estimateExactMoveFocus(cell, 1, 0); }
+    if (event.key === "ArrowUp" && !event.shiftKey) { event.preventDefault(); estimateExactMoveFocus(cell, -1, 0); }
+    if (event.key === "ArrowRight" && !event.shiftKey) { event.preventDefault(); estimateExactMoveFocus(cell, 0, 1); }
+    if (event.key === "ArrowLeft" && !event.shiftKey) { event.preventDefault(); estimateExactMoveFocus(cell, 0, -1); }
+  });
+}
+
 renderEstimateSheetGrid = function() {
   const grid = document.getElementById("estimateSheetGrid");
   if (!grid || !estimateSheetEditorRows) return;
@@ -144,6 +182,7 @@ renderEstimateSheetGrid = function() {
   const imgs = (spec.images || []).map(img => `<img class="estimate-exact-image" src="data:${img.mime};base64,${img.data}" style="${estimateExactImageStyle(img, spec)}" alt="">`).join("");
   grid.classList.add("estimate-exact-grid");
   grid.innerHTML = `<div class="estimate-exact-canvas">${imgs}<table class="estimate-exact-table"><colgroup>${colgroup}</colgroup><thead><tr><th class="estimate-sheet-corner"></th>${colHeaders}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+  bindEstimateExactKeyboard();
 };
 
 updateEstimateSheetCell = function(cell) {
