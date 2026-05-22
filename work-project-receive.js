@@ -1267,7 +1267,7 @@ document.addEventListener("keydown", handleEstimateDbScopedCommand, true);
 
 function bootEstimateDbDefaultScreen() {
   if (typeof switchWorkPanel === "function") {
-    switchWorkPanel("estimateDbManage");
+    switchWorkPanel("estimateSheetManage");
   }
   estimateDbActiveTab = estimateDbActiveTab || "pj";
   estimateDbReportActiveTab = estimateDbReportActiveTab || "summary";
@@ -7536,7 +7536,7 @@ document.addEventListener("click", event => {
   requestAnimationFrame(() => {
     const targetPanelId = workBtn.dataset.workMain;
     if (typeof syncWorkSideAccordion === "function") syncWorkSideAccordion(targetPanelId);
-    if (targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
+    if (targetPanelId === "estimateSheetManage" || targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
       document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
     } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
       document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
@@ -7724,3 +7724,256 @@ document.addEventListener("click", event => {
   document.addEventListener("DOMContentLoaded", bindCurrentConfirmButton);
   setTimeout(bindCurrentConfirmButton, 0);
 })();
+
+
+/* === 견적서관리 v1: 업로드 엑셀 양식 4종 웹 작성 화면 === */
+const ESTIMATE_SHEET_TEMPLATE_DATA = {"공내역서": [[null, null, null, null, null, null, null, null, null, null, null], ["견   적   서", null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "발송일자 : 2026년 00월 00일", null, null, null, null], ["수            신", "㈜xx건설 견적담당자 귀하", null, null, null, null, null, null, "      - 설계예가 작성 (전문업체 견적서 협조 조건)", null, null], ["공     사    명", "xx프로젝트", null, null, null, null, null, null, "         ※ 구조 수량산출은 3D 모델링으로 산출 가능", null, null], ["용  역  내  용", "정미물량산출 및 공내역서 작성", null, null, null, null, null, null, "      - 인테리어공사는 재료마감표 기준으로 산출", null, null], ["용  역  기  간", "발주처 일정에 따름", null, null, null, null, null, null, "      - V.E공사 작업 시 금액 협의", null, null], ["대금지불방식", "발주처 기준에따름", null, null, null, null, null, null, null, null, null], ["합  계  금  액", "일금영원정 (₩0)", null, null, null, null, null, null, null, null, null], ["품      목", null, "수   량", "단 위", "단   가", "금   액", "비   고", null, null, null, null], ["1. 물량산출 및 공내역서 작성", null, null, null, null, null, null, null, null, null, null], ["건축공사 (구조, 마감)", null, 0, "평", null, 0, null, null, "M2", null, null], ["기계공사", null, 0, "평", null, 0, null, null, "평", 0, null], ["전기공사", null, 0, "평", null, 0, null, null, null, null, null], ["토목,조경공사", null, 0, "평", null, 0, null, null, null, "공내역서", "단가작업"], ["단수정리", null, 1, "식", null, 0, null, null, "컨코", null, 0], [null, null, null, null, null, null, null, null, "현대", null, 0], [null, null, null, null, null, null, null, null, "현산", null, 0], ["총        계 ", null, null, null, null, 0, "(VAT 별도)", null, "계룡", null, 0], ["  ◆ 견  적  조  건 ◆", null, null, null, null, null, null, null, "한화", null, 0], ["      - 정미물량산출 (마감, 구조, 기계, 공사) 1회작업기준", null, null, null, null, null, null, null, "다우", null, 0], ["      - 인테리어, 철거공사 제외", null, null, null, null, null, null, null, null, null, null], ["      - 공내역서 작성", null, null, null, null, null, null, null, null, null, null], ["      - 고려전산 프로그램으로 작업", null, null, null, null, null, null, null, null, null, null], ["      - 도면의 오류 및 누락분(질의사항) 발췌", null, null, null, null, null, null, null, "대신: ", null, null], ["      - 부가세 별도 금액임", null, null, null, null, null, null, null, "조인:  ", null, null], [null, null, null, null, null, null, null, null, "타임: ", null, null], [null, null, null, null, null, null, null, null, "수와셈: ", null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "Tel: 02-2203-1463 / Fax: 02-2203-1464       ", null, null, null, null], [null, null, null, null, null, null, "(05615) 서울시 송파구 백제고분로 46길 18 CC TOWER 5층       ", null, null, null, null], [null, null, null, null, null, null, "㈜컨코스트 대표이사   현  동  명   (인)       ", null, null, null, null]], "설계예가": [[null, null, null, null, null, null, null, null, null, null, null], ["견   적   서", null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "발송일자 : 2026년 00월 00일", null, null, null, null], ["수            신", "㈜xx건설 견적담당자 귀하", null, null, null, null, null, null, null, null, null], ["공     사    명", "xx프로젝트", null, null, null, null, null, null, "         ※ 구조 수량산출은 3D 모델링으로 산출 가능", null, null], ["용  역  내  용", "정미물량산출 및 설계예가 작성", null, null, null, null, null, null, "      - 인테리어공사는 재료마감표 기준으로 산출", null, null], ["용  역  기  간", "발주처 일정에 따름", null, null, null, null, null, null, "      - V.E공사 작업 시 금액 협의", null, null], ["대금지불방식", "작업착수 직전 계약금 50% 현금지급 및 납품후 30일이내 잔여 50% 현금지급조건", null, null, null, null, null, null, null, null, null], ["합  계  금  액", "일금영원정 (₩0)", null, null, null, null, null, null, null, null, null], ["품      목", null, "수   량", "단 위", "단   가", "금   액", "비   고", null, null, null, null], ["1. 물량산출 및 설계예가 작성", null, null, null, null, null, null, null, null, null, null], ["건축공사 (구조, 마감)", null, 0, "평", null, 0, null, null, "M2", null, null], ["기계공사", null, 0, "평", null, 0, null, null, "평", 0, null], ["전기공사", null, 0, "평", null, 0, null, null, null, null, null], ["토목,조경공사", null, 0, "평", null, 0, null, null, null, "공내역서", "단가작업"], ["단수정리", null, 1, "식", null, 0, null, null, "컨코", null, 0], [null, null, null, null, null, null, null, null, "현대", null, 0], [null, null, null, null, null, null, null, null, "현산", null, 0], ["총        계 ", null, null, null, null, 0, "(VAT 별도)", null, "계룡", null, 0], ["  ◆ 견  적  조  건 ◆", null, null, null, null, null, null, null, "한화", null, 0], ["      - 정미물량산출 (마감, 구조, 기계, 전기, 토목, 조경공사) 1회작업기준", null, null, null, null, null, null, null, "다우", null, 0], ["      - 인테리어, 철거공사 제외", null, null, null, null, null, null, null, null, null, null], ["      - 설계예가 작성 (전문업체 견적서 협조 조건)", null, null, null, null, null, null, null, null, null, null], ["      - 고려전산 프로그램으로 작업", null, null, null, null, null, null, null, null, null, null], ["      - 도면의 오류 및 누락분(질의사항) 발췌", null, null, null, null, null, null, null, "대신: ", null, null], ["      - 부가세 별도 금액임", null, null, null, null, null, null, null, "조인:  ", null, null], [null, null, null, null, null, null, null, null, "타임: ", null, null], [null, null, null, null, null, null, null, null, "수와셈: ", null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "Tel: 02-2203-1463 / Fax: 02-2203-1464       ", null, null, null, null], [null, null, null, null, null, null, "(05615) 서울시 송파구 백제고분로 46길 18 CC TOWER 5층       ", null, null, null, null], [null, null, null, null, null, null, "㈜컨코스트 대표이사   현  동  명   (인)       ", null, null, null, null]], "공사비검증": [[null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["견   적   서", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "발송일자 : 2026년 00월 00일", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["수            신", "㈜xx건설 견적담당자 귀하", null, null, null, null, null, null, "공사비검증", "건축", "흙막이", "부대,조경", "타입", 700000, null, null, null, null, null, null, null, null, null, null, null], ["공     사    명", "xx프로젝트", null, null, null, null, null, null, null, "연면적", "지하연면적", "대지면적", "타입수", 700000, null, null, null, null, null, null, null, null, null, null, null], ["용  역  내  용", "공사비 검증 내역서 및 설계예가 작성 (물량산출 및 일위대가 포함)", null, null, null, null, null, null, "M2", null, null, null, null, 800000, null, null, null, null, null, null, null, null, null, null, null], ["용  역  기  간", "발주처 일정에 따름", null, null, null, null, null, null, "평", 0, 0, 0, null, 1000000, null, null, null, null, null, null, null, null, null, null, null], ["대금지불방식", "1)계약금 30%, 2)1차납품직후 40%, 3) 1차보완완료후 20%, 4) 검증완료후 10%", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["합  계  금  액", "일금영원정 (₩0)", null, null, null, null, null, null, "현산(가안)/변경전후", "건축단가", "건축금액", "타입금액", "확장금액", "건축합계", "흙막이단가", "흙막이금액", "부대토목단가", "부대토목금액", "토목금액", "조경단가", "조경금액", "토목,조경금액", "기계금액(90%)", "전기금액(90%)", "총액(전공정)"], ["품      목", null, "수   량", "단 위", "단   가", "금   액", "비   고", null, "컨코스트 기준", null, 0, 0, 0, 0, null, 0, null, 0, 0, null, 0, 0, 0, 0, 0], ["1. 물량산출 및 설계예가 작성", null, null, null, null, null, null, null, "타업체 기준", null, 0, 0, 0, 0, null, 0, null, 0, 0, null, 0, 0, 0, 0, 0], ["건축공사 (구조, 마감)", null, 0, "평", null, 0, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["기계공사", null, 0, "평", null, 0, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["전기공사", null, 0, "평", null, 0, null, null, "현산(나안)/변경후", "건축단가", "건축금액", "타입금액", "확장금액", "건축합계", "토목단가", "토목금액", "부대토목단가", "부대토목금액", "토목금액", "조경단가", "조경금액", "토목,조경금액", "기계금액(90%)", "전기금액(90%)", "총액(전공정)"], ["토목,조경공사", null, 0, "평", null, 0, null, null, "컨코스트 기준", null, 0, 0, 0, 0, null, 0, null, 0, 0, null, 0, 0, 0, 0, 0], ["단수정리", null, 1, "식", null, 0, null, null, "타업체 기준", null, 0, 0, 0, 0, null, 0, null, 0, 0, null, 0, 0, 0, 0, 0], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["총        계 ", null, null, null, null, 0, "(VAT 별도)", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["  ◆ 견  적  조  건 ◆", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 정미물량산출 (마감,구조,토목,조경,기계,전기공사)에 대한 당초/변경도면 기준 각1회 작업", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 인테리어, 철거공사 제외 (필요 시 별도 협의)", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 당초/변경 도서별 산출내역서 및 증감 대비표 작성", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 총괄표(원가계산서) 및 공종별 집계표 작성", null, null, null, null, null, null, null, "대신: ", "      - 정미물량산출 (마감,구조,토목,조경,기계,전기공사)에 대한 당초/변경도면 기준 각1회 작업", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 제출용 내역 아이템에 대한 일위대가 및 단가산출서 작성 (단, 전문업체 견적항목은 협조 조건)", null, null, null, null, null, null, null, "조인:  ", "      - 인테리어, 철거공사 제외 (필요 시 별도 협의)", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 산출 과정 중 발견된 도면 간 불일치, 오류, 누락 사항에 대한 질의서(Query) 발췌 및 정리", null, null, null, null, null, null, null, "타임: ", "      - 당초/변경 도서별 산출내역서 및 증감 대비표 작성", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 서류 제출 후 검증주체(한국부동산원 등)의 검토 의견에 따른 지적사항 보완", null, null, null, null, null, null, null, "수와셈: ", "      - 제출용 내역서 상 아이템에 대한 일위대가 작성 (전문업체 견적서 협조 조건)", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 용역 범위 외 설계변경이나 검증주체의 반복적인 재산출 요구 시에는 별도의 기술료를 협의", null, null, null, null, null, null, null, null, "      - 서류제출 후, 검증주체의 요구사항에 대한 지적사항 보완", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], ["      - 부가세 별도 금액임", null, null, null, null, null, null, null, null, "      - 도면의 문제점 및 질의사항 발췌", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, "      - 부가세 별도 금액임", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "Tel: 02-2203-1463 / Fax: 02-2203-1464       ", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "(05615) 서울시 송파구 백제고분로 46길 18 CC TOWER 5층       ", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "㈜컨코스트 대표이사   현  동  명   (인)       ", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]], "개산견적": [[null, null, null, null, null, null, null, null, null, null, null], ["견   적   서", null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "발송일자 : 2026년 00월 00일", null, null, null, null], ["수            신", "㈜xx건설 견적담당자 귀하", null, null, null, null, null, null, null, null, null], ["공     사    명", "xx프로젝트", null, null, null, null, null, null, "      - 설계예가 작성 (전문업체 견적서 협조 조건)", null, null], ["용  역  내  용", "물량산출 및 원가계산서 작성", null, null, null, null, null, null, "         ※ 구조 수량산출은 3D 모델링으로 산출 가능", null, null], ["용  역  기  간", "작업 착수 후 10일 (영업일 기준)", null, null, null, null, null, null, "      - 인테리어공사는 재료마감표 기준으로 산출", null, null], ["대금지불방식", "작업착수 직전 계약금 50% 현금지급 및 납품후 30일이내 잔여 50% 현금지급조건", null, null, null, null, null, null, null, null, null], ["합  계  금  액", "일금영원정 (₩0)", null, null, null, null, null, null, null, null, null], ["품      목", null, "수   량", "단 위", "단   가", "금   액", "비   고", null, null, null, null], ["1. 물량산출 및 원가계산서 작성", null, null, null, null, null, null, null, null, null, null], ["건축공사 (구조, 마감)", null, 0, "평", 0, 0, null, null, "M2", 0, null], ["기계공사", null, 0, "평", 0, 0, "평당공사비", null, "평", 0, null], ["전기공사", null, 0, "평", 0, 0, "평당공사비", null, null, null, null], ["토목,조경공사", null, 0, "평", 0, 0, null, null, null, "공내역서", "단가작업"], ["단수정리", null, 1, "식", null, null, null, null, "컨코", null, 0], [" ", null, null, null, null, null, null, null, "현대", null, 0], [null, null, null, null, null, null, null, null, "현산", null, 0], ["총        계 ", null, null, null, null, 0, "(VAT 별도)", null, "계룡", null, 0], ["  ◆ 견  적  조  건 ◆", null, null, null, null, " ", null, null, "한화", null, 0], ["      - 물량산출 (마감, 구조, 기계, 전기, 토목, 조경공사) 개산견적 1회 작업 기준", null, null, null, null, null, null, null, "다우", null, 0], ["      - 기계, 전기공사는 평당공사비로 작업", null, null, null, null, null, null, null, null, null, null], ["      - 인테리어, 철거공사 제외", null, null, null, null, null, null, null, null, null, null], ["      - 설계가 작성 (일위대가)", null, null, null, null, null, null, null, null, null, null], ["      - 고려전산 프로그램으로 작업", null, null, null, null, null, null, null, "대신: ", null, null], ["      - 부가세 별도 금액임", null, null, null, null, null, null, null, "조인:  ", null, null], [" ", null, null, null, null, null, null, null, "타임: ", null, null], [null, null, null, null, null, null, null, null, "수와셈: ", null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, "Tel: 02-2203-1463 / Fax: 02-2203-1464       ", null, null, null, null], [null, null, null, null, null, null, "(05665) 서울시 송파구 백제고분로 46길 18 CC TOWER 5층       ", null, null, null, null], [null, null, null, null, null, null, "㈜컨코스트 대표이사   현  동  명   (인)       ", null, null, null, null]]};
+
+const ESTIMATE_SHEET_TYPE_ORDER = ["개산견적", "공내역서", "설계예가", "공사비검증"];
+let estimateSheetActiveType = "개산견적";
+let estimateSheetEditingIndex = null;
+let estimateSheetEditorRows = null;
+let estimateSheetRecords = [
+  {
+    type: "개산견적",
+    title: "개산견적 견적서 초안",
+    status: "작성중",
+    updatedAt: "2026.05.22 09:00",
+    rows: cloneEstimateSheetRows("개산견적")
+  },
+  {
+    type: "공내역서",
+    title: "공내역서 견적서 초안",
+    status: "작성중",
+    updatedAt: "2026.05.22 09:10",
+    rows: cloneEstimateSheetRows("공내역서")
+  },
+  {
+    type: "설계예가",
+    title: "설계예가 견적서 초안",
+    status: "작성중",
+    updatedAt: "2026.05.22 09:20",
+    rows: cloneEstimateSheetRows("설계예가")
+  },
+  {
+    type: "공사비검증",
+    title: "공사비검증 견적서 초안",
+    status: "작성중",
+    updatedAt: "2026.05.22 09:30",
+    rows: cloneEstimateSheetRows("공사비검증")
+  }
+];
+
+function cloneEstimateSheetRows(type) {
+  const source = ESTIMATE_SHEET_TEMPLATE_DATA[type] || ESTIMATE_SHEET_TEMPLATE_DATA["개산견적"] || [];
+  return JSON.parse(JSON.stringify(source));
+}
+function estimateSheetCellText(value) {
+  if (value === null || typeof value === "undefined") return "";
+  return String(value);
+}
+function estimateSheetHtml(value) {
+  const text = estimateSheetCellText(value);
+  return text.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
+}
+function estimateSheetNow() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function getEstimateSheetCell(rows, r, c) {
+  return estimateSheetCellText(rows?.[r]?.[c]);
+}
+function getEstimateSheetRecordSummary(record) {
+  const rows = record?.rows || [];
+  return {
+    recipient: getEstimateSheetCell(rows, 4, 1) || "-",
+    project: getEstimateSheetCell(rows, 5, 1) || "-",
+    service: getEstimateSheetCell(rows, 6, 1) || "-",
+    total: getEstimateSheetCell(rows, 9, 1) || "-"
+  };
+}
+function setEstimateSheetType(type) {
+  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : "개산견적";
+  document.querySelectorAll(".estimate-sheet-tab").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.sheetType === estimateSheetActiveType);
+  });
+  closeEstimateSheetEditor();
+  renderEstimateSheetList();
+}
+function renderEstimateSheetManage() {
+  document.querySelectorAll(".estimate-sheet-tab").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.sheetType === estimateSheetActiveType);
+  });
+  renderEstimateSheetList();
+  if (estimateSheetEditorRows) renderEstimateSheetGrid();
+}
+function renderEstimateSheetList() {
+  const body = document.getElementById("estimateSheetListBody");
+  if (!body) return;
+  const keyword = (document.getElementById("estimateSheetSearch")?.value || "").trim().toLowerCase();
+  const records = estimateSheetRecords.filter(record => {
+    if (record.type !== estimateSheetActiveType) return false;
+    const s = getEstimateSheetRecordSummary(record);
+    const hay = [record.type, record.title, s.recipient, s.project, s.service, s.total, record.status].join(" ").toLowerCase();
+    return !keyword || hay.includes(keyword);
+  });
+  body.innerHTML = records.map(record => {
+    const index = estimateSheetRecords.indexOf(record);
+    const s = getEstimateSheetRecordSummary(record);
+    return `<tr onclick="openEstimateSheetEditor(${index})">
+      <td><span class="estimate-sheet-type-badge">${estimateSheetHtml(record.type)}</span></td>
+      <td><strong>${estimateSheetHtml(record.title || record.type + " 견적서")}</strong><small>수정: ${estimateSheetHtml(record.updatedAt || "-")}</small></td>
+      <td>${estimateSheetHtml(s.recipient)}</td>
+      <td>${estimateSheetHtml(s.project)}</td>
+      <td>${estimateSheetHtml(s.service)}</td>
+      <td>${estimateSheetHtml(s.total)}</td>
+      <td><span class="quote-status-badge">${estimateSheetHtml(record.status || "작성중")}</span></td>
+      <td class="quote-action-cell" onclick="event.stopPropagation();">
+        <button class="btn btn-line btn-xs" type="button" onclick="openEstimateSheetEditor(${index})">열기</button>
+        <button class="btn btn-line btn-xs" type="button" onclick="duplicateEstimateSheetRecord(${index})">복제</button>
+        <button class="btn btn-primary btn-xs" type="button" onclick="markEstimateSheetSent(${index})">발송</button>
+      </td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="8" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
+}
+function openEstimateSheetEditor(index = null) {
+  const editor = document.getElementById("estimateSheetEditor");
+  if (!editor) return;
+  if (index !== null && estimateSheetRecords[index]) {
+    estimateSheetEditingIndex = index;
+    estimateSheetActiveType = estimateSheetRecords[index].type || estimateSheetActiveType;
+    estimateSheetEditorRows = JSON.parse(JSON.stringify(estimateSheetRecords[index].rows || cloneEstimateSheetRows(estimateSheetActiveType)));
+  } else {
+    estimateSheetEditingIndex = null;
+    estimateSheetEditorRows = cloneEstimateSheetRows(estimateSheetActiveType);
+  }
+  editor.classList.remove("hidden");
+  const titleNode = document.getElementById("estimateSheetEditorTitle");
+  const subNode = document.getElementById("estimateSheetEditorSub");
+  if (titleNode) titleNode.textContent = `${estimateSheetActiveType} 견적서 작성`;
+  if (subNode) subNode.textContent = estimateSheetActiveType === "공사비검증" ? "A~Y 검증 계산 영역 포함" : "A~K 견적서 양식";
+  renderEstimateSheetManage();
+  renderEstimateSheetGrid();
+  editor.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function closeEstimateSheetEditor() {
+  const editor = document.getElementById("estimateSheetEditor");
+  if (editor) editor.classList.add("hidden");
+}
+function resetEstimateSheetEditor() {
+  estimateSheetEditorRows = cloneEstimateSheetRows(estimateSheetActiveType);
+  renderEstimateSheetGrid();
+  if (typeof showToast === "function") showToast("선택한 견적서 양식으로 초기화했습니다.");
+}
+function renderEstimateSheetGrid() {
+  const grid = document.getElementById("estimateSheetGrid");
+  if (!grid || !estimateSheetEditorRows) return;
+  const rows = estimateSheetEditorRows;
+  const maxCols = rows.reduce((max, row) => Math.max(max, Array.isArray(row) ? row.length : 0), 0);
+  const colHeaders = Array.from({ length: maxCols }, (_, i) => `<th>${estimateSheetColumnLabel(i)}</th>`).join("");
+  const bodyRows = rows.map((row, r) => {
+    const cells = Array.from({ length: maxCols }, (_, c) => {
+      const value = estimateSheetCellText(row?.[c]);
+      const cls = estimateSheetCellClass(r, c, value, maxCols);
+      return `<td class="${cls}" data-row="${r}" data-col="${c}" contenteditable="true" oninput="updateEstimateSheetCell(this)">${estimateSheetHtml(value)}</td>`;
+    }).join("");
+    return `<tr><th class="estimate-sheet-row-head">${r + 1}</th>${cells}</tr>`;
+  }).join("");
+  grid.innerHTML = `<thead><tr><th class="estimate-sheet-corner"></th>${colHeaders}</tr></thead><tbody>${bodyRows}</tbody>`;
+}
+function estimateSheetColumnLabel(index) {
+  let n = index + 1;
+  let label = "";
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    label = String.fromCharCode(65 + rem) + label;
+    n = Math.floor((n - 1) / 26);
+  }
+  return label;
+}
+function estimateSheetCellClass(rowIndex, colIndex, value, maxCols) {
+  const classes = [];
+  if (rowIndex === 1 && colIndex <= 6) classes.push("title-cell");
+  if ([4,5,6,7,8,9,10].includes(rowIndex) && colIndex === 0) classes.push("label-cell");
+  if (rowIndex === 10 || (estimateSheetActiveType === "공사비검증" && [9,10,14].includes(rowIndex))) classes.push("header-cell");
+  if (rowIndex >= 11 && rowIndex <= 19 && colIndex <= 6) classes.push("amount-cell");
+  if (rowIndex >= 20 && colIndex <= 6) classes.push("condition-cell");
+  if (estimateSheetActiveType === "공사비검증" && colIndex >= 8) classes.push("verify-cell");
+  if (!value) classes.push("blank-cell");
+  return classes.join(" ");
+}
+function updateEstimateSheetCell(cell) {
+  const r = Number(cell.dataset.row);
+  const c = Number(cell.dataset.col);
+  if (!estimateSheetEditorRows[r]) estimateSheetEditorRows[r] = [];
+  estimateSheetEditorRows[r][c] = cell.innerText.replace(/\n/g, " ").trim();
+}
+function saveEstimateSheetRecord() {
+  if (!estimateSheetEditorRows) return;
+  const project = getEstimateSheetCell(estimateSheetEditorRows, 5, 1) || `${estimateSheetActiveType} 견적서`;
+  const recipient = getEstimateSheetCell(estimateSheetEditorRows, 4, 1) || "";
+  const record = {
+    type: estimateSheetActiveType,
+    title: `${project}_${estimateSheetActiveType}`,
+    status: "작성중",
+    updatedAt: estimateSheetNow(),
+    rows: JSON.parse(JSON.stringify(estimateSheetEditorRows)),
+    recipient
+  };
+  if (estimateSheetEditingIndex !== null && estimateSheetRecords[estimateSheetEditingIndex]) {
+    estimateSheetRecords[estimateSheetEditingIndex] = record;
+  } else {
+    estimateSheetRecords.unshift(record);
+    estimateSheetEditingIndex = 0;
+  }
+  renderEstimateSheetList();
+  if (typeof showToast === "function") showToast("견적서 작성 내용을 저장했습니다.");
+}
+function duplicateEstimateSheetRecord(index) {
+  const record = estimateSheetRecords[index];
+  if (!record) return;
+  const copy = JSON.parse(JSON.stringify(record));
+  copy.title = `${copy.title || copy.type + " 견적서"}_복제`;
+  copy.status = "작성중";
+  copy.updatedAt = estimateSheetNow();
+  estimateSheetRecords.unshift(copy);
+  setEstimateSheetType(copy.type);
+  renderEstimateSheetList();
+  if (typeof showToast === "function") showToast("견적서를 복제했습니다.");
+}
+function markEstimateSheetSent(index) {
+  if (!estimateSheetRecords[index]) return;
+  estimateSheetRecords[index].status = "발송완료";
+  estimateSheetRecords[index].updatedAt = estimateSheetNow();
+  renderEstimateSheetList();
+  if (typeof showToast === "function") showToast("견적서 상태를 발송완료로 변경했습니다.");
+}
+function exportEstimateSheetCurrentHtml() {
+  if (!estimateSheetEditorRows) {
+    const first = estimateSheetRecords.find(record => record.type === estimateSheetActiveType);
+    if (first) {
+      estimateSheetEditorRows = JSON.parse(JSON.stringify(first.rows || cloneEstimateSheetRows(estimateSheetActiveType)));
+    } else {
+      estimateSheetEditorRows = cloneEstimateSheetRows(estimateSheetActiveType);
+    }
+  }
+  const rows = estimateSheetEditorRows || [];
+  const maxCols = rows.reduce((max, row) => Math.max(max, Array.isArray(row) ? row.length : 0), 0);
+  const tableRows = rows.map(row => `<tr>${Array.from({length:maxCols}, (_, c) => `<td>${estimateSheetHtml(row?.[c])}</td>`).join("")}</tr>`).join("");
+  const html = `<html><head><meta charset="utf-8"><style>td{border:1px solid #999;padding:6px;mso-number-format:"\\@";white-space:pre-wrap;} .title{font-size:20px;font-weight:bold;text-align:center;}</style></head><body><table>${tableRows}</table></body></html>`;
+  const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  if (typeof showToast === "function") showToast("현재 견적서 화면을 엑셀 호환 파일로 내보냈습니다.");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("estimateSheetManage")) renderEstimateSheetManage();
+});
