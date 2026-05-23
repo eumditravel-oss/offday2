@@ -18114,8 +18114,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   font-size: 12px;
   font-weight: 700;
   vertical-align: middle;
-  white-space: pre-wrap;
-  word-break: keep-all;
+  white-space: nowrap !important;
+  word-break: normal !important;
   background: #fff;
 }
 .estimate-sheet-grid thead th,
@@ -18209,8 +18209,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   height: inherit;
   line-height: 1.18;
   overflow: hidden;
-  white-space: pre-wrap;
-  word-break: keep-all;
+  white-space: nowrap !important;
+  word-break: normal !important;
   color: #000000;
 }
 .estimate-excel-col-head,
@@ -18302,8 +18302,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   padding: 0 4px;
   line-height: 1.15;
   overflow: hidden;
-  white-space: pre-wrap;
-  word-break: keep-all;
+  white-space: nowrap !important;
+  word-break: normal !important;
   color: #000 !important;
   font-family: Arial, '맑은 고딕', Malgun Gothic, sans-serif;
 }
@@ -18403,9 +18403,11 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-excel-cell {
   color: #000000 !important;
   background-clip: padding-box;
-  white-space: pre-wrap;
-  word-break: keep-all;
+  white-space: nowrap !important;
+  word-break: normal !important;
   line-height: 1.2;
+  overflow: hidden !important;
+  text-overflow: clip;
   outline: none;
 }
 .estimate-excel-cell.outside-print {
