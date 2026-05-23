@@ -213,6 +213,8 @@ function renderEstimateSheetList() {
   }).join("") || `<tr><td colspan="8" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
 }
 function openEstimateSheetEditor(index = null) {
+  const editor = document.getElementById("estimateSheetEditor");
+  if (!editor) return;
   if (index !== null && estimateSheetRecords[index]) {
     estimateSheetEditingIndex = index;
     estimateSheetActiveType = estimateSheetRecords[index].type;
@@ -221,127 +223,32 @@ function openEstimateSheetEditor(index = null) {
     estimateSheetEditingIndex = null;
     estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
   }
+  editor.classList.remove("hidden");
+  document.getElementById("estimateSheetEditorTitle").textContent = `${estimateSheetActiveType} 견적서 작성`;
+  document.getElementById("estimateSheetEditorSub").textContent = "원본 엑셀 기준 · 병합/행높이/열너비/로고/도장/수식 반영";
   renderEstimateSheetManage();
-  openEstimateSheetEditorWindow();
+  renderEstimateSheetGrid();
+  editor.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-let estimateSheetPopupWindow = null;
-let estimateSheetSelectedCell = { r: 1, c: 1 };
-let estimateSheetEditingCell = null;
-
-function estimateSheetVisibleText(value) {
-  return String(value ?? "").replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim();
-}
-
-function estimateSheetCellInputText(state, r, c) {
-  const obj = estimateSheetGetCellObj(state, r, c);
-  return obj.formula ? `=${obj.formula}` : estimateSheetVisibleText(obj.value);
-}
-
-function closeEstimateSheetEditor() {
-  if (estimateSheetPopupWindow && !estimateSheetPopupWindow.closed) estimateSheetPopupWindow.close();
-}
-
-function openEstimateSheetEditorWindow() {
-  if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  estimateSheetSelectedCell = { r: 1, c: 1 };
-  const features = "popup=yes,width=1500,height=920,left=40,top=30,resizable=yes,scrollbars=yes";
-  estimateSheetPopupWindow = window.open("", "concostEstimateExcelEditor", features);
-  if (!estimateSheetPopupWindow) {
-    if (typeof showToast === "function") showToast("팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 열어주세요.");
-    return;
-  }
-  const css = estimateSheetEditorPopupCss();
-  estimateSheetPopupWindow.document.open();
-  estimateSheetPopupWindow.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CON-COST 견적서 엑셀 작성</title><style>${css}</style></head><body><div class="excel-app"><header class="excel-topbar"><div class="excel-brand"><span>CON-COST</span><strong id="popupEstimateTitle">${estimateSheetHtml(estimateSheetActiveType)} 견적서 작성</strong></div><div class="excel-actions"><button type="button" id="popupResetBtn">양식 초기화</button><button type="button" id="popupInsertRowBtn">행 삽입 Ctrl+F9</button><button type="button" id="popupInsertColBtn">열 삽입 Ctrl+Shift+F9</button><button type="button" id="popupExportBtn">내보내기</button><button type="button" class="primary" id="popupSaveBtn">견적서 저장</button></div></header><section class="formula-row"><div class="name-box" id="estimateSheetNameBox">A1</div><input class="formula-box" id="estimateSheetFormulaBox" autocomplete="off" spellcheck="false" placeholder="셀 값 또는 =SUM(A1:A10) 형태의 수식 입력" /></section><div class="excel-help">방향키/Enter/Tab으로 셀 이동 · F2 또는 더블클릭으로 편집 · Delete/Backspace 값 삭제 · = 로 시작하는 수식 입력 가능 · Ctrl+F9 행 삽입 · Ctrl+Shift+F9 열 삽입</div><main class="estimate-sheet-grid-wrap estimate-excel-grid-wrap"><table class="estimate-sheet-grid estimate-excel-grid" id="estimateSheetGrid"></table></main></div></body></html>`);
-  estimateSheetPopupWindow.document.close();
-  estimateSheetBindPopupEvents();
-  renderEstimateSheetGrid(estimateSheetPopupWindow.document);
-  setTimeout(() => estimateSheetSelectCell(1, 1), 0);
-}
-
-function estimateSheetEditorPopupCss() {
-  return `*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;background:#f6f8fb;color:#111827}.excel-app{min-height:100%;display:flex;flex-direction:column}.excel-topbar{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:#fff;border-bottom:1px solid #d9e3ef;position:sticky;top:0;z-index:30}.excel-brand{display:flex;align-items:center;gap:10px;min-width:260px}.excel-brand span{display:inline-flex;align-items:center;height:24px;padding:0 12px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px;font-weight:900}.excel-brand strong{font-size:16px}.excel-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.excel-actions button{height:34px;padding:0 12px;border:1px solid #d7dee9;border-radius:8px;background:#fff;font-weight:800;cursor:pointer}.excel-actions button.primary{background:#f97316;border-color:#f97316;color:#fff}.formula-row{height:34px;display:flex;align-items:center;gap:6px;padding:4px 8px;background:#ffffff;border-bottom:1px solid #d9e3ef;position:sticky;top:56px;z-index:29}.name-box{width:92px;height:26px;border:1px solid #cfd8e3;background:#f8fafc;padding:4px 8px;font-size:12px;font-weight:800}.formula-box{flex:1;height:26px;border:1px solid #cfd8e3;border-radius:4px;padding:3px 9px;font-size:13px;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif}.excel-help{height:30px;padding:7px 10px;background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:12px;font-weight:800;position:sticky;top:90px;z-index:28}.estimate-sheet-grid-wrap.estimate-excel-grid-wrap{position:relative;overflow:auto;flex:1;background:#fff;border-top:0;padding:0}.estimate-sheet-grid.estimate-excel-grid{position:relative;border-collapse:collapse;table-layout:fixed;background:#fff;color:#000;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif}.estimate-excel-corner,.estimate-excel-col-head,.estimate-excel-row-head{background:#eef3f9!important;color:#000!important;border:1px solid #cfd9e6!important;font-weight:800!important;text-align:center!important;vertical-align:middle!important;height:28px;min-height:28px;padding:0!important;position:sticky;z-index:8}.estimate-excel-corner{left:0;top:0;width:42px;min-width:42px;max-width:42px;z-index:12}.estimate-excel-col-head{top:0}.estimate-excel-row-head{left:0;width:42px;min-width:42px;max-width:42px}.estimate-excel-cell{color:#000!important;background-clip:padding-box;white-space:nowrap!important;word-break:normal!important;overflow:hidden!important;text-overflow:clip;line-height:1.2;outline:none;cursor:cell;user-select:none}.estimate-excel-cell.outside-print{background-color:#a6a6a6!important}.estimate-excel-cell.formula-cell{cursor:cell}.estimate-excel-cell.active-cell{box-shadow:inset 0 0 0 2px #16a34a!important;position:relative;z-index:7}.estimate-excel-cell.editing-cell{box-shadow:inset 0 0 0 2px #2563eb!important;user-select:text;cursor:text;background:#fff!important}.estimate-excel-col-head.active-head,.estimate-excel-row-head.active-head{background:#dbeafe!important;color:#1d4ed8!important}.estimate-excel-image{position:absolute;object-fit:contain;pointer-events:none;z-index:5}.estimate-excel-cell[contenteditable="true"]{white-space:nowrap!important}`;
-}
-
-function estimateSheetBindPopupEvents() {
-  const doc = estimateSheetPopupWindow?.document;
-  if (!doc) return;
-  doc.getElementById("popupSaveBtn")?.addEventListener("click", saveEstimateSheetRecord);
-  doc.getElementById("popupResetBtn")?.addEventListener("click", resetEstimateSheetEditor);
-  doc.getElementById("popupInsertRowBtn")?.addEventListener("click", () => estimateSheetInsertRow(estimateSheetSelectedCell.r));
-  doc.getElementById("popupInsertColBtn")?.addEventListener("click", () => estimateSheetInsertCol(estimateSheetSelectedCell.c));
-  doc.getElementById("popupExportBtn")?.addEventListener("click", exportEstimateSheetCurrentHtml);
-  doc.addEventListener("mousedown", event => {
-    const cell = event.target.closest?.(".estimate-excel-cell");
-    if (!cell) return;
-    event.preventDefault();
-    estimateSheetCommitEdit();
-    estimateSheetSelectCell(Number(cell.dataset.row), Number(cell.dataset.col));
-  });
-  doc.addEventListener("dblclick", event => {
-    const cell = event.target.closest?.(".estimate-excel-cell");
-    if (!cell) return;
-    event.preventDefault();
-    estimateSheetBeginEdit();
-  });
-  doc.addEventListener("keydown", estimateSheetPopupKeydown);
-  const formula = doc.getElementById("estimateSheetFormulaBox");
-  formula?.addEventListener("focus", () => estimateSheetCommitEdit());
-  formula?.addEventListener("keydown", event => {
-    if (event.key === "Enter") { event.preventDefault(); estimateSheetApplyFormulaBox(); estimateSheetMoveSelection(1, 0); }
-    if (event.key === "Escape") { event.preventDefault(); estimateSheetRefreshFormulaBox(); formula.blur(); }
-  });
-  formula?.addEventListener("blur", estimateSheetApplyFormulaBox);
-}
-
-function renderEstimateSheetManage() {
-  const tabs = document.getElementById("estimateSheetTypeTabs");
-  if (tabs) tabs.querySelectorAll(".estimate-sheet-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.sheetType === estimateSheetActiveType));
-  renderEstimateSheetList();
-}
-
-function setEstimateSheetType(type) {
-  estimateSheetActiveType = type;
-  if (estimateSheetPopupWindow && !estimateSheetPopupWindow.closed) {
-    estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-    estimateSheetEditingIndex = null;
-    estimateSheetPopupWindow.document.getElementById("popupEstimateTitle").textContent = `${estimateSheetActiveType} 견적서 작성`;
-    renderEstimateSheetGrid(estimateSheetPopupWindow.document);
-    estimateSheetSelectCell(1, 1);
-  }
-  renderEstimateSheetManage();
-}
-
-function resetEstimateSheetEditor() {
-  estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  if (estimateSheetPopupWindow && !estimateSheetPopupWindow.closed) {
-    renderEstimateSheetGrid(estimateSheetPopupWindow.document);
-    estimateSheetSelectCell(1, 1);
-  } else renderEstimateSheetGrid();
-}
-
+function closeEstimateSheetEditor() { document.getElementById("estimateSheetEditor")?.classList.add("hidden"); }
+function resetEstimateSheetEditor() { estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType); renderEstimateSheetGrid(); }
 function saveEstimateSheetRecord() {
-  estimateSheetCommitEdit();
-  estimateSheetApplyFormulaBox();
   if (!estimateSheetEditorState) return;
   const project = estimateSheetDisplayValue(estimateSheetEditorState, 6, 2) || estimateSheetActiveType;
-  const record = { type: estimateSheetActiveType, title: `${estimateSheetVisibleText(project)}_${estimateSheetActiveType}`, status: "작성중", updatedAt: estimateSheetNow(), state: estimateSheetCloneState(estimateSheetEditorState) };
+  const record = { type: estimateSheetActiveType, title: `${project}_${estimateSheetActiveType}`, status: "작성중", updatedAt: estimateSheetNow(), state: estimateSheetCloneState(estimateSheetEditorState) };
   if (estimateSheetEditingIndex !== null && estimateSheetRecords[estimateSheetEditingIndex]) estimateSheetRecords[estimateSheetEditingIndex] = record;
   else { estimateSheetRecords.unshift(record); estimateSheetEditingIndex = 0; }
   renderEstimateSheetManage();
   if (typeof showToast === "function") showToast("견적서 작성 내용을 저장했습니다.");
 }
-
 function duplicateEstimateSheetRecord(index) {
   const src = estimateSheetRecords[index]; if (!src) return;
   const copy = JSON.parse(JSON.stringify(src)); copy.title = `${copy.title}_복제`; copy.status = "작성중"; copy.updatedAt = estimateSheetNow();
   estimateSheetRecords.unshift(copy); setEstimateSheetType(copy.type);
 }
 function markEstimateSheetSent(index) { if (estimateSheetRecords[index]) { estimateSheetRecords[index].status = "발송완료"; estimateSheetRecords[index].updatedAt = estimateSheetNow(); renderEstimateSheetList(); } }
-
-function renderEstimateSheetGrid(doc = document) {
-  const grid = doc.getElementById("estimateSheetGrid");
+function renderEstimateSheetGrid() {
+  const grid = document.getElementById("estimateSheetGrid");
   if (!grid || !estimateSheetEditorState) return;
   const state = estimateSheetEditorState;
   const spec = estimateSheetGetSpec(state.type);
@@ -349,7 +256,7 @@ function renderEstimateSheetGrid(doc = document) {
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const colGroup = `<colgroup><col class="estimate-row-head-col" style="width:42px">${Array.from({ length: state.maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px;min-width:${cols[i] || 64}px;max-width:${cols[i] || 64}px">`).join("")}</colgroup>`;
-  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head" data-col-head="${i + 1}">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
+  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
   const body = Array.from({ length: state.maxRow }, (_, ri) => {
     const r = ri + 1; const h = rows[ri] || 20;
     const cells = Array.from({ length: state.maxCol }, (_, ci) => {
@@ -358,14 +265,13 @@ function renderEstimateSheetGrid(doc = document) {
       const tmpl = estimateSheetCellTemplate(spec, r, c);
       const span = merge.starts[key] || { rowspan: 1, colspan: 1 };
       const obj = estimateSheetGetCellObj(state, r, c);
-      const displayed = estimateSheetVisibleText(estimateSheetDisplayValue(state, r, c));
+      const displayed = estimateSheetDisplayValue(state, r, c);
       const classes = ["estimate-excel-cell"];
       if (c > (spec.printCols || 7)) classes.push("outside-print");
       if (obj.formula) classes.push("formula-cell");
-      const style = `${tmpl.s || ""};white-space:nowrap!important;word-break:normal!important;overflow:hidden!important;text-overflow:clip;`;
-      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" tabindex="0" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} title="${obj.formula ? '=' + estimateSheetHtml(obj.formula) : estimateSheetHtml(displayed)}" style="${estimateSheetHtml(style)}">${estimateSheetHtml(displayed)}</td>`;
+      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? '=' + estimateSheetHtml(obj.formula) : ''}" style="${estimateSheetHtml(tmpl.s || '')}">${estimateSheetHtml(displayed)}</td>`;
     }).join("");
-    return `<tr style="height:${h}px"><th class="estimate-excel-row-head" data-row-head="${r}">${r}</th>${cells}</tr>`;
+    return `<tr style="height:${h}px"><th class="estimate-excel-row-head">${r}</th>${cells}</tr>`;
   }).join("");
   grid.className = "estimate-sheet-grid estimate-excel-grid";
   grid.innerHTML = `${colGroup}${head}<tbody>${body}</tbody>`;
@@ -375,178 +281,43 @@ function renderEstimateSheetGrid(doc = document) {
     wrap.querySelectorAll(".estimate-excel-image").forEach(n => n.remove());
     (spec.images || []).forEach((img, i) => {
       const pos = estimateSheetImagePosition(spec, img, state);
-      const el = doc.createElement("img");
+      const el = document.createElement("img");
       el.className = "estimate-excel-image"; el.src = img.data; el.alt = `견적서 이미지 ${i + 1}`;
       el.style.left = `${42 + pos.left}px`; el.style.top = `${28 + pos.top}px`; el.style.width = `${pos.width}px`; el.style.height = `${pos.height}px`;
       wrap.appendChild(el);
     });
   }
 }
-
-function estimateSheetGetPopupCell(r = estimateSheetSelectedCell.r, c = estimateSheetSelectedCell.c) {
-  const doc = estimateSheetPopupWindow?.document;
-  return doc?.querySelector(`#estimateSheetGrid [data-row="${r}"][data-col="${c}"]`) || null;
-}
-
-function estimateSheetSelectCell(r, c, focusCell = true) {
-  if (!estimateSheetEditorState || !estimateSheetPopupWindow || estimateSheetPopupWindow.closed) return;
-  r = Math.max(1, Math.min(estimateSheetEditorState.maxRow, Number(r) || 1));
-  c = Math.max(1, Math.min(estimateSheetEditorState.maxCol, Number(c) || 1));
-  const doc = estimateSheetPopupWindow.document;
-  estimateSheetEditingCell = null;
-  estimateSheetSelectedCell = { r, c };
-  doc.querySelectorAll(".estimate-excel-cell.active-cell,.estimate-excel-cell.editing-cell").forEach(el => { el.classList.remove("active-cell", "editing-cell"); el.removeAttribute("contenteditable"); });
-  doc.querySelectorAll(".estimate-excel-col-head.active-head,.estimate-excel-row-head.active-head").forEach(el => el.classList.remove("active-head"));
-  const cell = estimateSheetGetPopupCell(r, c);
-  if (cell) {
-    cell.classList.add("active-cell");
-    if (focusCell) cell.focus({ preventScroll: false });
-    doc.querySelector(`[data-col-head="${c}"]`)?.classList.add("active-head");
-    doc.querySelector(`[data-row-head="${r}"]`)?.classList.add("active-head");
-  }
-  estimateSheetRefreshFormulaBox();
-}
-
-function estimateSheetRefreshFormulaBox() {
-  const doc = estimateSheetPopupWindow?.document;
-  if (!doc || !estimateSheetEditorState) return;
-  const { r, c } = estimateSheetSelectedCell;
-  const formula = doc.getElementById("estimateSheetFormulaBox");
-  const name = doc.getElementById("estimateSheetNameBox");
-  if (name) name.textContent = `${estimateSheetColumnLabel(c - 1)}${r}`;
-  if (formula) formula.value = estimateSheetCellInputText(estimateSheetEditorState, r, c);
-}
-
-function estimateSheetApplyRawValue(r, c, raw) {
-  if (!estimateSheetEditorState) return;
+function updateEstimateSheetCell(cell) {
+  if (!estimateSheetEditorState || !cell) return;
+  const r = Number(cell.dataset.row), c = Number(cell.dataset.col);
   const obj = estimateSheetGetCellObj(estimateSheetEditorState, r, c);
-  raw = String(raw ?? "").replace(/\r?\n+/g, " ").trim();
+  const raw = cell.innerText.replace(/ /g, " ").trim();
   if (raw.startsWith("=")) { obj.formula = raw.slice(1); obj.userFormula = true; obj.value = ""; }
   else { obj.formula = ""; obj.userFormula = false; obj.value = /^-?[\d,]+(\.\d+)?$/.test(raw) ? Number(raw.replace(/,/g, "")) : raw; }
 }
-
-function estimateSheetApplyFormulaBox() {
-  const doc = estimateSheetPopupWindow?.document;
-  if (!doc || !estimateSheetEditorState) return;
-  const formula = doc.getElementById("estimateSheetFormulaBox");
-  if (!formula) return;
-  const { r, c } = estimateSheetSelectedCell;
-  estimateSheetApplyRawValue(r, c, formula.value);
-  renderEstimateSheetGrid(doc);
-  estimateSheetSelectCell(r, c);
-}
-
-function estimateSheetBeginEdit(initialText = null) {
-  const cell = estimateSheetGetPopupCell();
-  if (!cell || !estimateSheetEditorState) return;
-  estimateSheetCommitEdit();
-  const { r, c } = estimateSheetSelectedCell;
-  cell.classList.add("editing-cell");
-  cell.setAttribute("contenteditable", "true");
-  cell.textContent = initialText !== null ? initialText : estimateSheetCellInputText(estimateSheetEditorState, r, c);
-  estimateSheetEditingCell = cell;
-  cell.focus();
-  const doc = estimateSheetPopupWindow.document;
-  const range = doc.createRange();
-  range.selectNodeContents(cell);
-  range.collapse(false);
-  const sel = estimateSheetPopupWindow.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
-function estimateSheetCommitEdit() {
-  if (!estimateSheetEditingCell || !estimateSheetEditorState) return;
-  const r = Number(estimateSheetEditingCell.dataset.row), c = Number(estimateSheetEditingCell.dataset.col);
-  const raw = estimateSheetEditingCell.innerText;
-  estimateSheetApplyRawValue(r, c, raw);
-  estimateSheetEditingCell.removeAttribute("contenteditable");
-  estimateSheetEditingCell.classList.remove("editing-cell");
-  estimateSheetEditingCell = null;
-  renderEstimateSheetGrid(estimateSheetPopupWindow.document);
-  estimateSheetSelectCell(r, c);
-}
-
-function estimateSheetCancelEdit() {
-  if (!estimateSheetEditingCell) return;
-  const r = Number(estimateSheetEditingCell.dataset.row), c = Number(estimateSheetEditingCell.dataset.col);
-  estimateSheetEditingCell.removeAttribute("contenteditable");
-  estimateSheetEditingCell.classList.remove("editing-cell");
-  estimateSheetEditingCell = null;
-  renderEstimateSheetGrid(estimateSheetPopupWindow.document);
-  estimateSheetSelectCell(r, c);
-}
-
-function estimateSheetMoveSelection(dr, dc) {
-  estimateSheetCommitEdit();
-  const r = estimateSheetSelectedCell.r + dr;
-  const c = estimateSheetSelectedCell.c + dc;
-  estimateSheetSelectCell(r, c);
-}
-
-function estimateSheetClearSelectedCell() {
-  const { r, c } = estimateSheetSelectedCell;
-  estimateSheetApplyRawValue(r, c, "");
-  renderEstimateSheetGrid(estimateSheetPopupWindow.document);
-  estimateSheetSelectCell(r, c);
-}
-
-function estimateSheetPopupKeydown(event) {
-  if (!estimateSheetEditorState) return;
-  const isFormula = event.target?.id === "estimateSheetFormulaBox";
-  if (isFormula) return;
-  if (estimateSheetEditingCell) {
-    if (event.key === "Enter") { event.preventDefault(); estimateSheetCommitEdit(); estimateSheetMoveSelection(event.shiftKey ? -1 : 1, 0); }
-    else if (event.key === "Tab") { event.preventDefault(); estimateSheetCommitEdit(); estimateSheetMoveSelection(0, event.shiftKey ? -1 : 1); }
-    else if (event.key === "Escape") { event.preventDefault(); estimateSheetCancelEdit(); }
-    return;
-  }
-  if (event.ctrlKey && event.key === "F9") { event.preventDefault(); estimateSheetInsertRow(estimateSheetSelectedCell.r); return; }
-  if (event.ctrlKey && event.shiftKey && event.key === "F9") { event.preventDefault(); estimateSheetInsertCol(estimateSheetSelectedCell.c); return; }
-  if (["Enter", "Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
-    event.preventDefault();
-    const map = { Enter: [event.shiftKey ? -1 : 1, 0], Tab: [0, event.shiftKey ? -1 : 1], ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
-    const [dr, dc] = map[event.key]; estimateSheetMoveSelection(dr, dc); return;
-  }
-  if (event.key === "F2") { event.preventDefault(); estimateSheetBeginEdit(); return; }
-  if (event.key === "Backspace" || event.key === "Delete") { event.preventDefault(); estimateSheetClearSelectedCell(); return; }
-  if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key.length === 1) {
-    event.preventDefault();
-    estimateSheetBeginEdit(event.key);
-  }
-}
-
-function updateEstimateSheetCell(cell) {
-  if (!estimateSheetEditorState || !cell) return;
-  estimateSheetApplyRawValue(Number(cell.dataset.row), Number(cell.dataset.col), cell.innerText);
-}
-
 function estimateSheetMoveFocus(cell, dr, dc) {
   if (!cell) return;
-  estimateSheetMoveSelection(dr, dc);
+  updateEstimateSheetCell(cell);
+  let r = Number(cell.dataset.row) + dr, c = Number(cell.dataset.col) + dc;
+  r = Math.max(1, Math.min(estimateSheetEditorState.maxRow, r));
+  c = Math.max(1, Math.min(estimateSheetEditorState.maxCol, c));
+  renderEstimateSheetGrid();
+  const next = document.querySelector(`#estimateSheetGrid [data-row="${r}"][data-col="${c}"]`);
+  if (next) { next.focus(); document.execCommand?.("selectAll", false, null); }
 }
-
 function estimateSheetInsertRow(afterRow) {
   const s = estimateSheetEditorState; if (!s) return;
-  estimateSheetCommitEdit();
   const newCells = {};
   Object.entries(s.cells).forEach(([key, val]) => { const [r, c] = key.split(":").map(Number); newCells[estimateSheetCellKey(r > afterRow ? r + 1 : r, c)] = val; });
-  s.cells = newCells; s.maxRow += 1; s.rowHeights.splice(afterRow, 0, 20);
-  const doc = estimateSheetPopupWindow && !estimateSheetPopupWindow.closed ? estimateSheetPopupWindow.document : document;
-  renderEstimateSheetGrid(doc);
-  if (estimateSheetPopupWindow && !estimateSheetPopupWindow.closed) estimateSheetSelectCell(afterRow + 1, estimateSheetSelectedCell.c);
+  s.cells = newCells; s.maxRow += 1; s.rowHeights.splice(afterRow, 0, 20); renderEstimateSheetGrid();
 }
 function estimateSheetInsertCol(afterCol) {
   const s = estimateSheetEditorState; if (!s) return;
-  estimateSheetCommitEdit();
   const newCells = {};
   Object.entries(s.cells).forEach(([key, val]) => { const [r, c] = key.split(":").map(Number); newCells[estimateSheetCellKey(r, c > afterCol ? c + 1 : c)] = val; });
-  s.cells = newCells; s.maxCol += 1; s.colWidths.splice(afterCol, 0, 64);
-  const doc = estimateSheetPopupWindow && !estimateSheetPopupWindow.closed ? estimateSheetPopupWindow.document : document;
-  renderEstimateSheetGrid(doc);
-  if (estimateSheetPopupWindow && !estimateSheetPopupWindow.closed) estimateSheetSelectCell(estimateSheetSelectedCell.r, afterCol + 1);
+  s.cells = newCells; s.maxCol += 1; s.colWidths.splice(afterCol, 0, 64); renderEstimateSheetGrid();
 }
-
 document.addEventListener("keydown", event => {
   const cell = event.target.closest?.(".estimate-excel-cell");
   if (!cell) return;
@@ -559,22 +330,423 @@ document.addEventListener("keydown", event => {
   }
 });
 function exportEstimateSheetCurrentHtml() {
-  estimateSheetCommitEdit();
   if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  const doc = estimateSheetPopupWindow && !estimateSheetPopupWindow.closed ? estimateSheetPopupWindow.document : document;
-  renderEstimateSheetGrid(doc);
-  const wrap = doc.querySelector(".estimate-sheet-grid-wrap");
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${estimateSheetEditorPopupCss()} .estimate-sheet-grid-wrap{position:relative;overflow:visible} table{border-collapse:collapse;table-layout:fixed} td,th{white-space:nowrap!important;}</style></head><body>${wrap ? wrap.innerHTML : ""}</body></html>`;
+  renderEstimateSheetGrid();
+  const wrap = document.querySelector(".estimate-sheet-grid-wrap");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${document.querySelector("style")?.textContent || ""} .estimate-sheet-grid-wrap{position:relative;overflow:visible} table{border-collapse:collapse;table-layout:fixed} td,th{white-space:pre-wrap;}</style></head><body>${wrap ? wrap.innerHTML : ""}</body></html>`;
   const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xls`;
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
 }
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("estimateSheetManage")) {
-    renderEstimateSheetManage();
-    setTimeout(() => {
-      const panel = document.getElementById("estimateSheetManage");
-      if (panel?.classList.contains("active") && !estimateSheetPopupWindow) openEstimateSheetEditor();
-    }, 350);
+document.addEventListener("DOMContentLoaded", () => { if (document.getElementById("estimateSheetManage")) renderEstimateSheetManage(); });
+
+/* 새 창 엑셀 작성 모드: 리스트 하단 인라인 편집 대신 별도 창에서 견적서 엑셀 화면을 직접 작성 */
+let estimateSheetExcelWindowRef = null;
+let estimateSheetExcelActiveCell = { r: 1, c: 1 };
+let estimateSheetExcelAutoOpenTried = false;
+
+function estimateSheetEnsureDefaultRecords() {
+  if (!estimateSheetRecords.length) {
+    ESTIMATE_SHEET_TYPE_ORDER.forEach(type => estimateSheetRecords.push({
+      type,
+      title: `${type} 견적서 초안`,
+      status: "작성중",
+      updatedAt: estimateSheetNow(),
+      state: estimateSheetCreateState(type)
+    }));
   }
-});
+}
+
+function estimateSheetCellInlineStyle(styleText) {
+  return String(styleText || "").replace(/position\s*:\s*[^;]+;?/gi, "");
+}
+
+function estimateSheetBuildExcelGridHtml(state) {
+  const spec = estimateSheetGetSpec(state.type);
+  const merge = estimateSheetMergeInfo(spec);
+  const cols = state.colWidths || spec.cols;
+  const rows = state.rowHeights || spec.rows;
+  const colGroup = `<colgroup><col class="estimate-row-head-col" style="width:42px">${Array.from({ length: state.maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px;min-width:${cols[i] || 64}px;max-width:${cols[i] || 64}px">`).join("")}</colgroup>`;
+  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
+  const body = Array.from({ length: state.maxRow }, (_, ri) => {
+    const r = ri + 1;
+    const h = rows[ri] || 20;
+    const cells = Array.from({ length: state.maxCol }, (_, ci) => {
+      const c = ci + 1;
+      const key = estimateSheetCellKey(r, c);
+      if (merge.skips.has(key)) return "";
+      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const span = merge.starts[key] || { rowspan: 1, colspan: 1 };
+      const obj = estimateSheetGetCellObj(state, r, c);
+      const displayed = estimateSheetDisplayValue(state, r, c);
+      const classes = ["estimate-excel-cell"];
+      if (c > (spec.printCols || 7)) classes.push("outside-print");
+      if (obj.formula) classes.push("formula-cell");
+      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? "=" + estimateSheetHtml(obj.formula) : ""}" style="${estimateSheetHtml(estimateSheetCellInlineStyle(tmpl.s || ""))}">${estimateSheetHtml(displayed)}</td>`;
+    }).join("");
+    return `<tr style="height:${h}px"><th class="estimate-excel-row-head">${r}</th>${cells}</tr>`;
+  }).join("");
+  return `${colGroup}${head}<tbody>${body}</tbody>`;
+}
+
+function estimateSheetBuildExcelImagesHtml(state) {
+  const spec = estimateSheetGetSpec(state.type);
+  return (spec.images || []).map((img, i) => {
+    const pos = estimateSheetImagePosition(spec, img, state);
+    return `<img class="estimate-excel-image" src="${img.data}" alt="견적서 이미지 ${i + 1}" style="left:${42 + pos.left}px;top:${28 + pos.top}px;width:${pos.width}px;height:${pos.height}px">`;
+  }).join("");
+}
+
+function estimateSheetGetPopupCss() {
+  return `
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;background:#f3f5f8;color:#111827;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;overflow:hidden;}
+    .excel-window{height:100vh;display:flex;flex-direction:column;background:#f3f5f8;}
+    .excel-topbar{height:46px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#ffffff;border-bottom:1px solid #d8dee8;box-shadow:0 1px 3px rgba(15,23,42,.08);}
+    .excel-title{display:flex;align-items:center;gap:10px;min-width:0;font-weight:900;font-size:15px;white-space:nowrap;}
+    .excel-badge{height:26px;padding:0 10px;border-radius:999px;background:#111827;color:#fff;display:inline-flex;align-items:center;font-size:12px;}
+    .excel-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}
+    .excel-btn{height:30px;border:1px solid #cfd6df;border-radius:8px;background:#fff;padding:0 10px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;}
+    .excel-btn:hover{background:#f8fafc;}
+    .excel-btn.primary{background:#ff7a00;border-color:#ff7a00;color:#111827;}
+    .excel-formula-row{height:34px;display:grid;grid-template-columns:84px 1fr;gap:6px;padding:4px 8px;background:#f8fafc;border-bottom:1px solid #d8dee8;}
+    .name-box,.formula-box{height:26px;border:1px solid #cfd6df;background:#fff;border-radius:4px;padding:0 8px;font-weight:800;font-size:12px;outline:none;}
+    .formula-box{font-family:'Consolas','Malgun Gothic',monospace;font-weight:700;}
+    .excel-help{height:28px;display:flex;align-items:center;padding:0 10px;background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .excel-grid-host{position:relative;flex:1;overflow:auto;background:#e5e7eb;padding:0;}
+    .excel-grid-canvas{position:relative;display:inline-block;min-width:100%;min-height:100%;background:#fff;}
+    table{border-collapse:collapse;table-layout:fixed;background:#fff;}
+    .estimate-excel-grid{border-collapse:collapse;table-layout:fixed;width:auto;position:relative;z-index:2;}
+    .estimate-excel-col-head,.estimate-excel-row-head,.estimate-excel-corner{position:sticky;background:#f3f4f6;border:1px solid #c9d1dc;color:#111827;font-size:11px;font-weight:800;text-align:center;z-index:8;height:24px;user-select:none;}
+    .estimate-excel-col-head{top:0;}
+    .estimate-excel-row-head{left:0;width:42px;min-width:42px;z-index:7;}
+    .estimate-excel-corner{top:0;left:0;width:42px;min-width:42px;z-index:10;}
+    .estimate-excel-cell{border:1px solid #d9dfe8;background:#fff;min-height:20px;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;outline:none;position:relative;z-index:2;}
+    .estimate-excel-cell:focus,.estimate-excel-cell.active-cell{box-shadow:inset 0 0 0 2px #16a34a!important;z-index:5;}
+    .estimate-excel-cell.outside-print{background:#a6a6a6!important;color:#111827;}
+    .estimate-excel-cell.formula-cell{background-image:linear-gradient(135deg,rgba(22,163,74,.20),rgba(22,163,74,0) 30%);}
+    .estimate-excel-image{position:absolute;z-index:3;object-fit:contain;pointer-events:none;}
+  `;
+}
+
+function estimateSheetRenderExcelWindow() {
+  const win = estimateSheetExcelWindowRef;
+  if (!win || win.closed || !estimateSheetEditorState) return;
+  const doc = win.document;
+  const gridHost = doc.getElementById("estimateSheetPopupGrid");
+  const imageHost = doc.getElementById("estimateSheetPopupImages");
+  const title = doc.getElementById("estimateSheetPopupTitle");
+  if (title) title.textContent = `${estimateSheetActiveType} 견적서 작성`;
+  if (gridHost) gridHost.innerHTML = estimateSheetBuildExcelGridHtml(estimateSheetEditorState);
+  if (imageHost) imageHost.innerHTML = estimateSheetBuildExcelImagesHtml(estimateSheetEditorState);
+  estimateSheetPopupSelectCell(estimateSheetExcelActiveCell.r, estimateSheetExcelActiveCell.c, false);
+}
+
+function estimateSheetWriteExcelWindow(win) {
+  win.document.open();
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>CON-COST 견적서 엑셀 작성</title><style>${estimateSheetGetPopupCss()}</style></head><body>
+    <div class="excel-window">
+      <div class="excel-topbar">
+        <div class="excel-title"><span class="excel-badge">CON-COST</span><span id="estimateSheetPopupTitle">견적서 작성</span></div>
+        <div class="excel-actions">
+          <button class="excel-btn" id="estimateSheetPopupResetBtn" type="button">양식 초기화</button>
+          <button class="excel-btn" id="estimateSheetPopupAddRowBtn" type="button">행 추가 Ctrl+F9</button>
+          <button class="excel-btn" id="estimateSheetPopupAddColBtn" type="button">열 추가 Ctrl+Shift+F9</button>
+          <button class="excel-btn" id="estimateSheetPopupExportBtn" type="button">내보내기</button>
+          <button class="excel-btn primary" id="estimateSheetPopupSaveBtn" type="button">견적서 저장</button>
+        </div>
+      </div>
+      <div class="excel-formula-row"><input class="name-box" id="estimateSheetNameBox" readonly value="A1"><input class="formula-box" id="estimateSheetFormulaBox" placeholder="셀 값 또는 =SUM(A1:A10) 형태의 수식 입력"></div>
+      <div class="excel-help">방향키/Enter/Tab으로 셀 이동 · 셀 또는 수식 입력줄에 = 로 시작하는 수식 입력 가능 · Ctrl+F9 행 추가 · Ctrl+Shift+F9 열 추가</div>
+      <div class="excel-grid-host" id="estimateSheetPopupGridHost"><div class="excel-grid-canvas"><table class="estimate-excel-grid" id="estimateSheetPopupGrid"></table><div id="estimateSheetPopupImages"></div></div></div>
+    </div>
+  </body></html>`);
+  win.document.close();
+  estimateSheetBindExcelWindow(win);
+  estimateSheetRenderExcelWindow();
+}
+
+function estimateSheetBindExcelWindow(win) {
+  const doc = win.document;
+  doc.getElementById("estimateSheetPopupSaveBtn")?.addEventListener("click", () => saveEstimateSheetRecord());
+  doc.getElementById("estimateSheetPopupResetBtn")?.addEventListener("click", () => {
+    estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+    estimateSheetExcelActiveCell = { r: 1, c: 1 };
+    estimateSheetRenderExcelWindow();
+  });
+  doc.getElementById("estimateSheetPopupAddRowBtn")?.addEventListener("click", () => estimateSheetPopupInsertRow(estimateSheetExcelActiveCell.r));
+  doc.getElementById("estimateSheetPopupAddColBtn")?.addEventListener("click", () => estimateSheetPopupInsertCol(estimateSheetExcelActiveCell.c));
+  doc.getElementById("estimateSheetPopupExportBtn")?.addEventListener("click", () => exportEstimateSheetCurrentHtml());
+  doc.getElementById("estimateSheetFormulaBox")?.addEventListener("keydown", event => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    estimateSheetSetCellFromText(estimateSheetExcelActiveCell.r, estimateSheetExcelActiveCell.c, event.target.value);
+    estimateSheetRenderExcelWindow();
+  });
+  doc.addEventListener("focusin", event => {
+    const cell = event.target.closest?.(".estimate-excel-cell");
+    if (cell) estimateSheetPopupSelectCell(Number(cell.dataset.row), Number(cell.dataset.col), false);
+  });
+  doc.addEventListener("input", event => {
+    const cell = event.target.closest?.(".estimate-excel-cell");
+    if (cell) estimateSheetPopupSelectCell(Number(cell.dataset.row), Number(cell.dataset.col), false, cell.innerText);
+  });
+  doc.addEventListener("keydown", event => {
+    const cell = event.target.closest?.(".estimate-excel-cell");
+    if (!cell) return;
+    if (event.ctrlKey && event.shiftKey && event.key === "F9") {
+      event.preventDefault();
+      updateEstimateSheetCell(cell);
+      estimateSheetPopupInsertCol(Number(cell.dataset.col));
+      return;
+    }
+    if (event.ctrlKey && event.key === "F9") {
+      event.preventDefault();
+      updateEstimateSheetCell(cell);
+      estimateSheetPopupInsertRow(Number(cell.dataset.row));
+      return;
+    }
+    if ((event.key === "Delete" || event.key === "Backspace") && !cell.isContentEditable) {
+      event.preventDefault();
+      estimateSheetSetCellFromText(Number(cell.dataset.row), Number(cell.dataset.col), "");
+      cell.textContent = "";
+      estimateSheetPopupSelectCell(Number(cell.dataset.row), Number(cell.dataset.col), true);
+      return;
+    }
+    if (["Enter", "Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+      event.preventDefault();
+      estimateSheetPopupUpdateCellFromElement(cell);
+      const map = { Enter: [event.shiftKey ? -1 : 1, 0], Tab: [0, event.shiftKey ? -1 : 1], ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+      const [dr, dc] = map[event.key];
+      estimateSheetPopupMoveFocus(Number(cell.dataset.row) + dr, Number(cell.dataset.col) + dc);
+    }
+  });
+  win.addEventListener("beforeunload", () => { if (estimateSheetExcelWindowRef === win) estimateSheetExcelWindowRef = null; });
+}
+
+function estimateSheetPopupSelectCell(r, c, focus = true, liveText = null) {
+  const win = estimateSheetExcelWindowRef;
+  if (!win || win.closed || !estimateSheetEditorState) return;
+  const doc = win.document;
+  const row = Math.max(1, Math.min(estimateSheetEditorState.maxRow, Number(r) || 1));
+  const col = Math.max(1, Math.min(estimateSheetEditorState.maxCol, Number(c) || 1));
+  estimateSheetExcelActiveCell = { r: row, c: col };
+  doc.querySelectorAll(".estimate-excel-cell.active-cell").forEach(el => el.classList.remove("active-cell"));
+  const cell = doc.querySelector(`#estimateSheetPopupGrid [data-row="${row}"][data-col="${col}"]`);
+  cell?.classList.add("active-cell");
+  if (focus && cell) {
+    cell.focus();
+    const selection = win.getSelection?.();
+    const range = doc.createRange?.();
+    if (selection && range) {
+      range.selectNodeContents(cell);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+  const nameBox = doc.getElementById("estimateSheetNameBox");
+  const formulaBox = doc.getElementById("estimateSheetFormulaBox");
+  const obj = estimateSheetGetCellObj(estimateSheetEditorState, row, col);
+  if (nameBox) nameBox.value = `${estimateSheetColumnLabel(col - 1)}${row}`;
+  if (formulaBox) formulaBox.value = liveText !== null ? liveText : (obj.formula ? `=${obj.formula}` : estimateSheetDisplayValue(estimateSheetEditorState, row, col));
+}
+
+function estimateSheetSetCellFromText(r, c, rawText) {
+  if (!estimateSheetEditorState) return;
+  const obj = estimateSheetGetCellObj(estimateSheetEditorState, r, c);
+  const raw = String(rawText ?? "").replace(/ /g, " ").trim();
+  if (raw.startsWith("=")) {
+    obj.formula = raw.slice(1);
+    obj.userFormula = true;
+    obj.value = "";
+  } else {
+    obj.formula = "";
+    obj.userFormula = false;
+    obj.value = /^-?[\d,]+(\.\d+)?$/.test(raw) ? Number(raw.replace(/,/g, "")) : raw;
+  }
+}
+
+function estimateSheetPopupUpdateCellFromElement(cell) {
+  if (!cell) return;
+  estimateSheetSetCellFromText(Number(cell.dataset.row), Number(cell.dataset.col), cell.innerText);
+}
+
+function estimateSheetPopupMoveFocus(r, c) {
+  if (!estimateSheetEditorState) return;
+  const row = Math.max(1, Math.min(estimateSheetEditorState.maxRow, Number(r) || 1));
+  const col = Math.max(1, Math.min(estimateSheetEditorState.maxCol, Number(c) || 1));
+  estimateSheetExcelActiveCell = { r: row, c: col };
+  estimateSheetPopupSelectCell(row, col, true);
+  const win = estimateSheetExcelWindowRef;
+  const cell = win?.document?.querySelector(`#estimateSheetPopupGrid [data-row="${row}"][data-col="${col}"]`);
+  cell?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+}
+
+function estimateSheetPopupInsertRow(afterRow) {
+  estimateSheetInsertRow(afterRow);
+  estimateSheetRenderExcelWindow();
+}
+
+function estimateSheetPopupInsertCol(afterCol) {
+  estimateSheetInsertCol(afterCol);
+  estimateSheetRenderExcelWindow();
+}
+
+function openEstimateSheetExcelWindow(index = null, option = {}) {
+  estimateSheetEnsureDefaultRecords();
+  if (index !== null && estimateSheetRecords[index]) {
+    estimateSheetEditingIndex = index;
+    estimateSheetActiveType = estimateSheetRecords[index].type;
+    estimateSheetEditorState = estimateSheetCloneState(estimateSheetRecords[index].state);
+  } else if (option.newBlank) {
+    estimateSheetEditingIndex = null;
+    estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  } else if (option.fromUpload && estimateSheetEditorState) {
+    /* 업로드된 엑셀 값을 유지한 상태로 새 창을 연다. */
+  } else {
+    const firstIndex = estimateSheetRecords.findIndex(record => record.type === estimateSheetActiveType);
+    if (firstIndex >= 0) {
+      estimateSheetEditingIndex = firstIndex;
+      estimateSheetEditorState = estimateSheetCloneState(estimateSheetRecords[firstIndex].state);
+    } else {
+      estimateSheetEditingIndex = null;
+      estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+    }
+  }
+  estimateSheetExcelActiveCell = { r: 1, c: 1 };
+  const features = "popup=yes,width=1500,height=940,left=40,top=20,resizable=yes,scrollbars=yes";
+  const win = window.open("", "CONCOST_ESTIMATE_EXCEL_WINDOW", features);
+  if (!win) {
+    if (!option.silent && typeof showToast === "function") showToast("팝업이 차단되었습니다. 브라우저에서 팝업 허용 후 다시 열어주세요.");
+    return null;
+  }
+  estimateSheetExcelWindowRef = win;
+  estimateSheetWriteExcelWindow(win);
+  win.focus();
+  closeEstimateSheetEditor();
+  return win;
+}
+
+
+function newEstimateSheetRecord(type = estimateSheetActiveType) {
+  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
+  estimateSheetEditingIndex = null;
+  estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  estimateSheetExcelActiveCell = { r: 1, c: 1 };
+  renderEstimateSheetManage();
+  return openEstimateSheetExcelWindow(null, { newBlank: true });
+}
+
+function estimateSheetUploadExcelClick() {
+  const input = document.getElementById("estimateSheetExcelUploadInput");
+  if (input) input.click();
+}
+
+function estimateSheetEnsureXlsxLibrary(callback) {
+  if (window.XLSX) { callback(); return; }
+  const existing = document.getElementById("estimateSheetXlsxLibrary");
+  if (existing) {
+    existing.addEventListener("load", callback, { once: true });
+    existing.addEventListener("error", () => showToast?.("엑셀 해석 라이브러리를 불러오지 못했습니다."), { once: true });
+    return;
+  }
+  const script = document.createElement("script");
+  script.id = "estimateSheetXlsxLibrary";
+  script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+  script.onload = callback;
+  script.onerror = () => showToast?.("엑셀 해석 라이브러리를 불러오지 못했습니다. 인터넷 연결 또는 CDN 접근을 확인해주세요.");
+  document.head.appendChild(script);
+}
+
+function estimateSheetInferTypeFromFileName(name) {
+  const text = String(name || "");
+  if (text.includes("공내역")) return "공내역서";
+  if (text.includes("설계예가")) return "설계예가";
+  if (text.includes("공사비검증")) return "공사비검증";
+  if (text.includes("개산")) return "개산견적";
+  return estimateSheetActiveType;
+}
+
+function handleEstimateSheetExcelUpload(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  const targetType = estimateSheetInferTypeFromFileName(file.name);
+  estimateSheetEnsureXlsxLibrary(() => {
+    const reader = new FileReader();
+    reader.onload = event => {
+      try {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array", cellFormula: true, cellNF: true, cellStyles: true });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        estimateSheetApplyUploadedWorkbook(sheet, targetType, file.name);
+        openEstimateSheetExcelWindow(null, { fromUpload: true });
+      } catch (err) {
+        console.error(err);
+        showToast?.("엑셀 업로드 자료를 해석하지 못했습니다. 파일 형식을 확인해주세요.");
+      } finally {
+        input.value = "";
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
+  if (!sheet) return;
+  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
+  const state = estimateSheetCreateState(estimateSheetActiveType);
+  const ref = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
+  state.maxRow = Math.max(state.maxRow, ref.e.r + 1);
+  state.maxCol = Math.max(state.maxCol, ref.e.c + 1);
+  while (state.rowHeights.length < state.maxRow) state.rowHeights.push(20);
+  while (state.colWidths.length < state.maxCol) state.colWidths.push(64);
+  (sheet["!rows"] || []).forEach((row, i) => { if (row?.hpx) state.rowHeights[i] = row.hpx; });
+  (sheet["!cols"] || []).forEach((col, i) => { if (col?.wpx) state.colWidths[i] = col.wpx; });
+  for (let r = ref.s.r; r <= ref.e.r; r += 1) {
+    for (let c = ref.s.c; c <= ref.e.c; c += 1) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      const cell = sheet[addr];
+      if (!cell) continue;
+      const obj = estimateSheetGetCellObj(state, r + 1, c + 1);
+      obj.formula = cell.f ? String(cell.f).replace(/^=/, "") : "";
+      obj.userFormula = !!cell.f;
+      if (cell.f) obj.value = cell.v ?? "";
+      else obj.value = cell.w ?? cell.v ?? "";
+    }
+  }
+  estimateSheetEditorState = state;
+  estimateSheetEditingIndex = null;
+  estimateSheetExcelActiveCell = { r: 1, c: 1 };
+  const project = estimateSheetDisplayValue(state, 6, 2) || fileName.replace(/\.[^.]+$/, "");
+  estimateSheetRecords.unshift({
+    type: estimateSheetActiveType,
+    title: `${project}_${estimateSheetActiveType}_업로드`,
+    status: "작성중",
+    updatedAt: estimateSheetNow(),
+    state: estimateSheetCloneState(state)
+  });
+  estimateSheetEditingIndex = 0;
+  renderEstimateSheetManage();
+}
+
+const estimateSheetInlineEditorOpen = openEstimateSheetEditor;
+openEstimateSheetEditor = function(index = null) {
+  return openEstimateSheetExcelWindow(index);
+};
+
+const estimateSheetOriginalSetType = setEstimateSheetType;
+setEstimateSheetType = function(type) {
+  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : "개산견적";
+  closeEstimateSheetEditor();
+  renderEstimateSheetManage();
+  if (estimateSheetExcelWindowRef && !estimateSheetExcelWindowRef.closed) openEstimateSheetExcelWindow(null, { silent: true });
+};
+
+function autoOpenEstimateSheetExcelWindowOnce() {
+  /* 2026-05-23 수정: 견적서관리 화면 진입 시 새 창을 자동으로 열지 않는다.
+     새 창은 목록 행 클릭, [새로만들기], [엑셀 업로드] 동작에서만 열린다. */
+  estimateSheetExcelAutoOpenTried = true;
+}
+
+/* 자동 팝업 오픈 제거 */
