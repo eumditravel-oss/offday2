@@ -28,9 +28,11 @@ function estimateSheetColumnLabel(index) {
    - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
    - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
 */
-const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [96, 66, 76, 51, 103, 103, 99, 64, 64, 93, 64, 64, 64, 64, 64];
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [96, 66, 76, 51, 103, 103, 99, 68, 68, 93, 68, 68, 68, 68, 68];
 const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
 const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
+const ESTIMATE_GAESAN_FOOTER_MERGES = [[31, 1, 31, 7], [32, 1, 32, 7], [33, 1, 33, 7]];
+const ESTIMATE_GAESAN_TITLE_CELL = "2:1";
 
 function estimateSheetAppendCssRule(styleText, prop, value) {
   const source = String(styleText || "");
@@ -42,16 +44,46 @@ function estimateSheetAppendCssRule(styleText, prop, value) {
 function estimateSheetApplyManualOverrides(state) {
   if (!state || state.type !== "개산견적") return state;
   state.colWidths = ESTIMATE_GAESAN_MANUAL_COL_WIDTHS.slice();
-  while (state.colWidths.length < state.maxCol) state.colWidths.push(64);
+  while (state.colWidths.length < state.maxCol) state.colWidths.push(68);
   state.rowHeights = ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS.slice();
   while (state.rowHeights.length < state.maxRow) state.rowHeights.push(26);
+
   const spec = estimateSheetGetSpec("개산견적");
+
+  Object.keys(state.cells || {}).forEach(key => {
+    const obj = state.cells[key];
+    const [r, c] = key.split(":").map(Number);
+    const tmpl = estimateSheetCellTemplate(spec, r, c);
+    const base = obj.style || tmpl.s || "";
+    obj.style = estimateSheetAppendCssRule(base, "font-size", key === ESTIMATE_GAESAN_TITLE_CELL ? "28pt" : "11pt");
+  });
+
   ESTIMATE_GAESAN_YELLOW_CELLS.forEach(key => {
     const [r, c] = key.split(":").map(Number);
     const obj = estimateSheetGetCellObj(state, r, c);
     const tmpl = estimateSheetCellTemplate(spec, r, c);
     const base = obj.style || tmpl.s || "";
     obj.style = estimateSheetAppendCssRule(base, "background-color", "#fff2cc");
+  });
+
+  const existing = new Set((state.merges || []).map(m => m.join(":")));
+  ESTIMATE_GAESAN_FOOTER_MERGES.forEach(m => {
+    const key = m.join(":");
+    if (!existing.has(key)) state.merges.push(m);
+  });
+
+  [31, 32, 33].forEach(row => {
+    const source = estimateSheetGetCellObj(state, row, 7);
+    const target = estimateSheetGetCellObj(state, row, 1);
+    if (!String(target.value ?? "").trim() && !target.formula && (String(source.value ?? "").trim() || source.formula)) {
+      target.value = source.value;
+      target.formula = source.formula || "";
+      source.value = "";
+      source.formula = "";
+    }
+    const tmpl = estimateSheetCellTemplate(spec, row, 7);
+    const base = target.style || tmpl.s || "";
+    target.style = estimateSheetAppendCssRule(estimateSheetAppendCssRule(base, "text-align", "right"), "font-size", "11pt");
   });
   return state;
 }
@@ -347,6 +379,17 @@ function duplicateEstimateSheetRecord(index) {
   estimateSheetRecords.unshift(copy); setEstimateSheetType(copy.type);
 }
 function markEstimateSheetSent(index) { if (estimateSheetRecords[index]) { estimateSheetRecords[index].status = "발송완료"; estimateSheetRecords[index].updatedAt = estimateSheetNow(); renderEstimateSheetList(); } }
+function estimateSheetShouldOverflowText(state, r, c, displayed, span) {
+  const value = String(displayed ?? "");
+  if (!value.trim()) return false;
+  if (/^-?[\d,]+(\.\d+)?$/.test(value.trim())) return false;
+  if (span?.colspan > 1) return false;
+  if (state?.type === "개산견적" && c === 1 && r >= 22 && r <= 27) return true;
+  if (state?.type === "개산견적" && c === 9 && r >= 6 && r <= 8) return true;
+  if (state?.type === "개산견적" && c === 2 && r >= 5 && r <= 9) return true;
+  return value.length >= 9;
+}
+
 function renderEstimateSheetGrid() {
   const grid = document.getElementById("estimateSheetGrid");
   if (!grid || !estimateSheetEditorState) return;
@@ -374,6 +417,7 @@ function renderEstimateSheetGrid() {
       if (r === 1 && c <= printCols) classes.push("print-top");
       if (r === (spec.maxRow || state.maxRow) && c <= printCols) classes.push("print-bottom");
       if (obj.formula) classes.push("formula-cell");
+      if (estimateSheetShouldOverflowText(state, r, c, displayed, span)) classes.push("overflow-text-cell");
       return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? '=' + estimateSheetHtml(obj.formula) : ''}" data-original-text="${estimateSheetHtml(displayed)}" style="${estimateSheetHtml(estimateSheetCellEffectiveStyle(obj, tmpl))}">${estimateSheetHtml(displayed)}</td>`;
     }).join("");
     return `<tr style="height:${h}px"><th class="estimate-excel-row-head">${r}</th>${cells}</tr>`;
@@ -499,6 +543,7 @@ function estimateSheetBuildExcelGridHtml(state) {
       if (r === 1 && c <= printCols) classes.push("print-top");
       if (r === (spec.maxRow || state.maxRow) && c <= printCols) classes.push("print-bottom");
       if (obj.formula) classes.push("formula-cell");
+      if (estimateSheetShouldOverflowText(state, r, c, displayed, span)) classes.push("overflow-text-cell");
       return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? "=" + estimateSheetHtml(obj.formula) : ""}" data-original-text="${estimateSheetHtml(displayed)}" style="${estimateSheetHtml(estimateSheetCellEffectiveStyle(obj, tmpl))}">${estimateSheetHtml(displayed)}</td>`;
     }).join("");
     return `<tr style="height:${h}px"><th class="estimate-excel-row-head">${r}</th>${cells}</tr>`;
@@ -539,6 +584,10 @@ function estimateSheetGetPopupCss() {
     .estimate-excel-row-head{left:0;width:42px;min-width:42px;z-index:7;}
     .estimate-excel-corner{top:0;left:0;width:42px;min-width:42px;z-index:10;}
     .estimate-excel-cell{border:1px solid #d9dfe8;background:#fff;min-height:20px;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;outline:none;position:relative;z-index:2;}
+    .estimate-excel-cell.overflow-text-cell{overflow:visible!important;white-space:nowrap!important;text-overflow:clip!important;z-index:40!important;}
+    .estimate-excel-cell.overflow-text-cell.outside-print{overflow:visible!important;}
+    .estimate-excel-cell[data-row="2"][data-col="1"]{font-size:28pt!important;font-weight:700!important;}
+    .estimate-excel-cell:not([data-row="2"]),.estimate-excel-cell[data-row="2"]:not([data-col="1"]){font-size:11pt;}
     .estimate-excel-cell:focus,.estimate-excel-cell.active-cell{box-shadow:inset 0 0 0 2px #16a34a!important;z-index:5;}
     .estimate-excel-cell.outside-print{background:#a6a6a6!important;color:#111827;}
     .estimate-excel-cell.formula-cell{background-image:linear-gradient(135deg,rgba(22,163,74,.20),rgba(22,163,74,0) 30%);}
