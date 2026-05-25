@@ -24,15 +24,17 @@ function estimateSheetColumnLabel(index) {
 }
 
 
-/* 2026-05-25 개산견적 수동 치수/색상 보정
+/* 2026-05-25 견적서 4종 공통 수동 치수/색상 보정
+   - 개산견적/공내역서/설계예가/공사비검증 모두 같은 열 너비/행 높이/폰트/포인트색 기준 적용
    - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
    - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
 */
-const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [13.38, 8.13, 9.63, 6, 14.5, 14.5, 13.88, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
-const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [103, 66, 76, 51, 110, 110, 106, 68, 68, 93, 68, 68, 68, 68, 68];
+const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [13.38, 8.13, 9.63, 6, 15.5, 15.5, 13.88, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [103, 66, 76, 51, 117, 117, 106, 68, 68, 93, 68, 68, 68, 68, 68];
 const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
 const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
 const ESTIMATE_GAESAN_FOOTER_MERGES = [[31, 1, 31, 7], [32, 1, 32, 7], [33, 1, 33, 7]];
+const ESTIMATE_COMMON_TEXT_MERGES = [[12, 1, 12, 3]];
 const ESTIMATE_GAESAN_TITLE_CELL = "2:1";
 
 function estimateSheetAppendCssRule(styleText, prop, value) {
@@ -52,13 +54,13 @@ function estimateSheetEnsureMerge(state, r1, c1, r2, c2) {
 }
 
 function estimateSheetApplyManualOverrides(state) {
-  if (!state || state.type !== "개산견적") return state;
+  if (!state) return state;
   state.colWidths = ESTIMATE_GAESAN_MANUAL_COL_WIDTHS.slice();
   while (state.colWidths.length < state.maxCol) state.colWidths.push(68);
   state.rowHeights = ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS.slice();
   while (state.rowHeights.length < state.maxRow) state.rowHeights.push(26);
 
-  const spec = estimateSheetGetSpec("개산견적");
+  const spec = estimateSheetGetSpec(state.type || "개산견적");
 
   // 발송일자는 F4:G4를 병합한 뒤 오른쪽 정렬로 표시한다.
   const sendDateFromG = estimateSheetGetCellObj(state, 4, 7);
@@ -72,6 +74,15 @@ function estimateSheetApplyManualOverrides(state) {
     sendDateFromG.userFormula = false;
   }
   estimateSheetEnsureMerge(state, 4, 6, 4, 7);
+  ESTIMATE_COMMON_TEXT_MERGES.forEach(m => estimateSheetEnsureMerge(state, m[0], m[1], m[2], m[3]));
+  const itemTitle = estimateSheetGetCellObj(state, 12, 1);
+  [2, 3].forEach(col => {
+    const cell = estimateSheetGetCellObj(state, 12, col);
+    cell.value = "";
+    cell.formula = "";
+    cell.userFormula = false;
+  });
+  itemTitle.style = estimateSheetAppendCssRule(itemTitle.style || estimateSheetCellTemplate(spec, 12, 1).s || "", "font-weight", "700");
   sendDateToF.style = estimateSheetAppendCssRule(sendDateToF.style || estimateSheetCellTemplate(spec, 4, 7).s || "", "text-align", "right");
 
   Object.keys(state.cells || {}).forEach(key => {
@@ -525,7 +536,7 @@ function estimateSheetExportXlsxNow() {
   const spec = estimateSheetGetSpec(state.type);
   ws["!merges"] = (state.merges || []).map(m => ({ s: { r: m[0] - 1, c: m[1] - 1 }, e: { r: m[2] - 1, c: m[3] - 1 } }));
   ws["!cols"] = Array.from({ length: state.maxCol }, (_, i) => ({
-    wch: state.type === "개산견적" && ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS[i]
+    wch: ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS[i]
       ? ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS[i]
       : estimateSheetWidthUnitFromCol(state, i + 1),
     wpx: state.colWidths[i] || 64
