@@ -76,7 +76,15 @@ function estimateSheetCreateState(type) {
   (spec.cells || []).forEach(cell => {
     cells[estimateSheetCellKey(cell.r, cell.c)] = { value: cell.v ?? "", formula: cell.f || "", userFormula: false };
   });
-  return { type, cells, maxRow: spec.maxRow, maxCol: spec.maxCol, rowHeights: [...spec.rows], colWidths: [...spec.cols] };
+  return {
+    type,
+    cells,
+    maxRow: spec.maxRow,
+    maxCol: spec.maxCol,
+    rowHeights: [...spec.rows],
+    colWidths: [...spec.cols],
+    merges: JSON.parse(JSON.stringify(spec.merges || []))
+  };
 }
 function estimateSheetCloneState(state) { return JSON.parse(JSON.stringify(state)); }
 function estimateSheetGetCellObj(state, r, c) {
@@ -146,6 +154,9 @@ function estimateSheetMergeInfo(spec) {
     for (let r = r1; r <= r2; r += 1) for (let c = c1; c <= c2; c += 1) if (r !== r1 || c !== c1) skips.add(estimateSheetCellKey(r, c));
   });
   return { starts, skips };
+}
+function estimateSheetMergeInfoForState(spec, state) {
+  return estimateSheetMergeInfo({ merges: state?.merges || spec?.merges || [] });
 }
 function estimateSheetCellTemplate(spec, r, c) {
   if (!spec._cellMap) {
@@ -252,7 +263,7 @@ function renderEstimateSheetGrid() {
   if (!grid || !estimateSheetEditorState) return;
   const state = estimateSheetEditorState;
   const spec = estimateSheetGetSpec(state.type);
-  const merge = estimateSheetMergeInfo(spec);
+  const merge = estimateSheetMergeInfoForState(spec, state);
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const colGroup = `<colgroup><col class="estimate-row-head-col" style="width:42px">${Array.from({ length: state.maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px;min-width:${cols[i] || 64}px;max-width:${cols[i] || 64}px">`).join("")}</colgroup>`;
@@ -269,7 +280,7 @@ function renderEstimateSheetGrid() {
       const classes = ["estimate-excel-cell"];
       if (c > (spec.printCols || 7)) classes.push("outside-print");
       if (obj.formula) classes.push("formula-cell");
-      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? '=' + estimateSheetHtml(obj.formula) : ''}" style="${estimateSheetHtml(tmpl.s || '')}">${estimateSheetHtml(displayed)}</td>`;
+      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? '=' + estimateSheetHtml(obj.formula) : ''}" data-original-text="${estimateSheetHtml(displayed)}" style="${estimateSheetHtml(tmpl.s || '')}">${estimateSheetHtml(displayed)}</td>`;
     }).join("");
     return `<tr style="height:${h}px"><th class="estimate-excel-row-head">${r}</th>${cells}</tr>`;
   }).join("");
@@ -293,6 +304,8 @@ function updateEstimateSheetCell(cell) {
   const r = Number(cell.dataset.row), c = Number(cell.dataset.col);
   const obj = estimateSheetGetCellObj(estimateSheetEditorState, r, c);
   const raw = cell.innerText.replace(/ /g, " ").trim();
+  const originalText = String(cell.dataset.originalText ?? "").replace(/ /g, " ").trim();
+  if (raw === originalText && obj.formula) return;
   if (raw.startsWith("=")) { obj.formula = raw.slice(1); obj.userFormula = true; obj.value = ""; }
   else { obj.formula = ""; obj.userFormula = false; obj.value = /^-?[\d,]+(\.\d+)?$/.test(raw) ? Number(raw.replace(/,/g, "")) : raw; }
 }
@@ -310,13 +323,13 @@ function estimateSheetInsertRow(afterRow) {
   const s = estimateSheetEditorState; if (!s) return;
   const newCells = {};
   Object.entries(s.cells).forEach(([key, val]) => { const [r, c] = key.split(":").map(Number); newCells[estimateSheetCellKey(r > afterRow ? r + 1 : r, c)] = val; });
-  s.cells = newCells; s.maxRow += 1; s.rowHeights.splice(afterRow, 0, 20); renderEstimateSheetGrid();
+  s.cells = newCells; s.maxRow += 1; s.rowHeights.splice(afterRow, 0, s.rowHeights[afterRow - 1] || 20); renderEstimateSheetGrid();
 }
 function estimateSheetInsertCol(afterCol) {
   const s = estimateSheetEditorState; if (!s) return;
   const newCells = {};
   Object.entries(s.cells).forEach(([key, val]) => { const [r, c] = key.split(":").map(Number); newCells[estimateSheetCellKey(r, c > afterCol ? c + 1 : c)] = val; });
-  s.cells = newCells; s.maxCol += 1; s.colWidths.splice(afterCol, 0, 64); renderEstimateSheetGrid();
+  s.cells = newCells; s.maxCol += 1; s.colWidths.splice(afterCol, 0, s.colWidths[afterCol - 1] || 64); renderEstimateSheetGrid();
 }
 document.addEventListener("keydown", event => {
   const cell = event.target.closest?.(".estimate-excel-cell");
@@ -363,7 +376,7 @@ function estimateSheetCellInlineStyle(styleText) {
 
 function estimateSheetBuildExcelGridHtml(state) {
   const spec = estimateSheetGetSpec(state.type);
-  const merge = estimateSheetMergeInfo(spec);
+  const merge = estimateSheetMergeInfoForState(spec, state);
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const colGroup = `<colgroup><col class="estimate-row-head-col" style="width:42px">${Array.from({ length: state.maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px;min-width:${cols[i] || 64}px;max-width:${cols[i] || 64}px">`).join("")}</colgroup>`;
@@ -382,7 +395,7 @@ function estimateSheetBuildExcelGridHtml(state) {
       const classes = ["estimate-excel-cell"];
       if (c > (spec.printCols || 7)) classes.push("outside-print");
       if (obj.formula) classes.push("formula-cell");
-      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? "=" + estimateSheetHtml(obj.formula) : ""}" style="${estimateSheetHtml(estimateSheetCellInlineStyle(tmpl.s || ""))}">${estimateSheetHtml(displayed)}</td>`;
+      return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? "=" + estimateSheetHtml(obj.formula) : ""}" data-original-text="${estimateSheetHtml(displayed)}" style="${estimateSheetHtml(estimateSheetCellInlineStyle(tmpl.s || ""))}">${estimateSheetHtml(displayed)}</td>`;
     }).join("");
     return `<tr style="height:${h}px"><th class="estimate-excel-row-head">${r}</th>${cells}</tr>`;
   }).join("");
@@ -551,10 +564,14 @@ function estimateSheetPopupSelectCell(r, c, focus = true, liveText = null) {
   if (formulaBox) formulaBox.value = liveText !== null ? liveText : (obj.formula ? `=${obj.formula}` : estimateSheetDisplayValue(estimateSheetEditorState, row, col));
 }
 
-function estimateSheetSetCellFromText(r, c, rawText) {
+function estimateSheetSetCellFromText(r, c, rawText, option = {}) {
   if (!estimateSheetEditorState) return;
   const obj = estimateSheetGetCellObj(estimateSheetEditorState, r, c);
   const raw = String(rawText ?? "").replace(/ /g, " ").trim();
+  if (option.keepFormulaWhenUnchanged && obj.formula) {
+    const displayed = String(estimateSheetDisplayValue(estimateSheetEditorState, r, c)).replace(/ /g, " ").trim();
+    if (raw === displayed) return;
+  }
   if (raw.startsWith("=")) {
     obj.formula = raw.slice(1);
     obj.userFormula = true;
@@ -568,7 +585,7 @@ function estimateSheetSetCellFromText(r, c, rawText) {
 
 function estimateSheetPopupUpdateCellFromElement(cell) {
   if (!cell) return;
-  estimateSheetSetCellFromText(Number(cell.dataset.row), Number(cell.dataset.col), cell.innerText);
+  estimateSheetSetCellFromText(Number(cell.dataset.row), Number(cell.dataset.col), cell.innerText, { keepFormulaWhenUnchanged: true });
 }
 
 function estimateSheetPopupMoveFocus(r, c) {
@@ -576,6 +593,7 @@ function estimateSheetPopupMoveFocus(r, c) {
   const row = Math.max(1, Math.min(estimateSheetEditorState.maxRow, Number(r) || 1));
   const col = Math.max(1, Math.min(estimateSheetEditorState.maxCol, Number(c) || 1));
   estimateSheetExcelActiveCell = { r: row, c: col };
+  estimateSheetRenderExcelWindow();
   estimateSheetPopupSelectCell(row, col, true);
   const win = estimateSheetExcelWindowRef;
   const cell = win?.document?.querySelector(`#estimateSheetPopupGrid [data-row="${row}"][data-col="${col}"]`);
@@ -703,6 +721,9 @@ function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
   while (state.colWidths.length < state.maxCol) state.colWidths.push(64);
   (sheet["!rows"] || []).forEach((row, i) => { if (row?.hpx) state.rowHeights[i] = row.hpx; });
   (sheet["!cols"] || []).forEach((col, i) => { if (col?.wpx) state.colWidths[i] = col.wpx; });
+  if (Array.isArray(sheet["!merges"])) {
+    state.merges = sheet["!merges"].map(m => [m.s.r + 1, m.s.c + 1, m.e.r + 1, m.e.c + 1]);
+  }
   for (let r = ref.s.r; r <= ref.e.r; r += 1) {
     for (let c = ref.s.c; c <= ref.e.c; c += 1) {
       const addr = XLSX.utils.encode_cell({ r, c });
