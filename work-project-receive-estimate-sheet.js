@@ -29,9 +29,27 @@ function estimateSheetColumnLabel(index) {
    - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
    - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
 */
-const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [15.29, 8.13, 9.63, 6, 17.71, 17.71, 15.86, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
-const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [118, 66, 76, 51, 134, 134, 121, 68, 68, 93, 68, 68, 68, 68, 68];
+const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [17.47, 8.13, 9.63, 6, 20.24, 20.24, 18.13, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [135, 66, 76, 51, 153, 153, 138, 68, 68, 93, 68, 68, 68, 68, 68];
 const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
+function estimateSheetApplyCommonColumnWidths(state) {
+  if (!state) return state;
+  const widths = ESTIMATE_GAESAN_MANUAL_COL_WIDTHS.slice();
+  const units = ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS.slice();
+  state.colWidths = Array.from({ length: Math.max(state.maxCol || 0, widths.length) }, (_, i) => widths[i] || 68);
+  state.colWidthUnits = Array.from({ length: Math.max(state.maxCol || 0, units.length) }, (_, i) => units[i] || 8.38);
+  return state;
+}
+function estimateSheetEnsureRowHeights(state) {
+  if (!state) return state;
+  const source = ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS;
+  if (!Array.isArray(state.rowHeights)) state.rowHeights = [];
+  for (let i = 0; i < (state.maxRow || source.length); i += 1) {
+    if (!state.rowHeights[i]) state.rowHeights[i] = source[i] || 26;
+  }
+  return state;
+}
+
 const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
 const ESTIMATE_GAESAN_FOOTER_MERGES = [[31, 1, 31, 7], [32, 1, 32, 7], [33, 1, 33, 7]];
 const ESTIMATE_COMMON_TEXT_MERGES = [[12, 1, 12, 3]];
@@ -55,34 +73,41 @@ function estimateSheetEnsureMerge(state, r1, c1, r2, c2) {
 
 function estimateSheetApplyManualOverrides(state) {
   if (!state) return state;
-  state.colWidths = ESTIMATE_GAESAN_MANUAL_COL_WIDTHS.slice();
-  while (state.colWidths.length < state.maxCol) state.colWidths.push(68);
-  state.rowHeights = ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS.slice();
-  while (state.rowHeights.length < state.maxRow) state.rowHeights.push(26);
+  const isUploaded = !!state.fromUploadedWorkbook;
+  estimateSheetApplyCommonColumnWidths(state);
+  if (!isUploaded) {
+    state.rowHeights = ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS.slice();
+    while (state.rowHeights.length < state.maxRow) state.rowHeights.push(26);
+  } else {
+    estimateSheetEnsureRowHeights(state);
+  }
 
   const spec = estimateSheetGetSpec(state.type || "개산견적");
 
-  // 발송일자는 F4:G4를 병합한 뒤 오른쪽 정렬로 표시한다.
+  // 발송일자는 기본 양식에서만 F4:G4 병합 + 오른쪽 정렬로 보정한다.
+  // 업로드 엑셀은 원본 병합/정렬을 우선 보존한다.
   const sendDateFromG = estimateSheetGetCellObj(state, 4, 7);
   const sendDateToF = estimateSheetGetCellObj(state, 4, 6);
-  if (sendDateFromG?.value || sendDateFromG?.formula) {
-    sendDateToF.value = sendDateFromG.value;
-    sendDateToF.formula = sendDateFromG.formula || "";
-    sendDateToF.userFormula = !!sendDateFromG.userFormula;
-    sendDateFromG.value = "";
-    sendDateFromG.formula = "";
-    sendDateFromG.userFormula = false;
+  if (!isUploaded) {
+    if (sendDateFromG?.value || sendDateFromG?.formula) {
+      sendDateToF.value = sendDateFromG.value;
+      sendDateToF.formula = sendDateFromG.formula || "";
+      sendDateToF.userFormula = !!sendDateFromG.userFormula;
+      sendDateFromG.value = "";
+      sendDateFromG.formula = "";
+      sendDateFromG.userFormula = false;
+    }
+    estimateSheetEnsureMerge(state, 4, 6, 4, 7);
+    ESTIMATE_COMMON_TEXT_MERGES.forEach(m => estimateSheetEnsureMerge(state, m[0], m[1], m[2], m[3]));
+    const itemTitle = estimateSheetGetCellObj(state, 12, 1);
+    [2, 3].forEach(col => {
+      const cell = estimateSheetGetCellObj(state, 12, col);
+      cell.value = "";
+      cell.formula = "";
+      cell.userFormula = false;
+    });
+    itemTitle.style = estimateSheetAppendCssRule(itemTitle.style || estimateSheetCellTemplate(spec, 12, 1).s || "", "font-weight", "700");
   }
-  estimateSheetEnsureMerge(state, 4, 6, 4, 7);
-  ESTIMATE_COMMON_TEXT_MERGES.forEach(m => estimateSheetEnsureMerge(state, m[0], m[1], m[2], m[3]));
-  const itemTitle = estimateSheetGetCellObj(state, 12, 1);
-  [2, 3].forEach(col => {
-    const cell = estimateSheetGetCellObj(state, 12, col);
-    cell.value = "";
-    cell.formula = "";
-    cell.userFormula = false;
-  });
-  itemTitle.style = estimateSheetAppendCssRule(itemTitle.style || estimateSheetCellTemplate(spec, 12, 1).s || "", "font-weight", "700");
   sendDateToF.style = estimateSheetAppendCssRule(sendDateToF.style || estimateSheetCellTemplate(spec, 4, 7).s || "", "text-align", "right");
 
   Object.keys(state.cells || {}).forEach(key => {
@@ -101,25 +126,27 @@ function estimateSheetApplyManualOverrides(state) {
     obj.style = estimateSheetAppendCssRule(base, "background-color", "#fff2cc");
   });
 
-  const existing = new Set((state.merges || []).map(m => m.join(":")));
-  ESTIMATE_GAESAN_FOOTER_MERGES.forEach(m => {
-    const key = m.join(":");
-    if (!existing.has(key)) state.merges.push(m);
-  });
+  if (!isUploaded) {
+    const existing = new Set((state.merges || []).map(m => m.join(":")));
+    ESTIMATE_GAESAN_FOOTER_MERGES.forEach(m => {
+      const key = m.join(":");
+      if (!existing.has(key)) state.merges.push(m);
+    });
 
-  [31, 32, 33].forEach(row => {
-    const source = estimateSheetGetCellObj(state, row, 7);
-    const target = estimateSheetGetCellObj(state, row, 1);
-    if (!String(target.value ?? "").trim() && !target.formula && (String(source.value ?? "").trim() || source.formula)) {
-      target.value = source.value;
-      target.formula = source.formula || "";
-      source.value = "";
-      source.formula = "";
-    }
-    const tmpl = estimateSheetCellTemplate(spec, row, 7);
-    const base = target.style || tmpl.s || "";
-    target.style = estimateSheetAppendCssRule(estimateSheetAppendCssRule(base, "text-align", "right"), "font-size", "11pt");
-  });
+    [31, 32, 33].forEach(row => {
+      const source = estimateSheetGetCellObj(state, row, 7);
+      const target = estimateSheetGetCellObj(state, row, 1);
+      if (!String(target.value ?? "").trim() && !target.formula && (String(source.value ?? "").trim() || source.formula)) {
+        target.value = source.value;
+        target.formula = source.formula || "";
+        source.value = "";
+        source.formula = "";
+      }
+      const tmpl = estimateSheetCellTemplate(spec, row, 7);
+      const base = target.style || tmpl.s || "";
+      target.style = estimateSheetAppendCssRule(estimateSheetAppendCssRule(base, "text-align", "right"), "font-size", "11pt");
+    });
+  }
   return state;
 }
 
@@ -184,6 +211,7 @@ function estimateSheetCreateState(type) {
     maxCol: spec.maxCol,
     rowHeights: [...spec.rows],
     colWidths: [...spec.cols],
+    colWidthUnits: [],
     merges: JSON.parse(JSON.stringify(spec.merges || []))
   });
 }
@@ -996,7 +1024,9 @@ function handleEstimateSheetExcelUpload(input) {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         estimateSheetApplyUploadedWorkbook(sheet, targetType, file.name);
-        openEstimateSheetExcelWindow(null, { fromUpload: true });
+        if (!estimateSheetExcelWindowRef || estimateSheetExcelWindowRef.closed) {
+          openEstimateSheetExcelWindow(null, { fromUpload: true });
+        }
       } catch (err) {
         console.error(err);
         showToast?.("엑셀 업로드 자료를 해석하지 못했습니다. 파일 형식을 확인해주세요.");
@@ -1010,8 +1040,21 @@ function handleEstimateSheetExcelUpload(input) {
 
 function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
   if (!sheet) return;
+  const previousEditingIndex = estimateSheetEditingIndex;
   estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
-  const state = estimateSheetCreateState(estimateSheetActiveType);
+  const spec = estimateSheetGetSpec(estimateSheetActiveType);
+  const state = {
+    type: estimateSheetActiveType,
+    cells: {},
+    maxRow: spec.maxRow || 33,
+    maxCol: spec.maxCol || 15,
+    rowHeights: [...(spec.rows || [])],
+    colWidths: [...(spec.cols || [])],
+    colWidthUnits: [],
+    merges: [],
+    fromUploadedWorkbook: true,
+    sourceFileName: fileName || ""
+  };
   const ref = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
   state.maxRow = Math.max(state.maxRow, ref.e.r + 1);
   state.maxCol = Math.max(state.maxCol, ref.e.c + 1);
@@ -1028,6 +1071,7 @@ function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
       const cell = sheet[addr];
       if (!cell) continue;
       const obj = estimateSheetGetCellObj(state, r + 1, c + 1);
+      obj.__present = true;
       obj.formula = cell.f ? String(cell.f).replace(/^=/, "") : "";
       obj.userFormula = !!cell.f;
       if (cell.f) obj.value = cell.v ?? "";
@@ -1038,18 +1082,13 @@ function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
   estimateSheetNormalizeUploadedFormat(state);
   estimateSheetApplyManualOverrides(state);
   estimateSheetEditorState = state;
-  estimateSheetEditingIndex = null;
+  // 엑셀 불러오기는 새 리스트를 만들지 않고 현재 열려 있는 작성창의 내용만 교체한다.
+  // 기존 리스트를 열어 수정 중이었다면 해당 index를 유지하고, 새로만들기 상태라면 저장 시 새 리스트로 추가된다.
+  estimateSheetEditingIndex = previousEditingIndex;
   estimateSheetExcelActiveCell = { r: 1, c: 1 };
-  const project = estimateSheetDisplayValue(state, 6, 2) || fileName.replace(/\.[^.]+$/, "");
-  estimateSheetRecords.unshift({
-    type: estimateSheetActiveType,
-    title: `${project}_${estimateSheetActiveType}_업로드`,
-    status: "작성중",
-    updatedAt: estimateSheetNow(),
-    state: estimateSheetCloneState(state)
-  });
-  estimateSheetEditingIndex = 0;
   renderEstimateSheetManage();
+  estimateSheetRenderExcelWindow();
+  showToast?.("엑셀 내용을 현재 견적서 작성창에 불러왔습니다. 확인 후 견적서 저장을 누르면 리스트에 반영됩니다.");
 }
 
 
@@ -1099,10 +1138,12 @@ function estimateSheetPrintCurrentPdf() {
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const printCols = spec.printCols || 7;
-  const printRows = spec.maxRow || state.maxRow;
+  const printRows = Math.max(spec.maxRow || 33, state.maxRow || 33);
   const sheetWidth = cols.slice(0, printCols).reduce((sum, v) => sum + (Number(v) || 64), 0);
   const sheetHeight = rows.slice(0, printRows).reduce((sum, v) => sum + (Number(v) || 20), 0);
-  const printScale = Math.min(0.92, 640 / Math.max(1, sheetWidth), 850 / Math.max(1, sheetHeight));
+  const contentW = 690;
+  const contentH = 900;
+  const printScale = Math.min(1, contentW / Math.max(1, sheetWidth), contentH / Math.max(1, sheetHeight));
   const fileTitle = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g, "")}`;
   const printWin = window.open("", "CONCOST_ESTIMATE_PDF_PRINT", "width=900,height=1000,left=80,top=30,resizable=yes,scrollbars=yes");
   if (!printWin) {
@@ -1113,9 +1154,9 @@ function estimateSheetPrintCurrentPdf() {
     @page{size:A4 portrait;margin:0;}
     *{box-sizing:border-box;}
     html,body{margin:0;padding:0;background:#e5e7eb;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;color:#111827;}
-    .print-page{width:794px;height:1123px;margin:0 auto;background:#fff;padding:36px 28px;position:relative;overflow:hidden;}
-    .print-frame{width:100%;height:1050px;border:2px solid #111;position:relative;padding:44px 36px 110px;}
-    .print-sheet-viewport{position:relative;width:100%;height:880px;overflow:visible;}
+    .print-page{width:794px;height:1123px;margin:0 auto;background:#fff;padding:35px 30px;position:relative;overflow:hidden;}
+    .print-frame{width:100%;height:1052px;border:2px solid #111;position:relative;padding:54px 36px 92px;}
+    .print-sheet-viewport{position:relative;width:100%;height:914px;overflow:visible;}
     .print-sheet{position:relative;width:${sheetWidth}px;height:${sheetHeight}px;margin:0 auto;transform:scale(var(--print-scale));transform-origin:top center;}
     .printable-grid{border-collapse:collapse;table-layout:fixed;width:${sheetWidth}px;background:transparent;position:absolute;left:0;top:0;z-index:2;}
     .printable-cell{border:none;min-height:0;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;overflow:visible;position:relative;vertical-align:middle;background:transparent;font-size:11pt;}
@@ -1123,7 +1164,7 @@ function estimateSheetPrintCurrentPdf() {
     .printable-overflow{z-index:30!important;}
     .printable-image{position:absolute;object-fit:contain;pointer-events:none;z-index:3;}
     .print-footer{position:absolute;left:36px;right:36px;bottom:48px;text-align:right;font-size:11px;line-height:1.7;}
-    @media print{html,body{background:#fff;}.print-page{margin:0;padding:36px 28px;box-shadow:none;} .no-print{display:none!important;}}
+    @media print{html,body{background:#fff;}.print-page{margin:0;padding:35px 30px;box-shadow:none;} .no-print{display:none!important;}}
   `;
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${estimateSheetHtml(fileTitle)}</title><style>${css}</style></head><body>
     <div class="print-page" style="--print-scale:${printScale}">
