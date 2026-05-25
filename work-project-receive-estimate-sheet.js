@@ -42,6 +42,15 @@ function estimateSheetAppendCssRule(styleText, prop, value) {
   return `${cleaned}${cleaned ? ";" : ""}${prop}:${value}`;
 }
 
+
+function estimateSheetEnsureMerge(state, r1, c1, r2, c2) {
+  if (!state) return;
+  if (!Array.isArray(state.merges)) state.merges = [];
+  const key = [r1, c1, r2, c2].join(":");
+  const exists = state.merges.some(m => Array.isArray(m) && m.join(":") === key);
+  if (!exists) state.merges.push([r1, c1, r2, c2]);
+}
+
 function estimateSheetApplyManualOverrides(state) {
   if (!state || state.type !== "개산견적") return state;
   state.colWidths = ESTIMATE_GAESAN_MANUAL_COL_WIDTHS.slice();
