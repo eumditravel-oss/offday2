@@ -29,8 +29,8 @@ function estimateSheetColumnLabel(index) {
    - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
    - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
 */
-const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [13.38, 8.13, 9.63, 6, 15.5, 15.5, 13.88, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
-const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [103, 66, 76, 51, 117, 117, 106, 68, 68, 93, 68, 68, 68, 68, 68];
+const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [15.29, 8.13, 9.63, 6, 17.71, 17.71, 15.86, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [118, 66, 76, 51, 134, 134, 121, 68, 68, 93, 68, 68, 68, 68, 68];
 const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
 const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
 const ESTIMATE_GAESAN_FOOTER_MERGES = [[31, 1, 31, 7], [32, 1, 32, 7], [33, 1, 33, 7]];
@@ -331,7 +331,51 @@ function estimateSheetXlsxCellStyleToCss(cell) {
     const line = /dotted/i.test(b.style) ? "dotted" : /dash/i.test(b.style) ? "dashed" : /double/i.test(b.style) ? "double" : "solid";
     css.push(`border-${side}:${width} ${line} ${color}`);
   });
+
   return css.join(";");
+}
+
+function estimateSheetCssHasRule(styleText, prop) {
+  return new RegExp(`${prop}\\s*:`, "i").test(String(styleText || ""));
+}
+
+function estimateSheetUploadedTemplateRow(state, r) {
+  const a = String(estimateSheetGetCellObj(state, r, 1)?.value ?? "").replace(/\s+/g, "");
+  const b = String(estimateSheetGetCellObj(state, r, 2)?.value ?? "").replace(/\s+/g, "");
+  const g = String(estimateSheetGetCellObj(state, r, 7)?.value ?? "").replace(/\s+/g, "");
+  const rowText = `${a}${b}${g}`;
+  if (r <= 12) return r;
+  if (rowText.includes("총계") || rowText.includes("합계")) return 20;
+  if (rowText.includes("견적조건")) return 21;
+  if (r >= 22) return 22;
+  return Math.min(Math.max(r, 13), 19);
+}
+
+function estimateSheetNormalizeUploadedFormat(state) {
+  if (!state) return state;
+  const spec = estimateSheetGetSpec(state.type || "개산견적");
+  for (let r = 1; r <= state.maxRow; r += 1) {
+    const templateRow = estimateSheetUploadedTemplateRow(state, r);
+    for (let c = 1; c <= state.maxCol; c += 1) {
+      const obj = estimateSheetGetCellObj(state, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, templateRow, Math.min(c, spec.maxCol || c));
+      let style = String(obj.style || "").trim();
+      const fallback = String(tmpl.s || "").trim();
+      // SheetJS CE가 브라우저에서 업로드 파일의 테두리/채움 스타일을 완전히 읽지 못하는 경우가 있어,
+      // 값은 업로드 파일을 유지하되 견적서 기본 양식 스타일을 보강한다.
+      if (!style || style === "box-sizing:border-box;padding:0 4px;overflow:hidden") style = fallback;
+      else {
+        ["border-left", "border-right", "border-top", "border-bottom", "background-color", "font-size", "font-family", "font-weight", "text-align", "vertical-align"].forEach(prop => {
+          if (!estimateSheetCssHasRule(style, prop) && estimateSheetCssHasRule(fallback, prop)) {
+            const m = fallback.match(new RegExp(`${prop}\\s*:\\s*[^;]+`, "i"));
+            if (m) style = estimateSheetAppendCssRule(style, prop, m[0].split(":").slice(1).join(":").trim());
+          }
+        });
+      }
+      obj.style = estimateSheetAppendCssRule(style || fallback, "font-size", (r === 2 && c === 1) ? "28pt" : "11pt");
+    }
+  }
+  return state;
 }
 function renderEstimateSheetManage() {
   if (!estimateSheetRecords.length) {
@@ -419,9 +463,9 @@ function estimateSheetShouldOverflowText(state, r, c, displayed, span) {
   if (!value.trim()) return false;
   if (/^-?[\d,]+(\.\d+)?$/.test(value.trim())) return false;
   if (span?.colspan > 1) return false;
-  if (state?.type === "개산견적" && c === 1 && r >= 22 && r <= 27) return true;
-  if (state?.type === "개산견적" && c === 9 && r >= 6 && r <= 8) return true;
-  if (state?.type === "개산견적" && c === 2 && r >= 5 && r <= 9) return true;
+  if (c === 1 && r >= 22 && r <= 27) return true;
+  if (c === 9 && r >= 6 && r <= 8) return true;
+  if (c === 2 && r >= 5 && r <= 9) return true;
   return value.length >= 9;
 }
 
@@ -991,6 +1035,7 @@ function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
       obj.style = estimateSheetXlsxCellStyleToCss(cell);
     }
   }
+  estimateSheetNormalizeUploadedFormat(state);
   estimateSheetApplyManualOverrides(state);
   estimateSheetEditorState = state;
   estimateSheetEditingIndex = null;
