@@ -28,12 +28,8 @@ function estimateSheetColumnLabel(index) {
    - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
    - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
 */
-const ESTIMATE_GAESAN_EXCEL_COL_WIDTHS = [12.38, 8.13, 9.63, 6, 13.5, 13.5, 12.88, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
-const ESTIMATE_GAESAN_EXCEL_ROW_HEIGHTS = [16.5, 48.75, 16.5, 17.25, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 19.5, 19.5, 19.5, 19.5, 19.5, 19.5, 19.5, 19.5];
-const estimateSheetExcelColWidthToPx = width => Math.max(18, Math.round((Number(width) || 8.38) * 7 + 5));
-const estimateSheetExcelRowHeightToPx = height => Math.max(10, Math.round((Number(height) || 15) * 96 / 72));
-const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = ESTIMATE_GAESAN_EXCEL_COL_WIDTHS.map(estimateSheetExcelColWidthToPx);
-const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = ESTIMATE_GAESAN_EXCEL_ROW_HEIGHTS.map(estimateSheetExcelRowHeightToPx);
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [96, 66, 76, 51, 103, 103, 99, 68, 68, 93, 68, 68, 68, 68, 68];
+const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
 const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
 const ESTIMATE_GAESAN_FOOTER_MERGES = [[31, 1, 31, 7], [32, 1, 32, 7], [33, 1, 33, 7]];
 const ESTIMATE_GAESAN_TITLE_CELL = "2:1";
@@ -486,62 +482,14 @@ document.addEventListener("keydown", event => {
     const [dr, dc] = map[event.key]; estimateSheetMoveFocus(cell, dr, dc);
   }
 });
-function estimateSheetGetExportColWch(state, index) {
-  if (state?.type === "개산견적" && ESTIMATE_GAESAN_EXCEL_COL_WIDTHS[index] !== undefined) return ESTIMATE_GAESAN_EXCEL_COL_WIDTHS[index];
-  const px = Number((state?.colWidths || [])[index] || 64);
-  return Math.max(1, Math.round(((px - 5) / 7) * 100) / 100);
-}
-
-function estimateSheetGetExportRowHpt(state, index) {
-  if (state?.type === "개산견적" && ESTIMATE_GAESAN_EXCEL_ROW_HEIGHTS[index] !== undefined) return ESTIMATE_GAESAN_EXCEL_ROW_HEIGHTS[index];
-  const px = Number((state?.rowHeights || [])[index] || 20);
-  return Math.max(1, Math.round(px * 0.75 * 100) / 100);
-}
-
-function estimateSheetExportXlsxNow() {
-  if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  estimateSheetApplyManualOverrides(estimateSheetEditorState);
-  const state = estimateSheetEditorState;
-  const ws = {};
-  const yellowCells = state.type === "개산견적" ? ESTIMATE_GAESAN_YELLOW_CELLS : new Set();
-  for (let r = 1; r <= state.maxRow; r += 1) {
-    for (let c = 1; c <= state.maxCol; c += 1) {
-      const obj = estimateSheetGetCellObj(state, r, c);
-      const hasFormula = !!obj.formula;
-      const value = hasFormula ? estimateSheetEvaluateFormula(state, obj.formula, r, c) : obj.value;
-      if (!hasFormula && (value === "" || value === null || typeof value === "undefined")) continue;
-      const addr = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
-      const numeric = typeof value === "number" || /^-?\d+(\.\d+)?$/.test(String(value ?? "").replace(/,/g, "").trim());
-      const cellValue = numeric ? Number(String(value).replace(/,/g, "")) : String(value ?? "");
-      ws[addr] = {
-        t: numeric ? "n" : "s",
-        v: cellValue
-      };
-      if (hasFormula) ws[addr].f = String(obj.formula).replace(/^=/, "");
-      if (yellowCells.has(estimateSheetCellKey(r, c))) {
-        ws[addr].s = { fill: { patternType: "solid", fgColor: { rgb: "FFF2CC" } } };
-      }
-    }
-  }
-  ws["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: state.maxRow - 1, c: state.maxCol - 1 } });
-  ws["!cols"] = Array.from({ length: state.maxCol }, (_, i) => ({ wch: estimateSheetGetExportColWch(state, i) }));
-  ws["!rows"] = Array.from({ length: state.maxRow }, (_, i) => ({ hpt: estimateSheetGetExportRowHpt(state, i) }));
-  ws["!merges"] = (state.merges || []).map(([r1, c1, r2, c2]) => ({ s: { r: r1 - 1, c: c1 - 1 }, e: { r: r2 - 1, c: c2 - 1 } }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, (state.type || "견적서").slice(0, 31));
-  const filename = `CONCOST_${state.type}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xlsx`;
-  XLSX.writeFile(wb, filename, { bookType: "xlsx", cellStyles: true });
-}
-
 function exportEstimateSheetCurrentHtml() {
-  estimateSheetEnsureXlsxLibrary(() => {
-    try {
-      estimateSheetExportXlsxNow();
-    } catch (err) {
-      console.error(err);
-      showToast?.("엑셀 내보내기 중 오류가 발생했습니다.");
-    }
-  });
+  if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  renderEstimateSheetGrid();
+  const wrap = document.querySelector(".estimate-sheet-grid-wrap");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${document.querySelector("style")?.textContent || ""} .estimate-sheet-grid-wrap{position:relative;overflow:visible} table{border-collapse:collapse;table-layout:fixed} td,th{white-space:pre-wrap;}</style></head><body>${wrap ? wrap.innerHTML : ""}</body></html>`;
+  const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xls`;
+  document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
 }
 document.addEventListener("DOMContentLoaded", () => { if (document.getElementById("estimateSheetManage")) renderEstimateSheetManage(); });
 
@@ -671,7 +619,9 @@ function estimateSheetWriteExcelWindow(win) {
       <div class="excel-topbar">
         <div class="excel-title"><span class="excel-badge">CON-COST</span><span id="estimateSheetPopupTitle">견적서 작성</span></div>
         <div class="excel-actions">
+          <input id="estimateSheetPopupUploadInput" type="file" accept=".xlsx,.xls" style="display:none">
           <button class="excel-btn" id="estimateSheetPopupUploadBtn" type="button">엑셀 불러오기</button>
+          <button class="excel-btn" id="estimateSheetPopupPdfBtn" type="button">PDF출력하기</button>
           <button class="excel-btn" id="estimateSheetPopupResetBtn" type="button">양식 초기화</button>
           <button class="excel-btn" id="estimateSheetPopupAddRowBtn" type="button">행 추가 Ctrl+F9</button>
           <button class="excel-btn" id="estimateSheetPopupAddColBtn" type="button">열 추가 Ctrl+Shift+F9</button>
@@ -691,12 +641,22 @@ function estimateSheetWriteExcelWindow(win) {
 
 function estimateSheetBindExcelWindow(win) {
   const doc = win.document;
-  doc.getElementById("estimateSheetPopupUploadBtn")?.addEventListener("click", () => estimateSheetUploadExcelClick());
   doc.getElementById("estimateSheetPopupSaveBtn")?.addEventListener("click", () => {
     const active = doc.querySelector("#estimateSheetPopupGrid .estimate-excel-cell.active-cell");
     if (active) estimateSheetPopupUpdateCellFromElement(active);
     saveEstimateSheetRecord();
     win.close();
+  });
+  doc.getElementById("estimateSheetPopupUploadBtn")?.addEventListener("click", () => {
+    doc.getElementById("estimateSheetPopupUploadInput")?.click();
+  });
+  doc.getElementById("estimateSheetPopupUploadInput")?.addEventListener("change", event => {
+    handleEstimateSheetExcelUpload(event.target);
+  });
+  doc.getElementById("estimateSheetPopupPdfBtn")?.addEventListener("click", () => {
+    const active = doc.querySelector("#estimateSheetPopupGrid .estimate-excel-cell.active-cell");
+    if (active) estimateSheetPopupUpdateCellFromElement(active);
+    estimateSheetPrintCurrentPdf();
   });
   doc.getElementById("estimateSheetPopupResetBtn")?.addEventListener("click", () => {
     estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
@@ -969,6 +929,91 @@ function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
   renderEstimateSheetManage();
 }
 
+
+function estimateSheetBuildPrintableGridHtml(state) {
+  const spec = estimateSheetGetSpec(state.type);
+  const merge = estimateSheetMergeInfoForState(spec, state);
+  const cols = state.colWidths || spec.cols;
+  const rows = state.rowHeights || spec.rows;
+  const maxRow = spec.maxRow || state.maxRow;
+  const maxCol = spec.printCols || 7;
+  const colGroup = `<colgroup>${Array.from({ length: maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px">`).join("")}</colgroup>`;
+  const body = Array.from({ length: maxRow }, (_, ri) => {
+    const r = ri + 1;
+    const h = rows[ri] || 20;
+    const cells = Array.from({ length: maxCol }, (_, ci) => {
+      const c = ci + 1;
+      const key = estimateSheetCellKey(r, c);
+      if (merge.skips.has(key)) return "";
+      const spanRaw = merge.starts[key] || { rowspan: 1, colspan: 1 };
+      const span = {
+        rowspan: Math.min(spanRaw.rowspan || 1, Math.max(1, maxRow - r + 1)),
+        colspan: Math.min(spanRaw.colspan || 1, Math.max(1, maxCol - c + 1))
+      };
+      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const obj = estimateSheetGetCellObj(state, r, c);
+      const displayed = estimateSheetDisplayValue(state, r, c);
+      const overflowClass = estimateSheetShouldOverflowText(state, r, c, displayed, span) ? " printable-overflow" : "";
+      return `<td class="printable-cell${overflowClass}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} style="${estimateSheetHtml(estimateSheetCellEffectiveStyle(obj, tmpl))};height:${h}px">${estimateSheetHtml(displayed)}</td>`;
+    }).join("");
+    return `<tr style="height:${h}px">${cells}</tr>`;
+  }).join("");
+  return `<table class="printable-grid">${colGroup}<tbody>${body}</tbody></table>`;
+}
+
+function estimateSheetBuildPrintableImagesHtml(state) {
+  const spec = estimateSheetGetSpec(state.type);
+  return (spec.images || []).map((img, i) => {
+    const pos = estimateSheetImagePosition(spec, img, state);
+    return `<img class="printable-image" src="${img.data}" alt="견적서 이미지 ${i + 1}" style="left:${pos.left}px;top:${pos.top}px;width:${pos.width}px;height:${pos.height}px">`;
+  }).join("");
+}
+
+function estimateSheetPrintCurrentPdf() {
+  if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  const state = estimateSheetEditorState;
+  const spec = estimateSheetGetSpec(state.type);
+  const cols = state.colWidths || spec.cols;
+  const rows = state.rowHeights || spec.rows;
+  const printCols = spec.printCols || 7;
+  const printRows = spec.maxRow || state.maxRow;
+  const sheetWidth = cols.slice(0, printCols).reduce((sum, v) => sum + (Number(v) || 64), 0);
+  const sheetHeight = rows.slice(0, printRows).reduce((sum, v) => sum + (Number(v) || 20), 0);
+  const fileTitle = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g, "")}`;
+  const printWin = window.open("", "CONCOST_ESTIMATE_PDF_PRINT", "width=900,height=1000,left=80,top=30,resizable=yes,scrollbars=yes");
+  if (!printWin) {
+    showToast?.("팝업이 차단되었습니다. 브라우저에서 팝업 허용 후 다시 시도해주세요.");
+    return;
+  }
+  const css = `
+    @page{size:A4 portrait;margin:0;}
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;background:#e5e7eb;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;color:#111827;}
+    .print-page{width:794px;min-height:1123px;margin:0 auto;background:#fff;padding:44px 36px;position:relative;}
+    .print-frame{width:100%;min-height:1030px;border:2px solid #111;position:relative;padding:70px 52px 150px;}
+    .print-sheet{position:relative;width:${sheetWidth}px;height:${sheetHeight}px;margin:0 auto;}
+    .printable-grid{border-collapse:collapse;table-layout:fixed;width:${sheetWidth}px;background:transparent;position:absolute;left:0;top:0;z-index:2;}
+    .printable-cell{border:1px solid #111;min-height:0;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;overflow:visible;position:relative;vertical-align:middle;background:transparent;font-size:11pt;}
+    .printable-cell[style*="font-size:28pt"],.printable-cell[style*="font-size: 28pt"]{font-size:28pt!important;}
+    .printable-overflow{z-index:30!important;}
+    .printable-image{position:absolute;object-fit:contain;pointer-events:none;z-index:3;}
+    .print-footer{position:absolute;left:52px;right:52px;bottom:54px;text-align:right;font-size:11px;line-height:1.7;}
+    @media print{html,body{background:#fff;}.print-page{margin:0;padding:44px 36px;box-shadow:none;} .no-print{display:none!important;}}
+  `;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${estimateSheetHtml(fileTitle)}</title><style>${css}</style></head><body>
+    <div class="print-page">
+      <div class="print-frame">
+        <div class="print-sheet">${estimateSheetBuildPrintableGridHtml(state)}${estimateSheetBuildPrintableImagesHtml(state)}</div>
+        <div class="print-footer"></div>
+      </div>
+    </div>
+    <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250);};<\/script>
+  </body></html>`;
+  printWin.document.open();
+  printWin.document.write(html);
+  printWin.document.close();
+}
+
 const estimateSheetInlineEditorOpen = openEstimateSheetEditor;
 openEstimateSheetEditor = function(index = null) {
   return openEstimateSheetExcelWindow(index);
@@ -984,7 +1029,7 @@ setEstimateSheetType = function(type) {
 
 function autoOpenEstimateSheetExcelWindowOnce() {
   /* 2026-05-23 수정: 견적서관리 화면 진입 시 새 창을 자동으로 열지 않는다.
-     새 창은 목록 행 클릭 또는 [새로만들기] 동작에서만 열린다. 엑셀 불러오기는 새 창 상단 버튼에서 수행한다. */
+     새 창은 목록 행 클릭, [새로만들기], [엑셀 업로드] 동작에서만 열린다. */
   estimateSheetExcelAutoOpenTried = true;
 }
 
