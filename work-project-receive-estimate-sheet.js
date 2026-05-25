@@ -14,6 +14,9 @@ function estimateSheetNow() {
   const p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+function estimateSheetMakeId(prefix = "estimate") {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
 function estimateSheetHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[ch]));
 }
@@ -486,12 +489,24 @@ function resetEstimateSheetEditor() { estimateSheetEditorState = estimateSheetCr
 function saveEstimateSheetRecord() {
   if (!estimateSheetEditorState) return;
   const project = estimateSheetDisplayValue(estimateSheetEditorState, 6, 2) || estimateSheetActiveType;
-  const record = { type: estimateSheetActiveType, title: `${project}_${estimateSheetActiveType}`, status: "작성중", updatedAt: estimateSheetNow(), state: estimateSheetCloneState(estimateSheetEditorState) };
+  const existing = estimateSheetEditingIndex !== null && estimateSheetRecords[estimateSheetEditingIndex] ? estimateSheetRecords[estimateSheetEditingIndex] : null;
+  const record = {
+    ...(existing || {}),
+    id: existing?.id || estimateSheetMakeId("estimate"),
+    type: estimateSheetActiveType,
+    title: `${project}_${estimateSheetActiveType}`,
+    status: existing?.status || "작성중",
+    updatedAt: estimateSheetNow(),
+    state: estimateSheetCloneState(estimateSheetEditorState),
+    dataMode: "template-value-only"
+  };
   if (estimateSheetEditingIndex !== null && estimateSheetRecords[estimateSheetEditingIndex]) estimateSheetRecords[estimateSheetEditingIndex] = record;
   else { estimateSheetRecords.unshift(record); estimateSheetEditingIndex = 0; }
   renderEstimateSheetManage();
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
   if (typeof showToast === "function") showToast("견적서 작성 내용을 저장했습니다.");
 }
+
 function duplicateEstimateSheetRecord(index) {
   const src = estimateSheetRecords[index]; if (!src) return;
   const copy = JSON.parse(JSON.stringify(src)); copy.title = `${copy.title}_복제`; copy.status = "작성중"; copy.updatedAt = estimateSheetNow();
@@ -499,14 +514,17 @@ function duplicateEstimateSheetRecord(index) {
 }
 function markEstimateSheetSent(index) {
   if (estimateSheetRecords[index]) {
+    if (!estimateSheetRecords[index].id) estimateSheetRecords[index].id = estimateSheetMakeId("estimate");
     estimateSheetRecords[index].status = "발송완료";
     estimateSheetRecords[index].sentAt = estimateSheetNow();
     estimateSheetRecords[index].updatedAt = estimateSheetNow();
-    if (typeof registerEstimatePeriodSentRecord === "function") registerEstimatePeriodSentRecord(estimateSheetRecords[index]);
+    if (typeof registerEstimatePeriodSentRecord === "function") registerEstimatePeriodSentRecord(estimateSheetRecords[index], index);
     renderEstimateSheetList();
     if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+    if (typeof showToast === "function") showToast("발송 처리되어 기간별 견적서관리에 연결 등록되었습니다.");
   }
 }
+
 function estimateSheetShouldOverflowText(state, r, c, displayed, span) {
   const value = String(displayed ?? "");
   if (!value.trim()) return false;
@@ -1297,82 +1315,152 @@ function handleEstimateSheetExcelUpload(input) {
   });
 }
 
+
+/* 추천 구조 적용: 엑셀 불러오기는 원본 양식을 웹에 그대로 재현하려 하지 않고,
+   현재 견적서 템플릿에 값/수식만 주입한다. 이렇게 하면 병합, 테두리, 행높이,
+   열너비, 로고/도장, PDF/내보내기 기준이 항상 고정되어 형식 깨짐을 줄인다. */
+function estimateSheetCellFromUploaded(sheet, r, c) {
+  if (!sheet || !window.XLSX) return null;
+  return sheet[XLSX.utils.encode_cell({ r: r - 1, c: c - 1 })] || null;
+}
+
+function estimateSheetUploadedCellText(sheet, r, c) {
+  const cell = estimateSheetCellFromUploaded(sheet, r, c);
+  if (!cell) return "";
+  if (cell.f) return `=${String(cell.f).replace(/^=/, "")}`;
+  return cell.w ?? cell.v ?? "";
+}
+
+function estimateSheetApplyTextToStateCell(state, r, c, text) {
+  const obj = estimateSheetGetCellObj(state, r, c);
+  const raw = String(text ?? "").replace(/\u00a0/g, " ").trim();
+  if (!raw) {
+    obj.value = "";
+    obj.formula = "";
+    obj.userFormula = false;
+    return;
+  }
+  if (raw.startsWith("=")) {
+    obj.formula = raw.slice(1);
+    obj.value = "";
+    obj.userFormula = true;
+  } else {
+    obj.formula = "";
+    obj.userFormula = false;
+    obj.value = /^-?[\d,]+(\.\d+)?$/.test(raw) ? Number(raw.replace(/,/g, "")) : raw;
+  }
+}
+
+function estimateSheetUploadedUsedRows(sheet) {
+  if (!sheet || !window.XLSX) return { maxRow: 1, maxCol: 1 };
+  const ref = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
+  return { maxRow: ref.e.r + 1, maxCol: ref.e.c + 1 };
+}
+
+function estimateSheetFindUploadedRowByText(sheet, startRow, endRow, patterns) {
+  const pats = patterns.map(p => new RegExp(p, "i"));
+  for (let r = startRow; r <= endRow; r += 1) {
+    let rowText = "";
+    for (let c = 1; c <= 8; c += 1) rowText += String(estimateSheetUploadedCellText(sheet, r, c) || "").replace(/\s+/g, "");
+    if (pats.some(p => p.test(rowText))) return r;
+  }
+  return null;
+}
+
+function estimateSheetCopyUploadedValueRange(sheet, state, fromRow, toRow, maxCol) {
+  for (let r = fromRow; r <= toRow; r += 1) {
+    for (let c = 1; c <= maxCol; c += 1) {
+      const text = estimateSheetUploadedCellText(sheet, r, c);
+      if (String(text ?? "") !== "") estimateSheetApplyTextToStateCell(state, r, c, text);
+    }
+  }
+}
+
+function estimateSheetBuildStateFromUploadedValues(sheet, type, fileName) {
+  const spec = estimateSheetGetSpec(type);
+  const used = estimateSheetUploadedUsedRows(sheet);
+  const state = estimateSheetCreateState(type);
+  state.fromUploadedWorkbook = false;
+  state.importMode = "template-value-only";
+  state.sourceFileName = fileName || "";
+  state.maxCol = Math.max(state.maxCol || spec.maxCol || 15, spec.maxCol || 15);
+
+  // 상단 기본정보와 우측 참고 영역은 위치가 고정된 값만 가져온다.
+  estimateSheetCopyUploadedValueRange(sheet, state, 1, Math.min(12, used.maxRow), Math.min(15, state.maxCol));
+
+  // 품목 영역은 업로드 파일에서 총계 행을 찾아 그 위까지 가져오되,
+  // 웹 양식의 행/스타일은 템플릿 기준으로 유지한다.
+  const uploadedTotalRow = estimateSheetFindUploadedRowByText(sheet, 13, used.maxRow, ["총계", "합계"]);
+  const uploadedConditionRow = estimateSheetFindUploadedRowByText(sheet, 13, used.maxRow, ["견적조건"]);
+  const itemEnd = uploadedTotalRow ? uploadedTotalRow - 1 : Math.min(19, used.maxRow);
+  const baseItemEnd = 19;
+  const extraItemRows = Math.max(0, itemEnd - baseItemEnd);
+  for (let i = 0; i < extraItemRows; i += 1) estimateSheetInsertRowIntoState(state, 19 + i);
+  estimateSheetCopyUploadedValueRange(sheet, state, 13, Math.min(itemEnd, used.maxRow), Math.min(7, state.maxCol));
+
+  // 총계 이하 영역은 템플릿 위치에 맞게 다시 배치한다. 업로드 파일에 행이 추가되어도
+  // 불필요한 세로선/공백/정렬 깨짐이 생기지 않도록 양식 위치는 고정한다.
+  const totalTarget = 20 + extraItemRows;
+  if (uploadedTotalRow) {
+    for (let c = 1; c <= 7; c += 1) {
+      const text = estimateSheetUploadedCellText(sheet, uploadedTotalRow, c);
+      if (String(text ?? "") !== "") estimateSheetApplyTextToStateCell(state, totalTarget, c, text);
+    }
+  }
+
+  const conditionSource = uploadedConditionRow || (uploadedTotalRow ? uploadedTotalRow + 1 : 21);
+  const conditionTarget = 21 + extraItemRows;
+  for (let rr = 0; rr < 8; rr += 1) {
+    const srcR = conditionSource + rr;
+    const dstR = conditionTarget + rr;
+    if (dstR > state.maxRow) {
+      state.maxRow = dstR;
+      state.rowHeights.push(26);
+    }
+    for (let c = 1; c <= 7; c += 1) {
+      const text = estimateSheetUploadedCellText(sheet, srcR, c);
+      if (String(text ?? "") !== "") estimateSheetApplyTextToStateCell(state, dstR, c, text);
+    }
+  }
+
+  // 우측 참고/검증 영역은 템플릿이 허용하는 범위에서 값만 가져온다.
+  for (let r = 1; r <= Math.min(used.maxRow, state.maxRow); r += 1) {
+    for (let c = 8; c <= Math.min(used.maxCol, state.maxCol); c += 1) {
+      const text = estimateSheetUploadedCellText(sheet, r, c);
+      if (String(text ?? "") !== "") estimateSheetApplyTextToStateCell(state, r, c, text);
+    }
+  }
+
+  estimateSheetApplyManualOverrides(state);
+  state.templateValueOnly = true;
+  return state;
+}
+
+function estimateSheetInsertRowIntoState(state, afterRow) {
+  const newCells = {};
+  Object.entries(state.cells || {}).forEach(([key, val]) => {
+    const [r, c] = key.split(":").map(Number);
+    newCells[estimateSheetCellKey(r > afterRow ? r + 1 : r, c)] = val;
+  });
+  state.cells = newCells;
+  state.maxRow += 1;
+  state.rowHeights.splice(afterRow, 0, state.rowHeights[afterRow - 1] || 26);
+  if (Array.isArray(state.merges)) {
+    state.merges = state.merges.map(m => m.map((v, idx) => (idx === 0 || idx === 2) && v > afterRow ? v + 1 : v));
+  }
+}
+
 function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
   if (!sheet) return;
   const previousEditingIndex = estimateSheetEditingIndex;
   estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
-  const spec = estimateSheetGetSpec(estimateSheetActiveType);
-  const ref = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
-  const hasReadableStyles = estimateSheetWorkbookHasReadableStyles(sheet);
-  const state = {
-    type: estimateSheetActiveType,
-    cells: {},
-    maxRow: Math.max(spec.maxRow || 33, ref.e.r + 1),
-    maxCol: Math.max(spec.maxCol || 15, ref.e.c + 1),
-    rowHeights: [],
-    colWidths: [],
-    colWidthUnits: [],
-    merges: [],
-    fromUploadedWorkbook: true,
-    sourceFileName: fileName || ""
-  };
-
-  for (let i = 0; i < state.maxRow; i += 1) {
-    const row = (sheet["!rows"] || [])[i];
-    state.rowHeights[i] = row?.hpx || (row?.hpt ? Math.round(row.hpt * 96 / 72) : (spec.rows?.[i] || 20));
-  }
-  for (let i = 0; i < state.maxCol; i += 1) {
-    const col = (sheet["!cols"] || [])[i];
-    const fallbackPx = spec.cols?.[i] || 64;
-    state.colWidths[i] = estimateSheetColPxFromXlsxCol(col, fallbackPx);
-    state.colWidthUnits[i] = Number.isFinite(col?.wch) ? col.wch : Number.isFinite(col?.width) ? col.width : estimateSheetWidthUnitFromPx(state.colWidths[i]);
-  }
-  if (Array.isArray(sheet["!merges"])) {
-    state.merges = sheet["!merges"].map(m => [m.s.r + 1, m.s.c + 1, m.e.r + 1, m.e.c + 1]);
-  }
-
-  for (let r = 0; r < state.maxRow; r += 1) {
-    for (let c = 0; c < state.maxCol; c += 1) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      const cell = sheet[addr];
-      const obj = estimateSheetGetCellObj(state, r + 1, c + 1);
-      const tmpl = estimateSheetCellTemplate(spec, Math.min(r + 1, spec.maxRow || r + 1), Math.min(c + 1, spec.maxCol || c + 1));
-      obj.__present = !!cell;
-      if (cell) {
-        obj.formula = cell.f ? String(cell.f).replace(/^=/, "") : "";
-        obj.userFormula = !!cell.f;
-        if (cell.f) obj.value = cell.v ?? "";
-        else obj.value = cell.w ?? cell.v ?? "";
-        obj.style = estimateSheetXlsxCellStyleToCss(cell) || (hasReadableStyles ? "" : tmpl.s || "");
-      } else {
-        obj.value = "";
-        obj.formula = "";
-        obj.userFormula = false;
-        obj.style = hasReadableStyles ? "" : (tmpl.s || "");
-      }
-      if (!hasReadableStyles && obj.style) obj.style = estimateSheetAppendCssRule(obj.style, "font-size", (r + 1 === 2 && c + 1 === 1) ? "28pt" : "11pt");
-    }
-  }
-
-  if (!hasReadableStyles) {
-    estimateSheetNormalizeUploadedFormat(state);
-    estimateSheetApplyManualOverrides(state);
-  } else {
-    // 스타일이 읽힌 파일은 원본 병합/테두리/정렬/채움/행열 크기를 최우선으로 보존한다.
-    Object.keys(state.cells || {}).forEach(key => {
-      const [r, c] = key.split(":").map(Number);
-      const obj = state.cells[key];
-      if (!obj.style) return;
-      obj.style = estimateSheetAppendCssRule(obj.style, "font-size", (r === 2 && c === 1) ? "28pt" : (estimateSheetCssHasRule(obj.style, "font-size") ? estimateSheetCssTextToMap(obj.style)["font-size"] : "11pt"));
-    });
-  }
-
+  const state = estimateSheetBuildStateFromUploadedValues(sheet, estimateSheetActiveType, fileName);
   estimateSheetEditorState = state;
   estimateSheetEditingIndex = previousEditingIndex;
   estimateSheetExcelActiveCell = { r: 1, c: 1 };
   renderEstimateSheetManage();
   estimateSheetRenderExcelWindow();
-  showToast?.("엑셀 내용을 현재 견적서 작성창에 불러왔습니다. 확인 후 견적서 저장을 누르면 리스트에 반영됩니다.");
+  showToast?.("엑셀 파일의 값/수식만 현재 견적서 양식에 반영했습니다. 확인 후 견적서 저장을 누르면 견적서관리와 기간별 견적서관리가 연결됩니다.");
 }
 
 
@@ -1521,7 +1609,7 @@ function estimatePeriodSafeNumber(text) {
   return Number.isFinite(n) ? n : "";
 }
 
-function registerEstimatePeriodSentRecord(record) {
+function registerEstimatePeriodSentRecord(record, recordIndex = null) {
   if (!record) return;
   estimatePeriodLoadSentRows();
   const state = record.state || estimateSheetCreateState(record.type || estimateSheetActiveType);
@@ -1529,9 +1617,19 @@ function registerEstimatePeriodSentRecord(record) {
   const project = estimateSheetDisplayValue(state, 6, 2) || record.title || "";
   const service = estimateSheetDisplayValue(state, 7, 2) || "";
   const total = estimatePeriodSafeNumber(estimateSheetDisplayValue(state, 10, 2) || estimateSheetDisplayValue(state, 20, 5));
-  const key = `${record.type || ""}|${project}|${recipient}|${record.sentAt || record.updatedAt || estimateSheetNow()}`;
+  const sentAt = record.sentAt || record.updatedAt || estimateSheetNow();
+  const recordId = record.id || estimateSheetMakeId("estimate");
+  record.id = recordId;
+  const key = `${recordId}|${sentAt}`;
   const row = {
     key,
+    sourceEstimateId: recordId,
+    sourceEstimateIndex: recordIndex,
+    sentAt,
+    type: record.type || "",
+    title: record.title || project,
+    detailSnapshot: estimateSheetCloneState(state),
+    recordSnapshot: JSON.parse(JSON.stringify(record)),
     values: {
       2: estimatePeriodTodayCode(),
       3: recipient,
@@ -1548,11 +1646,11 @@ function registerEstimatePeriodSentRecord(record) {
       14: "견적서 발송",
       15: "대기중",
       16: "견적서관리 발송 처리",
-      17: record.sentAt || record.updatedAt || estimateSheetNow(),
+      17: sentAt,
       18: "발송"
     }
   };
-  estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.key !== key);
+  estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
   estimatePeriodSentRows.unshift(row);
   estimatePeriodSaveSentRows();
 }
@@ -1650,6 +1748,10 @@ function renderEstimatePeriodManage() {
   const body = Array.from({ length: totalRows }, (_, ri) => {
     const r = ri + 1;
     const h = ESTIMATE_PERIOD_TEMPLATE.rows?.[ri] || 24;
+    const dataIndex = r >= 9 ? r - 9 : -1;
+    const item = dataIndex >= 0 ? dataRows[dataIndex] : null;
+    const sentIndex = item && estimatePeriodSentRows.includes(item) ? estimatePeriodSentRows.indexOf(item) : -1;
+    const trAttr = sentIndex >= 0 ? ` class="estimate-period-data-row linked" onclick="openEstimatePeriodDetail(${sentIndex})" title="클릭하면 연결된 견적서 세부 내용이 새 창으로 열립니다."` : "";
     const cells = Array.from({ length: maxCol }, (_, ci) => {
       const c = ci + 1;
       const key = `${r}:${c}`;
@@ -1660,14 +1762,88 @@ function renderEstimatePeriodManage() {
       if (r === 1) classes.push("title");
       if (r === 2) classes.push("header");
       if (r >= 3 && r <= 8) classes.push("summary");
-      if (r >= 9 && r < 9 + estimatePeriodSentRows.length) classes.push("new-sent-row");
-      return `<td class="${classes.join(" ")}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""}>${estimateSheetHtml(value)}</td>`;
+      if (sentIndex >= 0) classes.push("new-sent-row", "clickable-detail");
+      const viewBadge = sentIndex >= 0 && c === 18 ? ` <button class="estimate-period-view-btn" type="button" onclick="event.stopPropagation();openEstimatePeriodDetail(${sentIndex})">세부보기</button>` : "";
+      return `<td class="${classes.join(" ")}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""}>${estimateSheetHtml(value)}${viewBadge}</td>`;
     }).join("");
-    return `<tr style="height:${h}px">${cells}</tr>`;
+    return `<tr style="height:${h}px"${trAttr}>${cells}</tr>`;
   }).join("");
   host.innerHTML = `<table class="estimate-period-grid">${colGroup}<tbody>${body}</tbody></table>`;
   const count = document.getElementById("estimatePeriodSentCount");
   if (count) count.textContent = `${estimatePeriodSentRows.length.toLocaleString("ko-KR")}건`;
+}
+
+function openEstimatePeriodDetail(sentIndex) {
+  estimatePeriodLoadSentRows();
+  const item = estimatePeriodSentRows[Number(sentIndex)];
+  if (!item) {
+    showToast?.("연결된 견적서 세부 자료를 찾지 못했습니다.");
+    return;
+  }
+  let state = item.detailSnapshot;
+  if (!state && item.sourceEstimateId) {
+    const record = estimateSheetRecords.find(r => r.id === item.sourceEstimateId);
+    if (record?.state) state = record.state;
+  }
+  if (!state) {
+    showToast?.("세부 견적서 스냅샷이 없습니다.");
+    return;
+  }
+  openEstimateSheetReadonlyWindow(state, item);
+}
+
+function openEstimateSheetReadonlyWindow(state, item = {}) {
+  const readonlyState = estimateSheetCloneState(state);
+  const features = "popup=yes,width=1500,height=940,left=60,top=30,resizable=yes,scrollbars=yes";
+  const win = window.open("", "CONCOST_ESTIMATE_PERIOD_DETAIL", features);
+  if (!win) {
+    showToast?.("팝업이 차단되었습니다. 브라우저에서 팝업 허용 후 다시 열어주세요.");
+    return;
+  }
+  const css = estimateSheetGetPopupCss() + `
+    .excel-topbar{position:sticky;top:0;z-index:80;}
+    .estimate-excel-cell{cursor:default!important;}
+    .estimate-excel-cell:focus{outline:none!important;}
+    .period-readonly-note{font-size:12px;color:#92400e;background:#fff7ed;border-top:1px solid #fed7aa;padding:7px 10px;}
+  `;
+  win.document.open();
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>기간별 견적서 세부보기</title><style>${css}</style></head><body>
+    <div class="excel-window">
+      <div class="excel-topbar">
+        <div class="excel-title"><span class="excel-badge">CON-COST</span><span>기간별 견적서 세부보기</span></div>
+        <div class="excel-actions">
+          <button class="excel-btn" id="periodReadonlyPrint" type="button">PDF출력하기</button>
+          <button class="excel-btn primary" id="periodReadonlyClose" type="button">닫기</button>
+        </div>
+      </div>
+      <div class="period-readonly-note">견적서관리에서 발송 처리된 시점의 세부 견적서입니다. 발송일: ${estimateSheetHtml(item.sentAt || "-")} / 구분: ${estimateSheetHtml(item.type || readonlyState.type || "-")}</div>
+      <div class="excel-grid-host" id="periodReadonlyGridHost"><div class="excel-grid-canvas"><table class="estimate-excel-grid" id="periodReadonlyGrid"></table><div id="periodReadonlyImages"></div></div></div>
+    </div>
+  </body></html>`);
+  win.document.close();
+  const gridHost = win.document.getElementById("periodReadonlyGridHost");
+  const grid = win.document.getElementById("periodReadonlyGrid");
+  const imageHost = win.document.getElementById("periodReadonlyImages");
+  if (gridHost) {
+    gridHost.style.width = `${estimateSheetGridPixelWidth(readonlyState)}px`;
+    gridHost.style.minWidth = `${estimateSheetGridPixelWidth(readonlyState)}px`;
+  }
+  if (grid) {
+    grid.innerHTML = estimateSheetBuildExcelGridHtml(readonlyState).replace(/contenteditable="true"/g, "contenteditable=\"false\"");
+    grid.querySelectorAll(".estimate-excel-cell").forEach(cell => cell.setAttribute("contenteditable", "false"));
+  }
+  if (imageHost) imageHost.innerHTML = estimateSheetBuildExcelImagesHtml(readonlyState);
+  win.document.getElementById("periodReadonlyClose")?.addEventListener("click", () => win.close());
+  win.document.getElementById("periodReadonlyPrint")?.addEventListener("click", () => {
+    const prevState = estimateSheetEditorState;
+    const prevType = estimateSheetActiveType;
+    estimateSheetEditorState = estimateSheetCloneState(readonlyState);
+    estimateSheetActiveType = readonlyState.type || prevType;
+    estimateSheetPrintCurrentPdf();
+    estimateSheetEditorState = prevState;
+    estimateSheetActiveType = prevType;
+  });
+  win.focus();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
