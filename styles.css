@@ -18430,3 +18430,25 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-sheet-caution {
   color: #000000 !important;
 }
+
+/* === 2026-05-25 견적서관리 엑셀 원본 표시 보정 ===
+   - 엑셀 Page Break Preview의 출력범위 외부 회색 영역과 파란 출력 경계선 우선 적용
+   - JS에서 계산한 원본 엑셀 열너비/행높이를 브라우저 테이블 레이아웃이 임의 확장하지 않도록 보정
+*/
+.estimate-sheet-grid.estimate-excel-grid,
+.estimate-excel-grid {
+  table-layout: fixed !important;
+  width: max-content;
+  min-width: 0 !important;
+}
+.estimate-excel-cell.outside-print {
+  background-color: #a6a6a6 !important;
+  border-color: #d9d9d9 !important;
+}
+.estimate-excel-cell.print-left { border-left: 2px solid #1d4ed8 !important; }
+.estimate-excel-cell.print-right { border-right: 3px solid #1d4ed8 !important; }
+.estimate-excel-cell.print-top { border-top: 2px solid #1d4ed8 !important; }
+.estimate-excel-cell.print-bottom { border-bottom: 3px solid #1d4ed8 !important; }
+.estimate-excel-cell {
+  background-clip: border-box !important;
+}
