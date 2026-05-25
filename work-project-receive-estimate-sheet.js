@@ -22,6 +22,40 @@ function estimateSheetColumnLabel(index) {
   while (n > 0) { const r = (n - 1) % 26; out = String.fromCharCode(65 + r) + out; n = Math.floor((n - 1) / 26); }
   return out;
 }
+
+
+/* 2026-05-25 개산견적 수동 치수/색상 보정
+   - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
+   - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
+*/
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [96, 66, 76, 51, 103, 103, 99, 64, 64, 93, 64, 64, 64, 64, 64];
+const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
+const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
+
+function estimateSheetAppendCssRule(styleText, prop, value) {
+  const source = String(styleText || "");
+  const re = new RegExp(`${prop}\\s*:\\s*[^;]+;?`, "ig");
+  const cleaned = source.replace(re, "").trim().replace(/;+$/, "");
+  return `${cleaned}${cleaned ? ";" : ""}${prop}:${value}`;
+}
+
+function estimateSheetApplyManualOverrides(state) {
+  if (!state || state.type !== "개산견적") return state;
+  state.colWidths = ESTIMATE_GAESAN_MANUAL_COL_WIDTHS.slice();
+  while (state.colWidths.length < state.maxCol) state.colWidths.push(64);
+  state.rowHeights = ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS.slice();
+  while (state.rowHeights.length < state.maxRow) state.rowHeights.push(26);
+  const spec = estimateSheetGetSpec("개산견적");
+  ESTIMATE_GAESAN_YELLOW_CELLS.forEach(key => {
+    const [r, c] = key.split(":").map(Number);
+    const obj = estimateSheetGetCellObj(state, r, c);
+    const tmpl = estimateSheetCellTemplate(spec, r, c);
+    const base = obj.style || tmpl.s || "";
+    obj.style = estimateSheetAppendCssRule(base, "background-color", "#fff2cc");
+  });
+  return state;
+}
+
 function estimateSheetCellKey(r, c) { return `${r}:${c}`; }
 function estimateSheetA1ToRc(ref) {
   const m = String(ref).replace(/\$/g, "").match(/^([A-Z]+)(\d+)$/i);
@@ -76,7 +110,7 @@ function estimateSheetCreateState(type) {
   (spec.cells || []).forEach(cell => {
     cells[estimateSheetCellKey(cell.r, cell.c)] = { value: cell.v ?? "", formula: cell.f || "", userFormula: false };
   });
-  return {
+  return estimateSheetApplyManualOverrides({
     type,
     cells,
     maxRow: spec.maxRow,
@@ -84,7 +118,7 @@ function estimateSheetCreateState(type) {
     rowHeights: [...spec.rows],
     colWidths: [...spec.cols],
     merges: JSON.parse(JSON.stringify(spec.merges || []))
-  };
+  });
 }
 function estimateSheetCloneState(state) { return JSON.parse(JSON.stringify(state)); }
 function estimateSheetGetCellObj(state, r, c) {
@@ -433,7 +467,10 @@ function estimateSheetEnsureDefaultRecords() {
 }
 
 function estimateSheetCellInlineStyle(styleText) {
-  return String(styleText || "").replace(/position\s*:\s*[^;]+;?/gi, "");
+  let css = String(styleText || "").replace(/position\s*:\s*[^;]+;?/gi, "");
+  css = css.replace(/overflow\s*:\s*[^;]+;?/gi, "");
+  css = css.replace(/text-overflow\s*:\s*[^;]+;?/gi, "");
+  return `${css};overflow:visible;text-overflow:clip;white-space:nowrap`;
 }
 
 function estimateSheetBuildExcelGridHtml(state) {
@@ -813,6 +850,7 @@ function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
       obj.style = estimateSheetXlsxCellStyleToCss(cell);
     }
   }
+  estimateSheetApplyManualOverrides(state);
   estimateSheetEditorState = state;
   estimateSheetEditingIndex = null;
   estimateSheetExcelActiveCell = { r: 1, c: 1 };
