@@ -18508,3 +18508,23 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-excel-cell[data-row="2"]:not([data-col="1"]) {
   font-size: 11pt;
 }
+
+
+/* 기간별 견적서관리 */
+.estimate-period-shell .quote-hero{margin-bottom:18px;}
+.estimate-period-count{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid #dbe3ee;border-radius:999px;background:#fff;font-weight:800;color:#111827;}
+.estimate-period-card{overflow:hidden;}
+.estimate-period-toolbar{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #dbe3ee;background:#f8fafc;font-size:13px;}
+.estimate-period-toolbar strong{font-size:15px;color:#111827;}
+.estimate-period-toolbar span{color:#64748b;font-weight:700;}
+.estimate-period-sheet-wrap{width:100%;max-height:620px;overflow:auto;background:#f3f4f6;border:1px solid #dbe3ee;border-radius:12px;}
+.estimate-period-grid{border-collapse:collapse;table-layout:fixed;background:#fff;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;font-size:11px;color:#111827;}
+.estimate-period-cell{border:1px solid #222;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:clip;vertical-align:middle;background:#fff;line-height:1.25;}
+.estimate-period-cell.title{font-size:20px;font-weight:900;text-align:center;background:#fff;height:44px;}
+.estimate-period-cell.header{background:#f1f5f9;font-weight:900;text-align:center;}
+.estimate-period-cell.summary{background:#fff;}
+.estimate-period-cell.c13.summary,.estimate-period-cell.c14.summary,.estimate-period-cell.c15.summary{background:#f8fafc;font-weight:800;text-align:center;}
+.estimate-period-cell.new-sent-row{background:#fff7ed;}
+.estimate-period-cell.c2,.estimate-period-cell.c5,.estimate-period-cell.c6,.estimate-period-cell.c7,.estimate-period-cell.c10,.estimate-period-cell.c14,.estimate-period-cell.c15{text-align:center;}
+.estimate-period-cell.c3,.estimate-period-cell.c4,.estimate-period-cell.c8,.estimate-period-cell.c13,.estimate-period-cell.c16,.estimate-period-cell.c17,.estimate-period-cell.c18{text-align:left;}
+.estimate-period-grid tr:nth-child(n+9) .estimate-period-cell{height:24px;}
