@@ -1850,3 +1850,393 @@ document.addEventListener("DOMContentLoaded", () => {
   estimatePeriodLoadSentRows();
   if (document.getElementById("estimatePeriodManage")) renderEstimatePeriodManage();
 });
+
+/* ========================================================================
+   2026-05 추천 구조 전환 패치
+   - 웹 화면: 고정 견적서 템플릿 + 값 데이터만 관리
+   - 저장: state 전체가 아니라 quoteData(JSON) 스냅샷을 기준으로 보관
+   - 엑셀 불러오기: 현재 열린 창의 값 데이터만 교체하고 리스트는 생성하지 않음
+   - 엑셀 내보내기/PDF/기간별 세부보기: quoteData를 다시 원본 템플릿 state에 주입해 렌더링
+   ======================================================================== */
+const ESTIMATE_TEMPLATE_DATA_MODE = "template-source-data-model";
+
+function estimateSheetClonePlain(obj) {
+  return JSON.parse(JSON.stringify(obj || {}));
+}
+
+function estimateSheetCellObjectToData(obj) {
+  if (!obj) return null;
+  const hasFormula = !!obj.formula;
+  const hasValue = obj.value !== "" && obj.value !== null && typeof obj.value !== "undefined";
+  if (!hasFormula && !hasValue) return null;
+  return {
+    value: obj.value ?? "",
+    formula: obj.formula || "",
+    userFormula: !!obj.userFormula
+  };
+}
+
+function estimateSheetExtractQuoteDataFromState(state) {
+  const source = state || estimateSheetCreateState(estimateSheetActiveType);
+  const quoteData = {
+    version: 2,
+    dataMode: ESTIMATE_TEMPLATE_DATA_MODE,
+    type: source.type || estimateSheetActiveType || "개산견적",
+    sourceFileName: source.sourceFileName || "",
+    maxRow: source.maxRow || 33,
+    maxCol: source.maxCol || 15,
+    valueCells: {},
+    userRowHeights: {},
+    userColWidths: {},
+    createdAt: estimateSheetNow()
+  };
+
+  Object.entries(source.cells || {}).forEach(([key, obj]) => {
+    const data = estimateSheetCellObjectToData(obj);
+    if (data) quoteData.valueCells[key] = data;
+  });
+
+  (source.rowHeights || []).forEach((height, index) => {
+    if (index + 1 > (estimateSheetGetSpec(quoteData.type)?.maxRow || 33) && height) {
+      quoteData.userRowHeights[index + 1] = height;
+    }
+  });
+  (source.colWidths || []).forEach((width, index) => {
+    if (index + 1 > (estimateSheetGetSpec(quoteData.type)?.maxCol || 15) && width) {
+      quoteData.userColWidths[index + 1] = width;
+    }
+  });
+  return quoteData;
+}
+
+function estimateSheetApplyQuoteDataToTemplate(quoteData, option = {}) {
+  const data = quoteData || {};
+  const type = ESTIMATE_SHEET_TYPE_ORDER.includes(data.type) ? data.type : (estimateSheetActiveType || "개산견적");
+  const spec = estimateSheetGetSpec(type);
+  const state = estimateSheetCreateState(type);
+  state.dataMode = ESTIMATE_TEMPLATE_DATA_MODE;
+  state.templateValueOnly = true;
+  state.sourceFileName = data.sourceFileName || "";
+  state.quoteDataVersion = data.version || 1;
+
+  const targetMaxRow = Math.max(Number(data.maxRow || 0), state.maxRow || spec.maxRow || 33);
+  const targetMaxCol = Math.max(Number(data.maxCol || 0), state.maxCol || spec.maxCol || 15);
+  while (state.maxRow < targetMaxRow) {
+    state.maxRow += 1;
+    state.rowHeights.push(state.rowHeights[state.rowHeights.length - 1] || 26);
+  }
+  while (state.maxCol < targetMaxCol) {
+    state.maxCol += 1;
+    state.colWidths.push(state.colWidths[state.colWidths.length - 1] || 68);
+    state.colWidthUnits.push(estimateSheetWidthUnitFromPx(state.colWidths[state.colWidths.length - 1] || 68));
+  }
+
+  Object.entries(data.userRowHeights || {}).forEach(([row, height]) => {
+    const r = Number(row);
+    if (r >= 1) state.rowHeights[r - 1] = Number(height) || state.rowHeights[r - 1] || 26;
+  });
+  Object.entries(data.userColWidths || {}).forEach(([col, width]) => {
+    const c = Number(col);
+    if (c >= 1) {
+      state.colWidths[c - 1] = Number(width) || state.colWidths[c - 1] || 68;
+      state.colWidthUnits[c - 1] = estimateSheetWidthUnitFromPx(state.colWidths[c - 1]);
+    }
+  });
+
+  Object.entries(data.valueCells || {}).forEach(([key, cellData]) => {
+    const [r, c] = key.split(":").map(Number);
+    if (!r || !c) return;
+    const obj = estimateSheetGetCellObj(state, r, c);
+    obj.value = cellData?.value ?? "";
+    obj.formula = cellData?.formula || "";
+    obj.userFormula = !!cellData?.userFormula || !!cellData?.formula;
+  });
+
+  estimateSheetApplyManualOverrides(state);
+  if (option.readonlySnapshot) state.readonlySnapshot = true;
+  return state;
+}
+
+function estimateSheetRecordToState(record) {
+  if (record?.quoteData) return estimateSheetApplyQuoteDataToTemplate(record.quoteData);
+  if (record?.state) {
+    const data = estimateSheetExtractQuoteDataFromState(record.state);
+    data.type = record.type || data.type;
+    return estimateSheetApplyQuoteDataToTemplate(data);
+  }
+  return estimateSheetCreateState(record?.type || estimateSheetActiveType);
+}
+
+function estimateSheetBuildRecordFromCurrent(existing) {
+  const baseState = estimateSheetEditorState || estimateSheetCreateState(estimateSheetActiveType);
+  const quoteData = estimateSheetExtractQuoteDataFromState(baseState);
+  quoteData.type = estimateSheetActiveType;
+  const stableState = estimateSheetApplyQuoteDataToTemplate(quoteData);
+  const project = estimateSheetDisplayValue(stableState, 6, 2) || estimateSheetActiveType;
+  return {
+    ...(existing || {}),
+    id: existing?.id || estimateSheetMakeId("estimate"),
+    type: estimateSheetActiveType,
+    title: `${project}_${estimateSheetActiveType}`,
+    status: existing?.status || "작성중",
+    updatedAt: estimateSheetNow(),
+    quoteData,
+    state: stableState,
+    dataMode: ESTIMATE_TEMPLATE_DATA_MODE
+  };
+}
+
+function openEstimateSheetEditor(index = null) {
+  const editor = document.getElementById("estimateSheetEditor");
+  if (!editor) return;
+  if (index !== null && estimateSheetRecords[index]) {
+    estimateSheetEditingIndex = index;
+    estimateSheetActiveType = estimateSheetRecords[index].type;
+    estimateSheetEditorState = estimateSheetRecordToState(estimateSheetRecords[index]);
+  } else {
+    estimateSheetEditingIndex = null;
+    estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  }
+  editor.classList.remove("hidden");
+  document.getElementById("estimateSheetEditorTitle").textContent = `${estimateSheetActiveType} 견적서 작성`;
+  document.getElementById("estimateSheetEditorSub").textContent = "원본 템플릿 고정 · 입력값/수식 JSON 저장 · 기간별 견적서관리 연결";
+  renderEstimateSheetManage();
+  renderEstimateSheetGrid();
+  editor.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function saveEstimateSheetRecord() {
+  if (!estimateSheetEditorState) return;
+  const existing = estimateSheetEditingIndex !== null && estimateSheetRecords[estimateSheetEditingIndex] ? estimateSheetRecords[estimateSheetEditingIndex] : null;
+  const record = estimateSheetBuildRecordFromCurrent(existing);
+  if (estimateSheetEditingIndex !== null && estimateSheetRecords[estimateSheetEditingIndex]) {
+    estimateSheetRecords[estimateSheetEditingIndex] = record;
+  } else {
+    estimateSheetRecords.unshift(record);
+    estimateSheetEditingIndex = 0;
+  }
+  estimateSheetEditorState = estimateSheetRecordToState(record);
+  renderEstimateSheetManage();
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+  if (typeof showToast === "function") showToast("원본 템플릿 기준으로 입력값/수식만 저장했습니다.");
+}
+
+function duplicateEstimateSheetRecord(index) {
+  const src = estimateSheetRecords[index];
+  if (!src) return;
+  const copy = estimateSheetClonePlain(src);
+  copy.id = estimateSheetMakeId("estimate");
+  copy.title = `${copy.title || copy.type}_복제`;
+  copy.status = "작성중";
+  copy.sentAt = "";
+  copy.updatedAt = estimateSheetNow();
+  copy.dataMode = ESTIMATE_TEMPLATE_DATA_MODE;
+  if (!copy.quoteData && copy.state) copy.quoteData = estimateSheetExtractQuoteDataFromState(copy.state);
+  copy.state = estimateSheetApplyQuoteDataToTemplate(copy.quoteData || {});
+  estimateSheetRecords.unshift(copy);
+  setEstimateSheetType(copy.type);
+}
+
+function markEstimateSheetSent(index) {
+  const record = estimateSheetRecords[index];
+  if (!record) return;
+  if (!record.id) record.id = estimateSheetMakeId("estimate");
+  if (!record.quoteData) record.quoteData = estimateSheetExtractQuoteDataFromState(record.state || estimateSheetCreateState(record.type));
+  record.state = estimateSheetApplyQuoteDataToTemplate(record.quoteData);
+  record.status = "발송완료";
+  record.sentAt = estimateSheetNow();
+  record.updatedAt = estimateSheetNow();
+  record.dataMode = ESTIMATE_TEMPLATE_DATA_MODE;
+  if (typeof registerEstimatePeriodSentRecord === "function") registerEstimatePeriodSentRecord(record, index);
+  renderEstimateSheetList();
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+  if (typeof showToast === "function") showToast("발송 처리되어 기간별 견적서관리에 연결 등록되었습니다.");
+}
+
+function openEstimateSheetExcelWindow(index = null, option = {}) {
+  estimateSheetEnsureDefaultRecords();
+  if (index !== null && estimateSheetRecords[index]) {
+    estimateSheetEditingIndex = index;
+    estimateSheetActiveType = estimateSheetRecords[index].type;
+    estimateSheetEditorState = estimateSheetRecordToState(estimateSheetRecords[index]);
+  } else if (option.newBlank) {
+    estimateSheetEditingIndex = null;
+    estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  } else if (option.fromUpload && estimateSheetEditorState) {
+    /* 현재 열린 창의 state만 갱신하고 리스트는 생성하지 않는다. */
+  } else {
+    const firstIndex = estimateSheetRecords.findIndex(record => record.type === estimateSheetActiveType);
+    if (firstIndex >= 0) {
+      estimateSheetEditingIndex = firstIndex;
+      estimateSheetEditorState = estimateSheetRecordToState(estimateSheetRecords[firstIndex]);
+    } else {
+      estimateSheetEditingIndex = null;
+      estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+    }
+  }
+  estimateSheetExcelActiveCell = { r: 1, c: 1 };
+  const features = "popup=yes,width=1500,height=940,left=40,top=20,resizable=yes,scrollbars=yes";
+  const win = window.open("", "CONCOST_ESTIMATE_EXCEL_WINDOW", features);
+  if (!win) {
+    if (!option.silent && typeof showToast === "function") showToast("팝업이 차단되었습니다. 브라우저에서 팝업 허용 후 다시 열어주세요.");
+    return null;
+  }
+  estimateSheetExcelWindowRef = win;
+  estimateSheetWriteExcelWindow(win);
+  win.focus();
+  closeEstimateSheetEditor();
+  return win;
+}
+
+function newEstimateSheetRecord(type = estimateSheetActiveType) {
+  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
+  estimateSheetEditingIndex = null;
+  estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  estimateSheetExcelActiveCell = { r: 1, c: 1 };
+  renderEstimateSheetManage();
+  return openEstimateSheetExcelWindow(null, { newBlank: true });
+}
+
+function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
+  if (!sheet) return;
+  const previousEditingIndex = estimateSheetEditingIndex;
+  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
+  const importedState = estimateSheetBuildStateFromUploadedValues(sheet, estimateSheetActiveType, fileName);
+  const quoteData = estimateSheetExtractQuoteDataFromState(importedState);
+  quoteData.type = estimateSheetActiveType;
+  quoteData.sourceFileName = fileName || "";
+  estimateSheetEditorState = estimateSheetApplyQuoteDataToTemplate(quoteData);
+  estimateSheetEditorState.sourceFileName = fileName || "";
+  estimateSheetEditingIndex = previousEditingIndex;
+  estimateSheetExcelActiveCell = { r: 1, c: 1 };
+  renderEstimateSheetManage();
+  estimateSheetRenderExcelWindow();
+  showToast?.("엑셀의 값/수식만 현재 열린 견적서 창에 반영했습니다. 저장 전까지 리스트에는 추가되지 않습니다.");
+}
+
+async function estimateSheetExportExcelJsNow() {
+  if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+  const exportData = estimateSheetExtractQuoteDataFromState(estimateSheetEditorState);
+  exportData.type = estimateSheetActiveType;
+  const state = estimateSheetApplyQuoteDataToTemplate(exportData);
+  const spec = estimateSheetGetSpec(state.type);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "CON-COST Groupware";
+  workbook.created = new Date();
+  const worksheet = workbook.addWorksheet(state.type || spec.sheet || "견적서", {
+    pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 1 },
+    properties: { defaultRowHeight: 18 }
+  });
+  worksheet.views = [{ showGridLines: false }];
+  worksheet.pageSetup.margins = { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0, footer: 0 };
+
+  for (let c = 1; c <= state.maxCol; c += 1) {
+    worksheet.getColumn(c).width = state.colWidthUnits?.[c - 1] || estimateSheetWidthUnitFromCol(state, c);
+  }
+  for (let r = 1; r <= state.maxRow; r += 1) {
+    worksheet.getRow(r).height = Math.round(((state.rowHeights?.[r - 1] || 20) * 0.75) * 100) / 100;
+    for (let c = 1; c <= state.maxCol; c += 1) {
+      const obj = estimateSheetGetCellObj(state, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const cell = worksheet.getCell(r, c);
+      if (obj.formula) {
+        cell.value = { formula: String(obj.formula).replace(/^=/, ""), result: estimateSheetGetRawValue(state, r, c) };
+      } else if (typeof obj.value === "number") {
+        cell.value = obj.value;
+      } else if (estimateSheetCellNeedsXlsxNumber(obj.value)) {
+        cell.value = Number(String(obj.value).replace(/,/g, ""));
+      } else {
+        cell.value = String(obj.value ?? "");
+      }
+      cell.style = estimateSheetCssToExcelJsStyle(estimateSheetCellEffectiveStyle(obj, tmpl), tmpl?.s || "");
+    }
+  }
+  (state.merges || []).forEach(m => {
+    try { worksheet.mergeCells(m[0], m[1], m[2], m[3]); } catch (e) { console.warn("merge skipped", m, e); }
+  });
+  (spec.images || []).forEach(img => {
+    try {
+      const match = String(img.data || "").match(/^data:image\/(\w+);base64,(.*)$/);
+      const extension = (match?.[1] || "png").replace("jpeg", "jpg");
+      const base64 = match?.[2] || String(img.data || "");
+      if (!base64) return;
+      const imageId = workbook.addImage({ base64, extension });
+      worksheet.addImage(imageId, { tl: { col: img.from.col, row: img.from.row }, br: { col: img.to.col, row: img.to.row }, editAs: "oneCell" });
+    } catch (e) { console.warn("image skipped", e); }
+  });
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `CONCOST_${state.type}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function registerEstimatePeriodSentRecord(record, recordIndex = null) {
+  if (!record) return;
+  estimatePeriodLoadSentRows();
+  if (!record.quoteData) record.quoteData = estimateSheetExtractQuoteDataFromState(record.state || estimateSheetCreateState(record.type || estimateSheetActiveType));
+  const state = estimateSheetApplyQuoteDataToTemplate(record.quoteData, { readonlySnapshot: true });
+  const recipient = estimateSheetDisplayValue(state, 5, 2) || "";
+  const project = estimateSheetDisplayValue(state, 6, 2) || record.title || "";
+  const service = estimateSheetDisplayValue(state, 7, 2) || "";
+  const total = estimatePeriodSafeNumber(estimateSheetDisplayValue(state, 10, 2) || estimateSheetDisplayValue(state, 20, 5));
+  const sentAt = record.sentAt || record.updatedAt || estimateSheetNow();
+  const recordId = record.id || estimateSheetMakeId("estimate");
+  record.id = recordId;
+  const row = {
+    key: `${recordId}|${sentAt}`,
+    sourceEstimateId: recordId,
+    sourceEstimateIndex: recordIndex,
+    sentAt,
+    type: record.type || state.type || "",
+    title: record.title || project,
+    quoteDataSnapshot: estimateSheetClonePlain(record.quoteData),
+    detailSnapshot: estimateSheetCloneState(state),
+    recordSnapshot: estimateSheetClonePlain(record),
+    values: {
+      2: estimatePeriodTodayCode(),
+      3: recipient,
+      4: project,
+      5: "",
+      6: "",
+      7: total,
+      8: service,
+      9: "",
+      10: "",
+      11: record.type || "",
+      12: record.type || "",
+      13: service,
+      14: "견적서 발송",
+      15: "대기중",
+      16: "견적서관리 발송 처리",
+      17: sentAt,
+      18: "발송"
+    }
+  };
+  estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
+  estimatePeriodSentRows.unshift(row);
+  estimatePeriodSaveSentRows();
+}
+
+function openEstimatePeriodDetail(sentIndex) {
+  estimatePeriodLoadSentRows();
+  const item = estimatePeriodSentRows[Number(sentIndex)];
+  if (!item) {
+    showToast?.("연결된 견적서 세부 자료를 찾지 못했습니다.");
+    return;
+  }
+  let state = item.quoteDataSnapshot ? estimateSheetApplyQuoteDataToTemplate(item.quoteDataSnapshot, { readonlySnapshot: true }) : item.detailSnapshot;
+  if (!state && item.sourceEstimateId) {
+    const record = estimateSheetRecords.find(r => r.id === item.sourceEstimateId);
+    if (record?.quoteData) state = estimateSheetApplyQuoteDataToTemplate(record.quoteData, { readonlySnapshot: true });
+    else if (record?.state) state = estimateSheetRecordToState(record);
+  }
+  if (!state) {
+    showToast?.("세부 견적서 스냅샷이 없습니다.");
+    return;
+  }
+  openEstimateSheetReadonlyWindow(state, item);
+}
