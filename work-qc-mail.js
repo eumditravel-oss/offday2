@@ -3,6 +3,7 @@
    ========================= */
 const workPageMeta = {
   estimateSheetManage: ["견적서관리", "개산견적, 공내역서, 설계예가, 공사비검증 견적서를 엑셀 양식 그대로 작성·관리합니다."],
+  estimatePeriodManage: ["기간별 견적서관리", "발송 처리된 견적서를 기간별 견적서 관리표에 누적합니다."],
   estimateDbManage: ["DB관리", "PJ관리, 기성관리, 기전업체 기준 DB를 엑셀 형식으로 관리합니다."],
   estimateQuote: ["프로젝트 작성", "최초 견적 문의, 도면/웹하드 정보, 통화·이메일 기록을 작성합니다."],
   estimateQuoteList: ["프로젝트 관리", "견적서 기록을 수정하고 견적서 양식 다운로드 및 착수 전환을 관리합니다."],
@@ -9394,7 +9395,7 @@ function updateBellReviewCount() {
 
 function syncWorkSideAccordion(targetPanelId) {
   const target = String(targetPanelId || "estimateDbManage");
-  const estimatePanels = ["estimateSheetManage", "estimateDbManage", "estimateQuote", "estimateQuoteList"];
+  const estimatePanels = ["estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList"];
   const projectReceivePanels = ["projectReceive", "projectReceiveList"];
   const pmSchedulePanels = ["pmSchedule"];
   const isEstimateQuote = estimatePanels.includes(target);
@@ -9435,7 +9436,7 @@ function switchWorkPanel(panelId) {
   document.getElementById(targetPanelId)?.classList.add("active");
   syncWorkSideAccordion(targetPanelId);
 
-  if (targetPanelId === "estimateSheetManage" || targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
+  if (targetPanelId === "estimateSheetManage" || targetPanelId === "estimatePeriodManage" || targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
   } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
     document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
@@ -9452,6 +9453,10 @@ function switchWorkPanel(panelId) {
 
   if (targetPanelId === "estimateSheetManage" && typeof renderEstimateSheetManage === "function") {
     renderEstimateSheetManage();
+  }
+
+  if (targetPanelId === "estimatePeriodManage" && typeof renderEstimatePeriodManage === "function") {
+    renderEstimatePeriodManage();
   }
 
   if (targetPanelId === "estimateDbManage" && typeof renderEstimateDbManage === "function") {
