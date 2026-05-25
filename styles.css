@@ -18528,3 +18528,9 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-cell.c2,.estimate-period-cell.c5,.estimate-period-cell.c6,.estimate-period-cell.c7,.estimate-period-cell.c10,.estimate-period-cell.c14,.estimate-period-cell.c15{text-align:center;}
 .estimate-period-cell.c3,.estimate-period-cell.c4,.estimate-period-cell.c8,.estimate-period-cell.c13,.estimate-period-cell.c16,.estimate-period-cell.c17,.estimate-period-cell.c18{text-align:left;}
 .estimate-period-grid tr:nth-child(n+9) .estimate-period-cell{height:24px;}
+
+/* 추천 구조: 기간별 견적서관리와 견적서관리 연결 표시 */
+.estimate-period-data-row.linked{cursor:pointer;}
+.estimate-period-data-row.linked:hover .estimate-period-cell{background:#ffedd5!important;}
+.estimate-period-view-btn{margin-left:6px;padding:2px 7px;border:1px solid #fb923c;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:10px;font-weight:900;cursor:pointer;}
+.estimate-period-view-btn:hover{background:#fed7aa;}
