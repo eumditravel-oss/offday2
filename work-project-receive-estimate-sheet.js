@@ -28,7 +28,8 @@ function estimateSheetColumnLabel(index) {
    - 사용자가 전달한 Excel 열 너비/행 높이를 px 환산값으로 고정
    - Excel의 연노랑 채움 RGB(255,242,204)를 지정 셀에 강제 반영
 */
-const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [96, 66, 76, 51, 103, 103, 99, 68, 68, 93, 68, 68, 68, 68, 68];
+const ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS = [13.38, 8.13, 9.63, 6, 14.5, 14.5, 13.88, 8.38, 8.38, 12, 8.38, 8.38, 8.38, 8.38, 8.38];
+const ESTIMATE_GAESAN_MANUAL_COL_WIDTHS = [103, 66, 76, 51, 110, 110, 106, 68, 68, 93, 68, 68, 68, 68, 68];
 const ESTIMATE_GAESAN_MANUAL_ROW_HEIGHTS = [22, 65, 22, 23, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 26, 26, 26, 26, 26, 26, 26, 26];
 const ESTIMATE_GAESAN_YELLOW_CELLS = new Set(["10:1", "11:1", "11:2", "11:3", "11:4", "11:5", "11:6", "11:7", "20:1", "20:2", "20:3", "20:4", "20:5"]);
 const ESTIMATE_GAESAN_FOOTER_MERGES = [[31, 1, 31, 7], [32, 1, 32, 7], [33, 1, 33, 7]];
@@ -49,6 +50,20 @@ function estimateSheetApplyManualOverrides(state) {
   while (state.rowHeights.length < state.maxRow) state.rowHeights.push(26);
 
   const spec = estimateSheetGetSpec("개산견적");
+
+  // 발송일자는 F4:G4를 병합한 뒤 오른쪽 정렬로 표시한다.
+  const sendDateFromG = estimateSheetGetCellObj(state, 4, 7);
+  const sendDateToF = estimateSheetGetCellObj(state, 4, 6);
+  if (sendDateFromG?.value || sendDateFromG?.formula) {
+    sendDateToF.value = sendDateFromG.value;
+    sendDateToF.formula = sendDateFromG.formula || "";
+    sendDateToF.userFormula = !!sendDateFromG.userFormula;
+    sendDateFromG.value = "";
+    sendDateFromG.formula = "";
+    sendDateFromG.userFormula = false;
+  }
+  estimateSheetEnsureMerge(state, 4, 6, 4, 7);
+  sendDateToF.style = estimateSheetAppendCssRule(sendDateToF.style || estimateSheetCellTemplate(spec, 4, 7).s || "", "text-align", "right");
 
   Object.keys(state.cells || {}).forEach(key => {
     const obj = state.cells[key];
@@ -399,7 +414,7 @@ function renderEstimateSheetGrid() {
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const colGroup = `<colgroup><col class="estimate-row-head-col" style="width:42px">${Array.from({ length: state.maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px;min-width:${cols[i] || 64}px;max-width:${cols[i] || 64}px">`).join("")}</colgroup>`;
-  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
+  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head" title="우클릭 시 열 너비 확인">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
   const body = Array.from({ length: state.maxRow }, (_, ri) => {
     const r = ri + 1; const h = rows[ri] || 20;
     const cells = Array.from({ length: state.maxCol }, (_, ci) => {
@@ -482,14 +497,45 @@ document.addEventListener("keydown", event => {
     const [dr, dc] = map[event.key]; estimateSheetMoveFocus(cell, dr, dc);
   }
 });
-function exportEstimateSheetCurrentHtml() {
+function estimateSheetBuildWorksheetAoA(state) {
+  const spec = estimateSheetGetSpec(state.type);
+  const rows = [];
+  for (let r = 1; r <= state.maxRow; r += 1) {
+    const row = [];
+    for (let c = 1; c <= state.maxCol; c += 1) row.push(estimateSheetDisplayValue(state, r, c));
+    rows.push(row);
+  }
+  return rows;
+}
+
+function estimateSheetExportXlsxNow() {
   if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  renderEstimateSheetGrid();
-  const wrap = document.querySelector(".estimate-sheet-grid-wrap");
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${document.querySelector("style")?.textContent || ""} .estimate-sheet-grid-wrap{position:relative;overflow:visible} table{border-collapse:collapse;table-layout:fixed} td,th{white-space:pre-wrap;}</style></head><body>${wrap ? wrap.innerHTML : ""}</body></html>`;
-  const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xls`;
-  document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
+  const state = estimateSheetEditorState;
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(estimateSheetBuildWorksheetAoA(state));
+  const spec = estimateSheetGetSpec(state.type);
+  ws["!merges"] = (state.merges || []).map(m => ({ s: { r: m[0] - 1, c: m[1] - 1 }, e: { r: m[2] - 1, c: m[3] - 1 } }));
+  ws["!cols"] = Array.from({ length: state.maxCol }, (_, i) => ({
+    wch: state.type === "개산견적" && ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS[i]
+      ? ESTIMATE_GAESAN_MANUAL_WIDTH_UNITS[i]
+      : estimateSheetWidthUnitFromCol(state, i + 1),
+    wpx: state.colWidths[i] || 64
+  }));
+  ws["!rows"] = Array.from({ length: state.maxRow }, (_, i) => ({ hpx: state.rowHeights[i] || 20 }));
+  XLSX.utils.book_append_sheet(wb, ws, state.type || spec.sheet || "견적서");
+  XLSX.writeFile(wb, `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xlsx`);
+}
+
+function exportEstimateSheetCurrentHtml() {
+  const run = () => {
+    try { estimateSheetExportXlsxNow(); }
+    catch (err) {
+      console.error(err);
+      showToast?.("엑셀 내보내기 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
+  };
+  if (window.XLSX) run();
+  else estimateSheetEnsureXlsxLibrary(run);
 }
 document.addEventListener("DOMContentLoaded", () => { if (document.getElementById("estimateSheetManage")) renderEstimateSheetManage(); });
 
@@ -523,7 +569,7 @@ function estimateSheetBuildExcelGridHtml(state) {
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const colGroup = `<colgroup><col class="estimate-row-head-col" style="width:42px">${Array.from({ length: state.maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px;min-width:${cols[i] || 64}px;max-width:${cols[i] || 64}px">`).join("")}</colgroup>`;
-  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
+  const head = `<thead><tr><th class="estimate-excel-corner"></th>${Array.from({ length: state.maxCol }, (_, i) => `<th class="estimate-excel-col-head" title="우클릭 시 열 너비 확인">${estimateSheetColumnLabel(i)}</th>`).join("")}</tr></thead>`;
   const body = Array.from({ length: state.maxRow }, (_, ri) => {
     const r = ri + 1;
     const h = rows[ri] || 20;
@@ -679,6 +725,18 @@ function estimateSheetBindExcelWindow(win) {
   doc.addEventListener("input", event => {
     const cell = event.target.closest?.(".estimate-excel-cell");
     if (cell) estimateSheetPopupSelectCell(Number(cell.dataset.row), Number(cell.dataset.col), false, cell.innerText);
+  });
+  doc.addEventListener("contextmenu", event => {
+    const cell = event.target.closest?.(".estimate-excel-cell");
+    const head = event.target.closest?.(".estimate-excel-col-head");
+    let col = null;
+    if (cell) col = Number(cell.dataset.col);
+    if (!col && head) col = Array.from(head.parentElement.children).indexOf(head);
+    if (!col || !estimateSheetEditorState) return;
+    event.preventDefault();
+    const px = Number(estimateSheetEditorState.colWidths[col - 1] || 64);
+    const unit = estimateSheetWidthUnitFromCol(estimateSheetEditorState, col);
+    win.alert(`${estimateSheetColumnLabel(col - 1)}열 너비: ${unit} (웹 ${Math.round(px)}px)`);
   });
   doc.addEventListener("keydown", event => {
     const cell = event.target.closest?.(".estimate-excel-cell");
@@ -979,6 +1037,7 @@ function estimateSheetPrintCurrentPdf() {
   const printRows = spec.maxRow || state.maxRow;
   const sheetWidth = cols.slice(0, printCols).reduce((sum, v) => sum + (Number(v) || 64), 0);
   const sheetHeight = rows.slice(0, printRows).reduce((sum, v) => sum + (Number(v) || 20), 0);
+  const printScale = Math.min(0.92, 640 / Math.max(1, sheetWidth), 850 / Math.max(1, sheetHeight));
   const fileTitle = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g, "")}`;
   const printWin = window.open("", "CONCOST_ESTIMATE_PDF_PRINT", "width=900,height=1000,left=80,top=30,resizable=yes,scrollbars=yes");
   if (!printWin) {
@@ -989,21 +1048,22 @@ function estimateSheetPrintCurrentPdf() {
     @page{size:A4 portrait;margin:0;}
     *{box-sizing:border-box;}
     html,body{margin:0;padding:0;background:#e5e7eb;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;color:#111827;}
-    .print-page{width:794px;min-height:1123px;margin:0 auto;background:#fff;padding:44px 36px;position:relative;}
-    .print-frame{width:100%;min-height:1030px;border:2px solid #111;position:relative;padding:70px 52px 150px;}
-    .print-sheet{position:relative;width:${sheetWidth}px;height:${sheetHeight}px;margin:0 auto;}
+    .print-page{width:794px;height:1123px;margin:0 auto;background:#fff;padding:36px 28px;position:relative;overflow:hidden;}
+    .print-frame{width:100%;height:1050px;border:2px solid #111;position:relative;padding:44px 36px 110px;}
+    .print-sheet-viewport{position:relative;width:100%;height:880px;overflow:visible;}
+    .print-sheet{position:relative;width:${sheetWidth}px;height:${sheetHeight}px;margin:0 auto;transform:scale(var(--print-scale));transform-origin:top center;}
     .printable-grid{border-collapse:collapse;table-layout:fixed;width:${sheetWidth}px;background:transparent;position:absolute;left:0;top:0;z-index:2;}
-    .printable-cell{border:1px solid #111;min-height:0;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;overflow:visible;position:relative;vertical-align:middle;background:transparent;font-size:11pt;}
+    .printable-cell{border:none;min-height:0;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;overflow:visible;position:relative;vertical-align:middle;background:transparent;font-size:11pt;}
     .printable-cell[style*="font-size:28pt"],.printable-cell[style*="font-size: 28pt"]{font-size:28pt!important;}
     .printable-overflow{z-index:30!important;}
     .printable-image{position:absolute;object-fit:contain;pointer-events:none;z-index:3;}
-    .print-footer{position:absolute;left:52px;right:52px;bottom:54px;text-align:right;font-size:11px;line-height:1.7;}
-    @media print{html,body{background:#fff;}.print-page{margin:0;padding:44px 36px;box-shadow:none;} .no-print{display:none!important;}}
+    .print-footer{position:absolute;left:36px;right:36px;bottom:48px;text-align:right;font-size:11px;line-height:1.7;}
+    @media print{html,body{background:#fff;}.print-page{margin:0;padding:36px 28px;box-shadow:none;} .no-print{display:none!important;}}
   `;
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${estimateSheetHtml(fileTitle)}</title><style>${css}</style></head><body>
-    <div class="print-page">
+    <div class="print-page" style="--print-scale:${printScale}">
       <div class="print-frame">
-        <div class="print-sheet">${estimateSheetBuildPrintableGridHtml(state)}${estimateSheetBuildPrintableImagesHtml(state)}</div>
+        <div class="print-sheet-viewport"><div class="print-sheet">${estimateSheetBuildPrintableGridHtml(state)}${estimateSheetBuildPrintableImagesHtml(state)}</div></div>
         <div class="print-footer"></div>
       </div>
     </div>
