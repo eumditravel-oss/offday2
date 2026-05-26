@@ -18633,3 +18633,58 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-row-actions.compact{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:330px;}
 .estimate-workflow-row-actions.compact .btn{white-space:nowrap;}
 .estimate-workflow-row-actions.compact .estimate-request-action-select{width:108px;min-width:108px;height:30px;border:1px solid #d7e1ee;border-radius:8px;padding:0 8px;}
+
+/* Estimate request workflow v2: visible selects, compact columns, memo open-only */
+.estimate-workflow-table col.col-date{width:45px !important;}
+.estimate-workflow-table col.col-status{width:130px !important;}
+.estimate-workflow-table col.col-company{width:190px !important;}
+.estimate-workflow-table col.col-project{width:220px !important;}
+.estimate-workflow-table col.col-client{width:170px !important;}
+.estimate-workflow-table col.col-memo{width:160px !important;}
+.estimate-workflow-table col.col-estimate{width:170px !important;}
+.estimate-workflow-table col.col-link{width:135px !important;}
+.estimate-workflow-table col.col-actions{width:300px !important;}
+.estimate-workflow-table th:nth-child(1),.estimate-workflow-table td:nth-child(1){width:45px !important;max-width:45px !important;overflow:hidden;text-align:center;}
+.estimate-workflow-table th:nth-child(6),.estimate-workflow-table td:nth-child(6){width:160px !important;max-width:160px !important;text-align:center;white-space:normal !important;}
+.estimate-workflow-table .memo .memo-preview{display:none !important;}
+.estimate-workflow-table .memo .memo-open-btn{margin:0 auto !important;display:inline-flex !important;}
+.estimate-workflow-table select.estimate-request-select,
+.estimate-workflow-table select.estimate-request-action-select,
+.estimate-workflow-filter-row select{
+  display:block !important;
+  color:#111827 !important;
+  -webkit-text-fill-color:#111827 !important;
+  background:#fff !important;
+  background-color:#fff !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:10px !important;
+  height:34px !important;
+  line-height:34px !important;
+  min-height:34px !important;
+  padding:0 26px 0 10px !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  text-align:left !important;
+  text-indent:0 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  appearance:auto !important;
+  -webkit-appearance:menulist !important;
+  overflow:visible !important;
+}
+.estimate-workflow-table select.estimate-request-select option,
+.estimate-workflow-table select.estimate-request-action-select option,
+.estimate-workflow-filter-row select option{
+  color:#111827 !important;
+  -webkit-text-fill-color:#111827 !important;
+  background:#fff !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+}
+.estimate-workflow-table tr.estimate-request-status-작업취소 td{background:#f1f5f9 !important;color:#64748b !important;text-decoration:none;}
+.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after{content:"작업취소 완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
+.estimate-workflow-table tr.estimate-request-status-승인완료 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-선착수 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after{content:"처리완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#2563eb;}
