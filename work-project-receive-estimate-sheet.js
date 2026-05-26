@@ -2840,7 +2840,7 @@ function estimateRequestRowHtml(row) {
   const estimateTypeOptions = ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${estimateRequestHtml(t)}" ${currentEstimateType === t ? "selected" : ""}>${estimateRequestHtml(t)}</option>`).join("");
   return `<tr data-request-id="${safeId}" data-request-status="${estimateRequestHtml(currentStatus)}" class="estimate-request-status-${estimateRequestHtml(currentStatus)}">
     <td contenteditable="true" data-request-field="date">${estimateRequestHtml(row.date)}</td>
-    <td><span class="estimate-select-wrap"><select class="estimate-request-select" data-request-field="status" title="${estimateRequestHtml(currentStatus)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value; const v=this.parentElement.querySelector('.estimate-select-value'); if(v) v.textContent=this.value;">${statusOptions}</select><span class="estimate-select-value">${estimateRequestHtml(currentStatus)}</span></span></td>
+    <td class="estimate-request-current-status"><span class="estimate-status-pill">${estimateRequestHtml(currentStatus)}</span></td>
     <td contenteditable="true" data-request-field="company">${estimateRequestHtml(row.company)}</td>
     <td contenteditable="true" data-request-field="project">${estimateRequestHtml(row.project)}</td>
     <td><div contenteditable="true" data-request-field="client">${estimateRequestHtml(row.client)}</div><small contenteditable="true" data-request-field="contact">${estimateRequestHtml(row.contact)}</small></td>
@@ -2850,13 +2850,8 @@ function estimateRequestRowHtml(row) {
     <td class="estimate-workflow-row-actions compact">
       <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
       <button class="btn btn-primary btn-xs" type="button" onclick="${estimateAction}">${estimateActionLabel}</button>
-      <select class="estimate-request-action-select" data-request-action title="처리 선택" onchange="this.setAttribute('title', this.options[this.selectedIndex]?.text || this.value);">
-        <option value="">처리 선택</option>
-        <option value="approve">승인</option>
-        <option value="prestart">선착수</option>
-        <option value="start">착수</option>
-        <option value="db">DB등록</option>
-        <option value="cancel">작업취소</option>
+      <select class="estimate-request-action-select" data-request-action title="상태 변경" onchange="this.setAttribute('title', this.options[this.selectedIndex]?.text || this.value);">
+        ${statusOptions}
       </select>
       <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestAction('${safeId}')">실행</button>
     </td>
@@ -2933,16 +2928,27 @@ function saveEstimateRequestMemoFromWindow(id, payload = {}) {
 }
 function runEstimateRequestAction(id) {
   const tr = document.querySelector(`tr[data-request-id="${CSS.escape(id)}"]`);
-  const action = tr?.querySelector("[data-request-action]")?.value || "";
-  if (!action) { alert("처리할 항목을 선택하세요."); return; }
+  const status = tr?.querySelector("[data-request-action]")?.value || "";
+  if (!status) { alert("변경할 상태를 선택하세요."); return; }
   saveEstimateRequestRowFromDom(id);
-  if (action === "approve") approveEstimateRequest(id);
-  else if (action === "prestart") startEstimateRequest(id, "선착수");
-  else if (action === "start") startEstimateRequest(id, "착수완료");
-  else if (action === "db") syncEstimateRequestToDb(id);
-  else if (action === "cancel") cancelEstimateRequest(id);
-  const actionText = tr?.querySelector("[data-request-action]")?.options?.[tr.querySelector("[data-request-action]")?.selectedIndex || 0]?.text || "처리";
-  showToast?.(`${actionText} 처리가 완료되었습니다.`);
+  if (status === "승인완료") approveEstimateRequest(id);
+  else if (status === "선착수") startEstimateRequest(id, "선착수");
+  else if (status === "착수완료") startEstimateRequest(id, "착수완료");
+  else if (status === "DB등록") syncEstimateRequestToDb(id);
+  else if (status === "작업취소") cancelEstimateRequest(id);
+  else {
+    estimateRequestLoadRows();
+    const idx = estimateRequestRows.findIndex(r => r.id === id);
+    if (idx >= 0) {
+      const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+      row.status = status;
+      estimateRequestAddHistory(row, `상태 변경: ${status}`);
+      estimateRequestRows[idx] = row;
+      estimateRequestSaveRows();
+      renderEstimateRequestManage();
+      showToast?.(`${status} 상태로 변경되었습니다.`);
+    }
+  }
 }
 
 function saveEstimateRequestRowFromDom(id) {
