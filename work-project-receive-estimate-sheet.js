@@ -2773,6 +2773,15 @@ function estimateRequestStatusSummary() {
   const items = ["의뢰메모", "견적요청", "대기중", "발송완료", "승인완료", "선착수", "착수완료", "DB등록", "작업취소"];
   return items.map(status => ({ status, count: rows.filter(r => r.status === status).length }));
 }
+function estimateRequestRefreshSelectLabels(root = document) {
+  try {
+    root.querySelectorAll(".estimate-request-select, .estimate-request-action-select").forEach(sel => {
+      const label = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : sel.value;
+      sel.setAttribute("title", label || "");
+      sel.dataset.selectedText = label || "";
+    });
+  } catch (e) {}
+}
 function renderEstimateRequestManage() {
   const stepbar = document.getElementById("estimateWorkflowStepbar");
   const toolbar = document.getElementById("estimateWorkflowToolbar");
@@ -2806,6 +2815,7 @@ function renderEstimateRequestManage() {
   board.innerHTML = `
     <div class="estimate-workflow-table-wrap">
       <table class="estimate-workflow-table">
+        <colgroup><col class="col-date"><col class="col-status"><col class="col-company"><col class="col-project"><col class="col-client"><col class="col-memo"><col class="col-estimate"><col class="col-link"><col class="col-actions"></colgroup>
         <thead><tr><th>의뢰일</th><th>상태</th><th>업체명</th><th>프로젝트명</th><th>의뢰자/연락처</th><th>메모</th><th>견적서</th><th>연계</th><th>관리</th></tr></thead>
         <tbody>${rows.map(row => estimateRequestRowHtml(row)).join("") || `<tr><td colspan="9" class="empty-cell">등록된 견적 의뢰가 없습니다. [의뢰 등록]으로 메모장처럼 먼저 기록하세요.</td></tr>`}</tbody>
       </table>
@@ -2814,6 +2824,7 @@ function renderEstimateRequestManage() {
       흐름: 의뢰 등록 → 견적서 작성요청 → 견적서관리에서 작성/발송 → 기간별 견적서관리 자동 누적 → 승인 또는 선착수 처리 → DB관리(PJ관리) 등록.
     </div>
   `;
+  estimateRequestRefreshSelectLabels(board);
 }
 function estimateRequestRowHtml(row) {
   row = estimateRequestNormalizeRow(row);
@@ -2823,21 +2834,23 @@ function estimateRequestRowHtml(row) {
   const safeId = estimateRequestHtml(row.id);
   const estimateActionLabel = linkedEstimate ? "견적열기" : "견적서 작성";
   const estimateAction = linkedEstimate ? `openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')` : `createEstimateSheetFromRequest('${safeId}')`;
-  const statusOptions = ESTIMATE_REQUEST_STATUS.map(s => `<option value="${estimateRequestHtml(s)}" ${row.status === s ? "selected" : ""}>${estimateRequestHtml(s)}</option>`).join("");
-  const estimateTypeOptions = ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${estimateRequestHtml(t)}" ${row.estimateType === t ? "selected" : ""}>${estimateRequestHtml(t)}</option>`).join("");
-  return `<tr data-request-id="${safeId}">
+  const currentStatus = ESTIMATE_REQUEST_STATUS.includes(row.status) ? row.status : "의뢰메모";
+  const currentEstimateType = ESTIMATE_SHEET_TYPE_ORDER.includes(row.estimateType) ? row.estimateType : "개산견적";
+  const statusOptions = ESTIMATE_REQUEST_STATUS.map(s => `<option value="${estimateRequestHtml(s)}" ${currentStatus === s ? "selected" : ""}>${estimateRequestHtml(s)}</option>`).join("");
+  const estimateTypeOptions = ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${estimateRequestHtml(t)}" ${currentEstimateType === t ? "selected" : ""}>${estimateRequestHtml(t)}</option>`).join("");
+  return `<tr data-request-id="${safeId}" class="estimate-request-status-${estimateRequestHtml(currentStatus)}">
     <td contenteditable="true" data-request-field="date">${estimateRequestHtml(row.date)}</td>
-    <td><select class="estimate-request-select" data-request-field="status">${statusOptions}</select></td>
+    <td><select class="estimate-request-select" data-request-field="status" title="${estimateRequestHtml(currentStatus)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value;">${statusOptions}</select></td>
     <td contenteditable="true" data-request-field="company">${estimateRequestHtml(row.company)}</td>
     <td contenteditable="true" data-request-field="project">${estimateRequestHtml(row.project)}</td>
     <td><div contenteditable="true" data-request-field="client">${estimateRequestHtml(row.client)}</div><small contenteditable="true" data-request-field="contact">${estimateRequestHtml(row.contact)}</small></td>
-    <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${safeId}')">열기</button><small class="memo-preview">${estimateRequestHtml((row.memo || row.rawMemo || "").replace(/\s+/g," ").slice(0, 36))}</small><span data-request-field="memo" class="request-memo-hidden">${estimateRequestHtml(row.memo || row.rawMemo || "")}</span></td>
-    <td><select class="estimate-request-select" data-request-field="estimateType">${estimateTypeOptions}</select><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
+    <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${safeId}')">열기</button><span data-request-field="memo" class="request-memo-hidden">${estimateRequestHtml(row.memo || row.rawMemo || "")}</span></td>
+    <td><select class="estimate-request-select" data-request-field="estimateType" title="${estimateRequestHtml(currentEstimateType)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value;">${estimateTypeOptions}</select><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
     <td><span class="quote-status-badge">${estimateRequestHtml(periodLinked)}</span><span class="quote-status-badge">${estimateRequestHtml(dbLabel)}</span></td>
     <td class="estimate-workflow-row-actions compact">
       <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
       <button class="btn btn-primary btn-xs" type="button" onclick="${estimateAction}">${estimateActionLabel}</button>
-      <select class="estimate-request-action-select" data-request-action>
+      <select class="estimate-request-action-select" data-request-action title="처리 선택" onchange="this.setAttribute('title', this.options[this.selectedIndex]?.text || this.value);">
         <option value="">처리 선택</option>
         <option value="approve">승인</option>
         <option value="prestart">선착수</option>
@@ -2928,7 +2941,10 @@ function runEstimateRequestAction(id) {
   else if (action === "start") startEstimateRequest(id, "착수완료");
   else if (action === "db") syncEstimateRequestToDb(id);
   else if (action === "cancel") cancelEstimateRequest(id);
+  const actionText = tr?.querySelector("[data-request-action]")?.options?.[tr.querySelector("[data-request-action]")?.selectedIndex || 0]?.text || "처리";
+  showToast?.(`${actionText} 처리가 완료되었습니다.`);
 }
+
 function saveEstimateRequestRowFromDom(id) {
   estimateRequestLoadRows();
   const tr = document.querySelector(`tr[data-request-id="${CSS.escape(id)}"]`);
@@ -2944,8 +2960,9 @@ function saveEstimateRequestRowFromDom(id) {
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
   renderEstimateRequestManage();
-  showToast?.("견적 의뢰관리 행을 저장했습니다.");
+  showToast?.(`견적 의뢰관리 행을 저장했습니다. 현재 상태: ${row.status || "-"}`);
 }
+
 function estimateRequestSetCell(state, r, c, v) {
   const obj = estimateSheetGetCellObj(state, r, c);
   obj.value = v ?? "";
@@ -3127,7 +3144,9 @@ function cancelEstimateRequest(id) {
   estimateRequestSyncPeriodStatus(row, "작업취소", "작업취소 처리");
   renderEstimateRequestManage();
   if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+  showToast?.("작업취소 처리되었습니다.");
 }
+
 
 /* 견적서 리스트에 의뢰ID/흐름 상태를 보강 표시 */
 const estimateWorkflowOriginalRenderList = typeof renderEstimateSheetList === "function" ? renderEstimateSheetList : null;
