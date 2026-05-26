@@ -17950,7 +17950,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* === 견적서관리 v1: 4종 견적서 엑셀 양식 웹 구현 === */
+/* === 견적서 종류별 관리 v1: 4종 견적서 엑셀 양식 웹 구현 === */
 .estimate-sheet-shell {
   gap: 18px;
 }
@@ -18183,7 +18183,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   }
 }
 
-/* === 견적서관리 v2: 엑셀 원본 양식 1:1 표시 보정 === */
+/* === 견적서 종류별 관리 v2: 엑셀 원본 양식 1:1 표시 보정 === */
 .estimate-excel-grid-wrap {
   position: relative;
   overflow: auto;
@@ -18262,7 +18262,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 /* =========================================================
-   견적서관리 - 엑셀 원본 정밀 표시 보정
+   견적서 종류별 관리 - 엑셀 원본 정밀 표시 보정
    - 분할 JS 적용 후 이미지가 일반 흐름으로 밀려 보이는 현상 방지
    - 엑셀의 행/열 치수를 우선 적용하기 위해 기존 grid 공통 min-width/padding 무력화
    ========================================================= */
@@ -18344,7 +18344,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
 }
 
-/* === 견적서관리: 엑셀 원본 1:1 렌더링 보정 === */
+/* === 견적서 종류별 관리: 엑셀 원본 1:1 렌더링 보정 === */
 .estimate-sheet-editor {
   overflow: hidden;
 }
@@ -18431,7 +18431,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color: #000000 !important;
 }
 
-/* === 2026-05-25 견적서관리 엑셀 원본 표시 보정 ===
+/* === 2026-05-25 견적서 종류별 관리 엑셀 원본 표시 보정 ===
    - 엑셀 Page Break Preview의 출력범위 외부 회색 영역과 파란 출력 경계선 우선 적용
    - JS에서 계산한 원본 엑셀 열너비/행높이를 브라우저 테이블 레이아웃이 임의 확장하지 않도록 보정
 */
@@ -18510,7 +18510,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* 기간별 견적서관리 */
+/* 기간별 견적서 관리 */
 .estimate-period-shell .quote-hero{margin-bottom:18px;}
 .estimate-period-count{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid #dbe3ee;border-radius:999px;background:#fff;font-weight:800;color:#111827;}
 .estimate-period-card{overflow:hidden;}
@@ -18529,14 +18529,14 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-cell.c3,.estimate-period-cell.c4,.estimate-period-cell.c8,.estimate-period-cell.c13,.estimate-period-cell.c16,.estimate-period-cell.c17,.estimate-period-cell.c18{text-align:left;}
 .estimate-period-grid tr:nth-child(n+9) .estimate-period-cell{height:24px;}
 
-/* 추천 구조: 기간별 견적서관리와 견적서관리 연결 표시 */
+/* 추천 구조: 기간별 견적서 관리와 견적서 종류별 관리 연결 표시 */
 .estimate-period-data-row.linked{cursor:pointer;}
 .estimate-period-data-row.linked:hover .estimate-period-cell{background:#ffedd5!important;}
 .estimate-period-view-btn{margin-left:6px;padding:2px 7px;border:1px solid #fb923c;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:10px;font-weight:900;cursor:pointer;}
 .estimate-period-view-btn:hover{background:#fed7aa;}
 
 
-/* 2026-05 기간별 견적서관리: 리스트형 관리 화면 */
+/* 2026-05 기간별 견적서 관리: 리스트형 관리 화면 */
 .estimate-period-hero-actions{gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
 .estimate-period-summary-cards{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:960px;}
 .estimate-period-summary-card{min-width:86px;padding:8px 10px;border:1px solid #dbe3ee;border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.04);}
@@ -19311,7 +19311,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table th:nth-child(7), .estimate-workflow-table td:nth-child(7){width:170px !important;min-width:170px !important;max-width:170px !important;}
 
 
-/* 기간별 견적서관리 열 너비/방향키 이동 보정 */
+/* 기간별 견적서 관리 열 너비/방향키 이동 보정 */
 .estimate-period-manage-table{
   table-layout:fixed !important;
   width:max-content !important;
@@ -19338,7 +19338,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:#fff !important;
 }
 
-/* 기간별 견적서관리: 열 너비/단일 스크롤/세부보기 보정 */
+/* 기간별 견적서 관리: 열 너비/단일 스크롤/세부보기 보정 */
 .estimate-period-sheet-wrap{
   width:100% !important;
   max-height:650px !important;
