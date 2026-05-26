@@ -319,7 +319,10 @@ function estimateSheetImagePosition(spec, img, state) {
   const top = topOfRow(img.from.row) + (img.from.rowOff || 0) / emu;
   const right = leftOfCol(img.to.col) + (img.to.colOff || 0) / emu;
   const bottom = topOfRow(img.to.row) + (img.to.rowOff || 0) / emu;
-  return { left, top, width: Math.max(6, right - left), height: Math.max(6, bottom - top) };
+  const extra = Number(state?.itemExtraRows || 0);
+  const extraShift = extra > 0 ? rows.slice(19, 19 + extra).reduce((sum, v) => sum + Number(v || 0), 0) : 0;
+  const shift = extraShift && img.from.row >= 29 ? extraShift : 0;
+  return { left, top: top + shift, width: Math.max(6, right - left), height: Math.max(6, bottom - top) };
 }
 
 function estimateSheetGridPixelWidth(state) {
@@ -383,6 +386,17 @@ function estimateSheetCssHasRule(styleText, prop) {
 }
 
 function estimateSheetUploadedTemplateRow(state, r) {
+  const extra = Number(state?.itemExtraRows || 0);
+  if (extra > 0) {
+    const totalRow = 20 + extra;
+    const conditionRow = 21 + extra;
+    if (r <= 12) return r;
+    if (r < totalRow) return Math.min(Math.max(r, 13), 19);
+    if (r === totalRow) return 20;
+    if (r === conditionRow) return 21;
+    if (r > conditionRow && r < 31 + extra) return Math.min(22 + (r - conditionRow - 1), 29);
+    if (r >= 31 + extra) return Math.min(31 + (r - (31 + extra)), 33);
+  }
   const a = String(estimateSheetGetCellObj(state, r, 1)?.value ?? "").replace(/\s+/g, "");
   const b = String(estimateSheetGetCellObj(state, r, 2)?.value ?? "").replace(/\s+/g, "");
   const g = String(estimateSheetGetCellObj(state, r, 7)?.value ?? "").replace(/\s+/g, "");
@@ -392,6 +406,16 @@ function estimateSheetUploadedTemplateRow(state, r) {
   if (rowText.includes("견적조건")) return 21;
   if (r >= 22) return 22;
   return Math.min(Math.max(r, 13), 19);
+}
+
+function estimateSheetTemplateRowForState(state, r) {
+  return estimateSheetUploadedTemplateRow(state, r);
+}
+
+function estimateSheetRowTextFromUploaded(sheet, r, maxCol = 7) {
+  let out = "";
+  for (let c = 1; c <= maxCol; c += 1) out += String(estimateSheetUploadedCellText(sheet, r, c) || "").replace(/\s+/g, "");
+  return out;
 }
 
 function estimateSheetNormalizeUploadedFormat(state) {
@@ -551,7 +575,7 @@ function renderEstimateSheetGrid() {
     const cells = Array.from({ length: state.maxCol }, (_, ci) => {
       const c = ci + 1; const key = estimateSheetCellKey(r, c);
       if (merge.skips.has(key)) return "";
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       const span = merge.starts[key] || { rowspan: 1, colspan: 1 };
       const obj = estimateSheetGetCellObj(state, r, c);
       const displayed = estimateSheetDisplayValue(state, r, c);
@@ -561,7 +585,7 @@ function renderEstimateSheetGrid() {
       if (c === 1) classes.push("print-left");
       if (c === printCols) classes.push("print-right");
       if (r === 1 && c <= printCols) classes.push("print-top");
-      if (r === (spec.maxRow || state.maxRow) && c <= printCols) classes.push("print-bottom");
+      if (r === (state.maxRow || spec.maxRow) && c <= printCols) classes.push("print-bottom");
       if (obj.formula) classes.push("formula-cell");
       if (estimateSheetShouldOverflowText(state, r, c, displayed, span)) classes.push("overflow-text-cell");
       return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? '=' + estimateSheetHtml(obj.formula) : ''}" data-original-text="${estimateSheetHtml(displayed)}" style="${estimateSheetHtml(estimateSheetCellEffectiveStyle(obj, tmpl))}">${estimateSheetHtml(displayed)}</td>`;
@@ -763,7 +787,8 @@ async function estimateSheetExportExcelJsNow() {
     pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 1 },
     properties: { defaultRowHeight: 18 }
   });
-  worksheet.views = [{ showGridLines: true }];
+  worksheet.views = [{ showGridLines: true, zoomScale: 85, zoomScaleNormal: 85, view: "pageBreakPreview" }];
+  worksheet.pageSetup.printArea = `A1:G${state.maxRow || spec.maxRow || 33}`;
   worksheet.pageSetup.margins = { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0, footer: 0 };
   for (let c = 1; c <= state.maxCol; c += 1) {
     worksheet.getColumn(c).width = state.colWidthUnits?.[c - 1] || estimateSheetWidthUnitFromCol(state, c);
@@ -772,7 +797,7 @@ async function estimateSheetExportExcelJsNow() {
     worksheet.getRow(r).height = Math.round(((state.rowHeights?.[r - 1] || 20) * 0.75) * 100) / 100;
     for (let c = 1; c <= state.maxCol; c += 1) {
       const obj = estimateSheetGetCellObj(state, r, c);
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       const cell = worksheet.getCell(r, c);
       if (obj.formula) {
         const result = estimateSheetGetRawValue(state, r, c);
@@ -792,7 +817,7 @@ async function estimateSheetExportExcelJsNow() {
   for (let r = 1; r <= state.maxRow; r += 1) {
     for (let c = 1; c <= state.maxCol; c += 1) {
       const obj = estimateSheetGetCellObj(state, r, c);
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       worksheet.getCell(r, c).style = estimateSheetCssToExcelJsStyle(estimateSheetCellEffectiveStyle(obj, tmpl), tmpl?.s || "");
     }
   }
@@ -803,7 +828,8 @@ async function estimateSheetExportExcelJsNow() {
       const base64 = match?.[2] || String(img.data || "");
       if (!base64) return;
       const imageId = workbook.addImage({ base64, extension });
-      worksheet.addImage(imageId, { tl: { col: img.from.col, row: img.from.row }, br: { col: img.to.col, row: img.to.row }, editAs: "oneCell" });
+      const rowShift = (Number(state.itemExtraRows || 0) && img.from.row >= 29) ? Number(state.itemExtraRows || 0) : 0;
+      worksheet.addImage(imageId, { tl: { col: img.from.col, row: img.from.row + rowShift }, br: { col: img.to.col, row: img.to.row + rowShift }, editAs: "oneCell" });
     } catch (e) { console.warn("image skipped", e); }
   });
   const buffer = await workbook.xlsx.writeBuffer();
@@ -836,7 +862,7 @@ function estimateSheetStateToStyledWorksheet(state) {
       const addr = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
       if (!ws[addr]) ws[addr] = { t: "s", v: "" };
       const obj = estimateSheetGetCellObj(state, r, c);
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       ws[addr].s = estimateSheetCssToXlsxStyle(estimateSheetCellEffectiveStyle(obj, tmpl), tmpl?.s || "");
       if (obj.formula) {
         ws[addr].f = String(obj.formula).replace(/^=/, "");
@@ -946,7 +972,7 @@ function estimateSheetBuildExcelGridHtml(state) {
       const c = ci + 1;
       const key = estimateSheetCellKey(r, c);
       if (merge.skips.has(key)) return "";
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       const span = merge.starts[key] || { rowspan: 1, colspan: 1 };
       const obj = estimateSheetGetCellObj(state, r, c);
       const displayed = estimateSheetDisplayValue(state, r, c);
@@ -956,7 +982,7 @@ function estimateSheetBuildExcelGridHtml(state) {
       if (c === 1) classes.push("print-left");
       if (c === printCols) classes.push("print-right");
       if (r === 1 && c <= printCols) classes.push("print-top");
-      if (r === (spec.maxRow || state.maxRow) && c <= printCols) classes.push("print-bottom");
+      if (r === (state.maxRow || spec.maxRow) && c <= printCols) classes.push("print-bottom");
       if (obj.formula) classes.push("formula-cell");
       if (estimateSheetShouldOverflowText(state, r, c, displayed, span)) classes.push("overflow-text-cell");
       return `<td class="${classes.join(" ")}" data-row="${r}" data-col="${c}" ${span.rowspan > 1 ? `rowspan="${span.rowspan}"` : ""} ${span.colspan > 1 ? `colspan="${span.colspan}"` : ""} contenteditable="true" spellcheck="false" title="${obj.formula ? "=" + estimateSheetHtml(obj.formula) : ""}" data-original-text="${estimateSheetHtml(displayed)}" style="${estimateSheetHtml(estimateSheetCellEffectiveStyle(obj, tmpl))}">${estimateSheetHtml(displayed)}</td>`;
@@ -1380,7 +1406,7 @@ function estimateSheetBuildStateFromUploadedValues(sheet, type, fileName) {
   const spec = estimateSheetGetSpec(type);
   const used = estimateSheetUploadedUsedRows(sheet);
   const state = estimateSheetCreateState(type);
-  state.fromUploadedWorkbook = false;
+  state.fromUploadedWorkbook = true;
   state.importMode = "template-value-only";
   state.sourceFileName = fileName || "";
   state.maxCol = Math.max(state.maxCol || spec.maxCol || 15, spec.maxCol || 15);
@@ -1395,7 +1421,9 @@ function estimateSheetBuildStateFromUploadedValues(sheet, type, fileName) {
   const itemEnd = uploadedTotalRow ? uploadedTotalRow - 1 : Math.min(19, used.maxRow);
   const baseItemEnd = 19;
   const extraItemRows = Math.max(0, itemEnd - baseItemEnd);
+  state.itemExtraRows = extraItemRows;
   for (let i = 0; i < extraItemRows; i += 1) estimateSheetInsertRowIntoState(state, 19 + i);
+  state.maxRow = Math.max(state.maxRow, (spec.maxRow || 33) + extraItemRows);
   estimateSheetCopyUploadedValueRange(sheet, state, 13, Math.min(itemEnd, used.maxRow), Math.min(7, state.maxCol));
 
   // 총계 이하 영역은 템플릿 위치에 맞게 다시 배치한다. 업로드 파일에 행이 추가되어도
@@ -1410,9 +1438,12 @@ function estimateSheetBuildStateFromUploadedValues(sheet, type, fileName) {
 
   const conditionSource = uploadedConditionRow || (uploadedTotalRow ? uploadedTotalRow + 1 : 21);
   const conditionTarget = 21 + extraItemRows;
-  for (let rr = 0; rr < 8; rr += 1) {
+  let writtenConditionRows = 0;
+  for (let rr = 0; rr < 12 && writtenConditionRows < 8; rr += 1) {
     const srcR = conditionSource + rr;
-    const dstR = conditionTarget + rr;
+    const rowText = estimateSheetRowTextFromUploaded(sheet, srcR, 7);
+    if (srcR !== uploadedTotalRow && (rowText.includes("총계") || rowText.includes("합계"))) continue;
+    const dstR = conditionTarget + writtenConditionRows;
     if (dstR > state.maxRow) {
       state.maxRow = dstR;
       state.rowHeights.push(26);
@@ -1421,6 +1452,7 @@ function estimateSheetBuildStateFromUploadedValues(sheet, type, fileName) {
       const text = estimateSheetUploadedCellText(sheet, srcR, c);
       if (String(text ?? "") !== "") estimateSheetApplyTextToStateCell(state, dstR, c, text);
     }
+    writtenConditionRows += 1;
   }
 
   // 우측 참고/검증 영역은 템플릿이 허용하는 범위에서 값만 가져온다.
@@ -1431,6 +1463,7 @@ function estimateSheetBuildStateFromUploadedValues(sheet, type, fileName) {
     }
   }
 
+  estimateSheetNormalizeUploadedFormat(state);
   estimateSheetApplyManualOverrides(state);
   state.templateValueOnly = true;
   return state;
@@ -1469,7 +1502,7 @@ function estimateSheetBuildPrintableGridHtml(state) {
   const merge = estimateSheetMergeInfoForState(spec, state);
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
-  const maxRow = spec.maxRow || state.maxRow;
+  const maxRow = state.maxRow || spec.maxRow;
   const maxCol = spec.printCols || 7;
   const colGroup = `<colgroup>${Array.from({ length: maxCol }, (_, i) => `<col style="width:${cols[i] || 64}px">`).join("")}</colgroup>`;
   const body = Array.from({ length: maxRow }, (_, ri) => {
@@ -1484,7 +1517,7 @@ function estimateSheetBuildPrintableGridHtml(state) {
         rowspan: Math.min(spanRaw.rowspan || 1, Math.max(1, maxRow - r + 1)),
         colspan: Math.min(spanRaw.colspan || 1, Math.max(1, maxCol - c + 1))
       };
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       const obj = estimateSheetGetCellObj(state, r, c);
       const displayed = estimateSheetDisplayValue(state, r, c);
       const overflowClass = estimateSheetShouldOverflowText(state, r, c, displayed, span) ? " printable-overflow" : "";
@@ -1510,11 +1543,11 @@ function estimateSheetPrintCurrentPdf() {
   const cols = state.colWidths || spec.cols;
   const rows = state.rowHeights || spec.rows;
   const printCols = spec.printCols || 7;
-  const printRows = Math.max(spec.maxRow || 33, state.maxRow || 33);
+  const printRows = Math.max(state.maxRow || 33, spec.maxRow || 33);
   const sheetWidth = cols.slice(0, printCols).reduce((sum, v) => sum + (Number(v) || 64), 0);
   const sheetHeight = rows.slice(0, printRows).reduce((sum, v) => sum + (Number(v) || 20), 0);
-  const contentW = 690;
-  const contentH = 900;
+  const contentW = 642;
+  const contentH = 1040;
   const printScale = Math.min(1, contentW / Math.max(1, sheetWidth), contentH / Math.max(1, sheetHeight));
   const fileTitle = `CONCOST_${estimateSheetActiveType}_${new Date().toISOString().slice(0,10).replace(/-/g, "")}`;
   const printWin = window.open("", "CONCOST_ESTIMATE_PDF_PRINT", "width=900,height=1000,left=80,top=30,resizable=yes,scrollbars=yes");
@@ -1526,17 +1559,16 @@ function estimateSheetPrintCurrentPdf() {
     @page{size:A4 portrait;margin:0;}
     *{box-sizing:border-box;}
     html,body{margin:0;padding:0;background:#e5e7eb;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;color:#111827;}
-    .print-page{width:794px;height:1123px;margin:0 auto;background:#fff;padding:35px 30px;position:relative;overflow:hidden;}
-    .print-frame{width:100%;height:1052px;border:2px solid #111;position:relative;padding:54px 36px 92px;}
-    .print-sheet-viewport{position:relative;width:100%;height:914px;overflow:visible;}
+    .print-page{width:794px;height:1123px;margin:0 auto;background:#fff;padding:28px 22px 22px;position:relative;overflow:hidden;}
+    .print-frame{width:100%;height:100%;position:relative;border:none;padding:0;}
+    .print-sheet-viewport{position:relative;width:100%;height:100%;overflow:visible;}
     .print-sheet{position:relative;width:${sheetWidth}px;height:${sheetHeight}px;margin:0 auto;transform:scale(var(--print-scale));transform-origin:top center;}
     .printable-grid{border-collapse:collapse;table-layout:fixed;width:${sheetWidth}px;background:transparent;position:absolute;left:0;top:0;z-index:2;}
     .printable-cell{border:none;min-height:0;line-height:1.25;white-space:nowrap;word-break:normal;text-overflow:clip;overflow:visible;position:relative;vertical-align:middle;background:transparent;font-size:11pt;}
     .printable-cell[style*="font-size:28pt"],.printable-cell[style*="font-size: 28pt"]{font-size:28pt!important;}
     .printable-overflow{z-index:30!important;}
     .printable-image{position:absolute;object-fit:contain;pointer-events:none;z-index:3;}
-    .print-footer{position:absolute;left:36px;right:36px;bottom:48px;text-align:right;font-size:11px;line-height:1.7;}
-    @media print{html,body{background:#fff;}.print-page{margin:0;padding:35px 30px;box-shadow:none;} .no-print{display:none!important;}}
+    @media print{html,body{background:#fff;}.print-page{margin:0;padding:28px 22px 22px;box-shadow:none;} .no-print{display:none!important;}}
   `;
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${estimateSheetHtml(fileTitle)}</title><style>${css}</style></head><body>
     <div class="print-page" style="--print-scale:${printScale}">
@@ -2137,7 +2169,7 @@ async function estimateSheetExportExcelJsNow() {
     worksheet.getRow(r).height = Math.round(((state.rowHeights?.[r - 1] || 20) * 0.75) * 100) / 100;
     for (let c = 1; c <= state.maxCol; c += 1) {
       const obj = estimateSheetGetCellObj(state, r, c);
-      const tmpl = estimateSheetCellTemplate(spec, r, c);
+      const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
       const cell = worksheet.getCell(r, c);
       if (obj.formula) {
         cell.value = { formula: String(obj.formula).replace(/^=/, ""), result: estimateSheetGetRawValue(state, r, c) };
@@ -2161,7 +2193,8 @@ async function estimateSheetExportExcelJsNow() {
       const base64 = match?.[2] || String(img.data || "");
       if (!base64) return;
       const imageId = workbook.addImage({ base64, extension });
-      worksheet.addImage(imageId, { tl: { col: img.from.col, row: img.from.row }, br: { col: img.to.col, row: img.to.row }, editAs: "oneCell" });
+      const rowShift = (Number(state.itemExtraRows || 0) && img.from.row >= 29) ? Number(state.itemExtraRows || 0) : 0;
+      worksheet.addImage(imageId, { tl: { col: img.from.col, row: img.from.row + rowShift }, br: { col: img.to.col, row: img.to.row + rowShift }, editAs: "oneCell" });
     } catch (e) { console.warn("image skipped", e); }
   });
   const buffer = await workbook.xlsx.writeBuffer();
