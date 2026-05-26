@@ -19192,3 +19192,120 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table th:nth-child(9){
   background-clip:padding-box !important;
 }
+
+/* === 견적 의뢰관리: 연계 열 제거 후 8열 구조 최종 정리 ===
+   DB관리 연결 여부는 내부 데이터로만 유지하고 화면에서는 표시하지 않습니다. */
+.estimate-workflow-table col.col-link{
+  display:none !important;
+  width:0 !important;
+}
+.estimate-workflow-table col.col-actions{
+  width:330px !important;
+}
+.estimate-workflow-table{
+  min-width:1360px !important;
+  width:100% !important;
+  table-layout:fixed !important;
+  border-collapse:collapse !important;
+  border-spacing:0 !important;
+}
+.estimate-workflow-table th,
+.estimate-workflow-table td{
+  border-bottom:1px solid #e5edf7 !important;
+  border-right:1px solid #edf2f7 !important;
+  box-sizing:border-box !important;
+}
+.estimate-workflow-table th:last-child,
+.estimate-workflow-table td:last-child{
+  border-right:0 !important;
+}
+.estimate-workflow-table thead th.estimate-actions-header,
+.estimate-workflow-table thead th:nth-child(8){
+  background:#f3f6fa !important;
+  color:#334155 !important;
+  border-bottom:1px solid #dbe4ef !important;
+  text-align:left !important;
+  padding-left:14px !important;
+}
+.estimate-workflow-table th:nth-child(8),
+.estimate-workflow-table td:nth-child(8),
+.estimate-workflow-table td.estimate-actions-cell{
+  display:table-cell !important;
+  width:330px !important;
+  min-width:330px !important;
+  max-width:330px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  padding:0 8px !important;
+  vertical-align:middle !important;
+  text-align:left !important;
+  overflow:hidden !important;
+  border-left:1px solid #edf2f7 !important;
+  border-right:0 !important;
+  border-bottom:1px solid #e5edf7 !important;
+}
+.estimate-workflow-table tbody tr:nth-child(odd) > td.estimate-actions-cell{
+  background:#fff !important;
+}
+.estimate-workflow-table tbody tr:nth-child(even) > td.estimate-actions-cell{
+  background:#f8fafc !important;
+}
+.estimate-workflow-table tbody tr.estimate-request-status-작업취소 > td.estimate-actions-cell,
+.estimate-workflow-table tbody tr[data-request-status="작업취소"] > td.estimate-actions-cell{
+  background:#e5e7eb !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact{
+  display:grid !important;
+  grid-template-columns:44px 82px 104px 44px !important;
+  column-gap:6px !important;
+  align-items:center !important;
+  justify-content:start !important;
+  width:100% !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:hidden !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact .btn,
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact .estimate-request-action-select{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  line-height:28px !important;
+  margin:0 !important;
+  padding-top:0 !important;
+  padding-bottom:0 !important;
+  box-sizing:border-box !important;
+  white-space:nowrap !important;
+  box-shadow:none !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact .btn{
+  padding-left:7px !important;
+  padding-right:7px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact .estimate-request-action-select{
+  padding-left:8px !important;
+  padding-right:20px !important;
+  color:#111827 !important;
+  -webkit-text-fill-color:#111827 !important;
+  background:#fff !important;
+}
+.estimate-workflow-table th:nth-child(1), .estimate-workflow-table td:nth-child(1){width:90px !important;min-width:90px !important;max-width:90px !important;}
+.estimate-workflow-table th:nth-child(2), .estimate-workflow-table td:nth-child(2){width:130px !important;min-width:130px !important;max-width:130px !important;}
+.estimate-workflow-table th:nth-child(3), .estimate-workflow-table td:nth-child(3){width:190px !important;min-width:190px !important;max-width:190px !important;}
+.estimate-workflow-table th:nth-child(4), .estimate-workflow-table td:nth-child(4){width:220px !important;min-width:220px !important;max-width:220px !important;}
+.estimate-workflow-table th:nth-child(5), .estimate-workflow-table td:nth-child(5){width:170px !important;min-width:170px !important;max-width:170px !important;}
+.estimate-workflow-table th:nth-child(6), .estimate-workflow-table td:nth-child(6){width:80px !important;min-width:80px !important;max-width:80px !important;text-align:center !important;}
+.estimate-workflow-table th:nth-child(7), .estimate-workflow-table td:nth-child(7){width:170px !important;min-width:170px !important;max-width:170px !important;}
