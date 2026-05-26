@@ -19387,3 +19387,24 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   opacity:1 !important;
   cursor:pointer !important;
 }
+
+/* DB관리 대량 더미데이터 성능 개선: 50행 단위 페이지 표시 */
+.quote-db-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px 0;
+  font-size: 12px;
+  color: #475569;
+}
+.quote-db-pager-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+.quote-db-pager .btn[disabled] {
+  opacity: .45;
+  cursor: not-allowed;
+}
