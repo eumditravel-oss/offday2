@@ -2408,10 +2408,14 @@ document.addEventListener("click", event => {
   requestAnimationFrame(() => {
     const targetPanelId = workBtn.dataset.workMain;
     if (typeof syncWorkSideAccordion === "function") syncWorkSideAccordion(targetPanelId);
-    if (targetPanelId === "estimateSheetManage" || targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
-      document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
-    } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
-      document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+    if (typeof activateWorkSideSelection === "function") {
+      activateWorkSideSelection(targetPanelId);
+      return;
+    }
+    if (["estimateRequestManage", "estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList", "projectReceive", "projectReceiveList"].includes(targetPanelId)) {
+      const selected = document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`);
+      selected?.classList.add("active", "work-side-selected");
+      selected?.setAttribute("data-work-selected", "true");
     }
   });
 }, true);
