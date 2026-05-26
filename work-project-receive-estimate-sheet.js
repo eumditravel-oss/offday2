@@ -4602,3 +4602,157 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("estimateDbManage")?.classList.contains("active")) renderEstimateDbManage?.();
   }, 80);
 });
+
+/* =========================================================
+   2026-05-26 견적관리 성능 구조 변경 패치
+   - 메뉴 진입 시 전체 동기화/전체 정리/전체 DB 역연계를 반복하지 않도록 분리
+   - seed/prune/BOQ 정리는 최초 1회 또는 명시 force 때만 실행
+   - 견적 의뢰관리 렌더링은 렌더링만 수행
+   - DB관리 저장 후 역연계는 전체 행이 아니라 수정된 행 중심으로 축소
+   ========================================================= */
+const ESTIMATE_PERFORMANCE_BOOTSTRAP_KEY = "concost.estimate.performance.bootstrap.v1";
+let estimatePerformanceBootstrapRunning = false;
+let estimatePerformanceBootstrapDone = false;
+
+const estimatePerformanceOriginalPrune = typeof estimateDummyHalfApplyPrune === "function" ? estimateDummyHalfApplyPrune : null;
+if (estimatePerformanceOriginalPrune) {
+  estimateDummyHalfApplyPrune = function estimatePerformancePruneOnce(options = {}) {
+    const force = !!options.force;
+    let alreadyPruned = false;
+    try { alreadyPruned = !!localStorage.getItem(ESTIMATE_DUMMY_HALF_STORAGE_VERSION); } catch (e) {}
+    if (alreadyPruned && !force) return;
+    return estimatePerformanceOriginalPrune(options);
+  };
+  window.estimateDummyHalfApplyPrune = estimateDummyHalfApplyPrune;
+}
+
+const estimatePerformanceOriginalEnsureDummyRows = typeof estimateRequestEnsurePeriodDummyRows === "function" ? estimateRequestEnsurePeriodDummyRows : null;
+let estimatePerformanceDummyRowsEnsured = false;
+if (estimatePerformanceOriginalEnsureDummyRows) {
+  estimateRequestEnsurePeriodDummyRows = function estimatePerformanceEnsureDummyRowsOnce(options = {}) {
+    if (estimatePerformanceDummyRowsEnsured && !options.force) return;
+    estimatePerformanceDummyRowsEnsured = true;
+    return estimatePerformanceOriginalEnsureDummyRows();
+  };
+  window.estimateRequestEnsurePeriodDummyRows = estimateRequestEnsurePeriodDummyRows;
+}
+
+function estimatePerformanceRunBootstrap(options = {}) {
+  if (estimatePerformanceBootstrapRunning) return;
+  if (estimatePerformanceBootstrapDone && !options.force) return;
+  estimatePerformanceBootstrapRunning = true;
+  try {
+    const force = !!options.force;
+    let bootstrapped = false;
+    try { bootstrapped = localStorage.getItem(ESTIMATE_PERFORMANCE_BOOTSTRAP_KEY) === "1"; } catch (e) {}
+
+    if (!bootstrapped || force) {
+      estimatePerformanceOriginalEnsureDummyRows?.({ force: true });
+      estimatePerformanceOriginalPrune?.({ silent: true, force: true });
+      if (typeof estimateCentralRemoveBoqRowsEverywhere === "function") estimateCentralRemoveBoqRowsEverywhere();
+      try { localStorage.setItem(ESTIMATE_PERFORMANCE_BOOTSTRAP_KEY, "1"); } catch (e) {}
+    }
+    estimatePerformanceBootstrapDone = true;
+  } finally {
+    estimatePerformanceBootstrapRunning = false;
+  }
+}
+
+const estimatePerformanceOriginalCentralSyncSeedRows = typeof estimateCentralSyncSeedRows === "function" ? estimateCentralSyncSeedRows : null;
+if (estimatePerformanceOriginalCentralSyncSeedRows) {
+  estimateCentralSyncSeedRows = function estimatePerformanceSyncSeedRows(options = {}) {
+    if (options.force || !estimateCentralSeedSynced) {
+      const result = estimatePerformanceOriginalCentralSyncSeedRows({ ...options, silent: true });
+      estimateCentralSeedSynced = true;
+      return result;
+    }
+  };
+  window.estimateCentralSyncSeedRows = estimateCentralSyncSeedRows;
+}
+
+function estimatePerformanceSyncDbRow(tab = estimateDbActiveTab, rowIndex = 0, options = {}) {
+  if (estimateCentralSyncRunning) return;
+  const dbRow = estimateDbSheets?.[tab]?.rows?.[rowIndex];
+  if (!dbRow) return;
+  const row = estimateCentralDbRowToPeriodRow?.(tab, dbRow, rowIndex);
+  if (!row || estimateLinkageHasBoq?.(row)) return;
+  estimateCentralSyncRunning = true;
+  try {
+    row.project = estimateLinkageNormalizeProjectName?.(row.project || "") || row.project || "";
+    row.centralKey = row.centralKey || estimateLinkageMakeKey?.(row) || estimateCentralMakeKey?.(row) || "";
+    row.dbPjNo = row.dbPjNo || estimateLinkageDbPjNo?.(row) || estimateCentralDbPjNo?.(row) || "";
+    estimateCentralEnsureSheetRecord?.(row, { source: "db" });
+    estimateCentralEnsureRequestRow?.(row, { skipSave: true });
+    if (typeof estimatePeriodEditRows !== "undefined") {
+      estimatePeriodLoadEdits?.();
+      const idx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText?.(item.project) === estimateLinkageText?.(row.project) && estimateLinkageText?.(item.company) === estimateLinkageText?.(row.company)));
+      const periodRow = { ...row, source: "db", linked: true, result: "DB관리 수정 연동" };
+      if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
+      else estimatePeriodEditRows.unshift(periodRow);
+      estimatePeriodSaveEdits?.();
+    }
+    estimateRequestSaveRows?.();
+  } finally {
+    estimateCentralSyncRunning = false;
+  }
+}
+window.estimatePerformanceSyncDbRow = estimatePerformanceSyncDbRow;
+
+if (typeof estimateLinkageSyncAllDbRows === "function") {
+  estimateLinkageSyncAllDbRows = function estimatePerformanceSyncDbRowsNarrow(options = {}) {
+    if (options.forceAll) {
+      ["pj", "progress", "mep"].forEach(tab => (estimateDbSheets?.[tab]?.rows || []).forEach((_, idx) => estimatePerformanceSyncDbRow(tab, idx, { silent: true })));
+      return;
+    }
+    const tab = options.tab || estimateDbActiveTab || estimateDbSelectedCell?.tab || "pj";
+    const rowIndex = Number.isFinite(Number(options.rowIndex)) ? Number(options.rowIndex) : Number(estimateDbSelectedCell?.rowIndex || 0);
+    estimatePerformanceSyncDbRow(tab, rowIndex, options);
+  };
+  window.estimateLinkageSyncAllDbRows = estimateLinkageSyncAllDbRows;
+}
+
+const estimatePerformanceBaseRenderRequestManage =
+  (typeof estimateCentralOriginalRenderEstimateRequestManage === "function" && estimateCentralOriginalRenderEstimateRequestManage) ||
+  (typeof estimateLinkageOriginalRenderRequest === "function" && estimateLinkageOriginalRenderRequest) ||
+  (typeof estimateDummyHalfOriginalRenderRequestManage === "function" && estimateDummyHalfOriginalRenderRequestManage) ||
+  (typeof renderEstimateRequestManage === "function" && renderEstimateRequestManage);
+
+if (estimatePerformanceBaseRenderRequestManage) {
+  renderEstimateRequestManage = function estimatePerformanceRenderEstimateRequestManage() {
+    estimatePerformanceRunBootstrap();
+    const result = estimatePerformanceBaseRenderRequestManage();
+    const toolbar = document.getElementById("estimateWorkflowToolbar");
+    if (toolbar && !toolbar.querySelector(".estimate-linkage-role-note")) {
+      toolbar.insertAdjacentHTML("afterbegin", `<div class="estimate-linkage-role-note" style="margin-bottom:8px;padding:8px 10px;border:1px solid #dbe4ef;border-radius:10px;background:#f8fafc;color:#475569;font-size:12px;font-weight:800;">최초 입력은 견적 의뢰관리에서 진행하고, 저장 즉시 견적서 종류별 관리·기간별 견적서 관리·DB관리로 자동 연계됩니다. 화면 진입 시에는 전체 동기화를 다시 실행하지 않습니다.</div>`);
+    }
+    return result;
+  };
+  window.renderEstimateRequestManage = renderEstimateRequestManage;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    estimatePerformanceRunBootstrap();
+  }, 10);
+});
+
+/* DB관리 저장 이벤트도 수정된 행만 역연계한다. */
+if (typeof estimateLinkageOriginalCommitDbSingle === "function") {
+  commitEstimateDbSinglePendingEdit = function estimatePerformanceCommitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}) {
+    const result = estimateLinkageOriginalCommitDbSingle(tab, rowIndex, colIndex, options);
+    if (result) estimatePerformanceSyncDbRow(tab, rowIndex, { silent: true });
+    return result;
+  };
+  window.commitEstimateDbSinglePendingEdit = commitEstimateDbSinglePendingEdit;
+}
+if (typeof estimateLinkageOriginalCommitDbPending === "function") {
+  commitEstimateDbPendingEdits = function estimatePerformanceCommitEstimateDbPendingEdits(options = {}) {
+    const active = document.activeElement;
+    const tab = active?.dataset?.tab || estimateDbActiveTab || estimateDbSelectedCell?.tab || "pj";
+    const rowIndex = Number(active?.dataset?.rowIndex ?? estimateDbSelectedCell?.rowIndex ?? 0);
+    const result = estimateLinkageOriginalCommitDbPending(options);
+    estimatePerformanceSyncDbRow(tab, rowIndex, { silent: true });
+    return result;
+  };
+  window.commitEstimateDbPendingEdits = commitEstimateDbPendingEdits;
+}
