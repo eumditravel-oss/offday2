@@ -18604,59 +18604,32 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-flow-tag { display:block; margin-top:4px; color:#475569; font-size:11px; }
 @media (max-width:1200px){ .estimate-workflow-stepbar{grid-template-columns:repeat(2,minmax(160px,1fr));} }
 
-/* 견적 의뢰관리 개선: 큰 메모장 새 창, 드롭다운 표시, 관리 버튼 축약 */
+/* Estimate request workflow dropdown visibility and compact memo/actions fix */
 .estimate-workflow-table select,
-.estimate-workflow-table .estimate-request-select,
-.estimate-workflow-table .estimate-row-action-select {
-  color:#111827 !important;
-  -webkit-text-fill-color:#111827 !important;
-  opacity:1 !important;
+.estimate-workflow-table select option,
+.estimate-workflow-filter-row select,
+.estimate-request-select,
+.estimate-request-action-select{
+  color:#0f172a !important;
+  -webkit-text-fill-color:#0f172a !important;
   background-color:#fff !important;
-  font-weight:800;
-  line-height:30px;
-  appearance:auto;
+  opacity:1 !important;
+  visibility:visible !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  line-height:30px !important;
 }
-.estimate-workflow-table select option {
-  color:#111827 !important;
-  background:#fff !important;
-  font-weight:500;
+.estimate-workflow-table select:disabled,
+.estimate-request-select:disabled,
+.estimate-request-action-select:disabled{
+  color:#64748b !important;
+  -webkit-text-fill-color:#64748b !important;
+  background-color:#f8fafc !important;
 }
-.estimate-workflow-table td.memo {
-  white-space:normal !important;
-  overflow:visible;
-}
-.estimate-workflow-table .memo-open-btn {
-  min-width:52px;
-  margin-right:8px;
-  vertical-align:middle;
-}
-.estimate-workflow-table .memo-preview {
-  display:inline-block;
-  max-width:210px;
-  color:#475569;
-  font-weight:700;
-  vertical-align:middle;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.estimate-workflow-row-actions.compact {
-  display:grid;
-  grid-template-columns:64px 96px minmax(110px,1fr) 56px;
-  align-items:center;
-  gap:6px;
-}
-.estimate-workflow-row-actions.compact .btn,
-.estimate-workflow-row-actions.compact select {
-  width:100%;
-  min-width:0;
-  height:30px;
-  padding-left:8px;
-  padding-right:8px;
-  white-space:nowrap;
-}
-.estimate-workflow-table td:nth-child(6){width:260px;}
-.estimate-workflow-table td:nth-child(9){width:360px;}
-@media (max-width:1280px){
-  .estimate-workflow-row-actions.compact{grid-template-columns:1fr 1fr;}
-}
+.estimate-workflow-table .memo{white-space:normal !important;}
+.estimate-workflow-table .memo .request-memo-hidden{display:none !important;}
+.estimate-workflow-table .memo .memo-open-btn{margin-right:8px;vertical-align:middle;}
+.estimate-workflow-table .memo .memo-preview{display:inline-block;max-width:220px;vertical-align:middle;color:#334155;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.estimate-workflow-row-actions.compact{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:330px;}
+.estimate-workflow-row-actions.compact .btn{white-space:nowrap;}
+.estimate-workflow-row-actions.compact .estimate-request-action-select{width:108px;min-width:108px;height:30px;border:1px solid #d7e1ee;border-radius:8px;padding:0 8px;}
