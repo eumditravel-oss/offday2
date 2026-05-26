@@ -1767,6 +1767,55 @@ function estimatePeriodMergeInfo() {
   return { starts, skips };
 }
 
+
+function estimatePeriodGetFocusableCells(host) {
+  const table = host?.querySelector?.(".estimate-period-manage-table");
+  if (!table) return [];
+  return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr =>
+    Array.from(tr.children).map(td => td.querySelector("[contenteditable='true'], select, button:not([disabled])") || td)
+  );
+}
+
+function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
+  const grid = estimatePeriodGetFocusableCells(host);
+  const row = grid[rowIndex];
+  if (!row) return false;
+  const target = row[Math.max(0, Math.min(colIndex, row.length - 1))];
+  if (!target) return false;
+  target.focus?.();
+  if (target.isContentEditable) {
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    range.collapse(false);
+    const sel = window.getSelection?.();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }
+  return true;
+}
+
+function estimatePeriodHandleNavKey(event, el) {
+  const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
+  if (!keyMap[event.key]) return;
+  const table = el.closest?.(".estimate-period-manage-table");
+  const tr = el.closest?.("tr[data-period-row-id]");
+  const td = el.closest?.("td");
+  if (!table || !tr || !td) return;
+  const rows = Array.from(table.querySelectorAll("tbody tr[data-period-row-id]"));
+  const rowIndex = rows.indexOf(tr);
+  const colIndex = Array.from(tr.children).indexOf(td);
+  const [dr, dc] = keyMap[event.key];
+  event.preventDefault();
+  estimatePeriodPersistRenderedRows();
+  estimatePeriodFocusGridCell(table.parentElement, rowIndex + dr, colIndex + dc);
+}
+
+function estimatePeriodBindCellNavigation(host) {
+  host.querySelectorAll(".estimate-period-manage-table td [contenteditable='true'], .estimate-period-manage-table td.editable").forEach(el => {
+    el.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, el));
+  });
+}
+
 function renderEstimatePeriodManage() {
   const host = document.getElementById("estimatePeriodSheetBody");
   if (!host || typeof ESTIMATE_PERIOD_TEMPLATE === "undefined") return;
@@ -2294,13 +2343,13 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "unitPrice", label: "단가(₩)", width: 92, align: "right" },
   { key: "amount", label: "금액(₩)", width: 112, align: "right" },
   { key: "scope", label: "작업범위", width: 140 },
-  { key: "usage", label: "건물용도", width: 29 },
+  { key: "usage", label: "건물용도", width: 70, cls: "usage" },
   { key: "count", label: "작업횟수", width: 88, align: "center" },
   { key: "unitWork", label: "단가작업", width: 104, align: "center" },
   { key: "bid", label: "실행/입찰", width: 104, align: "center" },
   { key: "description", label: "작업내용", width: 300, cls: "wide" },
   { key: "tender", label: "투찰", width: 130, align: "center" },
-  { key: "status", label: "수주/실주", width: 110, align: "center", type: "status" },
+  { key: "status", label: "수주/실주", width: 165, align: "center", type: "status" },
   { key: "memo", label: "비고", width: 180 },
   { key: "result", label: "결과내용", width: 180 },
   { key: "stage", label: "단계", width: 100, align: "center" },
@@ -2592,6 +2641,55 @@ function estimatePeriodPersistRenderedRows() {
   renderEstimatePeriodManage();
 }
 
+
+function estimatePeriodGetFocusableCells(host) {
+  const table = host?.querySelector?.(".estimate-period-manage-table");
+  if (!table) return [];
+  return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr =>
+    Array.from(tr.children).map(td => td.querySelector("[contenteditable='true'], select, button:not([disabled])") || td)
+  );
+}
+
+function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
+  const grid = estimatePeriodGetFocusableCells(host);
+  const row = grid[rowIndex];
+  if (!row) return false;
+  const target = row[Math.max(0, Math.min(colIndex, row.length - 1))];
+  if (!target) return false;
+  target.focus?.();
+  if (target.isContentEditable) {
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    range.collapse(false);
+    const sel = window.getSelection?.();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }
+  return true;
+}
+
+function estimatePeriodHandleNavKey(event, el) {
+  const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
+  if (!keyMap[event.key]) return;
+  const table = el.closest?.(".estimate-period-manage-table");
+  const tr = el.closest?.("tr[data-period-row-id]");
+  const td = el.closest?.("td");
+  if (!table || !tr || !td) return;
+  const rows = Array.from(table.querySelectorAll("tbody tr[data-period-row-id]"));
+  const rowIndex = rows.indexOf(tr);
+  const colIndex = Array.from(tr.children).indexOf(td);
+  const [dr, dc] = keyMap[event.key];
+  event.preventDefault();
+  estimatePeriodPersistRenderedRows();
+  estimatePeriodFocusGridCell(table.parentElement, rowIndex + dr, colIndex + dc);
+}
+
+function estimatePeriodBindCellNavigation(host) {
+  host.querySelectorAll(".estimate-period-manage-table td [contenteditable='true'], .estimate-period-manage-table td.editable").forEach(el => {
+    el.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, el));
+  });
+}
+
 function renderEstimatePeriodManage() {
   const host = document.getElementById("estimatePeriodSheetBody");
   if (!host) return;
@@ -2626,12 +2724,16 @@ function renderEstimatePeriodManage() {
     return `<tr${rowClass} data-period-row-id="${estimateSheetHtml(row.id)}" data-source="${estimateSheetHtml(row.source || "manual")}" data-sent-index="${sentIndex}">${cells}</tr>`;
   }).join("") : `<tr><td colspan="${ESTIMATE_PERIOD_COLUMNS.length}" class="estimate-period-empty">조건에 맞는 견적서가 없습니다.</td></tr>`;
   host.innerHTML = `<div class="estimate-period-manage-wrap"><table class="estimate-period-manage-table">${colGroup}${head}<tbody>${body}</tbody></table></div><div class="estimate-period-save-hint">셀을 수정한 뒤 [수정 저장]을 누르면 기간별 견적서관리 데이터가 저장됩니다. 발송 처리된 행의 [세부보기]는 견적서관리의 발송 스냅샷과 연결됩니다.</div>`;
+  estimatePeriodBindCellNavigation(host);
   host.querySelectorAll(".editable").forEach(td => {
     td.addEventListener("keydown", event => {
       if (event.key === "Enter") { event.preventDefault(); td.blur(); estimatePeriodPersistRenderedRows(); }
     });
   });
-  host.querySelectorAll(".status-select").forEach(sel => sel.addEventListener("change", estimatePeriodPersistRenderedRows));
+  host.querySelectorAll(".status-select").forEach(sel => {
+    sel.addEventListener("change", estimatePeriodPersistRenderedRows);
+    sel.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, sel));
+  });
   const count = document.getElementById("estimatePeriodSentCount");
   if (count) count.textContent = `${estimatePeriodSentRows.length.toLocaleString("ko-KR")}건`;
 }
