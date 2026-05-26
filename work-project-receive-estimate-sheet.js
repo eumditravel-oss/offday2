@@ -485,7 +485,7 @@ function renderEstimateSheetList() {
       <td>${estimateSheetHtml(s.service)}</td>
       <td>${estimateSheetHtml(s.total)}</td>
       <td><span class="quote-status-badge">${estimateSheetHtml(record.status || "작성중")}</span></td>
-      <td class="quote-action-cell" onclick="event.stopPropagation();"><button class="btn btn-line btn-xs" type="button" onclick="openEstimateSheetEditor(${index})">열기</button><button class="btn btn-line btn-xs" type="button" onclick="duplicateEstimateSheetRecord(${index})">복제</button><button class="btn btn-primary btn-xs" type="button" onclick="markEstimateSheetSent(${index})">발송</button></td>
+      <td class="quote-action-cell" onclick="event.stopPropagation();"><button class="btn btn-line btn-xs" type="button" onclick="openEstimateSheetEditor(${index})">열기</button></td>
     </tr>`;
   }).join("") || `<tr><td colspan="7" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
 }
