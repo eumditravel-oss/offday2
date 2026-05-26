@@ -19337,3 +19337,46 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   box-shadow:inset 0 0 0 2px #22c55e !important;
   background:#fff !important;
 }
+
+/* 기간별 견적서관리: 열 너비/단일 스크롤/세부보기 보정 */
+.estimate-period-sheet-wrap{
+  width:100% !important;
+  max-height:650px !important;
+  overflow:auto !important;
+  background:#f8fafc !important;
+  border:1px solid #dbe3ee !important;
+  border-radius:12px !important;
+}
+.estimate-period-manage-wrap{
+  width:max-content !important;
+  min-width:100% !important;
+  max-height:none !important;
+  overflow:visible !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+}
+.estimate-period-manage-table .usage{
+  min-width:35px !important;
+  max-width:35px !important;
+}
+.estimate-period-manage-table th:nth-child(8),
+.estimate-period-manage-table td:nth-child(8){
+  width:35px !important;
+  min-width:35px !important;
+  max-width:35px !important;
+}
+.estimate-period-manage-table th:nth-child(16),
+.estimate-period-manage-table td:nth-child(16){
+  min-width:180px !important;
+}
+.estimate-period-manage-table tbody tr[data-period-row-id]{
+  cursor:pointer;
+}
+.estimate-period-manage-table tbody tr[data-period-row-id]:hover td{
+  background:#eff6ff !important;
+}
+.estimate-period-detail-btn:not(:disabled){
+  opacity:1 !important;
+  cursor:pointer !important;
+}
