@@ -2273,3 +2273,413 @@ function openEstimatePeriodDetail(sentIndex) {
   }
   openEstimateSheetReadonlyWindow(state, item);
 }
+
+
+/* ========================================================================
+   2026-05 기간별 견적서관리 리스트형 개선 패치
+   - 엑셀 원본 형식 유지가 필요 없는 관리 화면으로 전환
+   - 합계/수주/실주/예가/대기중/작업취소는 우측 상단 카드로 분리
+   - 기간 필터, 상태 필터, 검색 필터 추가
+   - 업체명은 (주) 또는 ㈜가 포함된 토큰을 우선 추출
+   - 셀 직접 수정 및 localStorage 저장 지원
+   - 견적서관리 발송 데이터와 기간별 견적서관리 상세보기 연결 유지
+   ======================================================================== */
+const ESTIMATE_PERIOD_EDIT_KEY = "concost.estimate.period.edits.v3";
+const ESTIMATE_PERIOD_FILTER_KEY = "concost.estimate.period.filters.v1";
+const ESTIMATE_PERIOD_COLUMNS = [
+  { key: "date", label: "날짜", width: 82, align: "center" },
+  { key: "company", label: "업체명", width: 180, cls: "company" },
+  { key: "project", label: "프로젝트명", width: 300, cls: "wide" },
+  { key: "area", label: "연면적(평)", width: 92, align: "right" },
+  { key: "unitPrice", label: "단가(₩)", width: 92, align: "right" },
+  { key: "amount", label: "금액(₩)", width: 112, align: "right" },
+  { key: "scope", label: "작업범위", width: 140 },
+  { key: "usage", label: "건물용도", width: 116 },
+  { key: "count", label: "작업횟수", width: 88, align: "center" },
+  { key: "unitWork", label: "단가작업", width: 104, align: "center" },
+  { key: "bid", label: "실행/입찰", width: 104, align: "center" },
+  { key: "description", label: "작업내용", width: 300, cls: "wide" },
+  { key: "tender", label: "투찰", width: 130, align: "center" },
+  { key: "status", label: "수주/실주", width: 110, align: "center", type: "status" },
+  { key: "memo", label: "비고", width: 180 },
+  { key: "result", label: "결과내용", width: 180 },
+  { key: "stage", label: "단계", width: 100, align: "center" },
+  { key: "detail", label: "세부", width: 86, align: "center", type: "detail" }
+];
+const ESTIMATE_PERIOD_STATUS_LIST = ["수주", "실주", "예가", "대기중", "작업취소"];
+
+let estimatePeriodEditRows = [];
+let estimatePeriodFilters = { from: "", to: "", status: "전체", q: "" };
+
+function estimatePeriodLoadEdits() {
+  try { estimatePeriodEditRows = JSON.parse(localStorage.getItem(ESTIMATE_PERIOD_EDIT_KEY) || "[]"); }
+  catch (err) { estimatePeriodEditRows = []; }
+}
+
+function estimatePeriodSaveEdits() {
+  try { localStorage.setItem(ESTIMATE_PERIOD_EDIT_KEY, JSON.stringify(estimatePeriodEditRows)); }
+  catch (err) { console.warn("기간별 견적서 수정 저장 실패", err); }
+}
+
+function estimatePeriodLoadFilters() {
+  try { estimatePeriodFilters = { ...estimatePeriodFilters, ...(JSON.parse(localStorage.getItem(ESTIMATE_PERIOD_FILTER_KEY) || "{}") || {}) }; }
+  catch (err) {}
+}
+
+function estimatePeriodSaveFilters() {
+  try { localStorage.setItem(ESTIMATE_PERIOD_FILTER_KEY, JSON.stringify(estimatePeriodFilters)); }
+  catch (err) {}
+}
+
+function estimatePeriodNormalizeText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function estimatePeriodExtractCompanyName(text) {
+  const raw = estimatePeriodNormalizeText(text);
+  if (!raw) return "";
+  const tokens = raw.split(/\s+/).filter(Boolean);
+  const corpToken = tokens.find(token => token.includes("(주)") || token.includes("㈜"));
+  if (corpToken) return corpToken.replace(/[,:;，。]+$/g, "");
+  const stopWords = ["견적담당자", "담당자", "귀하", "님", "수신", "앞"];
+  const first = tokens.find(token => !stopWords.some(stop => token.includes(stop))) || tokens[0];
+  return (first || "").replace(/[,:;，。]+$/g, "");
+}
+
+function estimatePeriodFormatDateCode(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length >= 6) return digits.slice(0, 6);
+  return raw;
+}
+
+function estimatePeriodTodayCode() {
+  const d = new Date();
+  return `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function estimatePeriodToNumber(value) {
+  const n = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function estimatePeriodDisplayNumber(value) {
+  if (value === "" || value === null || typeof value === "undefined") return "";
+  const n = estimatePeriodToNumber(value);
+  if (!n && String(value).trim() !== "0") return String(value ?? "");
+  return n.toLocaleString("ko-KR");
+}
+
+function estimatePeriodRowFromValues(values = {}, key = "", source = "template", extra = {}) {
+  const date = estimatePeriodFormatDateCode(values[2]);
+  const companySource = values[3] || values.recipient || extra.recipient || "";
+  const amount = values[7] || values.amount || "";
+  const area = values[5] || values.area || "";
+  let unitPrice = values[6] || values.unitPrice || "";
+  if (!unitPrice && estimatePeriodToNumber(area) && estimatePeriodToNumber(amount)) {
+    unitPrice = Math.round(estimatePeriodToNumber(amount) / estimatePeriodToNumber(area));
+  }
+  return {
+    id: key || estimateSheetMakeId?.("period") || `period-${Date.now()}-${Math.random()}`,
+    source,
+    sourceEstimateId: extra.sourceEstimateId || "",
+    sourceSentIndex: Number.isFinite(extra.sourceSentIndex) ? extra.sourceSentIndex : -1,
+    date,
+    company: estimatePeriodExtractCompanyName(companySource),
+    companyRaw: companySource,
+    project: values[4] || values.project || "",
+    area,
+    unitPrice,
+    amount,
+    scope: values[8] || values.scope || "",
+    usage: values[9] || values.usage || "",
+    count: values[10] || values.count || "",
+    unitWork: values[11] || values.unitWork || "",
+    bid: values[12] || values.bid || "",
+    description: values[13] || values.description || "",
+    tender: values[14] || values.tender || "",
+    status: values[15] || values.status || "대기중",
+    memo: values[16] || values.memo || "",
+    result: values[17] || values.result || "",
+    stage: values[18] || values.stage || "",
+    sentAt: extra.sentAt || values.sentAt || "",
+    linked: !!extra.linked,
+    detailSnapshot: extra.detailSnapshot || null,
+    recordSnapshot: extra.recordSnapshot || null
+  };
+}
+
+function estimatePeriodBaseListRows() {
+  const rows = [];
+  const maxRow = ESTIMATE_PERIOD_TEMPLATE?.maxRow || 156;
+  for (let r = 9; r <= maxRow; r += 1) {
+    const values = {};
+    for (let c = 1; c <= (ESTIMATE_PERIOD_TEMPLATE?.maxCol || 18); c += 1) {
+      const v = estimatePeriodTemplateValue(r, c);
+      if (v !== "" && v !== null && typeof v !== "undefined") values[c] = v;
+    }
+    const has = Object.keys(values).some(c => !String(values[c]).startsWith("="));
+    if (has) rows.push(estimatePeriodRowFromValues(values, `template-${r}`, "template"));
+  }
+  return rows;
+}
+
+function estimatePeriodSentListRows() {
+  estimatePeriodLoadSentRows();
+  return estimatePeriodSentRows.map((item, index) => {
+    const row = estimatePeriodRowFromValues(item.values || {}, item.key || `sent-${index}`, "sent", {
+      linked: true,
+      sentAt: item.sentAt || "",
+      sourceEstimateId: item.sourceEstimateId || "",
+      sourceSentIndex: index,
+      detailSnapshot: item.detailSnapshot || null,
+      recordSnapshot: item.recordSnapshot || null,
+      recipient: item.values?.[3] || item.recordSnapshot?.recipient || ""
+    });
+    row.status = item.values?.[15] || row.status || "대기중";
+    row.stage = item.values?.[18] || row.stage || "발송";
+    return row;
+  });
+}
+
+function estimatePeriodAllRowsForList() {
+  estimatePeriodLoadEdits();
+  const edits = estimatePeriodEditRows.map(row => ({ ...row, source: row.source || "manual", linked: !!row.linked }));
+  const sent = estimatePeriodSentListRows();
+  const base = estimatePeriodBaseListRows();
+  const sentKeys = new Set(sent.map(row => row.id));
+  const editKeys = new Set(edits.map(row => row.id));
+  return [
+    ...sent,
+    ...edits.filter(row => !sentKeys.has(row.id)),
+    ...base.filter(row => !sentKeys.has(row.id) && !editKeys.has(row.id))
+  ];
+}
+
+function estimatePeriodSummary(allRows) {
+  const result = {};
+  ["합계", ...ESTIMATE_PERIOD_STATUS_LIST].forEach(label => { result[label] = { count: 0, ratio: "0%" }; });
+  allRows.forEach(row => {
+    const status = String(row.status || "");
+    ESTIMATE_PERIOD_STATUS_LIST.forEach(label => { if (status.includes(label)) result[label].count += 1; });
+  });
+  result["합계"].count = ESTIMATE_PERIOD_STATUS_LIST.reduce((sum, label) => sum + result[label].count, 0);
+  ESTIMATE_PERIOD_STATUS_LIST.forEach(label => {
+    result[label].ratio = result["합계"].count ? `${Math.round((result[label].count / result["합계"].count) * 1000) / 10}%` : "0%";
+  });
+  return result;
+}
+
+function estimatePeriodDateInRange(row) {
+  const date = estimatePeriodFormatDateCode(row.date);
+  const from = estimatePeriodFormatDateCode(estimatePeriodFilters.from);
+  const to = estimatePeriodFormatDateCode(estimatePeriodFilters.to);
+  if (from && date && date < from) return false;
+  if (to && date && date > to) return false;
+  return true;
+}
+
+function estimatePeriodFilterRows(rows) {
+  const status = estimatePeriodFilters.status || "전체";
+  const q = estimatePeriodNormalizeText(estimatePeriodFilters.q).toLowerCase();
+  return rows.filter(row => {
+    if (!estimatePeriodDateInRange(row)) return false;
+    if (status !== "전체" && !String(row.status || "").includes(status)) return false;
+    if (q) {
+      const hay = ESTIMATE_PERIOD_COLUMNS.filter(col => col.key !== "detail").map(col => row[col.key]).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderEstimatePeriodSummaryCards(summary) {
+  const host = document.getElementById("estimatePeriodSummaryCards");
+  if (!host) return;
+  const labels = ["합계", ...ESTIMATE_PERIOD_STATUS_LIST];
+  host.innerHTML = labels.map(label => {
+    const item = summary[label] || { count: 0, ratio: "" };
+    return `<div class="estimate-period-summary-card"><strong>${estimateSheetHtml(label)}</strong><b>${Number(item.count || 0).toLocaleString("ko-KR")}</b><span>${label === "합계" ? "건" : estimateSheetHtml(item.ratio || "0%")}</span></div>`;
+  }).join("");
+}
+
+function renderEstimatePeriodFilters() {
+  const host = document.getElementById("estimatePeriodFilterControls");
+  if (!host) return;
+  host.innerHTML = `
+    <label class="estimate-period-filter-field"><span>시작일(YYMMDD)</span><input id="estimatePeriodFilterFrom" value="${estimateSheetHtml(estimatePeriodFilters.from || "")}" placeholder="260501"></label>
+    <label class="estimate-period-filter-field"><span>종료일(YYMMDD)</span><input id="estimatePeriodFilterTo" value="${estimateSheetHtml(estimatePeriodFilters.to || "")}" placeholder="260531"></label>
+    <label class="estimate-period-filter-field"><span>상태</span><select id="estimatePeriodFilterStatus"><option>전체</option>${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option ${estimatePeriodFilters.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+    <label class="estimate-period-filter-field search"><span>검색</span><input id="estimatePeriodFilterQ" value="${estimateSheetHtml(estimatePeriodFilters.q || "")}" placeholder="업체명, 프로젝트명, 작업내용"></label>
+    <button class="btn btn-line" type="button" id="estimatePeriodFilterApply">기간 조회</button>
+    <button class="btn btn-line" type="button" id="estimatePeriodFilterReset">전체보기</button>
+    <button class="btn btn-primary" type="button" id="estimatePeriodAddManualRow">행 추가</button>
+    <button class="btn btn-line" type="button" id="estimatePeriodSaveRows">수정 저장</button>
+  `;
+  host.querySelector("#estimatePeriodFilterApply")?.addEventListener("click", () => {
+    estimatePeriodFilters.from = host.querySelector("#estimatePeriodFilterFrom")?.value || "";
+    estimatePeriodFilters.to = host.querySelector("#estimatePeriodFilterTo")?.value || "";
+    estimatePeriodFilters.status = host.querySelector("#estimatePeriodFilterStatus")?.value || "전체";
+    estimatePeriodFilters.q = host.querySelector("#estimatePeriodFilterQ")?.value || "";
+    estimatePeriodSaveFilters();
+    renderEstimatePeriodManage();
+  });
+  host.querySelector("#estimatePeriodFilterReset")?.addEventListener("click", () => {
+    estimatePeriodFilters = { from: "", to: "", status: "전체", q: "" };
+    estimatePeriodSaveFilters();
+    renderEstimatePeriodManage();
+  });
+  host.querySelector("#estimatePeriodAddManualRow")?.addEventListener("click", () => {
+    estimatePeriodLoadEdits();
+    estimatePeriodEditRows.unshift(estimatePeriodRowFromValues({ 2: estimatePeriodTodayCode(), 15: "대기중", 18: "수기" }, estimateSheetMakeId("period"), "manual"));
+    estimatePeriodSaveEdits();
+    renderEstimatePeriodManage();
+  });
+  host.querySelector("#estimatePeriodSaveRows")?.addEventListener("click", () => {
+    estimatePeriodPersistRenderedRows();
+    showToast?.("기간별 견적서관리 수정 내용을 저장했습니다.");
+  });
+}
+
+function estimatePeriodPersistRenderedRows() {
+  const rows = Array.from(document.querySelectorAll("#estimatePeriodSheetBody tr[data-period-row-id]"));
+  estimatePeriodLoadEdits();
+  const editMap = new Map(estimatePeriodEditRows.map(row => [row.id, row]));
+  let sentChanged = false;
+  rows.forEach(tr => {
+    const id = tr.getAttribute("data-period-row-id");
+    if (!id) return;
+    const source = tr.getAttribute("data-source") || "manual";
+    const row = { ...(editMap.get(id) || { id, source }) };
+    ESTIMATE_PERIOD_COLUMNS.forEach(col => {
+      if (col.type === "detail") return;
+      const el = tr.querySelector(`[data-period-key="${col.key}"]`);
+      row[col.key] = col.type === "status" ? (el?.value || "") : estimatePeriodNormalizeText(el?.innerText || el?.textContent || "");
+    });
+    row.company = estimatePeriodExtractCompanyName(row.company || row.companyRaw || "");
+    if (source === "sent") {
+      const index = Number(tr.getAttribute("data-sent-index"));
+      if (estimatePeriodSentRows[index]) {
+        const item = estimatePeriodSentRows[index];
+        item.values = item.values || {};
+        item.values[2] = row.date;
+        item.values[3] = row.company;
+        item.values[4] = row.project;
+        item.values[5] = row.area;
+        item.values[6] = row.unitPrice;
+        item.values[7] = row.amount;
+        item.values[8] = row.scope;
+        item.values[9] = row.usage;
+        item.values[10] = row.count;
+        item.values[11] = row.unitWork;
+        item.values[12] = row.bid;
+        item.values[13] = row.description;
+        item.values[14] = row.tender;
+        item.values[15] = row.status;
+        item.values[16] = row.memo;
+        item.values[17] = row.result;
+        item.values[18] = row.stage;
+        sentChanged = true;
+      }
+    } else {
+      editMap.set(id, row);
+    }
+  });
+  estimatePeriodEditRows = Array.from(editMap.values()).filter(row => row.source !== "template" || row.id.startsWith("manual") || row.modified);
+  estimatePeriodSaveEdits();
+  if (sentChanged) estimatePeriodSaveSentRows();
+  renderEstimatePeriodManage();
+}
+
+function renderEstimatePeriodManage() {
+  const host = document.getElementById("estimatePeriodSheetBody");
+  if (!host) return;
+  estimatePeriodLoadFilters();
+  estimatePeriodLoadSentRows();
+  estimatePeriodLoadEdits();
+  const allRows = estimatePeriodAllRowsForList().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.sentAt || "").localeCompare(String(a.sentAt || "")));
+  const summary = estimatePeriodSummary(allRows);
+  const filtered = estimatePeriodFilterRows(allRows);
+  renderEstimatePeriodSummaryCards(summary);
+  renderEstimatePeriodFilters();
+  const colGroup = `<colgroup>${ESTIMATE_PERIOD_COLUMNS.map(col => `<col style="width:${col.width}px">`).join("")}</colgroup>`;
+  const head = `<thead><tr>${ESTIMATE_PERIOD_COLUMNS.map(col => `<th>${estimateSheetHtml(col.label)}</th>`).join("")}</tr></thead>`;
+  const body = filtered.length ? filtered.map(row => {
+    const sentIndex = row.source === "sent" ? row.sourceSentIndex : -1;
+    const rowClass = row.linked ? " class=\"is-linked\"" : "";
+    const cells = ESTIMATE_PERIOD_COLUMNS.map(col => {
+      const align = col.align ? ` ${col.align}` : "";
+      const cls = `${col.cls || ""}${align}`.trim();
+      if (col.type === "detail") {
+        const disabled = row.linked ? "" : " disabled";
+        const btn = `<button class="estimate-period-detail-btn" type="button"${disabled} onclick="openEstimatePeriodDetail(${sentIndex})">세부보기</button>`;
+        return `<td class="center">${btn}</td>`;
+      }
+      if (col.type === "status") {
+        return `<td class="center"><select class="status-select" data-period-key="${col.key}">${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option value="${s}" ${String(row[col.key] || "").includes(s) ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+      }
+      let value = row[col.key] ?? "";
+      if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
+      return `<td class="editable ${cls}" contenteditable="true" data-period-key="${col.key}">${estimateSheetHtml(value)}</td>`;
+    }).join("");
+    return `<tr${rowClass} data-period-row-id="${estimateSheetHtml(row.id)}" data-source="${estimateSheetHtml(row.source || "manual")}" data-sent-index="${sentIndex}">${cells}</tr>`;
+  }).join("") : `<tr><td colspan="${ESTIMATE_PERIOD_COLUMNS.length}" class="estimate-period-empty">조건에 맞는 견적서가 없습니다.</td></tr>`;
+  host.innerHTML = `<div class="estimate-period-manage-wrap"><table class="estimate-period-manage-table">${colGroup}${head}<tbody>${body}</tbody></table></div><div class="estimate-period-save-hint">셀을 수정한 뒤 [수정 저장]을 누르면 기간별 견적서관리 데이터가 저장됩니다. 발송 처리된 행의 [세부보기]는 견적서관리의 발송 스냅샷과 연결됩니다.</div>`;
+  host.querySelectorAll(".editable").forEach(td => {
+    td.addEventListener("keydown", event => {
+      if (event.key === "Enter") { event.preventDefault(); td.blur(); estimatePeriodPersistRenderedRows(); }
+    });
+  });
+  host.querySelectorAll(".status-select").forEach(sel => sel.addEventListener("change", estimatePeriodPersistRenderedRows));
+  const count = document.getElementById("estimatePeriodSentCount");
+  if (count) count.textContent = `${estimatePeriodSentRows.length.toLocaleString("ko-KR")}건`;
+}
+
+function registerEstimatePeriodSentRecord(record, recordIndex) {
+  if (!record) return;
+  estimatePeriodLoadSentRows();
+  const state = record.state || estimateSheetRecordToState(record);
+  const recipientRaw = estimateSheetDisplayValue(state, 5, 2) || "";
+  const recipient = estimatePeriodExtractCompanyName(recipientRaw) || estimatePeriodExtractCompanyName(record.recipient || "") || recipientRaw;
+  const project = estimateSheetDisplayValue(state, 6, 2) || record.title || "";
+  const service = estimateSheetDisplayValue(state, 7, 2) || "";
+  const totalText = estimateSheetDisplayValue(state, 10, 2) || "";
+  const totalAmount = estimateSheetDisplayValue(state, 20, 6) || estimatePeriodToNumber(totalText) || "";
+  const sentAt = record.sentAt || estimateSheetNow();
+  const recordId = record.id || estimateSheetMakeId("estimate");
+  record.id = recordId;
+  const key = `${recordId}|${sentAt}`;
+  const row = {
+    key,
+    sourceEstimateId: recordId,
+    sourceEstimateIndex: recordIndex,
+    sentAt,
+    type: record.type || "",
+    title: record.title || project,
+    detailSnapshot: estimateSheetCloneState(state),
+    recordSnapshot: JSON.parse(JSON.stringify(record)),
+    values: {
+      2: estimatePeriodTodayCode(),
+      3: recipient,
+      4: project,
+      5: "",
+      6: "",
+      7: totalAmount,
+      8: service,
+      9: "",
+      10: "",
+      11: record.type || "",
+      12: record.type || "",
+      13: service,
+      14: "견적서 발송",
+      15: "대기중",
+      16: "견적서관리 발송 처리",
+      17: sentAt,
+      18: "발송"
+    }
+  };
+  estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
+  estimatePeriodSentRows.unshift(row);
+  estimatePeriodSaveSentRows();
+}
