@@ -4395,3 +4395,210 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage?.();
   }, 30);
 });
+
+/* =========================================================
+   2026-05-26 더미데이터 경량화 패치
+   - 견적 의뢰관리/DB관리 렉 완화를 위해 기간별 견적서 관리 원본 더미데이터를 최신순 50%만 사용
+   - 삭제 대상 더미행은 견적 의뢰관리 / 견적서 종류별 관리 / 기간별 견적서 관리 / DB관리에서 동일 기준으로 제거
+   - 사용자가 직접 추가한 행은 삭제하지 않고, 기간별 템플릿에서 자동 생성된 연계 더미행만 정리
+   ========================================================= */
+const ESTIMATE_DUMMY_HALF_STORAGE_VERSION = "concost.estimate.dummy.half-sync.v1";
+let estimateDummyHalfPruneRunning = false;
+const estimateDummyHalfOriginalCentralTemplateRows = typeof estimateCentralTemplateRows === "function" ? estimateCentralTemplateRows : null;
+const estimateDummyHalfOriginalPeriodBaseListRows = typeof estimatePeriodBaseListRows === "function" ? estimatePeriodBaseListRows : null;
+
+function estimateDummyHalfText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+function estimateDummyHalfSignature(row = {}) {
+  const company = estimateDummyHalfText(row.company || row.client || row.companyRaw || "");
+  const project = estimateDummyHalfText(row.project || row.title || "");
+  return `${company}__${project}`;
+}
+function estimateDummyHalfGetFullTemplateRows() {
+  try {
+    const rows = estimateDummyHalfOriginalCentralTemplateRows ? estimateDummyHalfOriginalCentralTemplateRows() : [];
+    return (rows || []).filter(row => row && !(typeof estimateCentralHasBoq === "function" && estimateCentralHasBoq(row)));
+  } catch (e) {
+    console.warn("견적 더미데이터 원본 조회 실패", e);
+    return [];
+  }
+}
+function estimateDummyHalfKeepCount(rows) {
+  return Math.ceil((rows || []).length / 2);
+}
+function estimateDummyHalfGetKeepRows() {
+  const rows = estimateDummyHalfGetFullTemplateRows();
+  return rows.slice(0, estimateDummyHalfKeepCount(rows));
+}
+function estimateDummyHalfGetDeleteRows() {
+  const rows = estimateDummyHalfGetFullTemplateRows();
+  return rows.slice(estimateDummyHalfKeepCount(rows));
+}
+function estimateDummyHalfBuildSets() {
+  const keepRows = estimateDummyHalfGetKeepRows();
+  const deleteRows = estimateDummyHalfGetDeleteRows();
+  const toSet = rows => {
+    const centralKeys = new Set();
+    const dbPjNos = new Set();
+    const signatures = new Set();
+    const projects = new Set();
+    rows.forEach(row => {
+      const centralKey = estimateDummyHalfText(row.centralKey || (typeof estimateCentralMakeKey === "function" ? estimateCentralMakeKey(row) : ""));
+      const dbPjNo = estimateDummyHalfText(row.dbPjNo || (typeof estimateCentralDbPjNo === "function" ? estimateCentralDbPjNo(row) : ""));
+      const signature = estimateDummyHalfSignature(row);
+      const project = estimateDummyHalfText(row.project || "");
+      if (centralKey) centralKeys.add(centralKey);
+      if (dbPjNo) dbPjNos.add(dbPjNo);
+      if (signature !== "__") signatures.add(signature);
+      if (project) projects.add(project);
+    });
+    return { centralKeys, dbPjNos, signatures, projects };
+  };
+  return { keep: toSet(keepRows), remove: toSet(deleteRows), keepRows, deleteRows };
+}
+function estimateDummyHalfMatchesSet(row = {}, setInfo) {
+  if (!row || !setInfo) return false;
+  const centralKey = estimateDummyHalfText(row.centralKey || (typeof estimateCentralMakeKey === "function" ? estimateCentralMakeKey(row) : ""));
+  const dbPjNo = estimateDummyHalfText(row.dbPjNo || "");
+  const signature = estimateDummyHalfSignature(row);
+  const project = estimateDummyHalfText(row.project || row.title || "");
+  if (centralKey && setInfo.centralKeys.has(centralKey)) return true;
+  if (dbPjNo && setInfo.dbPjNos.has(dbPjNo)) return true;
+  if (signature !== "__" && setInfo.signatures.has(signature)) return true;
+  if (project && setInfo.projects.has(project)) return true;
+  return false;
+}
+function estimateDummyHalfRowFromDb(tab, dbRow, index) {
+  try {
+    const row = typeof estimateCentralDbRowToPeriodRow === "function" ? estimateCentralDbRowToPeriodRow(tab, dbRow, index) : null;
+    if (row) return row;
+  } catch (e) {}
+  const getIdx = header => typeof getEstimateDbColumnIndexByHeader === "function" ? getEstimateDbColumnIndexByHeader(tab, header) : -1;
+  const get = header => {
+    const idx = getIdx(header);
+    return idx >= 0 ? dbRow[idx] : "";
+  };
+  return {
+    dbPjNo: get("PJ NO"),
+    company: get("거래처명") || get("업체명") || get("계약업체"),
+    project: get("프로젝트명") || get("PJ명"),
+    date: get("견적서일자") || get("수주일자")
+  };
+}
+function estimateDummyHalfIsTemplateLinkedRecord(row = {}) {
+  const sourceText = estimateDummyHalfText(row.source || row.dataMode || row.result || row.stage || row.history?.map?.(h => h.text || h.message).join(" ") || "");
+  if (/period-template|template|더미데이터|자동 연계|공통 기준 자동 연계|DB관리 기준 자동 연계|기간별 견적서 관리/.test(sourceText)) return true;
+  if (estimateDummyHalfText(row.id || "").startsWith("central-") || estimateDummyHalfText(row.requestId || "").startsWith("central-")) return true;
+  if (estimateDummyHalfText(row.centralKey || "") || estimateDummyHalfText(row.dbPjNo || "")) return true;
+  return false;
+}
+function estimateDummyHalfShouldRemove(row = {}, setInfo) {
+  if (!row) return false;
+  if (!estimateDummyHalfMatchesSet(row, setInfo.remove)) return false;
+  if (estimateDummyHalfMatchesSet(row, setInfo.keep)) return false;
+  return estimateDummyHalfIsTemplateLinkedRecord(row);
+}
+function estimateDummyHalfApplyPrune(options = {}) {
+  if (estimateDummyHalfPruneRunning) return;
+  estimateDummyHalfPruneRunning = true;
+  try {
+    const setInfo = estimateDummyHalfBuildSets();
+    if (!setInfo.deleteRows.length) return;
+
+    if (Array.isArray(estimateSheetRecords)) {
+      estimateSheetRecords = estimateSheetRecords.filter(record => !estimateDummyHalfShouldRemove(record, setInfo));
+    }
+
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    if (Array.isArray(estimateRequestRows)) {
+      estimateRequestRows = estimateRequestRows.filter(row => !estimateDummyHalfShouldRemove(row, setInfo));
+      if (typeof estimateRequestSaveRows === "function") estimateRequestSaveRows();
+    }
+
+    if (typeof estimatePeriodLoadEdits === "function") estimatePeriodLoadEdits();
+    if (Array.isArray(estimatePeriodEditRows)) {
+      estimatePeriodEditRows = estimatePeriodEditRows.filter(row => !estimateDummyHalfShouldRemove(row, setInfo));
+      if (typeof estimatePeriodSaveEdits === "function") estimatePeriodSaveEdits();
+    }
+
+    if (typeof estimatePeriodLoadSentRows === "function") estimatePeriodLoadSentRows();
+    if (Array.isArray(estimatePeriodSentRows)) {
+      estimatePeriodSentRows = estimatePeriodSentRows.filter((item, index) => {
+        let row = item;
+        try {
+          row = typeof estimatePeriodRowFromValues === "function" ? estimatePeriodRowFromValues(item.values || {}, item.key || `sent-${index}`, "sent", item) : item;
+        } catch (e) {}
+        return !estimateDummyHalfShouldRemove(row, setInfo);
+      });
+      if (typeof estimatePeriodSaveSentRows === "function") estimatePeriodSaveSentRows();
+    }
+
+    ["pj", "progress", "mep"].forEach(tab => {
+      const sheet = estimateDbSheets?.[tab];
+      if (!sheet || !Array.isArray(sheet.rows)) return;
+      sheet.rows = sheet.rows.filter((dbRow, index) => {
+        const row = estimateDummyHalfRowFromDb(tab, dbRow, index);
+        return !estimateDummyHalfShouldRemove(row, setInfo);
+      });
+    });
+
+    try { localStorage.setItem(ESTIMATE_DUMMY_HALF_STORAGE_VERSION, String(Date.now())); } catch (e) {}
+    if (typeof recalcAllEstimateDbRows === "function") recalcAllEstimateDbRows();
+    if (!options.silent) showToast?.("견적관리 더미데이터를 현재 기준 50%로 정리했습니다.");
+  } finally {
+    estimateDummyHalfPruneRunning = false;
+  }
+}
+
+if (estimateDummyHalfOriginalCentralTemplateRows) {
+  estimateCentralTemplateRows = function estimateDummyHalfCentralTemplateRows() {
+    return estimateDummyHalfGetKeepRows();
+  };
+  window.estimateCentralTemplateRows = estimateCentralTemplateRows;
+}
+if (estimateDummyHalfOriginalPeriodBaseListRows) {
+  estimatePeriodBaseListRows = function estimateDummyHalfPeriodBaseListRows() {
+    const setInfo = estimateDummyHalfBuildSets();
+    return (estimateDummyHalfOriginalPeriodBaseListRows() || []).filter(row => !estimateDummyHalfShouldRemove(row, setInfo));
+  };
+  window.estimatePeriodBaseListRows = estimatePeriodBaseListRows;
+}
+
+const estimateDummyHalfOriginalSyncSeedRows = typeof estimateCentralSyncSeedRows === "function" ? estimateCentralSyncSeedRows : null;
+if (estimateDummyHalfOriginalSyncSeedRows) {
+  estimateCentralSyncSeedRows = function estimateDummyHalfSyncSeedRows(options = {}) {
+    const result = estimateDummyHalfOriginalSyncSeedRows(options);
+    estimateDummyHalfApplyPrune({ silent: true });
+    return result;
+  };
+  window.estimateCentralSyncSeedRows = estimateCentralSyncSeedRows;
+}
+
+const estimateDummyHalfOriginalRenderRequestManage = typeof renderEstimateRequestManage === "function" ? renderEstimateRequestManage : null;
+if (estimateDummyHalfOriginalRenderRequestManage) {
+  renderEstimateRequestManage = function estimateDummyHalfRenderRequestManage() {
+    estimateDummyHalfApplyPrune({ silent: true });
+    return estimateDummyHalfOriginalRenderRequestManage();
+  };
+  window.renderEstimateRequestManage = renderEstimateRequestManage;
+}
+
+const estimateDummyHalfOriginalRenderDbManage = typeof renderEstimateDbManage === "function" ? renderEstimateDbManage : null;
+if (estimateDummyHalfOriginalRenderDbManage) {
+  renderEstimateDbManage = function estimateDummyHalfRenderDbManage() {
+    estimateDummyHalfApplyPrune({ silent: true });
+    return estimateDummyHalfOriginalRenderDbManage();
+  };
+  window.renderEstimateDbManage = renderEstimateDbManage;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    estimateCentralSeedSynced = false;
+    estimateCentralSyncSeedRows?.({ silent: true });
+    estimateDummyHalfApplyPrune({ silent: true });
+    if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage?.();
+    if (document.getElementById("estimateDbManage")?.classList.contains("active")) renderEstimateDbManage?.();
+  }, 80);
+});
