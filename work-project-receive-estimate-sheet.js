@@ -3958,3 +3958,440 @@ if (estimateCentralFinalInitializeEstimateDbVisibleSeedRows) {
     estimateCentralRemoveBoqRowsEverywhere();
   };
 }
+
+/* =========================================================
+   2026-05-27 견적관리 연계 최종 보강
+   - 메뉴 순서는 유지
+   - 견적 의뢰관리 = 최초 입력 원본, DB관리 = 기준 데이터 보정 화면
+   - 견적 의뢰관리/견적서 종류별/기간별/DB관리 간 공통 키 기반 동기화
+   - BOQ 행 전역 제외
+   - 견적서명 표시 시 _설계예가/_공사비검증 등 내부 분류 suffix 제거
+   ========================================================= */
+const ESTIMATE_LINKAGE_PATCH_VERSION = "2026-05-27.request-first-sync.v2";
+const ESTIMATE_LINKAGE_TYPE_SUFFIXES = ["개산견적", "공내역서", "설계예가", "공사비검증", "설계가", "BOQ"];
+const ESTIMATE_LINKAGE_STATUS_MAP = {
+  REQUESTED: "의뢰메모",
+  WAITING: "대기중",
+  WRITING: "견적작성중",
+  SENT: "대기중",
+  WON: "작업시작",
+  LOST: "대기중",
+  HOLD: "대기중",
+  CANCELLED: "작업취소",
+  PRE_START: "선착수",
+  STARTED: "작업시작"
+};
+
+function estimateLinkageText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+function estimateLinkageTypeRegex() {
+  return new RegExp(`_\\s*(${ESTIMATE_LINKAGE_TYPE_SUFFIXES.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*$`, "i");
+}
+function estimateLinkageSplitTitle(title = "") {
+  const raw = String(title ?? "").trim();
+  const re = estimateLinkageTypeRegex();
+  const m = raw.match(re);
+  if (!m) return { displayTitle: raw, typeSuffix: "" };
+  return { displayTitle: raw.replace(re, "").trim(), typeSuffix: m[1] || "" };
+}
+function estimateLinkageDisplayTitle(title = "") {
+  return estimateLinkageSplitTitle(title).displayTitle || String(title ?? "");
+}
+function estimateLinkageHasBoq(row = {}) {
+  if (!row) return false;
+  if (Array.isArray(row)) return row.some(cell => /\bBOQ\b/i.test(String(cell ?? "")));
+  return Object.values(row).some(value => /\bBOQ\b/i.test(String(value ?? "")));
+}
+function estimateLinkageStatusForRequest(status) {
+  const text = estimateLinkageText(status);
+  if (!text) return "의뢰메모";
+  if (ESTIMATE_REQUEST_STATUS?.includes?.(text)) return text;
+  if (/취소/.test(text)) return "작업취소";
+  if (/선착수/.test(text)) return "선착수";
+  if (/작업시작|착수완료|수주|실주/.test(text)) return "작업시작";
+  if (/작성/.test(text)) return "견적작성중";
+  return "대기중";
+}
+function estimateLinkageStatusForPeriod(status) {
+  const text = estimateLinkageText(status);
+  if (typeof ESTIMATE_PERIOD_STATUS_LIST !== "undefined" && ESTIMATE_PERIOD_STATUS_LIST.includes(text)) return text;
+  if (/취소/.test(text)) return "작업취소";
+  if (/실주/.test(text)) return "실주";
+  if (/수주|작업시작|착수/.test(text)) return "수주";
+  if (/예가/.test(text)) return "예가";
+  return "대기중";
+}
+function estimateLinkageNormalizeProjectName(value = "") {
+  return estimateLinkageDisplayTitle(value).replace(/\s+$/g, "");
+}
+function estimateLinkageMakeKey(row = {}) {
+  if (typeof estimateCentralMakeKey === "function") return estimateCentralMakeKey(row);
+  const safe = value => estimateLinkageText(value).replace(/[^0-9a-zA-Z가-힣]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "empty";
+  return [row.date, row.company, row.project].map(safe).join("__");
+}
+function estimateLinkageDbPjNo(row = {}) {
+  if (row.dbPjNo) return row.dbPjNo;
+  if (typeof estimateCentralDbPjNo === "function") return estimateCentralDbPjNo(row);
+  return `PJ-${estimateLinkageMakeKey(row).slice(0, 30)}`;
+}
+function estimateLinkageCanonicalRow(row = {}) {
+  const type = (typeof estimatePeriodResolveEstimateType === "function" ? estimatePeriodResolveEstimateType(row) : row.unitWork) || row.estimateType || "개산견적";
+  const project = estimateLinkageNormalizeProjectName(row.project || row.title || row.projectName || "");
+  const company = estimateLinkageText(row.company || row.client || row.companyRaw || row.recipient || "");
+  const next = {
+    ...row,
+    id: row.id || row.key || row.periodKey || "",
+    date: row.date || (typeof estimatePeriodTodayCode === "function" ? estimatePeriodTodayCode() : ""),
+    company,
+    client: row.client || company,
+    project,
+    estimateType: type,
+    unitWork: row.unitWork || type,
+    status: row.status || "대기중",
+    memo: row.memo || row.description || row.scope || "",
+    description: row.description || row.memo || row.scope || "",
+    scope: row.scope || row.description || row.memo || ""
+  };
+  next.centralKey = row.centralKey || estimateLinkageMakeKey(next);
+  next.dbPjNo = row.dbPjNo || estimateLinkageDbPjNo(next);
+  return next;
+}
+
+/* 기존 전역 함수의 판단 기준을 보강한다. */
+if (typeof estimateCentralHasBoq === "function") {
+  window.estimateCentralHasBoq = estimateLinkageHasBoq;
+}
+if (typeof estimateCentralNormalizeStatusForRequest === "function") {
+  window.estimateCentralNormalizeStatusForRequest = estimateLinkageStatusForRequest;
+}
+if (typeof estimateCentralNormalizeStatusForPeriod === "function") {
+  window.estimateCentralNormalizeStatusForPeriod = estimateLinkageStatusForPeriod;
+}
+
+/* 견적서명 표시용 suffix 제거: 저장 내부값은 유지하되 목록/창 제목은 정제해서 보여준다. */
+const estimateLinkageOriginalGetSummary = typeof getEstimateSheetRecordSummary === "function" ? getEstimateSheetRecordSummary : null;
+if (estimateLinkageOriginalGetSummary) {
+  window.getEstimateSheetRecordSummary = function estimateLinkageGetEstimateSheetRecordSummary(record) {
+    const summary = estimateLinkageOriginalGetSummary(record);
+    if (summary) {
+      summary.project = estimateLinkageNormalizeProjectName(summary.project || "");
+      summary.recipient = estimateLinkageDisplayTitle(summary.recipient || "");
+    }
+    return summary;
+  };
+}
+
+const estimateLinkageOriginalRenderSheetList = typeof renderEstimateSheetList === "function" ? renderEstimateSheetList : null;
+if (estimateLinkageOriginalRenderSheetList) {
+  window.renderEstimateSheetList = function estimateLinkageRenderEstimateSheetList() {
+    const body = document.getElementById("estimateSheetListBody");
+    if (!body) return estimateLinkageOriginalRenderSheetList();
+    if (typeof estimateCentralSyncSeedRows === "function" && !estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+    if (typeof estimateCentralRemoveBoqRowsEverywhere === "function") estimateCentralRemoveBoqRowsEverywhere();
+    const keyword = (document.getElementById("estimateSheetSearch")?.value || "").trim().toLowerCase();
+    const rows = (estimateSheetRecords || []).filter(record => {
+      if (record.type !== estimateSheetActiveType) return false;
+      if (estimateLinkageHasBoq(record) || /\bBOQ\b/i.test([record.type, record.title].join(" "))) return false;
+      const s = getEstimateSheetRecordSummary(record);
+      const cleanTitle = estimateLinkageDisplayTitle(record.title || "");
+      return !keyword || [record.type, cleanTitle, s.recipient, s.project, s.service, s.total, record.status].join(" ").toLowerCase().includes(keyword);
+    });
+    body.innerHTML = rows.map(record => {
+      const index = estimateSheetRecords.indexOf(record);
+      const s = getEstimateSheetRecordSummary(record);
+      const cleanTitle = estimateLinkageDisplayTitle(record.title || s.project || "견적서");
+      return `<tr onclick="openEstimateSheetEditor(${index})">
+        <td><strong>${estimateSheetHtml(cleanTitle)}</strong><small>수정: ${estimateSheetHtml(record.updatedAt || "-")}</small></td>
+        <td>${estimateSheetHtml(s.recipient)}</td>
+        <td>${estimateSheetHtml(s.project)}</td>
+        <td>${estimateSheetHtml(s.service)}</td>
+        <td>${estimateSheetHtml(s.total)}</td>
+        <td><span class="quote-status-badge">${estimateSheetHtml(record.status || "작성중")}</span></td>
+      </tr>`;
+    }).join("") || `<tr><td colspan="6" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 견적 의뢰관리에서 의뢰를 등록하거나 [새로만들기]로 작성하세요.</td></tr>`;
+  };
+}
+
+const estimateLinkageOriginalOpenEditor = typeof openEstimateSheetEditor === "function" ? openEstimateSheetEditor : null;
+if (estimateLinkageOriginalOpenEditor) {
+  window.openEstimateSheetEditor = function estimateLinkageOpenEstimateSheetEditor(index = null) {
+    const result = estimateLinkageOriginalOpenEditor(index);
+    const titleEl = document.getElementById("estimateSheetEditorTitle");
+    const rec = index !== null && estimateSheetRecords?.[index] ? estimateSheetRecords[index] : null;
+    if (titleEl && rec?.title) titleEl.textContent = `${rec.type || estimateSheetActiveType} 견적서 작성 · ${estimateLinkageDisplayTitle(rec.title)}`;
+    return result;
+  };
+}
+
+/* 중앙 동기화 함수 재정의: 의뢰관리 행을 항상 생성하고, 같은 키의 중복 행은 병합한다. */
+if (typeof estimateCentralEnsureSheetRecord === "function") {
+  window.estimateCentralEnsureSheetRecord = function estimateLinkageEnsureSheetRecord(row = {}, options = {}) {
+    const src = estimateLinkageCanonicalRow(row);
+    if (estimateLinkageHasBoq(src)) return null;
+    const type = src.estimateType || "개산견적";
+    const id = (typeof estimateCentralEstimateId === "function" ? estimateCentralEstimateId(src) : `central-estimate-${src.centralKey}`);
+    const existingIndex = (estimateSheetRecords || []).findIndex(item => item.id === id || item.centralKey === src.centralKey || (estimateLinkageText(item.requestId) && estimateLinkageText(item.requestId) === estimateLinkageText(src.id)));
+    const old = existingIndex >= 0 ? estimateSheetRecords[existingIndex] : null;
+    const state = old?.state || (typeof estimatePeriodCreateDemoStateFromRow === "function" ? estimatePeriodCreateDemoStateFromRow(src) : estimateSheetCreateState(type));
+    const record = {
+      ...(old || {}),
+      id: old?.id || id,
+      requestId: old?.requestId || (typeof estimateCentralRequestId === "function" ? estimateCentralRequestId(src) : `central-request-${src.centralKey}`),
+      centralKey: src.centralKey,
+      dbPjNo: src.dbPjNo,
+      type,
+      title: estimateLinkageDisplayTitle(src.project || old?.title || "견적"),
+      status: estimateLinkageStatusForRequest(src.status),
+      updatedAt: old?.updatedAt || (typeof estimateSheetNow === "function" ? estimateSheetNow() : new Date().toLocaleString()),
+      state,
+      quoteData: typeof estimateSheetExtractQuoteDataFromState === "function" ? estimateSheetExtractQuoteDataFromState(state) : old?.quoteData || null,
+      dataMode: old?.dataMode || "central-request-linked",
+      source: options.source || old?.source || "central"
+    };
+    if (existingIndex >= 0) estimateSheetRecords[existingIndex] = record;
+    else estimateSheetRecords.unshift(record);
+    return record;
+  };
+}
+
+if (typeof estimateCentralEnsureRequestRow === "function") {
+  window.estimateCentralEnsureRequestRow = function estimateLinkageEnsureRequestRow(row = {}, options = {}) {
+    const src = estimateLinkageCanonicalRow(row);
+    if (estimateLinkageHasBoq(src)) return null;
+    estimateRequestLoadRows?.();
+    const id = typeof estimateCentralRequestId === "function" ? estimateCentralRequestId(src) : `central-request-${src.centralKey}`;
+    const estimateId = typeof estimateCentralEstimateId === "function" ? estimateCentralEstimateId(src) : `central-estimate-${src.centralKey}`;
+    const idx = estimateRequestRows.findIndex(item => item.id === id || item.centralKey === src.centralKey || (estimateLinkageText(item.project) === estimateLinkageText(src.project) && estimateLinkageText(item.company) === estimateLinkageText(src.company)));
+    const old = idx >= 0 ? estimateRequestNormalizeRow(estimateRequestRows[idx]) : {};
+    const next = estimateRequestNormalizeRow?.({
+      ...old,
+      id: old.id || id,
+      centralKey: src.centralKey,
+      dbPjNo: src.dbPjNo,
+      date: src.date || old.date || (typeof estimatePeriodTodayCode === "function" ? estimatePeriodTodayCode() : ""),
+      company: src.company || old.company || "",
+      client: old.client || src.client || src.company || "",
+      project: src.project || old.project || "",
+      contact: old.contact || src.contact || "",
+      estimateType: src.estimateType || old.estimateType || "개산견적",
+      memo: old.memo || [src.scope, src.description, src.memo].filter(Boolean).join(" / "),
+      rawMemo: old.rawMemo || src.memo || src.description || "",
+      status: estimateLinkageStatusForRequest(src.status || old.status),
+      estimateId: old.estimateId || estimateId,
+      periodKey: old.periodKey || src.id || src.key || "",
+      dbLinked: true
+    }) || {};
+    next.history = Array.isArray(next.history) ? next.history : [];
+    if (!next.history.some(h => String(h.text || h.message || "").includes("공통 기준 자동 연계"))) {
+      next.history.unshift({ at: typeof estimateRequestNowLabel === "function" ? estimateRequestNowLabel() : new Date().toLocaleString(), text: "공통 기준 자동 연계 생성" });
+    }
+    if (idx >= 0) estimateRequestRows[idx] = next;
+    else estimateRequestRows.unshift(next);
+    if (!options.skipSave) estimateRequestSaveRows?.();
+    return next;
+  };
+}
+
+if (typeof estimateCentralEnsureDbRows === "function") {
+  window.estimateCentralEnsureDbRows = function estimateLinkageEnsureDbRows(row = {}, options = {}) {
+    const src = estimateLinkageCanonicalRow(row);
+    if (estimateLinkageHasBoq(src)) return;
+    ["pj", "progress", "mep"].forEach(tab => estimateCentralUpsertDbRow?.(tab, src, options));
+    if (typeof recalcAllEstimateDbRows === "function") recalcAllEstimateDbRows();
+  };
+}
+
+if (typeof estimateCentralPeriodRowToRequestDb === "function") {
+  window.estimateCentralPeriodRowToRequestDb = function estimateLinkagePeriodRowToRequestDb(row = {}) {
+    const src = estimateLinkageCanonicalRow(row);
+    if (estimateLinkageHasBoq(src)) return;
+    estimateCentralEnsureSheetRecord?.(src, { source: row.source || "period" });
+    estimateCentralEnsureRequestRow?.(src);
+    estimateCentralEnsureDbRows?.(src, { overwrite: true });
+  };
+}
+
+if (typeof estimateCentralSyncSeedRows === "function") {
+  window.estimateCentralSyncSeedRows = function estimateLinkageSyncSeedRows(options = {}) {
+    if (estimateCentralSyncRunning) return;
+    estimateCentralSyncRunning = true;
+    try {
+      estimateRequestLoadRows?.();
+      estimatePeriodLoadEdits?.();
+      estimatePeriodLoadSentRows?.();
+      const templateRows = (typeof estimateCentralTemplateRows === "function" ? estimateCentralTemplateRows() : []).map(estimateLinkageCanonicalRow).filter(row => !estimateLinkageHasBoq(row));
+      templateRows.forEach(row => {
+        estimateCentralEnsureSheetRecord?.(row, { source: "period-template" });
+        estimateCentralEnsureRequestRow?.(row, { skipSave: true });
+        estimateCentralEnsureDbRows?.(row, { overwrite: false });
+      });
+      (estimatePeriodEditRows || []).filter(row => row.source !== "template").forEach(row => estimateCentralPeriodRowToRequestDb?.(row));
+      (estimatePeriodSentRows || []).forEach((item, index) => {
+        const row = estimatePeriodRowFromValues?.(item.values || {}, item.key || `sent-${index}`, "sent", {
+          linked: true,
+          sourceEstimateId: item.sourceEstimateId || "",
+          sentAt: item.sentAt || "",
+          detailSnapshot: item.detailSnapshot || null,
+          recordSnapshot: item.recordSnapshot || null
+        });
+        if (row) estimateCentralPeriodRowToRequestDb?.(row);
+      });
+      estimateCentralRemoveBoqRowsEverywhere?.();
+      estimateRequestSaveRows?.();
+      estimatePeriodSaveEdits?.();
+      estimatePeriodSaveSentRows?.();
+      estimateCentralSeedSynced = true;
+      if (!options.silent) showToast?.("견적관리 공통 데이터 연계를 갱신했습니다.");
+    } finally {
+      estimateCentralSyncRunning = false;
+    }
+  };
+}
+
+/* 의뢰관리 저장/상태 변경 시 견적서/기간별/DB까지 즉시 반영한다. */
+function estimateLinkageRequestToCentralRow(request = {}) {
+  const req = estimateRequestNormalizeRow?.(request) || request;
+  const row = estimateLinkageCanonicalRow({
+    id: req.periodKey || req.id,
+    date: req.date,
+    company: req.company || req.client,
+    client: req.client,
+    project: req.project,
+    scope: req.memo || req.rawMemo,
+    description: req.memo || req.rawMemo,
+    memo: req.memo || req.rawMemo,
+    status: req.status,
+    unitWork: req.estimateType,
+    estimateType: req.estimateType,
+    dbPjNo: req.dbPjNo || "",
+    centralKey: req.centralKey || ""
+  });
+  return row;
+}
+function estimateLinkageSyncRequestRow(id, options = {}) {
+  estimateRequestLoadRows?.();
+  const idx = estimateRequestRows.findIndex(row => row.id === id || row.centralKey === id);
+  if (idx < 0) return;
+  const req = estimateRequestRows[idx];
+  const row = estimateLinkageRequestToCentralRow(req);
+  if (estimateLinkageHasBoq(row)) return;
+  const sheetRecord = estimateCentralEnsureSheetRecord?.(row, { source: "request" });
+  if (sheetRecord) {
+    req.estimateId = req.estimateId || sheetRecord.id;
+    req.centralKey = req.centralKey || row.centralKey;
+    req.dbPjNo = req.dbPjNo || row.dbPjNo;
+  }
+  estimateCentralEnsureDbRows?.(row, { overwrite: false });
+  if (typeof estimatePeriodEditRows !== "undefined") {
+    estimatePeriodLoadEdits?.();
+    const periodRow = { ...row, source: "request", linked: true, result: "견적 의뢰관리 연동", stage: "의뢰관리", status: estimateLinkageStatusForPeriod(req.status) };
+    const pIdx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText(item.project) === estimateLinkageText(row.project) && estimateLinkageText(item.company) === estimateLinkageText(row.company)));
+    if (pIdx >= 0) estimatePeriodEditRows[pIdx] = { ...estimatePeriodEditRows[pIdx], ...periodRow };
+    else estimatePeriodEditRows.unshift(periodRow);
+    estimatePeriodSaveEdits?.();
+  }
+  estimateRequestRows[idx] = req;
+  estimateRequestSaveRows?.();
+  if (!options.silent) {
+    renderEstimateSheetManage?.();
+    renderEstimatePeriodManage?.();
+    renderEstimateDbManage?.();
+  }
+}
+
+const estimateLinkageOriginalSaveRequestRow = typeof saveEstimateRequestRowFromDom === "function" ? saveEstimateRequestRowFromDom : null;
+if (estimateLinkageOriginalSaveRequestRow) {
+  window.saveEstimateRequestRowFromDom = function estimateLinkageSaveEstimateRequestRowFromDom(id) {
+    const result = estimateLinkageOriginalSaveRequestRow(id);
+    estimateLinkageSyncRequestRow(id, { silent: true });
+    return result;
+  };
+}
+const estimateLinkageOriginalSaveRequestMemo = typeof saveEstimateRequestMemoFromWindow === "function" ? saveEstimateRequestMemoFromWindow : null;
+if (estimateLinkageOriginalSaveRequestMemo) {
+  window.saveEstimateRequestMemoFromWindow = function estimateLinkageSaveEstimateRequestMemoFromWindow(id, payload = {}) {
+    const result = estimateLinkageOriginalSaveRequestMemo(id, payload);
+    estimateLinkageSyncRequestRow(id, { silent: true });
+    return result;
+  };
+}
+const estimateLinkageOriginalRunRequestAction = typeof runEstimateRequestAction === "function" ? runEstimateRequestAction : null;
+if (estimateLinkageOriginalRunRequestAction) {
+  window.runEstimateRequestAction = function estimateLinkageRunEstimateRequestAction(id) {
+    const result = estimateLinkageOriginalRunRequestAction(id);
+    estimateLinkageSyncRequestRow(id, { silent: true });
+    return result;
+  };
+}
+
+/* DB 수정 저장 후 의뢰관리/견적서/기간별 관리로 역반영한다. */
+function estimateLinkageSyncAllDbRows(options = {}) {
+  if (estimateCentralSyncRunning) return;
+  ["pj", "progress", "mep"].forEach(tab => {
+    (estimateDbSheets?.[tab]?.rows || []).forEach((dbRow, index) => {
+      const row = estimateCentralDbRowToPeriodRow?.(tab, dbRow, index);
+      if (!row || estimateLinkageHasBoq(row)) return;
+      row.project = estimateLinkageNormalizeProjectName(row.project || "");
+      row.centralKey = row.centralKey || estimateLinkageMakeKey(row);
+      row.dbPjNo = row.dbPjNo || estimateLinkageDbPjNo(row);
+      estimateCentralEnsureSheetRecord?.(row, { source: "db" });
+      estimateCentralEnsureRequestRow?.(row, { skipSave: true });
+      if (typeof estimatePeriodEditRows !== "undefined") {
+        estimatePeriodLoadEdits?.();
+        const idx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText(item.project) === estimateLinkageText(row.project) && estimateLinkageText(item.company) === estimateLinkageText(row.company)));
+        const periodRow = { ...row, source: "db", linked: true, result: "DB관리 수정 연동" };
+        if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
+        else estimatePeriodEditRows.unshift(periodRow);
+      }
+    });
+  });
+  estimateCentralRemoveBoqRowsEverywhere?.();
+  estimateRequestSaveRows?.();
+  estimatePeriodSaveEdits?.();
+  if (!options.silent) {
+    renderEstimateRequestManage?.();
+    renderEstimateSheetManage?.();
+    renderEstimatePeriodManage?.();
+  }
+}
+const estimateLinkageOriginalCommitDbPending = typeof commitEstimateDbPendingEdits === "function" ? commitEstimateDbPendingEdits : null;
+if (estimateLinkageOriginalCommitDbPending) {
+  window.commitEstimateDbPendingEdits = function estimateLinkageCommitEstimateDbPendingEdits(options = {}) {
+    const result = estimateLinkageOriginalCommitDbPending(options);
+    estimateLinkageSyncAllDbRows({ silent: true });
+    return result;
+  };
+}
+const estimateLinkageOriginalCommitDbSingle = typeof commitEstimateDbSinglePendingEdit === "function" ? commitEstimateDbSinglePendingEdit : null;
+if (estimateLinkageOriginalCommitDbSingle) {
+  window.commitEstimateDbSinglePendingEdit = function estimateLinkageCommitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}) {
+    const result = estimateLinkageOriginalCommitDbSingle(tab, rowIndex, colIndex, options);
+    if (result) estimateLinkageSyncAllDbRows({ silent: true });
+    return result;
+  };
+}
+
+/* 의뢰관리 렌더링 전 더미/연계 행을 강제 보장한다. */
+const estimateLinkageOriginalRenderRequest = typeof renderEstimateRequestManage === "function" ? renderEstimateRequestManage : null;
+if (estimateLinkageOriginalRenderRequest) {
+  window.renderEstimateRequestManage = function estimateLinkageRenderEstimateRequestManage() {
+    estimateCentralSyncSeedRows?.({ silent: true });
+    estimateCentralRemoveBoqRowsEverywhere?.();
+    const result = estimateLinkageOriginalRenderRequest();
+    const toolbar = document.getElementById("estimateWorkflowToolbar");
+    if (toolbar && !toolbar.querySelector(".estimate-linkage-role-note")) {
+      toolbar.insertAdjacentHTML("afterbegin", `<div class="estimate-linkage-role-note" style="margin-bottom:8px;padding:8px 10px;border:1px solid #dbe4ef;border-radius:10px;background:#f8fafc;color:#475569;font-size:12px;font-weight:800;">최초 입력은 견적 의뢰관리에서 진행하고, 저장 즉시 견적서 종류별 관리·기간별 견적서 관리·DB관리로 자동 연계됩니다.</div>`);
+    }
+    return result;
+  };
+}
+
+/* 초기 진입 시 견적 의뢰관리 더미 행이 보이지 않는 문제 방지 */
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    estimateCentralSyncSeedRows?.({ silent: true });
+    estimateLinkageSyncAllDbRows?.({ silent: true });
+    if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage?.();
+  }, 30);
+});
