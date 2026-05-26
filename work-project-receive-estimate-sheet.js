@@ -3536,7 +3536,7 @@ function estimateCentralUpsertDbRow(tab, row = {}, options = {}) {
     index = 0;
   }
   Object.entries(map).forEach(([header, value]) => estimateCentralPutDbCell(tab, target, header, value, !!options.overwrite));
-  if (tab === "pj") estimateCentralPutDbCell(tab, target, ESTIMATE_DB_PROJECT_LINK_HEADER, `기간별 견적서 관리:${row.id || row.centralKey || ""}`, false);
+  if (tab === "pj") estimateCentralPutDbCell(tab, target, ESTIMATE_DB_PROJECT_LINK_HEADER, "", true);
   recalcEstimateDbRow?.(tab, target);
   return target;
 }
