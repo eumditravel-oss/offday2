@@ -461,6 +461,14 @@ function getEstimateSheetRecordSummary(record) {
     total: estimateSheetDisplayValue(state, record.type === "공사비검증" ? 10 : 10, 2) || "-"
   };
 }
+function estimateSheetCleanListTitle(title, type = "") {
+  const typePattern = ESTIMATE_SHEET_TYPE_ORDER.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  let text = String(title ?? "").trim();
+  if (!text) return "";
+  text = text.replace(new RegExp(`_\\s*(?:${typePattern})\\s*$`, "i"), "");
+  if (type) text = text.replace(new RegExp(`_\\s*${String(type).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i"), "");
+  return text.trim();
+}
 function setEstimateSheetType(type) {
   estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : "개산견적";
   closeEstimateSheetEditor();
@@ -479,7 +487,7 @@ function renderEstimateSheetList() {
     const index = estimateSheetRecords.indexOf(record);
     const s = getEstimateSheetRecordSummary(record);
     return `<tr onclick="openEstimateSheetEditor(${index})">
-      <td><strong>${estimateSheetHtml(record.title)}</strong><small>수정: ${estimateSheetHtml(record.updatedAt)}</small></td>
+      <td><strong>${estimateSheetHtml(estimateSheetCleanListTitle(record.title, record.type) || record.title)}</strong><small>수정: ${estimateSheetHtml(record.updatedAt)}</small></td>
       <td>${estimateSheetHtml(s.recipient)}</td>
       <td>${estimateSheetHtml(s.project)}</td>
       <td>${estimateSheetHtml(s.service)}</td>
@@ -516,7 +524,7 @@ function saveEstimateSheetRecord() {
     ...(existing || {}),
     id: existing?.id || estimateSheetMakeId("estimate"),
     type: estimateSheetActiveType,
-    title: `${project}_${estimateSheetActiveType}`,
+    title: estimateSheetCleanListTitle(project, estimateSheetActiveType) || project,
     status: existing?.status || "작성중",
     updatedAt: estimateSheetNow(),
     state: estimateSheetCloneState(estimateSheetEditorState),
@@ -2056,7 +2064,7 @@ function estimateSheetBuildRecordFromCurrent(existing) {
     ...(existing || {}),
     id: existing?.id || estimateSheetMakeId("estimate"),
     type: estimateSheetActiveType,
-    title: `${project}_${estimateSheetActiveType}`,
+    title: estimateSheetCleanListTitle(project, estimateSheetActiveType) || project,
     status: existing?.status || "작성중",
     updatedAt: estimateSheetNow(),
     quoteData,
@@ -2341,8 +2349,8 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "unitPrice", label: "단가(₩)", width: 92, align: "right" },
   { key: "amount", label: "금액(₩)", width: 112, align: "right" },
   { key: "scope", label: "작업범위", width: 140 },
-  { key: "usage", label: "건물용도", width: 35, cls: "usage" },
-  { key: "count", label: "작업횟수", width: 88, align: "center" },
+  { key: "usage", label: "건물용도", width: 79, cls: "usage" },
+  { key: "count", label: "작업횟수", width: 44, align: "center" },
   { key: "unitWork", label: "단가작업", width: 104, align: "center" },
   { key: "bid", label: "실행/입찰", width: 104, align: "center" },
   { key: "description", label: "작업내용", width: 300, cls: "wide" },
@@ -3040,7 +3048,7 @@ function estimateRequestRowHtml(row) {
     <td contenteditable="true" data-request-field="project">${estimateRequestHtml(row.project)}</td>
     <td><div contenteditable="true" data-request-field="client">${estimateRequestHtml(row.client)}</div><small contenteditable="true" data-request-field="contact">${estimateRequestHtml(row.contact)}</small></td>
     <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${safeId}')">열기</button><span data-request-field="memo" class="request-memo-hidden">${estimateRequestHtml(row.memo || row.rawMemo || "")}</span></td>
-    <td><span class="estimate-select-wrap"><select class="estimate-request-select" data-request-field="estimateType" title="${estimateRequestHtml(currentEstimateType)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value; const v=this.parentElement.querySelector('.estimate-select-value'); if(v) v.textContent=this.value;">${estimateTypeOptions}</select><span class="estimate-select-value">${estimateRequestHtml(currentEstimateType)}</span></span><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
+    <td><span class="estimate-select-wrap"><select class="estimate-request-select" data-request-field="estimateType" title="${estimateRequestHtml(currentEstimateType)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value; const v=this.parentElement.querySelector('.estimate-select-value'); if(v) v.textContent=this.value;">${estimateTypeOptions}</select><span class="estimate-select-value">${estimateRequestHtml(currentEstimateType)}</span></span><small>${linkedEstimate ? estimateRequestHtml(estimateSheetCleanListTitle(linkedEstimate.title, linkedEstimate.type) || "연결됨") : "미작성"}</small></td>
     <td class="estimate-actions-cell">
       <div class="estimate-workflow-row-actions compact">
         <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
@@ -3185,7 +3193,7 @@ function createEstimateSheetFromRequest(id) {
     id: row.estimateId || estimateSheetMakeId("estimate"),
     requestId: row.id,
     type,
-    title: `${row.project || row.company || "견적"}_${type}`,
+    title: estimateSheetCleanListTitle(row.project || row.company || "견적", type) || (row.project || row.company || "견적"),
     status: "대기중",
     updatedAt: estimateSheetNow(),
     state,
@@ -3547,7 +3555,7 @@ function estimateCentralEnsureSheetRecord(row = {}, options = {}) {
     centralKey: row.centralKey || estimateCentralMakeKey(row),
     dbPjNo: row.dbPjNo || estimateCentralDbPjNo(row),
     type,
-    title: `${row.project || row.company || "견적"}_${type}`,
+    title: estimateSheetCleanListTitle(row.project || row.company || "견적", type) || (row.project || row.company || "견적"),
     status: estimateCentralNormalizeStatusForRequest(row.status),
     updatedAt: estimateSheetNow?.() || new Date().toISOString(),
     state,
@@ -3678,6 +3686,11 @@ const estimateCentralOriginalRenderEstimateRequestManage = typeof renderEstimate
 if (estimateCentralOriginalRenderEstimateRequestManage) {
   window.renderEstimateRequestManage = function estimateCentralRenderEstimateRequestManage() {
     if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+    estimateRequestLoadRows?.();
+    if (!Array.isArray(estimateRequestRows) || estimateRequestRows.length === 0) {
+      estimateCentralSeedSynced = false;
+      estimateCentralSyncSeedRows({ silent: true, force: true });
+    }
     estimateCentralRemoveBoqRowsEverywhere();
     return estimateCentralOriginalRenderEstimateRequestManage();
   };
