@@ -871,15 +871,19 @@
                     <h2>기간별 견적서관리</h2>
                     <p class="subcopy">견적서관리와 연결되어 발송 처리된 견적서를 발송일 기준으로 최상단에 누적하고, 리스트 클릭 시 세부 견적서를 새 창으로 확인합니다.</p>
                   </div>
-                  <div class="project-receive-actions">
+                  <div class="project-receive-actions estimate-period-hero-actions">
+                    <div class="estimate-period-summary-cards" id="estimatePeriodSummaryCards" aria-label="기간별 견적서 상태 요약"></div>
                     <span class="estimate-period-count">발송 누적 <strong id="estimatePeriodSentCount">0건</strong></span>
                     <button class="btn btn-line" type="button" onclick="renderEstimatePeriodManage()">새로고침</button>
                   </div>
                 </div>
                 <section class="project-receive-card quote-card quote-card-full estimate-period-card">
-                  <div class="estimate-period-toolbar">
-                    <strong>견적서 기간별 관리표</strong>
-                    <span>업로드한 7.-견적서-.xlsx 구성을 기준으로 표시합니다.</span>
+                  <div class="estimate-period-toolbar estimate-period-filter-toolbar">
+                    <div class="estimate-period-toolbar-title">
+                      <strong>견적서 기간별 관리표</strong>
+                      <span>엑셀형 화면이 아니라 기간·상태·업체명 기준으로 수정 가능한 관리 리스트로 표시합니다.</span>
+                    </div>
+                    <div class="estimate-period-filter-controls" id="estimatePeriodFilterControls"></div>
                   </div>
                   <div class="estimate-period-sheet-wrap" id="estimatePeriodSheetBody"></div>
                 </section>
