@@ -2343,7 +2343,7 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "unitPrice", label: "단가(₩)", width: 92, align: "right" },
   { key: "amount", label: "금액(₩)", width: 112, align: "right" },
   { key: "scope", label: "작업범위", width: 140 },
-  { key: "usage", label: "건물용도", width: 70, cls: "usage" },
+  { key: "usage", label: "건물용도", width: 35, cls: "usage" },
   { key: "count", label: "작업횟수", width: 88, align: "center" },
   { key: "unitWork", label: "단가작업", width: 104, align: "center" },
   { key: "bid", label: "실행/입찰", width: 104, align: "center" },
@@ -2351,7 +2351,7 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "tender", label: "투찰", width: 130, align: "center" },
   { key: "status", label: "수주/실주", width: 165, align: "center", type: "status" },
   { key: "memo", label: "비고", width: 180 },
-  { key: "result", label: "결과내용", width: 180 },
+  { key: "result", label: "처리이력", width: 180 },
   { key: "stage", label: "단계", width: 100, align: "center" },
   { key: "detail", label: "세부", width: 86, align: "center", type: "detail" }
 ];
@@ -2690,6 +2690,92 @@ function estimatePeriodBindCellNavigation(host) {
   });
 }
 
+
+function estimatePeriodResolveEstimateType(row = {}) {
+  const text = [row.unitWork, row.bid, row.stage, row.description, row.tender].map(v => String(v || "")).join(" ");
+  if (text.includes("공사비검증")) return "공사비검증";
+  if (text.includes("설계예가") || text.includes("예가")) return "설계예가";
+  if (text.includes("공내역서") || text.includes("내역")) return "공내역서";
+  if (text.includes("개산견적") || text.includes("개산")) return "개산견적";
+  return "개산견적";
+}
+
+function estimatePeriodSetStateCell(state, r, c, value) {
+  const obj = estimateSheetGetCellObj(state, r, c);
+  obj.value = value ?? "";
+  obj.formula = "";
+  obj.userFormula = false;
+}
+
+function estimatePeriodCreateDemoStateFromRow(row = {}) {
+  const type = estimatePeriodResolveEstimateType(row);
+  const state = estimateSheetCreateState(type);
+  const area = estimatePeriodToNumber(row.area) || 0;
+  const unitPrice = estimatePeriodToNumber(row.unitPrice) || 0;
+  const amount = estimatePeriodToNumber(row.amount) || (area && unitPrice ? area * unitPrice : 0);
+  const serviceText = row.description || row.scope || row.unitWork || type;
+  const paymentText = "작업착수 직전 계약금 50% 현금지급 및 납품후 30일이내 잔여 50% 현금지급조건";
+  const totalKo = amount ? `일금${estimateSheetNumberToKorean(amount)}원정 (₩${amount.toLocaleString("ko-KR")})` : "일금영원정 (₩0)";
+
+  estimatePeriodSetStateCell(state, 4, 7, "발송일자 : 2026년 00월 00일");
+  estimatePeriodSetStateCell(state, 5, 2, row.company ? `${row.company} 견적담당자 귀하` : "㈜xx건설 견적담당자 귀하");
+  estimatePeriodSetStateCell(state, 6, 2, row.project || "xx프로젝트");
+  estimatePeriodSetStateCell(state, 7, 2, serviceText || "물량산출 및 원가계산서 작성");
+  estimatePeriodSetStateCell(state, 8, 2, "발주처 일정에 따름");
+  estimatePeriodSetStateCell(state, 9, 2, paymentText);
+  estimatePeriodSetStateCell(state, 10, 2, totalKo);
+
+  const defaultItems = [
+    ["건축공사 (구조, 마감)", area || "", "평", unitPrice || "", amount || "", ""],
+    ["기계공사", area || "", "평", unitPrice || "", amount || "", row.unitWork === "공내역서" ? "평당공사비" : ""],
+    ["전기공사", area || "", "평", unitPrice || "", amount || "", row.unitWork === "공내역서" ? "평당공사비" : ""],
+    ["토목,조경공사", area || "", "평", unitPrice || "", amount || "", ""],
+    ["단수정리", 1, "식", "", "", ""]
+  ];
+  defaultItems.forEach((item, i) => {
+    const r = 13 + i;
+    estimatePeriodSetStateCell(state, r, 1, item[0]);
+    estimatePeriodSetStateCell(state, r, 3, item[1]);
+    estimatePeriodSetStateCell(state, r, 4, item[2]);
+    estimatePeriodSetStateCell(state, r, 5, item[3]);
+    estimatePeriodSetStateCell(state, r, 6, item[4]);
+    estimatePeriodSetStateCell(state, r, 7, item[5]);
+  });
+  estimatePeriodSetStateCell(state, 20, 6, amount || 0);
+  estimatePeriodSetStateCell(state, 22, 1, `- ${serviceText || "물량산출"}`);
+  estimatePeriodSetStateCell(state, 23, 1, row.usage ? `- 건물용도: ${row.usage}` : "- 기계, 전기공사는 평당공사비로 작업");
+  estimatePeriodSetStateCell(state, 24, 1, row.bid ? `- 실행/입찰: ${row.bid}` : "- 인테리어, 철거공사 제외");
+  estimatePeriodSetStateCell(state, 25, 1, row.tender ? `- 투찰: ${row.tender}` : "- 고려전산 프로그램으로 작업");
+  estimatePeriodSetStateCell(state, 26, 1, row.memo ? `- ${row.memo}` : "- 부가세 별도 금액임");
+  state.__periodDemoRow = JSON.parse(JSON.stringify(row));
+  return state;
+}
+
+function openEstimatePeriodRowDetail(rowId) {
+  const allRows = estimatePeriodAllRowsForList();
+  const row = allRows.find(item => String(item.id) === String(rowId));
+  if (!row) {
+    showToast?.("기간별 견적서 행을 찾지 못했습니다.");
+    return;
+  }
+  if (row.source === "sent" && Number.isFinite(Number(row.sourceSentIndex)) && Number(row.sourceSentIndex) >= 0) {
+    openEstimatePeriodDetail(Number(row.sourceSentIndex));
+    return;
+  }
+  const state = row.detailSnapshot || estimatePeriodCreateDemoStateFromRow(row);
+  openEstimateSheetReadonlyWindow(state, {
+    sentAt: row.result || row.sentAt || "더미데이터",
+    type: estimatePeriodResolveEstimateType(row),
+    values: {
+      3: row.company,
+      4: row.project,
+      11: row.unitWork,
+      12: row.bid,
+      15: row.status
+    }
+  });
+}
+
 function renderEstimatePeriodManage() {
   const host = document.getElementById("estimatePeriodSheetBody");
   if (!host) return;
@@ -2710,8 +2796,8 @@ function renderEstimatePeriodManage() {
       const align = col.align ? ` ${col.align}` : "";
       const cls = `${col.cls || ""}${align}`.trim();
       if (col.type === "detail") {
-        const disabled = row.linked ? "" : " disabled";
-        const btn = `<button class="estimate-period-detail-btn" type="button"${disabled} onclick="openEstimatePeriodDetail(${sentIndex})">세부보기</button>`;
+        const safeRowId = estimateSheetHtml(row.id || "");
+        const btn = `<button class="estimate-period-detail-btn" type="button" onclick="event.stopPropagation();openEstimatePeriodRowDetail('${safeRowId}')">세부보기</button>`;
         return `<td class="center">${btn}</td>`;
       }
       if (col.type === "status") {
@@ -2721,7 +2807,7 @@ function renderEstimatePeriodManage() {
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
       return `<td class="editable ${cls}" contenteditable="true" data-period-key="${col.key}">${estimateSheetHtml(value)}</td>`;
     }).join("");
-    return `<tr${rowClass} data-period-row-id="${estimateSheetHtml(row.id)}" data-source="${estimateSheetHtml(row.source || "manual")}" data-sent-index="${sentIndex}">${cells}</tr>`;
+    return `<tr${rowClass} data-period-row-id="${estimateSheetHtml(row.id)}" data-source="${estimateSheetHtml(row.source || "manual")}" data-sent-index="${sentIndex}" ondblclick="openEstimatePeriodRowDetail('${estimateSheetHtml(row.id || "")}')">${cells}</tr>`;
   }).join("") : `<tr><td colspan="${ESTIMATE_PERIOD_COLUMNS.length}" class="estimate-period-empty">조건에 맞는 견적서가 없습니다.</td></tr>`;
   host.innerHTML = `<div class="estimate-period-manage-wrap"><table class="estimate-period-manage-table">${colGroup}${head}<tbody>${body}</tbody></table></div><div class="estimate-period-save-hint">셀을 수정한 뒤 [수정 저장]을 누르면 기간별 견적서관리 데이터가 저장됩니다. 발송 처리된 행의 [세부보기]는 견적서관리의 발송 스냅샷과 연결됩니다.</div>`;
   estimatePeriodBindCellNavigation(host);
