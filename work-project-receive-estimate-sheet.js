@@ -2847,13 +2847,15 @@ function estimateRequestRowHtml(row) {
     <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${safeId}')">열기</button><span data-request-field="memo" class="request-memo-hidden">${estimateRequestHtml(row.memo || row.rawMemo || "")}</span></td>
     <td><span class="estimate-select-wrap"><select class="estimate-request-select" data-request-field="estimateType" title="${estimateRequestHtml(currentEstimateType)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value; const v=this.parentElement.querySelector('.estimate-select-value'); if(v) v.textContent=this.value;">${estimateTypeOptions}</select><span class="estimate-select-value">${estimateRequestHtml(currentEstimateType)}</span></span><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
     <td><span class="quote-status-badge">${estimateRequestHtml(periodLinked)}</span><span class="quote-status-badge">${estimateRequestHtml(dbLabel)}</span></td>
-    <td class="estimate-workflow-row-actions compact">
-      <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
-      <button class="btn btn-primary btn-xs" type="button" onclick="${estimateAction}">${estimateActionLabel}</button>
-      <select class="estimate-request-action-select" data-request-action title="상태 변경" onchange="this.setAttribute('title', this.options[this.selectedIndex]?.text || this.value);">
-        ${statusOptions}
-      </select>
-      <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestAction('${safeId}')">실행</button>
+    <td class="estimate-actions-cell">
+      <div class="estimate-workflow-row-actions compact">
+        <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
+        <button class="btn btn-primary btn-xs" type="button" onclick="${estimateAction}">${estimateActionLabel}</button>
+        <select class="estimate-request-action-select" data-request-action title="상태 변경" onchange="this.setAttribute('title', this.options[this.selectedIndex]?.text || this.value);">
+          ${statusOptions}
+        </select>
+        <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestAction('${safeId}')">실행</button>
+      </div>
     </td>
   </tr>`;
 }
