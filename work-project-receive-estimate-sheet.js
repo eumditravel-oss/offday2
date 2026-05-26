@@ -3376,3 +3376,559 @@ window.renderEstimateSheetList = function estimateWorkflowRenderSheetList() {
 setTimeout(() => {
   if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage();
 }, 0);
+
+/* =========================================================
+   2026-05-26 DB 중심 견적관리 연계 패치
+   - 기간별 견적서 관리 원본 더미데이터를 견적서 종류별 관리 / 견적 의뢰관리 / DB관리로 동일 확장
+   - BOQ 포함 행은 모든 관리 화면에서 제외
+   - DB관리(PJ관리)를 기준 데이터로 사용하고, 연결 가능한 값은 즉시 재동기화
+   - 프로젝트 작성에서 DB 불러오기 이후 접수번호(PJ NO)를 부여하고 프로젝트 리스트는 DB관리 변경값을 즉시 반영
+   ========================================================= */
+const ESTIMATE_CENTRAL_SYNC_VERSION = "2026-05-26.db-foundation.v1";
+let estimateCentralSyncRunning = false;
+let estimateCentralSeedSynced = false;
+
+function estimateCentralText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+function estimateCentralHasBoq(row = {}) {
+  return Object.values(row || {}).some(value => /\bBOQ\b/i.test(String(value ?? "")));
+}
+function estimateCentralSafeKey(value) {
+  return estimateCentralText(value).replace(/[^0-9a-zA-Z가-힣]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "empty";
+}
+function estimateCentralMakeKey(row = {}) {
+  return [row.date, row.company, row.project].map(estimateCentralSafeKey).join("__");
+}
+function estimateCentralEstimateId(row = {}) {
+  return `central-estimate-${estimateCentralMakeKey(row)}`;
+}
+function estimateCentralRequestId(row = {}) {
+  return `central-request-${estimateCentralMakeKey(row)}`;
+}
+function estimateCentralDbPjNo(row = {}) {
+  const date = estimatePeriodFormatDateCode?.(row.date) || estimateCentralText(row.date);
+  const tail = estimateCentralSafeKey(row.project).slice(0, 12).toUpperCase();
+  return `${date || estimatePeriodTodayCode?.() || "260000"}-${tail || "PJ"}`;
+}
+function estimateCentralNormalizeStatusForRequest(status) {
+  const text = estimateCentralText(status);
+  if (text.includes("작업취소")) return "작업취소";
+  if (text.includes("수주") || text.includes("실주")) return "작업시작";
+  if (text.includes("예가")) return "대기중";
+  return "대기중";
+}
+function estimateCentralNormalizeStatusForPeriod(status) {
+  const text = estimateCentralText(status);
+  if (ESTIMATE_PERIOD_STATUS_LIST.includes(text)) return text;
+  if (text.includes("취소")) return "작업취소";
+  if (text.includes("수주")) return "수주";
+  if (text.includes("실주")) return "실주";
+  if (text.includes("예가")) return "예가";
+  return "대기중";
+}
+function estimateCentralTemplateRows() {
+  if (typeof ESTIMATE_PERIOD_TEMPLATE === "undefined") return [];
+  const rows = [];
+  const maxRow = ESTIMATE_PERIOD_TEMPLATE.maxRow || 156;
+  for (let r = 9; r <= maxRow; r += 1) {
+    const values = {};
+    for (let c = 1; c <= (ESTIMATE_PERIOD_TEMPLATE.maxCol || 18); c += 1) {
+      const v = estimatePeriodTemplateValue?.(r, c);
+      if (v !== "" && v !== null && typeof v !== "undefined") values[c] = v;
+    }
+    if (!values[2] || !values[3] || !values[4]) continue;
+    const row = estimatePeriodRowFromValues(values, `template-${r}`, "template", { templateRow: r });
+    row.centralKey = estimateCentralMakeKey(row);
+    row.dbPjNo = estimateCentralDbPjNo(row);
+    if (estimateCentralHasBoq(row)) continue;
+    rows.push(row);
+  }
+  return rows;
+}
+function estimateCentralRowToDbMap(row = {}) {
+  const year = String(row.date || "").slice(0, 2) ? `20${String(row.date).slice(0, 2)}` : String(new Date().getFullYear());
+  const pjNo = row.dbPjNo || estimateCentralDbPjNo(row);
+  const type = estimatePeriodResolveEstimateType?.(row) || "개산견적";
+  return {
+    "년도": year,
+    "PJ NO": pjNo,
+    "국내/해외": "국내",
+    "거래처명": row.company || "",
+    "업체명": row.company || "",
+    "프로젝트명": row.project || "",
+    "PJ명": row.project || "",
+    "부서명": "견적부",
+    "작업공종": row.scope || row.description || "",
+    "작업구분": row.bid || row.tender || "",
+    "업무성격": type,
+    "업무단계2": row.count || "",
+    "단가작업여부": row.unitWork || type,
+    "건물용도": row.usage || "",
+    "연면적(평)": row.area || "",
+    "수주일자": row.status === "수주" || row.status === "실주" ? row.date : "",
+    "상담 / 이메일 / 특기사항": row.description || row.memo || "",
+    "수주시 요청사항": row.memo || "",
+    "계약금액": row.amount || "",
+    "견적서일자": row.date || "",
+    "계약업체": row.company || ""
+  };
+}
+function estimateCentralPutDbCell(tab, targetRow, header, value, overwrite = false) {
+  if (!targetRow) return;
+  const idx = getEstimateDbColumnIndexByHeader?.(tab, header);
+  if (idx < 0) return;
+  if (overwrite || !estimateCentralText(targetRow[idx])) targetRow[idx] = value ?? "";
+}
+function estimateCentralFindDbRow(tab, row = {}) {
+  const sheet = estimateDbSheets?.[tab];
+  const rows = sheet?.rows || [];
+  const pjNoIdx = getEstimateDbColumnIndexByHeader?.(tab, "PJ NO");
+  const projectIdx = tab === "pj" ? getEstimateDbColumnIndexByHeader?.(tab, "프로젝트명") : getEstimateDbColumnIndexByHeader?.(tab, "PJ명");
+  const companyIdx = tab === "pj" ? getEstimateDbColumnIndexByHeader?.(tab, "거래처명") : getEstimateDbColumnIndexByHeader?.(tab, "업체명");
+  const pjNo = row.dbPjNo || estimateCentralDbPjNo(row);
+  let found = pjNoIdx >= 0 ? rows.findIndex(r => estimateCentralText(r[pjNoIdx]) === pjNo) : -1;
+  if (found >= 0) return found;
+  found = rows.findIndex(r => {
+    const projectOk = projectIdx < 0 || estimateCentralText(r[projectIdx]) === estimateCentralText(row.project);
+    const companyOk = companyIdx < 0 || estimateCentralText(r[companyIdx]) === estimateCentralText(row.company);
+    return projectOk && companyOk && estimateCentralText(row.project);
+  });
+  return found;
+}
+function estimateCentralUpsertDbRow(tab, row = {}, options = {}) {
+  const sheet = estimateDbSheets?.[tab];
+  if (!sheet) return null;
+  const cols = getEstimateDbLeafColumns?.(sheet) || sheet.headerRows?.[0] || [];
+  const map = estimateCentralRowToDbMap(row);
+  let index = estimateCentralFindDbRow(tab, row);
+  let target = index >= 0 ? sheet.rows[index] : null;
+  if (!target) {
+    target = Array(cols.length).fill("");
+    sheet.rows = sheet.rows || [];
+    sheet.rows.unshift(target);
+    index = 0;
+  }
+  Object.entries(map).forEach(([header, value]) => estimateCentralPutDbCell(tab, target, header, value, !!options.overwrite));
+  if (tab === "pj") estimateCentralPutDbCell(tab, target, ESTIMATE_DB_PROJECT_LINK_HEADER, `기간별 견적서 관리:${row.id || row.centralKey || ""}`, false);
+  recalcEstimateDbRow?.(tab, target);
+  return target;
+}
+function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
+  if (!dbRow) return null;
+  const get = header => {
+    const idx = getEstimateDbColumnIndexByHeader?.(tab, header);
+    return idx >= 0 ? dbRow[idx] : "";
+  };
+  const project = get("프로젝트명") || get("PJ명");
+  const company = get("거래처명") || get("업체명") || get("계약업체");
+  if (!estimateCentralText(project) && !estimateCentralText(company)) return null;
+  const row = {
+    id: `db-${tab}-${estimateCentralSafeKey(get("PJ NO") || `${company}-${project}-${rowIndex}`)}`,
+    source: "db",
+    date: estimatePeriodFormatDateCode?.(get("견적서일자") || get("수주일자") || "") || "",
+    company: estimatePeriodExtractCompanyName?.(company) || estimateCentralText(company),
+    companyRaw: company,
+    project,
+    area: get("연면적(평)"),
+    unitPrice: "",
+    amount: get("계약금액"),
+    scope: get("작업공종"),
+    usage: get("건물용도"),
+    count: get("업무단계2"),
+    unitWork: get("단가작업여부"),
+    bid: get("작업구분"),
+    description: get("상담 / 이메일 / 특기사항") || get("작업공종"),
+    tender: get("작업구분"),
+    status: estimateCentralNormalizeStatusForPeriod(get("수주일자") ? "수주" : "대기중"),
+    memo: get("수주시 요청사항"),
+    result: "DB관리 연동",
+    stage: tab === "pj" ? "DB" : tab,
+    dbPjNo: get("PJ NO") || ""
+  };
+  row.centralKey = estimateCentralMakeKey(row);
+  if (!row.dbPjNo) row.dbPjNo = estimateCentralDbPjNo(row);
+  return estimateCentralHasBoq(row) ? null : row;
+}
+function estimateCentralEnsureSheetRecord(row = {}, options = {}) {
+  if (!row || estimateCentralHasBoq(row)) return;
+  const type = estimatePeriodResolveEstimateType?.(row) || "개산견적";
+  const id = estimateCentralEstimateId(row);
+  const state = estimatePeriodCreateDemoStateFromRow?.(row) || estimateSheetCreateState?.(type);
+  const record = {
+    id,
+    requestId: estimateCentralRequestId(row),
+    centralKey: row.centralKey || estimateCentralMakeKey(row),
+    dbPjNo: row.dbPjNo || estimateCentralDbPjNo(row),
+    type,
+    title: `${row.project || row.company || "견적"}_${type}`,
+    status: estimateCentralNormalizeStatusForRequest(row.status),
+    updatedAt: estimateSheetNow?.() || new Date().toISOString(),
+    state,
+    quoteData: typeof estimateSheetExtractQuoteDataFromState === "function" ? estimateSheetExtractQuoteDataFromState(state) : null,
+    dataMode: "period-db-linked",
+    source: options.source || "central"
+  };
+  const idx = estimateSheetRecords.findIndex(item => item.id === id || item.centralKey === record.centralKey);
+  if (idx >= 0) {
+    estimateSheetRecords[idx] = { ...estimateSheetRecords[idx], ...record, id: estimateSheetRecords[idx].id || id };
+  } else {
+    estimateSheetRecords.unshift(record);
+  }
+}
+function estimateCentralEnsureRequestRow(row = {}, options = {}) {
+  if (!row || estimateCentralHasBoq(row)) return;
+  estimateRequestLoadRows?.();
+  const id = estimateCentralRequestId(row);
+  const idx = estimateRequestRows.findIndex(item => item.id === id || item.centralKey === (row.centralKey || estimateCentralMakeKey(row)) || (estimateCentralText(item.project) === estimateCentralText(row.project) && estimateCentralText(item.company) === estimateCentralText(row.company)));
+  const next = estimateRequestNormalizeRow?.({
+    ...(idx >= 0 ? estimateRequestRows[idx] : {}),
+    id,
+    centralKey: row.centralKey || estimateCentralMakeKey(row),
+    dbPjNo: row.dbPjNo || estimateCentralDbPjNo(row),
+    date: row.date || estimatePeriodTodayCode?.() || "",
+    company: row.company || "",
+    client: row.company || "",
+    project: row.project || "",
+    contact: "",
+    estimateType: estimatePeriodResolveEstimateType?.(row) || "개산견적",
+    memo: [row.scope, row.description, row.memo].filter(Boolean).join(" / "),
+    status: estimateCentralNormalizeStatusForRequest(row.status),
+    estimateId: estimateCentralEstimateId(row),
+    periodKey: row.id || "",
+    dbLinked: true
+  }) || {};
+  next.history = Array.isArray(next.history) ? next.history : [];
+  if (!next.history.some(h => String(h.message || "").includes("DB관리 기준 자동 연계"))) {
+    next.history.push({ at: estimateRequestNowLabel?.() || new Date().toLocaleString(), message: "DB관리 기준 자동 연계 생성" });
+  }
+  if (idx >= 0) estimateRequestRows[idx] = next;
+  else estimateRequestRows.unshift(next);
+  if (!options.skipSave) estimateRequestSaveRows?.();
+}
+function estimateCentralEnsureDbRows(row = {}, options = {}) {
+  if (!row || estimateCentralHasBoq(row)) return;
+  ["pj", "progress", "mep"].forEach(tab => estimateCentralUpsertDbRow(tab, row, options));
+}
+function estimateCentralSyncSeedRows(options = {}) {
+  if (estimateCentralSyncRunning) return;
+  estimateCentralSyncRunning = true;
+  try {
+    const rows = estimateCentralTemplateRows();
+    rows.forEach(row => {
+      estimateCentralEnsureSheetRecord(row, { source: "period-template" });
+      estimateCentralEnsureRequestRow(row, { skipSave: true });
+      estimateCentralEnsureDbRows(row, { overwrite: false });
+    });
+    estimateRequestSaveRows?.();
+    estimateCentralRemoveBoqRowsEverywhere();
+    estimateCentralSeedSynced = true;
+  } finally {
+    estimateCentralSyncRunning = false;
+  }
+}
+function estimateCentralRemoveBoqRowsEverywhere() {
+  const hasBoqArray = row => Array.isArray(row) && row.some(cell => /\bBOQ\b/i.test(String(cell ?? "")));
+  if (Array.isArray(estimateSheetRecords)) estimateSheetRecords = estimateSheetRecords.filter(record => !estimateCentralHasBoq(record) && !/\bBOQ\b/i.test([record.type, record.title, record.status].join(" ")));
+  if (Array.isArray(estimateRequestRows)) estimateRequestRows = estimateRequestRows.filter(row => !estimateCentralHasBoq(row));
+  if (Array.isArray(estimatePeriodEditRows)) estimatePeriodEditRows = estimatePeriodEditRows.filter(row => !estimateCentralHasBoq(row));
+  if (Array.isArray(estimatePeriodSentRows)) estimatePeriodSentRows = estimatePeriodSentRows.filter(row => !estimateCentralHasBoq(row.values || row));
+  Object.values(estimateDbSheets || {}).forEach(sheet => {
+    if (Array.isArray(sheet.rows)) sheet.rows = sheet.rows.filter(row => !hasBoqArray(row));
+  });
+  estimateRequestSaveRows?.();
+  estimatePeriodSaveEdits?.();
+  estimatePeriodSaveSentRows?.();
+}
+function estimateCentralSyncFromDbRow(tab, rowIndex, options = {}) {
+  if (estimateCentralSyncRunning) return;
+  const dbRow = estimateDbSheets?.[tab]?.rows?.[rowIndex];
+  const row = estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex);
+  if (!row || estimateCentralHasBoq(row)) return;
+  estimateCentralSyncRunning = true;
+  try {
+    estimateCentralEnsureSheetRecord(row, { source: "db" });
+    estimateCentralEnsureRequestRow(row);
+    estimateCentralEnsureDbRows(row, { overwrite: false });
+    estimatePeriodLoadEdits?.();
+    const idx = estimatePeriodEditRows.findIndex(item => item.id === row.id || item.centralKey === row.centralKey || (estimateCentralText(item.project) === estimateCentralText(row.project) && estimateCentralText(item.company) === estimateCentralText(row.company)));
+    const periodRow = { ...row, source: "db", linked: true, result: "DB관리 수정 연동" };
+    if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
+    else estimatePeriodEditRows.unshift(periodRow);
+    estimatePeriodSaveEdits?.();
+    estimateCentralRemoveBoqRowsEverywhere();
+  } finally {
+    estimateCentralSyncRunning = false;
+  }
+}
+function estimateCentralSyncAllDbRows(options = {}) {
+  if (estimateCentralSyncRunning) return;
+  ["pj", "progress", "mep"].forEach(tab => (estimateDbSheets?.[tab]?.rows || []).forEach((_, idx) => estimateCentralSyncFromDbRow(tab, idx, options)));
+}
+function estimateCentralPeriodRowToRequestDb(row = {}) {
+  if (!row || estimateCentralHasBoq(row)) return;
+  row.centralKey = row.centralKey || estimateCentralMakeKey(row);
+  row.dbPjNo = row.dbPjNo || estimateCentralDbPjNo(row);
+  estimateCentralEnsureSheetRecord(row, { source: row.source || "period" });
+  estimateCentralEnsureRequestRow(row);
+  estimateCentralEnsureDbRows(row, { overwrite: true });
+}
+
+const estimateCentralOriginalPeriodBaseListRows = typeof estimatePeriodBaseListRows === "function" ? estimatePeriodBaseListRows : null;
+if (estimateCentralOriginalPeriodBaseListRows) {
+  window.estimatePeriodBaseListRows = function estimateCentralPeriodBaseListRows() {
+    return estimateCentralOriginalPeriodBaseListRows().filter(row => !estimateCentralHasBoq(row));
+  };
+}
+const estimateCentralOriginalRenderEstimateSheetManage = typeof renderEstimateSheetManage === "function" ? renderEstimateSheetManage : null;
+if (estimateCentralOriginalRenderEstimateSheetManage) {
+  window.renderEstimateSheetManage = function estimateCentralRenderEstimateSheetManage() {
+    if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+    estimateCentralRemoveBoqRowsEverywhere();
+    return estimateCentralOriginalRenderEstimateSheetManage();
+  };
+}
+const estimateCentralOriginalRenderEstimateRequestManage = typeof renderEstimateRequestManage === "function" ? renderEstimateRequestManage : null;
+if (estimateCentralOriginalRenderEstimateRequestManage) {
+  window.renderEstimateRequestManage = function estimateCentralRenderEstimateRequestManage() {
+    if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+    estimateCentralRemoveBoqRowsEverywhere();
+    return estimateCentralOriginalRenderEstimateRequestManage();
+  };
+}
+const estimateCentralOriginalInitializeEstimateDbVisibleSeedRows = typeof initializeEstimateDbVisibleSeedRows === "function" ? initializeEstimateDbVisibleSeedRows : null;
+if (estimateCentralOriginalInitializeEstimateDbVisibleSeedRows) {
+  window.initializeEstimateDbVisibleSeedRows = function estimateCentralInitializeEstimateDbVisibleSeedRows() {
+    estimateCentralOriginalInitializeEstimateDbVisibleSeedRows();
+    if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+    estimateCentralRemoveBoqRowsEverywhere();
+  };
+}
+const estimateCentralOriginalRenderEstimatePeriodManage = typeof renderEstimatePeriodManage === "function" ? renderEstimatePeriodManage : null;
+if (estimateCentralOriginalRenderEstimatePeriodManage) {
+  window.renderEstimatePeriodManage = function estimateCentralRenderEstimatePeriodManage() {
+    if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+    estimateCentralRemoveBoqRowsEverywhere();
+    return estimateCentralOriginalRenderEstimatePeriodManage();
+  };
+}
+const estimateCentralOriginalPersistPeriodRows = typeof estimatePeriodPersistRenderedRows === "function" ? estimatePeriodPersistRenderedRows : null;
+if (estimateCentralOriginalPersistPeriodRows) {
+  window.estimatePeriodPersistRenderedRows = function estimateCentralPersistPeriodRows() {
+    const result = estimateCentralOriginalPersistPeriodRows();
+    estimatePeriodAllRowsForList?.().filter(row => row.source !== "template").forEach(row => estimateCentralPeriodRowToRequestDb(row));
+    return result;
+  };
+}
+const estimateCentralOriginalCreateEstimateSheetFromRequest = typeof createEstimateSheetFromRequest === "function" ? createEstimateSheetFromRequest : null;
+if (estimateCentralOriginalCreateEstimateSheetFromRequest) {
+  window.createEstimateSheetFromRequest = function estimateCentralCreateEstimateSheetFromRequest(id) {
+    const result = estimateCentralOriginalCreateEstimateSheetFromRequest(id);
+    const req = estimateRequestRows.find(row => row.id === id);
+    if (req) {
+      const row = {
+        id: req.periodKey || id,
+        date: req.date,
+        company: req.company || req.client,
+        project: req.project,
+        scope: req.memo,
+        description: req.memo,
+        status: req.status,
+        unitWork: req.estimateType,
+        dbPjNo: req.dbPjNo || ""
+      };
+      row.centralKey = estimateCentralMakeKey(row);
+      row.dbPjNo = row.dbPjNo || estimateCentralDbPjNo(row);
+      estimateCentralPeriodRowToRequestDb(row);
+      renderEstimatePeriodManage?.();
+      renderEstimateDbManage?.();
+    }
+    return result;
+  };
+}
+const estimateCentralOriginalSaveEstimateSheetRecord = typeof saveEstimateSheetRecord === "function" ? saveEstimateSheetRecord : null;
+if (estimateCentralOriginalSaveEstimateSheetRecord) {
+  window.saveEstimateSheetRecord = function estimateCentralSaveEstimateSheetRecord() {
+    const result = estimateCentralOriginalSaveEstimateSheetRecord();
+    const rec = estimateSheetEditingIndex !== null ? estimateSheetRecords[estimateSheetEditingIndex] : estimateSheetRecords[0];
+    if (rec) {
+      const state = rec.state || estimateSheetEditorState;
+      const row = {
+        id: rec.periodKey || rec.id,
+        date: estimatePeriodTodayCode?.() || "",
+        company: estimatePeriodExtractCompanyName?.(estimateSheetDisplayValue(state, 5, 2)) || estimateSheetDisplayValue(state, 5, 2),
+        project: estimateSheetDisplayValue(state, 6, 2) || rec.title,
+        scope: estimateSheetDisplayValue(state, 7, 2) || "",
+        description: estimateSheetDisplayValue(state, 7, 2) || "",
+        amount: estimateSheetDisplayValue(state, 20, 6) || "",
+        status: rec.status || "대기중",
+        unitWork: rec.type,
+        dbPjNo: rec.dbPjNo || ""
+      };
+      row.centralKey = rec.centralKey || estimateCentralMakeKey(row);
+      row.dbPjNo = row.dbPjNo || estimateCentralDbPjNo(row);
+      estimateCentralPeriodRowToRequestDb(row);
+      renderEstimateRequestManage?.();
+      renderEstimateDbManage?.();
+    }
+    return result;
+  };
+}
+const estimateCentralOriginalSyncEstimateRequestToDb = typeof syncEstimateRequestToDb === "function" ? syncEstimateRequestToDb : null;
+if (estimateCentralOriginalSyncEstimateRequestToDb) {
+  window.syncEstimateRequestToDb = function estimateCentralSyncEstimateRequestToDb(id, options = {}) {
+    const result = estimateCentralOriginalSyncEstimateRequestToDb(id, options);
+    const req = estimateRequestRows.find(row => row.id === id);
+    if (req) {
+      const row = {
+        id: req.periodKey || id,
+        date: req.date,
+        company: req.company || req.client,
+        project: req.project,
+        scope: req.memo,
+        description: req.memo,
+        status: req.status,
+        unitWork: req.estimateType,
+        dbPjNo: req.dbPjNo || ""
+      };
+      row.centralKey = req.centralKey || estimateCentralMakeKey(row);
+      row.dbPjNo = row.dbPjNo || estimateCentralDbPjNo(row);
+      estimateCentralEnsureDbRows(row, { overwrite: false });
+      estimateCentralEnsureSheetRecord(row, { source: "request" });
+    }
+    return result;
+  };
+}
+const estimateCentralOriginalUpdateEstimateDbCell = typeof updateEstimateDbCell === "function" ? updateEstimateDbCell : null;
+if (estimateCentralOriginalUpdateEstimateDbCell) {
+  window.updateEstimateDbCell = function estimateCentralUpdateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
+    const result = estimateCentralOriginalUpdateEstimateDbCell(rowIndex, colIndex, value, options);
+    if (options.commit) estimateCentralSyncFromDbRow(options.tab || estimateDbActiveTab, rowIndex, { silent: true });
+    return result;
+  };
+}
+const estimateCentralOriginalCommitEstimateDbPendingEdits = typeof commitEstimateDbPendingEdits === "function" ? commitEstimateDbPendingEdits : null;
+if (estimateCentralOriginalCommitEstimateDbPendingEdits) {
+  window.commitEstimateDbPendingEdits = function estimateCentralCommitEstimateDbPendingEdits(options = {}) {
+    const result = estimateCentralOriginalCommitEstimateDbPendingEdits(options);
+    estimateCentralSyncAllDbRows({ silent: true });
+    renderEstimateRequestManage?.();
+    renderEstimatePeriodManage?.();
+    renderEstimateSheetManage?.();
+    return result;
+  };
+}
+const estimateCentralOriginalCommitEstimateDbSinglePendingEdit = typeof commitEstimateDbSinglePendingEdit === "function" ? commitEstimateDbSinglePendingEdit : null;
+if (estimateCentralOriginalCommitEstimateDbSinglePendingEdit) {
+  window.commitEstimateDbSinglePendingEdit = function estimateCentralCommitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}) {
+    const result = estimateCentralOriginalCommitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options);
+    if (result) estimateCentralSyncFromDbRow(tab, rowIndex, { silent: true });
+    return result;
+  };
+}
+const estimateCentralOriginalGetProjectReceiveListItems = typeof getProjectReceiveListItems === "function" ? getProjectReceiveListItems : null;
+if (estimateCentralOriginalGetProjectReceiveListItems) {
+  window.getProjectReceiveListItems = function estimateCentralGetProjectReceiveListItems() {
+    const base = estimateCentralOriginalGetProjectReceiveListItems() || [];
+    const dbItems = (estimateDbSheets?.pj?.rows || []).map((row, index) => {
+      const periodRow = estimateCentralDbRowToPeriodRow("pj", row, index);
+      if (!periodRow) return null;
+      const data = {
+        projectNo: periodRow.dbPjNo || estimateCentralDbPjNo(periodRow),
+        projectName: periodRow.project || "",
+        client: periodRow.company || "",
+        usage: periodRow.usage || "",
+        area: periodRow.area || "",
+        floors: "",
+        basementFloors: "",
+        groundFloors: "",
+        firstDelivery: "",
+        scopes: [{ label: periodRow.scope || "미선택", checked: !!periodRow.scope }],
+        workContent: periodRow.description || "",
+        notes: periodRow.memo || "",
+        dbLinked: true
+      };
+      return { source: "db", index, data, status: "DB연동" };
+    }).filter(Boolean);
+    const merged = [...base, ...dbItems];
+    const seen = new Set();
+    return merged.filter(item => {
+      const key = item.data?.projectNo || `${item.data?.projectName || ""}-${item.data?.client || ""}`;
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+}
+const estimateCentralOriginalApplyEstimateDbPjRowToQuote = typeof applyEstimateDbPjRowToQuote === "function" ? applyEstimateDbPjRowToQuote : null;
+if (estimateCentralOriginalApplyEstimateDbPjRowToQuote) {
+  window.applyEstimateDbPjRowToQuote = function estimateCentralApplyEstimateDbPjRowToQuote(rowIndex) {
+    const row = estimateDbSheets?.pj?.rows?.[rowIndex];
+    const periodRow = estimateCentralDbRowToPeriodRow("pj", row, rowIndex);
+    if (periodRow) {
+      const pjIdx = getEstimateDbColumnIndexByHeader?.("pj", "PJ NO");
+      if (pjIdx >= 0 && !estimateCentralText(row[pjIdx])) row[pjIdx] = periodRow.dbPjNo || estimateCentralDbPjNo(periodRow);
+    }
+    const result = estimateCentralOriginalApplyEstimateDbPjRowToQuote(rowIndex);
+    if (periodRow && typeof estimateQuoteState !== "undefined") {
+      estimateQuoteState.projectNo = estimateQuoteState.projectNo || periodRow.dbPjNo || estimateCentralDbPjNo(periodRow);
+      estimateQuoteState.dbLinked = true;
+      renderEstimateQuoteDashboard?.();
+      estimateCentralSyncFromDbRow("pj", rowIndex, { silent: true });
+    }
+    return result;
+  };
+}
+const estimateCentralOriginalSaveProjectReceiveDraft = typeof saveProjectReceiveDraft === "function" ? saveProjectReceiveDraft : null;
+if (estimateCentralOriginalSaveProjectReceiveDraft) {
+  window.saveProjectReceiveDraft = function estimateCentralSaveProjectReceiveDraft() {
+    syncProjectReceiveInputsToState?.();
+    if (typeof projectReceiveState !== "undefined" && !estimateCentralText(projectReceiveState.projectNo)) {
+      projectReceiveState.projectNo = `${estimatePeriodTodayCode?.() || "260000"}-${estimateCentralSafeKey(projectReceiveState.projectName || "PJ").slice(0, 12).toUpperCase()}`;
+      const input = document.getElementById("receiveProjectNo");
+      if (input) input.value = projectReceiveState.projectNo;
+    }
+    const result = estimateCentralOriginalSaveProjectReceiveDraft();
+    if (typeof projectReceiveState !== "undefined") {
+      const row = {
+        id: `project-receive-${projectReceiveState.projectNo}`,
+        date: estimatePeriodTodayCode?.() || "",
+        company: projectReceiveState.client || "",
+        project: projectReceiveState.projectName || "",
+        area: projectReceiveState.area || "",
+        scope: getProjectReceiveListScopeText?.(projectReceiveState) || "",
+        usage: projectReceiveState.usage || "",
+        description: projectReceiveState.workContent || "",
+        memo: projectReceiveState.notes || projectReceiveState.request || "",
+        status: "대기중",
+        dbPjNo: projectReceiveState.projectNo || ""
+      };
+      row.centralKey = estimateCentralMakeKey(row);
+      estimateCentralPeriodRowToRequestDb(row);
+      renderProjectReceiveListView?.();
+    }
+    return result;
+  };
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    estimateCentralSyncSeedRows({ silent: true });
+    if (document.getElementById("estimateSheetManage")?.classList.contains("active")) renderEstimateSheetManage?.();
+    if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage?.();
+    if (document.getElementById("estimatePeriodManage")?.classList.contains("active")) renderEstimatePeriodManage?.();
+    if (document.getElementById("estimateDbManage")?.classList.contains("active")) renderEstimateDbManage?.();
+    if (document.getElementById("projectReceiveListBody")) renderProjectReceiveListView?.();
+  }, 0);
+});
+
+/* DB관리 렌더링 초기에 기존 더미 2행 절단 로직이 실행된 뒤에도 기간별 원본 더미데이터가 다시 보존되도록 최종 보강 */
+const estimateCentralFinalInitializeEstimateDbVisibleSeedRows = typeof initializeEstimateDbVisibleSeedRows === "function" ? initializeEstimateDbVisibleSeedRows : null;
+if (estimateCentralFinalInitializeEstimateDbVisibleSeedRows) {
+  window.initializeEstimateDbVisibleSeedRows = function estimateCentralFinalInitializeEstimateDbVisibleSeedRowsWrapper() {
+    estimateCentralFinalInitializeEstimateDbVisibleSeedRows();
+    estimateCentralSyncSeedRows({ silent: true });
+    estimateCentralRemoveBoqRowsEverywhere();
+  };
+}
