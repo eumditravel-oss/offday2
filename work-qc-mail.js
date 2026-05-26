@@ -9411,10 +9411,7 @@ function syncWorkSideAccordion(targetPanelId) {
   });
   document.querySelectorAll(".side-main, .side-item, [data-work-main]").forEach(btn => {
     btn.classList.remove("active", "work-side-selected");
-    if (btn.classList?.contains("side-main") || btn.classList?.contains("side-item")) {
-      btn.removeAttribute("data-work-selected");
-      btn.removeAttribute("aria-current");
-    }
+    btn.removeAttribute("data-work-selected");
   });
 
   if (isEstimateQuote) {
@@ -9435,22 +9432,16 @@ function activateWorkSideSelection(targetPanelId) {
   const target = String(targetPanelId || "estimateRequestManage");
   const estimatePanels = ["estimateRequestManage", "estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList"];
   const projectReceivePanels = ["projectReceive", "projectReceiveList"];
-
-  // 좌측 업무관리 카테고리의 선택 표시를 항상 단일 기준으로 다시 지정합니다.
-  // 견적 의뢰관리 / 기간별 견적서관리처럼 JS 렌더링 후 active 클래스가 풀리던 항목은
-  // data-work-selected와 work-side-selected를 함께 부여해 시각 표시가 유지되도록 합니다.
-  document.querySelectorAll(".side-nav .side-main, .side-nav .side-item").forEach(btn => {
-    btn.classList.remove("active", "work-side-selected");
-    btn.removeAttribute("data-work-selected");
-    btn.removeAttribute("aria-current");
-  });
-
   const markSelected = (el) => {
     if (!el) return;
     el.classList.add("active", "work-side-selected");
     el.setAttribute("data-work-selected", "true");
-    el.setAttribute("aria-current", "page");
   };
+
+  document.querySelectorAll(".work-side-selected, [data-work-selected='true']").forEach(el => {
+    el.classList.remove("work-side-selected");
+    el.removeAttribute("data-work-selected");
+  });
 
   if (estimatePanels.includes(target)) {
     document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
@@ -9477,31 +9468,21 @@ function activateWorkSideSelection(targetPanelId) {
   markSelected(document.querySelector(`.side-main[data-work-main="${target}"]`));
 }
 
-function forceWorkSideSelection(targetPanelId) {
-  const target = String(targetPanelId || "estimateRequestManage");
-  if (typeof syncWorkSideAccordion === "function") syncWorkSideAccordion(target);
-  if (typeof activateWorkSideSelection === "function") activateWorkSideSelection(target);
-  if (typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(() => activateWorkSideSelection(target));
-  } else {
-    setTimeout(() => activateWorkSideSelection(target), 0);
-  }
-}
-
-
 function switchWorkPanel(panelId) {
   const targetPanelId = panelId || "estimateDbManage";
 
   document.querySelectorAll(".work-panel").forEach(panel => panel.classList.remove("active"));
-  document.querySelectorAll("[data-work-main]").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll("[data-work-main]").forEach(btn => {
+    btn.classList.remove("active", "work-side-selected");
+    btn.removeAttribute("data-work-selected");
+  });
   document.querySelectorAll(".side-sub").forEach(menu => menu.classList.remove("active"));
 
   document.getElementById(targetPanelId)?.classList.add("active");
-  if (typeof forceWorkSideSelection === "function") {
-    forceWorkSideSelection(targetPanelId);
-  } else {
-    syncWorkSideAccordion(targetPanelId);
-    if (typeof activateWorkSideSelection === "function") activateWorkSideSelection(targetPanelId);
+  syncWorkSideAccordion(targetPanelId);
+
+  if (typeof activateWorkSideSelection === "function") {
+    activateWorkSideSelection(targetPanelId);
   }
 
   const meta = workPageMeta[targetPanelId] || workPageMeta.estimateDbManage || workPageMeta.projectReceive;
@@ -12556,10 +12537,13 @@ document.addEventListener("click", event => {
 
   switchWorkPanel(targetPanelId);
 
-  // 클릭한 대분류 외의 하위 카테고리는 즉시 접고,
-  // 클릭한 세부카테고리는 견적서관리와 동일하게 선택 표시를 고정합니다.
-  if (typeof forceWorkSideSelection === "function") {
-    forceWorkSideSelection(targetPanelId);
+  // 클릭한 대분류 외의 하위 카테고리는 즉시 접습니다.
+  // DB관리 클릭 시 프로젝트 접수 하위 메뉴가 남아 있는 현상을 방지합니다.
+  if (typeof syncWorkSideAccordion === "function") {
+    syncWorkSideAccordion(targetPanelId);
+  }
+  if (typeof activateWorkSideSelection === "function") {
+    activateWorkSideSelection(targetPanelId);
   }
 
   if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
