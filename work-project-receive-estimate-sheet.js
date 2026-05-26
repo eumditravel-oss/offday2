@@ -2294,7 +2294,7 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "unitPrice", label: "단가(₩)", width: 92, align: "right" },
   { key: "amount", label: "금액(₩)", width: 112, align: "right" },
   { key: "scope", label: "작업범위", width: 140 },
-  { key: "usage", label: "건물용도", width: 116 },
+  { key: "usage", label: "건물용도", width: 29 },
   { key: "count", label: "작업횟수", width: 88, align: "center" },
   { key: "unitWork", label: "단가작업", width: 104, align: "center" },
   { key: "bid", label: "실행/입찰", width: 104, align: "center" },
