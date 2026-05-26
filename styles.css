@@ -18011,18 +18011,17 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 .estimate-sheet-list-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1040px;
   border-collapse: collapse;
   color: #0f172a;
 }
 
-.estimate-sheet-col-title { width: 24%; }
+.estimate-sheet-col-title { width: 22%; }
 .estimate-sheet-col-recipient { width: 12%; }
-.estimate-sheet-col-project { width: 19%; }
-.estimate-sheet-col-service { width: 23%; }
-.estimate-sheet-col-total { width: 10.4%; }
-.estimate-sheet-col-status { width: 5%; }
-.estimate-sheet-col-manage { width: 10.4%; }
+.estimate-sheet-col-project { width: 20%; }
+.estimate-sheet-col-service { width: 25%; }
+.estimate-sheet-col-total { width: 14%; }
+.estimate-sheet-col-status { width: 7%; }
 .estimate-sheet-list-table th,
 .estimate-sheet-list-table td {
   border-bottom: 1px solid #e2e8f0;
