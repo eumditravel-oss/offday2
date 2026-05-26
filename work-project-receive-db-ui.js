@@ -111,6 +111,7 @@ function syncEstimateDbYearOptions() {
 function setEstimateDbTab(tab) {
   if (!estimateDbSheets[tab]) return;
   estimateDbActiveTab = tab;
+  setEstimateDbPageIndex(tab, 0);
   estimateDbSelectedCell = { tab, sectionIndex: null, rowIndex: 0, colIndex: 0 };
   renderEstimateDbManage();
 }
@@ -523,6 +524,62 @@ function recalcEstimateDbRow(tab, row) {
 function recalcAllEstimateDbRows() {
   Object.keys(estimateDbSheets).forEach(tab => (estimateDbSheets[tab].rows || []).forEach(row => recalcEstimateDbRow(tab, row)));
 }
+
+/* =========================================================
+   DB관리 성능 구조 변경
+   - 전체 탭 재계산 대신 현재 탭만 재계산
+   - 대량 행은 50개 단위 페이지 렌더링
+   ========================================================= */
+const ESTIMATE_DB_RENDER_PAGE_SIZE = 50;
+let estimateDbPageState = { pj: 0, progress: 0, mep: 0 };
+function recalcEstimateDbRowsByTab(tab = estimateDbActiveTab) {
+  const sheet = estimateDbSheets?.[tab];
+  if (!sheet || !Array.isArray(sheet.rows)) return;
+  sheet.rows.forEach(row => recalcEstimateDbRow(tab, row));
+}
+function getEstimateDbPageIndex(tab = estimateDbActiveTab) {
+  const value = Number(estimateDbPageState?.[tab] || 0);
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+function setEstimateDbPageIndex(tab = estimateDbActiveTab, page = 0) {
+  estimateDbPageState = estimateDbPageState || { pj: 0, progress: 0, mep: 0 };
+  estimateDbPageState[tab] = Math.max(0, Number(page) || 0);
+}
+function getEstimateDbPagedEntries(entries = [], tab = estimateDbActiveTab) {
+  const total = entries.length;
+  const pageSize = ESTIMATE_DB_RENDER_PAGE_SIZE;
+  const maxPage = Math.max(0, Math.ceil(total / pageSize) - 1);
+  const page = Math.min(getEstimateDbPageIndex(tab), maxPage);
+  setEstimateDbPageIndex(tab, page);
+  const start = page * pageSize;
+  return { entries: entries.slice(start, start + pageSize), page, maxPage, total, start, end: Math.min(total, start + pageSize) };
+}
+function renderEstimateDbPager(paged) {
+  const wrap = document.querySelector('.quote-db-grid-wrap');
+  if (!wrap || !paged) return;
+  let pager = document.getElementById('estimateDbPager');
+  if (!pager) {
+    pager = document.createElement('div');
+    pager.id = 'estimateDbPager';
+    pager.className = 'quote-db-pager';
+    wrap.insertAdjacentElement('afterend', pager);
+  }
+  const disabledPrev = paged.page <= 0 ? 'disabled' : '';
+  const disabledNext = paged.page >= paged.maxPage ? 'disabled' : '';
+  pager.innerHTML = `
+    <div class="quote-db-pager-info">표시 ${paged.total ? (paged.start + 1).toLocaleString('ko-KR') : 0}~${paged.end.toLocaleString('ko-KR')} / 전체 ${paged.total.toLocaleString('ko-KR')}행</div>
+    <div class="quote-db-pager-actions">
+      <button class="btn btn-line btn-sm" type="button" ${disabledPrev} onclick="moveEstimateDbPage(-1)">이전</button>
+      <span>${(paged.page + 1).toLocaleString('ko-KR')} / ${(paged.maxPage + 1).toLocaleString('ko-KR')}</span>
+      <button class="btn btn-line btn-sm" type="button" ${disabledNext} onclick="moveEstimateDbPage(1)">다음</button>
+    </div>`;
+}
+function moveEstimateDbPage(delta = 0) {
+  const current = getEstimateDbPageIndex(estimateDbActiveTab);
+  setEstimateDbPageIndex(estimateDbActiveTab, current + Number(delta || 0));
+  estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex: 0, colIndex: estimateDbSelectedCell?.colIndex || 0 };
+  renderEstimateDbManage();
+}
 function getEstimateDbStageGroups() {
   return ["세금계산서", "입금예정일", "입금일"];
 }
@@ -628,6 +685,7 @@ function toggleEstimateDbSort(colIndex) {
 
 function setEstimateDbSearchKeyword(value) {
   estimateDbSearchKeyword = String(value || "");
+  setEstimateDbPageIndex(estimateDbActiveTab, 0);
   estimateDbSelectedCell = { tab: estimateDbActiveTab, sectionIndex: null, rowIndex: 0, colIndex: estimateDbSelectedCell?.colIndex || 0 };
   renderEstimateDbManage();
 }
@@ -858,7 +916,7 @@ function renderEstimateDbManage() {
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
   sanitizeEstimateDbSheetsBeforeRender();
   ensureEstimateDbProgressStageTotalColumns();
-  recalcAllEstimateDbRows();
+  recalcEstimateDbRowsByTab(estimateDbActiveTab);
   renderEstimateDbSearchBox();
   updateEstimateDbSaveButtonState();
   const resizeBtn = document.getElementById("estimateDbColumnResizeBtn");
@@ -896,9 +954,12 @@ function renderEstimateDbManage() {
       <th class="quote-db-manage-col">관리</th>
     </tr>
   `;
-  const entries = getEstimateDbDisplayRowEntries(sheet, estimateDbActiveTab);
+  const allEntries = getEstimateDbDisplayRowEntries(sheet, estimateDbActiveTab);
+  const paged = getEstimateDbPagedEntries(allEntries, estimateDbActiveTab);
+  const entries = paged.entries;
   const totalRow = renderEstimateDbTotalRow(sheet, colCount);
   body.innerHTML = totalRow + (entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">검색 조건에 맞는 DB 행이 없습니다.</td></tr>`);
+  renderEstimateDbPager(paged);
   applyEstimateDbCommaFormatToRenderedInputs();
   renderEstimateDbReports();
   restoreEstimateDbFocus();
