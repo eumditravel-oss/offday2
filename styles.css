@@ -18737,3 +18737,50 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   border-color:#111827 !important;
   color:#fff !important;
 }
+
+/* === 견적 의뢰관리 행별 빈 공간 제거 보정 ===
+   상태/견적서 보조문구 때문에 행 높이가 늘어나고 관리 칸 하단에 빈 영역이 생기는 문제를 방지합니다. */
+.estimate-workflow-table tbody tr{
+  height:44px !important;
+}
+.estimate-workflow-table tbody td{
+  padding:6px 8px !important;
+  vertical-align:middle !important;
+  height:44px !important;
+  min-height:44px !important;
+  line-height:1.2 !important;
+}
+.estimate-workflow-table td:nth-child(2)::after,
+.estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-승인완료 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-선착수 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after{
+  display:none !important;
+  content:none !important;
+}
+.estimate-workflow-table td:nth-child(7) small{
+  display:none !important;
+}
+.estimate-workflow-row-actions.compact{
+  height:34px !important;
+  min-height:34px !important;
+  align-items:center !important;
+  align-content:center !important;
+  flex-wrap:nowrap !important;
+  overflow:hidden !important;
+}
+.estimate-workflow-row-actions.compact .btn,
+.estimate-workflow-row-actions.compact .estimate-request-action-select{
+  height:30px !important;
+  min-height:30px !important;
+  line-height:30px !important;
+  margin:0 !important;
+}
+.estimate-workflow-table tr[data-request-status="작업취소"] td,
+.estimate-workflow-table tr.estimate-request-status-작업취소 td{
+  background:#e5e7eb !important;
+  color:#64748b !important;
+}
