@@ -2683,3 +2683,393 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
   estimatePeriodSentRows.unshift(row);
   estimatePeriodSaveSentRows();
 }
+
+
+/* =========================================================
+   2026-05 workflow patch
+   견적 의뢰관리 → 견적서관리 → 기간별 견적서관리 → DB관리 연결
+   - 최초 의뢰는 메모장형 입력으로 관리
+   - 견적서 작성 요청 시 현재 견적서관리 데이터 모델에 연결 레코드 생성
+   - 발송/승인/착수/취소 상태가 의뢰관리와 기간별 관리에 같이 반영
+   - 착수 전환 시 DB관리(PJ관리) 후보 행으로 연결 등록
+   ========================================================= */
+const ESTIMATE_REQUEST_STORAGE_KEY = "concostEstimateRequestWorkflowRows.v1";
+let estimateRequestRows = [];
+let estimateRequestFilters = { status: "전체", q: "" };
+const ESTIMATE_REQUEST_STATUS = ["의뢰메모", "견적요청", "견적작성중", "대기중", "발송완료", "승인완료", "선착수", "착수완료", "DB등록", "작업취소"];
+
+function estimateRequestSafeId(prefix = "req") {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+function estimateRequestToday() {
+  const d = new Date();
+  return `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+function estimateRequestNowLabel() {
+  const d = new Date();
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+function estimateRequestHtml(v) {
+  return String(v ?? "").replace(/[&<>"]/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[s]));
+}
+function estimateRequestLoadRows() {
+  try { estimateRequestRows = JSON.parse(localStorage.getItem(ESTIMATE_REQUEST_STORAGE_KEY) || "[]") || []; }
+  catch (e) { estimateRequestRows = []; }
+  if (!Array.isArray(estimateRequestRows)) estimateRequestRows = [];
+}
+function estimateRequestSaveRows() {
+  try { localStorage.setItem(ESTIMATE_REQUEST_STORAGE_KEY, JSON.stringify(estimateRequestRows)); } catch (e) { console.warn("견적 의뢰관리 저장 실패", e); }
+}
+function estimateRequestAddHistory(row, text) {
+  if (!row) return;
+  row.history = Array.isArray(row.history) ? row.history : [];
+  row.history.unshift({ at: estimateRequestNowLabel(), text });
+  row.updatedAt = estimateRequestNowLabel();
+}
+function estimateRequestExtractCompany(text) {
+  const src = String(text || "");
+  if (typeof estimatePeriodExtractCompanyName === "function") {
+    const found = estimatePeriodExtractCompanyName(src);
+    if (found) return found;
+  }
+  const patterns = [/(?:㈜|\(주\))[^\s,;\/]+/u, /[^\s,;\/]+(?:㈜|\(주\))/u, /[^\s,;\/]+건설/u, /[^\s,;\/]+엔지니어링/u, /[^\s,;\/]+종합건축/u];
+  for (const p of patterns) {
+    const m = src.match(p);
+    if (m) return m[0];
+  }
+  return src.split(/[\n,;]/).map(x => x.trim()).filter(Boolean)[0] || "";
+}
+function estimateRequestNormalizeRow(row = {}) {
+  return {
+    id: row.id || estimateRequestSafeId(),
+    date: row.date || estimateRequestToday(),
+    company: row.company || estimateRequestExtractCompany(row.rawMemo || row.client || ""),
+    project: row.project || "",
+    client: row.client || "",
+    contact: row.contact || "",
+    memo: row.memo || row.rawMemo || "",
+    status: row.status || "의뢰메모",
+    estimateType: row.estimateType || "개산견적",
+    estimateId: row.estimateId || "",
+    periodKey: row.periodKey || "",
+    dbLinked: !!row.dbLinked,
+    startMode: row.startMode || "",
+    updatedAt: row.updatedAt || estimateRequestNowLabel(),
+    history: Array.isArray(row.history) ? row.history : []
+  };
+}
+function estimateRequestFilteredRows() {
+  estimateRequestLoadRows();
+  const q = String(estimateRequestFilters.q || "").toLowerCase().trim();
+  return estimateRequestRows.map(estimateRequestNormalizeRow).filter(row => {
+    if (estimateRequestFilters.status !== "전체" && row.status !== estimateRequestFilters.status) return false;
+    if (!q) return true;
+    return [row.date, row.company, row.project, row.client, row.contact, row.memo, row.status, row.estimateType].join(" ").toLowerCase().includes(q);
+  }).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+}
+function estimateRequestStatusSummary() {
+  estimateRequestLoadRows();
+  const rows = estimateRequestRows.map(estimateRequestNormalizeRow);
+  const items = ["의뢰메모", "견적요청", "대기중", "발송완료", "승인완료", "선착수", "착수완료", "DB등록", "작업취소"];
+  return items.map(status => ({ status, count: rows.filter(r => r.status === status).length }));
+}
+function renderEstimateRequestManage() {
+  const stepbar = document.getElementById("estimateWorkflowStepbar");
+  const toolbar = document.getElementById("estimateWorkflowToolbar");
+  const board = document.getElementById("estimateWorkflowBoard");
+  if (!stepbar || !toolbar || !board) return;
+  estimateRequestLoadRows();
+  stepbar.innerHTML = [
+    ["01", "클라이언트 의뢰", "메모장형 기록"],
+    ["02", "업체/프로젝트 가등록", "대략 정보 저장"],
+    ["03", "견적서 작성 요청", "대기중 자동 전환"],
+    ["04", "발송/승인/선착수", "기간별 관리 연결"],
+    ["05", "착수/DB등록", "PJ관리 후보 생성"]
+  ].map(x => `<div class="estimate-workflow-step"><b>${x[0]}</b><strong>${x[1]}</strong><span>${x[2]}</span></div>`).join("");
+  toolbar.innerHTML = `
+    <div class="estimate-workflow-filter-row">
+      <label>상태 <select id="estimateRequestStatusFilter"><option>전체</option>${ESTIMATE_REQUEST_STATUS.map(s => `<option ${estimateRequestFilters.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+      <label class="grow">검색 <input id="estimateRequestSearch" value="${estimateRequestHtml(estimateRequestFilters.q || "")}" placeholder="업체명, 프로젝트명, 메모, 담당자 검색"></label>
+      <button class="btn btn-line" type="button" id="estimateRequestApplyFilter">조회</button>
+      <button class="btn btn-line" type="button" id="estimateRequestResetFilter">전체보기</button>
+      <button class="btn btn-primary" type="button" onclick="addEstimateRequestMemo()">의뢰 등록</button>
+    </div>
+    <div class="estimate-workflow-summary">${estimateRequestStatusSummary().map(item => `<span><b>${estimateRequestHtml(item.status)}</b>${item.count.toLocaleString("ko-KR")}건</span>`).join("")}</div>
+  `;
+  toolbar.querySelector("#estimateRequestApplyFilter")?.addEventListener("click", () => {
+    estimateRequestFilters.status = toolbar.querySelector("#estimateRequestStatusFilter")?.value || "전체";
+    estimateRequestFilters.q = toolbar.querySelector("#estimateRequestSearch")?.value || "";
+    renderEstimateRequestManage();
+  });
+  toolbar.querySelector("#estimateRequestResetFilter")?.addEventListener("click", () => { estimateRequestFilters = { status: "전체", q: "" }; renderEstimateRequestManage(); });
+  const rows = estimateRequestFilteredRows();
+  board.innerHTML = `
+    <div class="estimate-workflow-table-wrap">
+      <table class="estimate-workflow-table">
+        <thead><tr><th>의뢰일</th><th>상태</th><th>업체명</th><th>프로젝트명</th><th>의뢰자/연락처</th><th>메모</th><th>견적서</th><th>연계</th><th>관리</th></tr></thead>
+        <tbody>${rows.map(row => estimateRequestRowHtml(row)).join("") || `<tr><td colspan="9" class="empty-cell">등록된 견적 의뢰가 없습니다. [의뢰 등록]으로 메모장처럼 먼저 기록하세요.</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div class="estimate-workflow-help">
+      흐름: 의뢰 등록 → 견적서 작성요청 → 견적서관리에서 작성/발송 → 기간별 견적서관리 자동 누적 → 승인 또는 선착수 처리 → DB관리(PJ관리) 등록.
+    </div>
+  `;
+}
+function estimateRequestRowHtml(row) {
+  const linkedEstimate = row.estimateId ? estimateSheetRecords.find(r => r.id === row.estimateId) : null;
+  const periodLinked = row.periodKey ? "기간별 연결" : "-";
+  const dbLabel = row.dbLinked ? "DB등록" : "DB대기";
+  return `<tr data-request-id="${estimateRequestHtml(row.id)}">
+    <td contenteditable="true" data-request-field="date">${estimateRequestHtml(row.date)}</td>
+    <td><select data-request-field="status">${ESTIMATE_REQUEST_STATUS.map(s => `<option value="${s}" ${row.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>
+    <td contenteditable="true" data-request-field="company">${estimateRequestHtml(row.company)}</td>
+    <td contenteditable="true" data-request-field="project">${estimateRequestHtml(row.project)}</td>
+    <td><div contenteditable="true" data-request-field="client">${estimateRequestHtml(row.client)}</div><small contenteditable="true" data-request-field="contact">${estimateRequestHtml(row.contact)}</small></td>
+    <td class="memo" contenteditable="true" data-request-field="memo">${estimateRequestHtml(row.memo)}</td>
+    <td><select data-request-field="estimateType">${ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${t}" ${row.estimateType === t ? "selected" : ""}>${t}</option>`).join("")}</select><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
+    <td><span class="quote-status-badge">${estimateRequestHtml(periodLinked)}</span><span class="quote-status-badge">${estimateRequestHtml(dbLabel)}</span></td>
+    <td class="estimate-workflow-row-actions">
+      <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${estimateRequestHtml(row.id)}')">저장</button>
+      <button class="btn btn-primary btn-xs" type="button" onclick="createEstimateSheetFromRequest('${estimateRequestHtml(row.id)}')">견적서 작성</button>
+      <button class="btn btn-line btn-xs" type="button" onclick="approveEstimateRequest('${estimateRequestHtml(row.id)}')">승인</button>
+      <button class="btn btn-line btn-xs" type="button" onclick="startEstimateRequest('${estimateRequestHtml(row.id)}','선착수')">선착수</button>
+      <button class="btn btn-line btn-xs" type="button" onclick="startEstimateRequest('${estimateRequestHtml(row.id)}','착수완료')">착수</button>
+      <button class="btn btn-line btn-xs" type="button" onclick="syncEstimateRequestToDb('${estimateRequestHtml(row.id)}')">DB등록</button>
+      ${linkedEstimate ? `<button class="btn btn-line btn-xs" type="button" onclick="openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')">견적열기</button>` : ""}
+    </td>
+  </tr>`;
+}
+function addEstimateRequestMemo() {
+  estimateRequestLoadRows();
+  const memo = prompt("클라이언트 의뢰 내용을 메모장처럼 입력하세요.\n예: (주)xx건설 / xx프로젝트 / 견적 요청 가능성 / 통화 내용", "");
+  if (memo === null) return;
+  const company = estimateRequestExtractCompany(memo);
+  const row = estimateRequestNormalizeRow({ rawMemo: memo, memo, company, status: "의뢰메모" });
+  estimateRequestAddHistory(row, "클라이언트 의뢰 메모 등록");
+  estimateRequestRows.unshift(row);
+  estimateRequestSaveRows();
+  renderEstimateRequestManage();
+  showToast?.("견적 의뢰 메모를 등록했습니다.");
+}
+function saveEstimateRequestRowFromDom(id) {
+  estimateRequestLoadRows();
+  const tr = document.querySelector(`tr[data-request-id="${CSS.escape(id)}"]`);
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (!tr || idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  tr.querySelectorAll("[data-request-field]").forEach(el => {
+    const key = el.getAttribute("data-request-field");
+    row[key] = el.tagName === "SELECT" ? el.value : (el.innerText || el.textContent || "").trim();
+  });
+  if (!row.company) row.company = estimateRequestExtractCompany(`${row.client} ${row.memo}`);
+  estimateRequestAddHistory(row, "의뢰관리 행 수정 저장");
+  estimateRequestRows[idx] = row;
+  estimateRequestSaveRows();
+  renderEstimateRequestManage();
+  showToast?.("견적 의뢰관리 행을 저장했습니다.");
+}
+function estimateRequestSetCell(state, r, c, v) {
+  const obj = estimateSheetGetCellObj(state, r, c);
+  obj.value = v ?? "";
+  obj.formula = "";
+  obj.userFormula = false;
+}
+function createEstimateSheetFromRequest(id) {
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  const type = ESTIMATE_SHEET_TYPE_ORDER.includes(row.estimateType) ? row.estimateType : "개산견적";
+  const state = estimateSheetCreateState(type);
+  estimateRequestSetCell(state, 5, 2, row.company || row.client || "");
+  estimateRequestSetCell(state, 6, 2, row.project || "");
+  if (row.memo) estimateRequestSetCell(state, 7, 2, row.memo.split(/\n/)[0].slice(0, 80));
+  const record = {
+    id: row.estimateId || estimateSheetMakeId("estimate"),
+    requestId: row.id,
+    type,
+    title: `${row.project || row.company || "견적"}_${type}`,
+    status: "대기중",
+    updatedAt: estimateSheetNow(),
+    state,
+    quoteData: typeof estimateSheetExtractQuoteDataFromState === "function" ? estimateSheetExtractQuoteDataFromState(state) : null,
+    dataMode: typeof ESTIMATE_TEMPLATE_DATA_MODE !== "undefined" ? ESTIMATE_TEMPLATE_DATA_MODE : "template-value-only"
+  };
+  const existingIndex = estimateSheetRecords.findIndex(r => r.id === record.id || r.requestId === row.id);
+  if (existingIndex >= 0) estimateSheetRecords[existingIndex] = { ...estimateSheetRecords[existingIndex], ...record, id: estimateSheetRecords[existingIndex].id };
+  else estimateSheetRecords.unshift(record);
+  row.estimateId = (existingIndex >= 0 ? estimateSheetRecords[existingIndex].id : record.id);
+  row.status = "대기중";
+  estimateRequestAddHistory(row, "견적서 작성 요청 및 견적서관리 대기중 등록");
+  estimateRequestRows[idx] = row;
+  estimateRequestSaveRows();
+  estimateSheetActiveType = type;
+  if (typeof renderEstimateSheetManage === "function") renderEstimateSheetManage();
+  renderEstimateRequestManage();
+  showToast?.("견적서관리로 대기중 견적서를 연결 등록했습니다.");
+  openEstimateSheetById(row.estimateId);
+}
+function openEstimateSheetById(estimateId) {
+  const index = estimateSheetRecords.findIndex(r => r.id === estimateId);
+  if (index >= 0) {
+    if (typeof openEstimateSheetExcelWindow === "function") openEstimateSheetExcelWindow(index);
+    else if (typeof openEstimateSheetEditor === "function") openEstimateSheetEditor(index);
+  }
+}
+function estimateRequestFindByEstimateId(estimateId) {
+  estimateRequestLoadRows();
+  return estimateRequestRows.find(r => r.estimateId === estimateId || r.id === estimateId);
+}
+function estimateRequestUpdateByEstimate(record, status, message) {
+  if (!record?.id) return;
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.estimateId === record.id || r.id === record.requestId);
+  if (idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  row.estimateId = record.id;
+  row.status = status || row.status;
+  row.periodKey = row.periodKey || record.periodKey || "";
+  estimateRequestAddHistory(row, message || `견적서관리 상태 변경: ${row.status}`);
+  estimateRequestRows[idx] = row;
+  estimateRequestSaveRows();
+}
+const estimateWorkflowOriginalSaveRecord = typeof saveEstimateSheetRecord === "function" ? saveEstimateSheetRecord : null;
+window.saveEstimateSheetRecord = function estimateWorkflowSaveEstimateSheetRecord() {
+  const beforeId = estimateSheetEditingIndex !== null ? estimateSheetRecords[estimateSheetEditingIndex]?.id : null;
+  estimateWorkflowOriginalSaveRecord?.();
+  const rec = beforeId ? estimateSheetRecords.find(r => r.id === beforeId) : estimateSheetRecords[estimateSheetEditingIndex || 0];
+  if (rec?.requestId) estimateRequestUpdateByEstimate(rec, rec.status || "대기중", "견적서관리 저장 반영");
+};
+const estimateWorkflowOriginalMarkSent = typeof markEstimateSheetSent === "function" ? markEstimateSheetSent : null;
+window.markEstimateSheetSent = function estimateWorkflowMarkEstimateSheetSent(index) {
+  estimateWorkflowOriginalMarkSent?.(index);
+  const rec = estimateSheetRecords[index];
+  if (rec?.id) {
+    estimateRequestUpdateByEstimate(rec, "발송완료", "견적서 발송 처리 및 기간별 견적서관리 연결");
+    const period = (typeof estimatePeriodSentRows !== "undefined" ? estimatePeriodSentRows : []).find(x => x.sourceEstimateId === rec.id);
+    if (period) {
+      estimateRequestLoadRows();
+      const reqIdx = estimateRequestRows.findIndex(r => r.estimateId === rec.id || r.id === rec.requestId);
+      if (reqIdx >= 0) {
+        estimateRequestRows[reqIdx].periodKey = period.key;
+        estimateRequestSaveRows();
+      }
+    }
+    if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage();
+  }
+};
+function approveEstimateRequest(id) {
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  row.status = "승인완료";
+  estimateRequestAddHistory(row, "견적 승인 완료");
+  estimateRequestRows[idx] = row;
+  estimateRequestSaveRows();
+  estimateRequestSyncPeriodStatus(row, "수주", "견적 승인 완료");
+  renderEstimateRequestManage();
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+}
+function startEstimateRequest(id, mode = "착수완료") {
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  row.status = mode === "선착수" ? "선착수" : "착수완료";
+  row.startMode = mode === "선착수" ? "승인 전 선착수" : "승인 후 착수";
+  estimateRequestAddHistory(row, row.startMode);
+  estimateRequestRows[idx] = row;
+  estimateRequestSaveRows();
+  estimateRequestSyncPeriodStatus(row, row.status === "선착수" ? "실주" : "수주", row.startMode);
+  renderEstimateRequestManage();
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+}
+function estimateRequestSyncPeriodStatus(row, status, memo) {
+  if (!row?.estimateId || typeof estimatePeriodSentRows === "undefined") return;
+  estimatePeriodLoadSentRows?.();
+  const item = estimatePeriodSentRows.find(x => x.sourceEstimateId === row.estimateId || x.key === row.periodKey);
+  if (!item) return;
+  item.values = item.values || {};
+  item.values[15] = status;
+  item.values[16] = memo || item.values[16] || "";
+  item.values[17] = estimateRequestNowLabel();
+  item.values[18] = row.status;
+  row.periodKey = item.key;
+  estimatePeriodSaveSentRows?.();
+  estimateRequestSaveRows();
+}
+function syncEstimateRequestToDb(id) {
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  try {
+    if (typeof estimateDbSheets !== "undefined" && estimateDbSheets.pj) {
+      const sheet = estimateDbSheets.pj;
+      const headers = (sheet.headerRows && sheet.headerRows[0]) || [];
+      const next = Array(headers.length).fill("");
+      const put = (name, value) => { const i = headers.indexOf(name); if (i >= 0) next[i] = value || ""; };
+      put("년도", `20${String(row.date || estimateRequestToday()).slice(0, 2)}`);
+      put("거래처명", row.company);
+      put("프로젝트명", row.project);
+      put("거래처담당자", row.client);
+      put("휴대폰", row.contact);
+      put("작업공종", row.memo);
+      put("업무성격", row.startMode || row.status);
+      put("상담 / 이메일 / 특기사항", row.memo);
+      put("수주일자", row.status === "승인완료" || row.status === "착수완료" ? row.date : "");
+      sheet.rows = sheet.rows || [];
+      const exists = sheet.rows.findIndex(r => r[headers.indexOf("프로젝트명")] === row.project && r[headers.indexOf("거래처명")] === row.company);
+      if (exists >= 0) sheet.rows[exists] = next;
+      else sheet.rows.unshift(next);
+      row.dbLinked = true;
+      row.status = "DB등록";
+      estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 등록");
+      estimateRequestRows[idx] = row;
+      estimateRequestSaveRows();
+      if (typeof renderEstimateDbManage === "function") renderEstimateDbManage();
+      renderEstimateRequestManage();
+      showToast?.("DB관리(PJ관리)에 연결 등록했습니다.");
+    }
+  } catch (e) {
+    console.warn("DB관리 연결 실패", e);
+    showToast?.("DB관리 연결 중 오류가 발생했습니다.");
+  }
+}
+function cancelEstimateRequest(id) {
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  row.status = "작업취소";
+  estimateRequestAddHistory(row, "작업취소 처리");
+  estimateRequestRows[idx] = row;
+  estimateRequestSaveRows();
+  estimateRequestSyncPeriodStatus(row, "작업취소", "작업취소 처리");
+  renderEstimateRequestManage();
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+}
+
+/* 견적서 리스트에 의뢰ID/흐름 상태를 보강 표시 */
+const estimateWorkflowOriginalRenderList = typeof renderEstimateSheetList === "function" ? renderEstimateSheetList : null;
+window.renderEstimateSheetList = function estimateWorkflowRenderSheetList() {
+  estimateWorkflowOriginalRenderList?.();
+  const body = document.getElementById("estimateSheetListBody");
+  if (!body) return;
+  Array.from(body.querySelectorAll("tr")).forEach(tr => {
+    const onclick = tr.getAttribute("onclick") || "";
+    const m = onclick.match(/openEstimateSheetEditor\((\d+)\)/);
+    if (!m) return;
+    const rec = estimateSheetRecords[Number(m[1])];
+    if (!rec?.requestId) return;
+    const req = estimateRequestFindByEstimateId(rec.id) || estimateRequestRows.find(r => r.id === rec.requestId);
+    const td = tr.children[6];
+    if (td && req) td.innerHTML += `<small class="estimate-flow-tag">의뢰흐름: ${estimateRequestHtml(req.status || "-")}</small>`;
+  });
+};
+
+/* 초기 진입 패널이 견적 의뢰관리일 때 렌더링 */
+setTimeout(() => {
+  if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage();
+}, 0);
