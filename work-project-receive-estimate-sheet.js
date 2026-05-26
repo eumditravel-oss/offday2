@@ -485,9 +485,8 @@ function renderEstimateSheetList() {
       <td>${estimateSheetHtml(s.service)}</td>
       <td>${estimateSheetHtml(s.total)}</td>
       <td><span class="quote-status-badge">${estimateSheetHtml(record.status || "작성중")}</span></td>
-      <td class="quote-action-cell" onclick="event.stopPropagation();"><button class="btn btn-line btn-xs" type="button" onclick="openEstimateSheetEditor(${index})">열기</button></td>
     </tr>`;
-  }).join("") || `<tr><td colspan="7" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
+  }).join("") || `<tr><td colspan="6" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
 }
 function openEstimateSheetEditor(index = null) {
   const editor = document.getElementById("estimateSheetEditor");
@@ -3353,22 +3352,10 @@ function cancelEstimateRequest(id) {
 }
 
 
-/* 견적서 리스트에 의뢰ID/흐름 상태를 보강 표시 */
+/* 견적서 리스트 렌더링 유지 */
 const estimateWorkflowOriginalRenderList = typeof renderEstimateSheetList === "function" ? renderEstimateSheetList : null;
 window.renderEstimateSheetList = function estimateWorkflowRenderSheetList() {
   estimateWorkflowOriginalRenderList?.();
-  const body = document.getElementById("estimateSheetListBody");
-  if (!body) return;
-  Array.from(body.querySelectorAll("tr")).forEach(tr => {
-    const onclick = tr.getAttribute("onclick") || "";
-    const m = onclick.match(/openEstimateSheetEditor\((\d+)\)/);
-    if (!m) return;
-    const rec = estimateSheetRecords[Number(m[1])];
-    if (!rec?.requestId) return;
-    const req = estimateRequestFindByEstimateId(rec.id) || estimateRequestRows.find(r => r.id === rec.requestId);
-    const td = tr.children[5];
-    if (td && req) td.innerHTML += `<small class="estimate-flow-tag">의뢰흐름: ${estimateRequestHtml(req.status || "-")}</small>`;
-  });
 };
 
 /* 초기 진입 패널이 견적 의뢰관리일 때 렌더링 */
