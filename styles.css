@@ -18534,3 +18534,35 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-data-row.linked:hover .estimate-period-cell{background:#ffedd5!important;}
 .estimate-period-view-btn{margin-left:6px;padding:2px 7px;border:1px solid #fb923c;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:10px;font-weight:900;cursor:pointer;}
 .estimate-period-view-btn:hover{background:#fed7aa;}
+
+
+/* 2026-05 기간별 견적서관리: 리스트형 관리 화면 */
+.estimate-period-hero-actions{gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.estimate-period-summary-cards{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:960px;}
+.estimate-period-summary-card{min-width:86px;padding:8px 10px;border:1px solid #dbe3ee;border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.estimate-period-summary-card strong{display:block;font-size:12px;color:#475569;margin-bottom:2px;}
+.estimate-period-summary-card b{display:inline-block;font-size:17px;color:#0f172a;margin-right:4px;}
+.estimate-period-summary-card span{font-size:11px;color:#64748b;font-weight:800;}
+.estimate-period-toolbar.estimate-period-filter-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#fff;}
+.estimate-period-toolbar-title{display:flex;flex-direction:column;gap:4px;}
+.estimate-period-filter-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.estimate-period-filter-field{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:900;color:#475569;}
+.estimate-period-filter-field input,.estimate-period-filter-field select{height:34px;min-width:118px;border:1px solid #cbd5e1;border-radius:10px;padding:0 9px;font-size:12px;background:#fff;color:#111827;}
+.estimate-period-filter-field.search input{min-width:220px;}
+.estimate-period-manage-wrap{width:100%;max-height:650px;overflow:auto;background:#f8fafc;border:1px solid #dbe3ee;border-radius:12px;}
+.estimate-period-manage-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;background:#fff;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;font-size:12px;color:#111827;}
+.estimate-period-manage-table th{position:sticky;top:0;z-index:5;height:38px;background:#f1f5f9;border-bottom:1px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:0 8px;text-align:center;font-weight:900;white-space:nowrap;}
+.estimate-period-manage-table td{height:34px;border-bottom:1px solid #e2e8f0;border-right:1px solid #eef2f7;padding:4px 8px;white-space:nowrap;vertical-align:middle;background:#fff;}
+.estimate-period-manage-table tr.is-linked td{background:#fff7ed;}
+.estimate-period-manage-table tr:hover td{background:#eff6ff;}
+.estimate-period-manage-table .editable{outline:none;cursor:text;border-radius:6px;}
+.estimate-period-manage-table .editable:focus{box-shadow:inset 0 0 0 2px #22c55e;background:#fff!important;}
+.estimate-period-manage-table .center{text-align:center;}
+.estimate-period-manage-table .right{text-align:right;}
+.estimate-period-manage-table .wide{min-width:260px;max-width:420px;overflow:hidden;text-overflow:ellipsis;}
+.estimate-period-manage-table .company{min-width:170px;}
+.estimate-period-manage-table .status-select{height:28px;border:1px solid #cbd5e1;border-radius:999px;padding:0 8px;font-size:12px;font-weight:800;background:#fff;}
+.estimate-period-detail-btn{height:28px;padding:0 10px;border:1px solid #fed7aa;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:11px;font-weight:900;cursor:pointer;}
+.estimate-period-detail-btn:hover{background:#fed7aa;}
+.estimate-period-empty{padding:42px 12px;text-align:center;color:#64748b;font-weight:800;background:#fff;}
+.estimate-period-save-hint{font-size:11px;color:#64748b;font-weight:800;padding:8px 2px 0;}
