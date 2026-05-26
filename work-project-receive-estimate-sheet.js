@@ -2815,33 +2815,29 @@ function renderEstimateRequestManage() {
     </div>
   `;
 }
-function estimateRequestOptionHtml(options, selectedValue, fallback) {
-  const safeOptions = Array.isArray(options) ? options : [];
-  const value = safeOptions.includes(selectedValue) ? selectedValue : (safeOptions.includes(fallback) ? fallback : safeOptions[0] || "");
-  return safeOptions.map(opt => `<option value="${estimateRequestHtml(opt)}" ${value === opt ? "selected" : ""}>${estimateRequestHtml(opt)}</option>`).join("");
-}
 function estimateRequestRowHtml(row) {
   row = estimateRequestNormalizeRow(row);
-  if (!ESTIMATE_REQUEST_STATUS.includes(row.status)) row.status = "의뢰메모";
-  if (!ESTIMATE_SHEET_TYPE_ORDER.includes(row.estimateType)) row.estimateType = "개산견적";
   const linkedEstimate = row.estimateId ? estimateSheetRecords.find(r => r.id === row.estimateId) : null;
   const periodLinked = row.periodKey ? "기간별 연결" : "-";
   const dbLabel = row.dbLinked ? "DB등록" : "DB대기";
-  const memoPreview = String(row.memo || "").replace(/\s+/g, " ").trim().slice(0, 36);
-  const requestId = estimateRequestHtml(row.id);
-  return `<tr data-request-id="${requestId}">
+  const safeId = estimateRequestHtml(row.id);
+  const estimateActionLabel = linkedEstimate ? "견적열기" : "견적서 작성";
+  const estimateAction = linkedEstimate ? `openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')` : `createEstimateSheetFromRequest('${safeId}')`;
+  const statusOptions = ESTIMATE_REQUEST_STATUS.map(s => `<option value="${estimateRequestHtml(s)}" ${row.status === s ? "selected" : ""}>${estimateRequestHtml(s)}</option>`).join("");
+  const estimateTypeOptions = ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${estimateRequestHtml(t)}" ${row.estimateType === t ? "selected" : ""}>${estimateRequestHtml(t)}</option>`).join("");
+  return `<tr data-request-id="${safeId}">
     <td contenteditable="true" data-request-field="date">${estimateRequestHtml(row.date)}</td>
-    <td><select class="estimate-request-select" data-request-field="status" onchange="estimateRequestSelectChanged(this)">${estimateRequestOptionHtml(ESTIMATE_REQUEST_STATUS, row.status, "의뢰메모")}</select></td>
+    <td><select class="estimate-request-select" data-request-field="status">${statusOptions}</select></td>
     <td contenteditable="true" data-request-field="company">${estimateRequestHtml(row.company)}</td>
     <td contenteditable="true" data-request-field="project">${estimateRequestHtml(row.project)}</td>
     <td><div contenteditable="true" data-request-field="client">${estimateRequestHtml(row.client)}</div><small contenteditable="true" data-request-field="contact">${estimateRequestHtml(row.contact)}</small></td>
-    <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${requestId}')">열기</button><small class="memo-preview">${estimateRequestHtml(memoPreview || "메모 없음")}</small><span hidden data-request-field="memo">${estimateRequestHtml(row.memo)}</span></td>
-    <td><select class="estimate-request-select" data-request-field="estimateType" onchange="estimateRequestSelectChanged(this)">${estimateRequestOptionHtml(ESTIMATE_SHEET_TYPE_ORDER, row.estimateType, "개산견적")}</select><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
+    <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${safeId}')">열기</button><small class="memo-preview">${estimateRequestHtml((row.memo || row.rawMemo || "").replace(/\s+/g," ").slice(0, 36))}</small><span data-request-field="memo" class="request-memo-hidden">${estimateRequestHtml(row.memo || row.rawMemo || "")}</span></td>
+    <td><select class="estimate-request-select" data-request-field="estimateType">${estimateTypeOptions}</select><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
     <td><span class="quote-status-badge">${estimateRequestHtml(periodLinked)}</span><span class="quote-status-badge">${estimateRequestHtml(dbLabel)}</span></td>
     <td class="estimate-workflow-row-actions compact">
-      <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${requestId}')">저장</button>
-      <button class="btn btn-primary btn-xs" type="button" onclick="${linkedEstimate ? `openEstimateSheetById('${requestId ? estimateRequestHtml(row.estimateId) : ""}')` : `createEstimateSheetFromRequest('${requestId}')`}">${linkedEstimate ? "견적열기" : "견적서 작성"}</button>
-      <select class="estimate-row-action-select" data-request-action="${requestId}">
+      <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
+      <button class="btn btn-primary btn-xs" type="button" onclick="${estimateAction}">${estimateActionLabel}</button>
+      <select class="estimate-request-action-select" data-request-action>
         <option value="">처리 선택</option>
         <option value="approve">승인</option>
         <option value="prestart">선착수</option>
@@ -2849,74 +2845,84 @@ function estimateRequestRowHtml(row) {
         <option value="db">DB등록</option>
         <option value="cancel">작업취소</option>
       </select>
-      <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestRowAction('${requestId}')">실행</button>
+      <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestAction('${safeId}')">실행</button>
     </td>
   </tr>`;
 }
-function estimateRequestSelectChanged(sel) {
-  if (!sel) return;
-  sel.setAttribute("data-current-value", sel.value || "");
-  sel.title = sel.value || "";
-}
 function addEstimateRequestMemo() {
-  openEstimateRequestMemoWindow("__new__");
-}
-function addEstimateRequestMemoFromPopup(memo) {
   estimateRequestLoadRows();
-  const text = String(memo || "").trim();
-  if (!text) return;
-  const company = estimateRequestExtractCompany(text);
-  const row = estimateRequestNormalizeRow({ rawMemo: text, memo: text, company, status: "의뢰메모" });
-  estimateRequestAddHistory(row, "클라이언트 의뢰 메모 등록");
-  estimateRequestRows.unshift(row);
-  estimateRequestSaveRows();
-  renderEstimateRequestManage();
-  showToast?.("견적 의뢰 메모를 등록했습니다.");
+  const row = estimateRequestNormalizeRow({ status: "의뢰메모" });
+  openEstimateRequestMemoWindow(row.id, true);
 }
-function updateEstimateRequestMemoFromPopup(id, memo) {
+function openEstimateRequestMemoWindow(id, isNew = false) {
   estimateRequestLoadRows();
-  const idx = estimateRequestRows.findIndex(r => r.id === id);
-  if (idx < 0) return;
-  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
-  row.memo = String(memo || "").trim();
-  if (!row.company) row.company = estimateRequestExtractCompany(row.memo);
-  estimateRequestAddHistory(row, "메모장 내용 수정");
-  estimateRequestRows[idx] = row;
-  estimateRequestSaveRows();
-  renderEstimateRequestManage();
-  showToast?.("메모 내용을 저장했습니다.");
-}
-function openEstimateRequestMemoWindow(id) {
-  estimateRequestLoadRows();
-  const isNew = id === "__new__";
-  const row = isNew ? estimateRequestNormalizeRow({ memo: "" }) : estimateRequestNormalizeRow(estimateRequestRows.find(r => r.id === id) || {});
-  const win = window.open("", isNew ? "concostEstimateRequestNewMemo" : `concostEstimateRequestMemo_${id}`, "width=980,height=760,resizable=yes,scrollbars=yes");
-  if (!win) {
-    alert("팝업 차단을 해제한 뒤 다시 시도하세요.");
-    return;
+  let row = estimateRequestRows.find(r => r.id === id);
+  if (!row) row = estimateRequestNormalizeRow({ id, status: "의뢰메모" });
+  row = estimateRequestNormalizeRow(row);
+  const w = window.open("", `estimate_request_memo_${String(id).replace(/[^a-zA-Z0-9_-]/g,"_")}`, "width=980,height=720,scrollbars=yes,resizable=yes");
+  if (!w) { alert("팝업 차단을 해제해주세요."); return; }
+  const company = estimateRequestHtml(row.company || "");
+  const project = estimateRequestHtml(row.project || "");
+  const client = estimateRequestHtml(row.client || "");
+  const contact = estimateRequestHtml(row.contact || "");
+  w.document.open();
+  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>견적 의뢰 메모</title><style>
+    *{box-sizing:border-box} body{margin:0;background:#f4f7fb;color:#0f172a;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif}
+    .bar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #dbe4ef;box-shadow:0 4px 14px rgba(15,23,42,.06)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900}.brand b{display:inline-flex;padding:7px 12px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}.brand span{font-size:18px}
+    .actions{display:flex;gap:8px}.btn{height:36px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;padding:0 14px;font-weight:900;cursor:pointer}.primary{background:#ff6b00;color:#fff;border-color:#ff6b00}
+    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569}.field input{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff}.field.wide{grid-column:span 2}
+    textarea{width:100%;min-height:480px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}
+  </style></head><body><div class="bar"><div class="brand"><b>CON-COST</b><span>견적 의뢰 메모</span></div><div class="actions"><button class="btn" onclick="window.close()">닫기</button><button class="btn primary" onclick="saveMemo()">저장</button></div></div><main>
+  <div class="grid">
+    <label class="field"><span>업체명</span><input id="company" value="${company}" placeholder="예: (주)xx건설"></label>
+    <label class="field wide"><span>프로젝트명</span><input id="project" value="${project}" placeholder="대략적인 프로젝트명"></label>
+    <label class="field"><span>의뢰자</span><input id="client" value="${client}" placeholder="담당자명"></label>
+    <label class="field"><span>연락처</span><input id="contact" value="${contact}" placeholder="전화/이메일"></label>
+  </div>
+  <textarea id="memo" placeholder="클라이언트 의뢰 내용을 메모장처럼 자유롭게 길게 작성하세요.\n예: (주)xx건설 / xx프로젝트 / 견적 요청 가능성 / 통화 내용 / 전달사항"></textarea>
+  <div class="hint">저장하면 의뢰관리 리스트의 메모는 [열기] 버튼으로 확인됩니다.</div>
+</main><script>
+  const REQUEST_ID = ${JSON.stringify(id)};
+  const IS_NEW = ${JSON.stringify(!!isNew)};
+  document.getElementById('memo').value = ${JSON.stringify(row.memo || row.rawMemo || "")};
+  function saveMemo(){
+    if(!window.opener || !window.opener.saveEstimateRequestMemoFromWindow){ alert('원본 화면을 찾을 수 없습니다.'); return; }
+    window.opener.saveEstimateRequestMemoFromWindow(REQUEST_ID, {
+      company: document.getElementById('company').value,
+      project: document.getElementById('project').value,
+      client: document.getElementById('client').value,
+      contact: document.getElementById('contact').value,
+      memo: document.getElementById('memo').value,
+      isNew: IS_NEW
+    });
+    window.close();
   }
-  const safeMemo = estimateRequestHtml(row.memo || "");
-  win.document.open();
-  win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${isNew ? "의뢰 메모 등록" : "의뢰 메모 열기"}</title>
-    <style>
-      *{box-sizing:border-box} body{margin:0;background:#f3f6fa;font-family:Arial,'Noto Sans KR',sans-serif;color:#111827} 
-      header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:#fff;border-bottom:1px solid #dbe4ef;box-shadow:0 4px 16px rgba(15,23,42,.06)}
-      header strong{font-size:18px} main{padding:18px} textarea{width:100%;height:560px;min-height:560px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.7;background:#fff;white-space:pre-wrap;outline:none} 
-      textarea:focus{border-color:#ff7a1a;box-shadow:0 0 0 3px rgba(255,122,26,.16)} .hint{margin:0 0 10px;color:#64748b;font-size:13px;font-weight:700}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-      button{border:1px solid #d7e1ee;border-radius:11px;background:#fff;padding:10px 16px;font-weight:900;cursor:pointer}.primary{border-color:#ff7a1a;background:#ff7a1a;color:#fff}.line{background:#fff}
-    </style></head><body>
-    <header><strong>${isNew ? "클라이언트 의뢰 메모 등록" : "클라이언트 의뢰 메모"}</strong><button class="line" onclick="window.close()">닫기</button></header>
-    <main><p class="hint">업체명, 프로젝트명, 통화내용, 요청사항, 특이사항을 메모장처럼 길게 작성합니다.</p><textarea id="memoArea" placeholder="예: (주)xx건설 / xx프로젝트 / 견적 요청 가능성 / 통화 내용">${safeMemo}</textarea>
-    <div class="actions"><button class="line" onclick="window.close()">취소</button><button class="primary" onclick="saveMemo()">저장</button></div></main>
-    <script>function saveMemo(){var v=document.getElementById('memoArea').value; ${isNew ? `window.opener && window.opener.addEstimateRequestMemoFromPopup(v);` : `window.opener && window.opener.updateEstimateRequestMemoFromPopup(${JSON.stringify(id)}, v);`} window.close();}<\/script>
-    </body></html>`);
-  win.document.close();
-  setTimeout(() => win.document.getElementById("memoArea")?.focus(), 50);
+</script></body></html>`);
+  w.document.close();
 }
-function runEstimateRequestRowAction(id) {
-  const select = document.querySelector(`select[data-request-action="${CSS.escape(id)}"]`);
-  const action = select?.value || "";
-  if (!action) { showToast?.("처리 항목을 먼저 선택하세요."); return; }
+function saveEstimateRequestMemoFromWindow(id, payload = {}) {
+  estimateRequestLoadRows();
+  let idx = estimateRequestRows.findIndex(r => r.id === id);
+  let row = idx >= 0 ? estimateRequestNormalizeRow(estimateRequestRows[idx]) : estimateRequestNormalizeRow({ id, status: "의뢰메모" });
+  row.memo = String(payload.memo || "");
+  row.rawMemo = row.memo;
+  row.company = String(payload.company || "").trim() || estimateRequestExtractCompany(row.memo);
+  row.project = String(payload.project || "").trim() || row.project || "";
+  row.client = String(payload.client || "").trim() || row.client || "";
+  row.contact = String(payload.contact || "").trim() || row.contact || "";
+  estimateRequestAddHistory(row, idx >= 0 ? "의뢰 메모 수정 저장" : "클라이언트 의뢰 메모 등록");
+  if (idx >= 0) estimateRequestRows[idx] = row;
+  else estimateRequestRows.unshift(row);
+  estimateRequestSaveRows();
+  renderEstimateRequestManage();
+  showToast?.("견적 의뢰 메모를 저장했습니다.");
+}
+function runEstimateRequestAction(id) {
+  const tr = document.querySelector(`tr[data-request-id="${CSS.escape(id)}"]`);
+  const action = tr?.querySelector("[data-request-action]")?.value || "";
+  if (!action) { alert("처리할 항목을 선택하세요."); return; }
+  saveEstimateRequestRowFromDom(id);
   if (action === "approve") approveEstimateRequest(id);
   else if (action === "prestart") startEstimateRequest(id, "선착수");
   else if (action === "start") startEstimateRequest(id, "착수완료");
