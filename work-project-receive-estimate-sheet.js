@@ -479,7 +479,6 @@ function renderEstimateSheetList() {
     const index = estimateSheetRecords.indexOf(record);
     const s = getEstimateSheetRecordSummary(record);
     return `<tr onclick="openEstimateSheetEditor(${index})">
-      <td><span class="estimate-sheet-type-badge">${estimateSheetHtml(record.type)}</span></td>
       <td><strong>${estimateSheetHtml(record.title)}</strong><small>수정: ${estimateSheetHtml(record.updatedAt)}</small></td>
       <td>${estimateSheetHtml(s.recipient)}</td>
       <td>${estimateSheetHtml(s.project)}</td>
@@ -488,7 +487,7 @@ function renderEstimateSheetList() {
       <td><span class="quote-status-badge">${estimateSheetHtml(record.status || "작성중")}</span></td>
       <td class="quote-action-cell" onclick="event.stopPropagation();"><button class="btn btn-line btn-xs" type="button" onclick="openEstimateSheetEditor(${index})">열기</button><button class="btn btn-line btn-xs" type="button" onclick="duplicateEstimateSheetRecord(${index})">복제</button><button class="btn btn-primary btn-xs" type="button" onclick="markEstimateSheetSent(${index})">발송</button></td>
     </tr>`;
-  }).join("") || `<tr><td colspan="8" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="empty-cell">선택한 견적서 구분의 작성된 리스트가 없습니다. 항목 추가 버튼으로 새 견적서를 작성하세요.</td></tr>`;
 }
 function openEstimateSheetEditor(index = null) {
   const editor = document.getElementById("estimateSheetEditor");
@@ -3367,7 +3366,7 @@ window.renderEstimateSheetList = function estimateWorkflowRenderSheetList() {
     const rec = estimateSheetRecords[Number(m[1])];
     if (!rec?.requestId) return;
     const req = estimateRequestFindByEstimateId(rec.id) || estimateRequestRows.find(r => r.id === rec.requestId);
-    const td = tr.children[6];
+    const td = tr.children[5];
     if (td && req) td.innerHTML += `<small class="estimate-flow-tag">의뢰흐름: ${estimateRequestHtml(req.status || "-")}</small>`;
   });
 };
