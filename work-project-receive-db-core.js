@@ -244,12 +244,26 @@ function removeEstimateDbPjReceiptColumnOnce() {
   estimateDbPjReceiptColumnRemoved = true;
 }
 
+function clearEstimateDbPjProjectLinkValues() {
+  const sheet = estimateDbSheets?.pj;
+  if (!sheet) return;
+  const header = sheet.headerRows?.[0] || [];
+  const linkIndex = header.findIndex(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER);
+  if (linkIndex < 0) return;
+  (sheet.rows || []).forEach(row => {
+    if (!Array.isArray(row)) return;
+    while (row.length <= linkIndex) row.push("");
+    row[linkIndex] = "";
+  });
+}
+
 function ensureEstimateDbPjProjectLinkColumnOnce() {
   if (estimateDbPjProjectLinkColumnEnsured) return;
   const sheet = estimateDbSheets?.pj;
   if (!sheet) return;
   const header = sheet.headerRows?.[0] || [];
   if (header.some(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER)) {
+    clearEstimateDbPjProjectLinkValues();
     estimateDbPjProjectLinkColumnEnsured = true;
     return;
   }
