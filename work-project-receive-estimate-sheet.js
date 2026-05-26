@@ -2763,7 +2763,7 @@ function estimateRequestNormalizeRow(row = {}) {
     estimateType: row.estimateType || "개산견적",
     estimateId: row.estimateId || "",
     periodKey: row.periodKey || "",
-    dbLinked: !!row.dbLinked,
+    dbLinked: !!row.dbLinked, // 내부 DB관리 후보 연결 여부(UI에는 표시하지 않음)
     startMode: row.startMode || "",
     updatedAt: row.updatedAt || estimateRequestNowLabel(),
     history: Array.isArray(row.history) ? row.history : []
@@ -2826,13 +2826,13 @@ function renderEstimateRequestManage() {
   board.innerHTML = `
     <div class="estimate-workflow-table-wrap">
       <table class="estimate-workflow-table">
-        <colgroup><col class="col-date"><col class="col-status"><col class="col-company"><col class="col-project"><col class="col-client"><col class="col-memo"><col class="col-estimate"><col class="col-link"><col class="col-actions"></colgroup>
-        <thead><tr><th>의뢰일</th><th>상태</th><th>업체명</th><th>프로젝트명</th><th>의뢰자/연락처</th><th>메모</th><th>견적서</th><th>연계</th><th>관리</th></tr></thead>
-        <tbody>${rows.map(row => estimateRequestRowHtml(row)).join("") || `<tr><td colspan="9" class="empty-cell">등록된 견적 의뢰가 없습니다. [의뢰 등록]으로 메모장처럼 먼저 기록하세요.</td></tr>`}</tbody>
+        <colgroup><col class="col-date"><col class="col-status"><col class="col-company"><col class="col-project"><col class="col-client"><col class="col-memo"><col class="col-estimate"><col class="col-actions"></colgroup>
+        <thead><tr><th>의뢰일</th><th>상태</th><th>업체명</th><th>프로젝트명</th><th>의뢰자/연락처</th><th>메모</th><th>견적서</th><th class="estimate-actions-header">관리</th></tr></thead>
+        <tbody>${rows.map(row => estimateRequestRowHtml(row)).join("") || `<tr><td colspan="8" class="empty-cell">등록된 견적 의뢰가 없습니다. [의뢰 등록]으로 메모장처럼 먼저 기록하세요.</td></tr>`}</tbody>
       </table>
     </div>
     <div class="estimate-workflow-help">
-      흐름: 의뢰 등록 → 견적서 작성요청 → 견적서관리에서 작성/발송 → 기간별 견적서관리 자동 누적 → 선착수 또는 작업시작 처리 → DB관리(PJ관리) 자동 연결.
+      흐름: 의뢰 등록 → 견적서 작성요청 → 견적서관리에서 작성/발송 → 기간별 견적서관리 자동 누적 → 선착수 또는 작업시작 처리 → DB관리(PJ관리) 후보 행 자동 연결.
     </div>
   `;
   estimateRequestRefreshSelectLabels(board);
@@ -2840,8 +2840,6 @@ function renderEstimateRequestManage() {
 function estimateRequestRowHtml(row) {
   row = estimateRequestNormalizeRow(row);
   const linkedEstimate = row.estimateId ? estimateSheetRecords.find(r => r.id === row.estimateId) : null;
-  const periodLinked = row.periodKey ? "기간별 연결" : "-";
-  const dbLabel = row.dbLinked ? "DB등록" : "DB대기";
   const safeId = estimateRequestHtml(row.id);
   const estimateActionLabel = linkedEstimate ? "견적열기" : "견적서 작성";
   const estimateAction = linkedEstimate ? `openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')` : `createEstimateSheetFromRequest('${safeId}')`;
@@ -2857,7 +2855,6 @@ function estimateRequestRowHtml(row) {
     <td><div contenteditable="true" data-request-field="client">${estimateRequestHtml(row.client)}</div><small contenteditable="true" data-request-field="contact">${estimateRequestHtml(row.contact)}</small></td>
     <td class="memo"><button class="btn btn-line btn-xs memo-open-btn" type="button" onclick="openEstimateRequestMemoWindow('${safeId}')">열기</button><span data-request-field="memo" class="request-memo-hidden">${estimateRequestHtml(row.memo || row.rawMemo || "")}</span></td>
     <td><span class="estimate-select-wrap"><select class="estimate-request-select" data-request-field="estimateType" title="${estimateRequestHtml(currentEstimateType)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value; const v=this.parentElement.querySelector('.estimate-select-value'); if(v) v.textContent=this.value;">${estimateTypeOptions}</select><span class="estimate-select-value">${estimateRequestHtml(currentEstimateType)}</span></span><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
-    <td><span class="quote-status-badge">${estimateRequestHtml(periodLinked)}</span><span class="quote-status-badge">${estimateRequestHtml(dbLabel)}</span></td>
     <td class="estimate-actions-cell">
       <div class="estimate-workflow-row-actions compact">
         <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
@@ -3139,7 +3136,7 @@ function syncEstimateRequestToDb(id, options = {}) {
       if (exists >= 0) sheet.rows[exists] = next;
       else sheet.rows.unshift(next);
       row.dbLinked = true;
-      estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 자동 연결");
+      estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 자동 연결(내부 처리)");
       estimateRequestRows[idx] = row;
       estimateRequestSaveRows();
       if (!options.silent) {
