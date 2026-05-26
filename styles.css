@@ -18710,3 +18710,25 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table tr.estimate-request-status-작업취소 td:first-child{box-shadow:inset 4px 0 0 #9ca3af;}
 .estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after,
 .estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after{content:"작업취소 완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
+
+
+/* === 견적관리 좌측 세부카테고리 선택 표시 고정 패치 === */
+.side-nav .side-item.work-side-selected,
+.side-nav .side-item[data-work-selected="true"]{
+  background:#111827 !important;
+  color:#fff !important;
+  border-color:#111827 !important;
+  box-shadow:inset 4px 0 0 #f97316 !important;
+}
+.side-nav .side-main.work-side-selected,
+.side-nav .side-main[data-work-selected="true"]{
+  background:#111827 !important;
+  color:#fff !important;
+  border-color:#111827 !important;
+}
+.estimate-quote-sub-menu.active .side-item[data-work-selected="true"],
+.estimate-quote-sub-menu.active .side-item.work-side-selected{
+  background:#111827 !important;
+  color:#fff !important;
+  border-color:#111827 !important;
+}
