@@ -18862,3 +18862,55 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   min-width:320px !important;
   max-width:320px !important;
 }
+
+/* === 견적 의뢰관리 상태/관리 드롭다운 구조 정리 ===
+   상태 칸은 현재 상태만 표시하고, 상태 변경 드롭다운은 관리 칸으로 통합합니다. */
+.estimate-workflow-table td.estimate-request-current-status{
+  text-align:center !important;
+  vertical-align:middle !important;
+  padding:6px 8px !important;
+}
+.estimate-status-pill{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:78px !important;
+  height:28px !important;
+  padding:0 10px !important;
+  border-radius:999px !important;
+  background:#eef6ff !important;
+  color:#0f172a !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+.estimate-workflow-table tr.estimate-request-status-작업취소 .estimate-status-pill,
+.estimate-workflow-table tr[data-request-status="작업취소"] .estimate-status-pill{
+  background:#d1d5db !important;
+  color:#475569 !important;
+}
+.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-승인완료 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-선착수 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after,
+.estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after{
+  content:none !important;
+  display:none !important;
+}
+.estimate-workflow-row-actions.compact .estimate-request-action-select{
+  width:118px !important;
+  min-width:118px !important;
+  max-width:118px !important;
+  color:#111827 !important;
+  -webkit-text-fill-color:#111827 !important;
+  background:#fff !important;
+}
+.estimate-workflow-table col.col-actions{width:340px !important;}
+.estimate-workflow-table th:nth-child(9),
+.estimate-workflow-table td:nth-child(9){
+  width:340px !important;
+  min-width:340px !important;
+  max-width:340px !important;
+}
