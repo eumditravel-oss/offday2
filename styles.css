@@ -19170,3 +19170,107 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   display:none !important;
   content:none !important;
 }
+
+/* === 견적 의뢰관리: 연계/관리 열 겹침 및 관리열 우측 빈공간 제거 ===
+   1) 연계 열의 DB등록/DB대기 배지가 관리 열과 겹치지 않도록 최소 폭 확보
+   2) 관리 열은 버튼 4개가 딱 맞게 들어가는 고정 폭으로 축소
+   3) 행 가로선은 테이블 끝까지 유지 */
+.estimate-workflow-table{
+  width:100% !important;
+  min-width:1595px !important;
+  table-layout:fixed !important;
+  border-collapse:collapse !important;
+  border-spacing:0 !important;
+}
+.estimate-workflow-table col.col-date{width:80px !important;}
+.estimate-workflow-table col.col-status{width:130px !important;}
+.estimate-workflow-table col.col-company{width:220px !important;}
+.estimate-workflow-table col.col-project{width:230px !important;}
+.estimate-workflow-table col.col-client{width:210px !important;}
+.estimate-workflow-table col.col-memo{width:80px !important;}
+.estimate-workflow-table col.col-estimate{width:210px !important;}
+.estimate-workflow-table col.col-link{width:150px !important;}
+.estimate-workflow-table col.col-actions{width:285px !important;}
+
+.estimate-workflow-table th:nth-child(8),
+.estimate-workflow-table td:nth-child(8){
+  width:150px !important;
+  min-width:150px !important;
+  max-width:150px !important;
+  padding:4px 6px !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+}
+.estimate-workflow-table th:nth-child(9),
+.estimate-workflow-table td:nth-child(9){
+  width:285px !important;
+  min-width:285px !important;
+  max-width:285px !important;
+  padding:4px 6px !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+}
+.estimate-workflow-table td:nth-child(8) .quote-status-badge{
+  min-width:54px !important;
+  max-width:62px !important;
+  height:28px !important;
+  line-height:28px !important;
+  padding:0 8px !important;
+  margin:0 2px !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  vertical-align:middle !important;
+}
+.estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions,
+.estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions.compact{
+  display:grid !important;
+  grid-template-columns:38px 74px 106px 38px !important;
+  align-items:center !important;
+  justify-content:start !important;
+  column-gap:5px !important;
+  width:261px !important;
+  min-width:261px !important;
+  max-width:261px !important;
+  height:30px !important;
+  min-height:30px !important;
+  max-height:30px !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+.estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions.compact .btn,
+.estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions.compact .estimate-request-action-select{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  line-height:28px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  white-space:nowrap !important;
+}
+.estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions.compact .btn{
+  padding:0 6px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:12px !important;
+}
+.estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions.compact .estimate-request-action-select{
+  padding:0 18px 0 7px !important;
+  font-size:12px !important;
+}
+.estimate-workflow-table thead th,
+.estimate-workflow-table tbody td{
+  border-bottom:1px solid #e5edf7 !important;
+  border-right:1px solid #edf2f7 !important;
+}
+.estimate-workflow-table thead th:last-child,
+.estimate-workflow-table tbody td:last-child{
+  border-right:0 !important;
+}
