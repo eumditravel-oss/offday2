@@ -18688,3 +18688,25 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
 .estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
 .estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after{content:"처리완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#2563eb;}
+
+/* === 견적 의뢰관리 2026-05 수정: 열 너비/드롭다운 표시/작업취소 행 강조 === */
+.estimate-workflow-table col.col-date{width:90px !important;}
+.estimate-workflow-table col.col-memo{width:80px !important;}
+.estimate-workflow-table th:nth-child(1),
+.estimate-workflow-table td:nth-child(1){width:90px !important;max-width:90px !important;min-width:90px !important;text-align:center;overflow:hidden;}
+.estimate-workflow-table th:nth-child(6),
+.estimate-workflow-table td:nth-child(6){width:80px !important;max-width:80px !important;min-width:80px !important;text-align:center;white-space:nowrap !important;overflow:hidden;}
+.estimate-workflow-table .memo .request-memo-hidden,
+.estimate-workflow-table .memo .memo-preview{display:none !important;}
+.estimate-workflow-table .memo .memo-open-btn{margin:0 auto !important;display:inline-flex !important;}
+.estimate-select-wrap{position:relative;display:block;width:100%;min-width:118px;height:34px;}
+.estimate-select-wrap select.estimate-request-select{position:absolute;inset:0;width:100%;height:34px;color:transparent !important;-webkit-text-fill-color:transparent !important;background:#fff !important;z-index:2;cursor:pointer;}
+.estimate-select-wrap .estimate-select-value{position:absolute;left:10px;right:28px;top:0;height:34px;line-height:34px;color:#0f172a !important;font-size:13px;font-weight:900;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:3;}
+.estimate-select-wrap::after{content:"";position:absolute;right:10px;top:50%;margin-top:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #475569;z-index:4;pointer-events:none;}
+.estimate-select-wrap select.estimate-request-select option{color:#0f172a !important;-webkit-text-fill-color:#0f172a !important;background:#fff !important;}
+.estimate-workflow-table tr[data-request-status="작업취소"] td,
+.estimate-workflow-table tr.estimate-request-status-작업취소 td{background:#e5e7eb !important;color:#64748b !important;}
+.estimate-workflow-table tr[data-request-status="작업취소"] td:first-child,
+.estimate-workflow-table tr.estimate-request-status-작업취소 td:first-child{box-shadow:inset 4px 0 0 #9ca3af;}
+.estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after{content:"작업취소 완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
