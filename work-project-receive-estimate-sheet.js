@@ -2696,7 +2696,18 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
 const ESTIMATE_REQUEST_STORAGE_KEY = "concostEstimateRequestWorkflowRows.v1";
 let estimateRequestRows = [];
 let estimateRequestFilters = { status: "전체", q: "" };
-const ESTIMATE_REQUEST_STATUS = ["의뢰메모", "견적요청", "견적작성중", "대기중", "발송완료", "승인완료", "선착수", "착수완료", "DB등록", "작업취소"];
+const ESTIMATE_REQUEST_STATUS = ["의뢰메모", "견적작성중", "대기중", "선착수", "작업시작", "작업취소"];
+const ESTIMATE_REQUEST_STATUS_ALIAS = {
+  "견적요청": "대기중",
+  "발송완료": "대기중",
+  "승인완료": "작업시작",
+  "착수완료": "작업시작",
+  "DB등록": "작업시작"
+};
+function estimateRequestNormalizeStatus(status) {
+  const value = String(status || "").trim();
+  return ESTIMATE_REQUEST_STATUS_ALIAS[value] || (ESTIMATE_REQUEST_STATUS.includes(value) ? value : "의뢰메모");
+}
 
 function estimateRequestSafeId(prefix = "req") {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -2748,7 +2759,7 @@ function estimateRequestNormalizeRow(row = {}) {
     client: row.client || "",
     contact: row.contact || "",
     memo: row.memo || row.rawMemo || "",
-    status: row.status || "의뢰메모",
+    status: estimateRequestNormalizeStatus(row.status),
     estimateType: row.estimateType || "개산견적",
     estimateId: row.estimateId || "",
     periodKey: row.periodKey || "",
@@ -2770,7 +2781,7 @@ function estimateRequestFilteredRows() {
 function estimateRequestStatusSummary() {
   estimateRequestLoadRows();
   const rows = estimateRequestRows.map(estimateRequestNormalizeRow);
-  const items = ["의뢰메모", "견적요청", "대기중", "발송완료", "승인완료", "선착수", "착수완료", "DB등록", "작업취소"];
+  const items = ESTIMATE_REQUEST_STATUS;
   return items.map(status => ({ status, count: rows.filter(r => r.status === status).length }));
 }
 function estimateRequestRefreshSelectLabels(root = document) {
@@ -2792,8 +2803,8 @@ function renderEstimateRequestManage() {
     ["01", "클라이언트 의뢰", "메모장형 기록"],
     ["02", "업체/프로젝트 가등록", "대략 정보 저장"],
     ["03", "견적서 작성 요청", "대기중 자동 전환"],
-    ["04", "발송/승인/선착수", "기간별 관리 연결"],
-    ["05", "착수/DB등록", "PJ관리 후보 생성"]
+    ["04", "발송/선착수", "기간별 관리 연결"],
+    ["05", "작업시작", "PJ관리 후보 자동 생성"]
   ].map(x => `<div class="estimate-workflow-step"><b>${x[0]}</b><strong>${x[1]}</strong><span>${x[2]}</span></div>`).join("");
   toolbar.innerHTML = `
     <div class="estimate-workflow-filter-row">
@@ -2821,7 +2832,7 @@ function renderEstimateRequestManage() {
       </table>
     </div>
     <div class="estimate-workflow-help">
-      흐름: 의뢰 등록 → 견적서 작성요청 → 견적서관리에서 작성/발송 → 기간별 견적서관리 자동 누적 → 승인 또는 선착수 처리 → DB관리(PJ관리) 등록.
+      흐름: 의뢰 등록 → 견적서 작성요청 → 견적서관리에서 작성/발송 → 기간별 견적서관리 자동 누적 → 선착수 또는 작업시작 처리 → DB관리(PJ관리) 자동 연결.
     </div>
   `;
   estimateRequestRefreshSelectLabels(board);
@@ -2925,6 +2936,7 @@ function saveEstimateRequestMemoFromWindow(id, payload = {}) {
   if (idx >= 0) estimateRequestRows[idx] = row;
   else estimateRequestRows.unshift(row);
   estimateRequestSaveRows();
+  syncEstimateRequestToDb(id, { silent: true });
   renderEstimateRequestManage();
   showToast?.("견적 의뢰 메모를 저장했습니다.");
 }
@@ -2933,10 +2945,8 @@ function runEstimateRequestAction(id) {
   const status = tr?.querySelector("[data-request-action]")?.value || "";
   if (!status) { alert("변경할 상태를 선택하세요."); return; }
   saveEstimateRequestRowFromDom(id);
-  if (status === "승인완료") approveEstimateRequest(id);
-  else if (status === "선착수") startEstimateRequest(id, "선착수");
-  else if (status === "착수완료") startEstimateRequest(id, "착수완료");
-  else if (status === "DB등록") syncEstimateRequestToDb(id);
+  if (status === "선착수") startEstimateRequest(id, "선착수");
+  else if (status === "작업시작") startEstimateRequest(id, "작업시작");
   else if (status === "작업취소") cancelEstimateRequest(id);
   else {
     estimateRequestLoadRows();
@@ -2967,6 +2977,7 @@ function saveEstimateRequestRowFromDom(id) {
   estimateRequestAddHistory(row, "의뢰관리 행 수정 저장");
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
+  syncEstimateRequestToDb(id, { silent: true });
   renderEstimateRequestManage();
   showToast?.(`견적 의뢰관리 행을 저장했습니다. 현재 상태: ${row.status || "-"}`);
 }
@@ -3006,6 +3017,7 @@ function createEstimateSheetFromRequest(id) {
   estimateRequestAddHistory(row, "견적서 작성 요청 및 견적서관리 대기중 등록");
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
+  syncEstimateRequestToDb(row.id, { silent: true });
   estimateSheetActiveType = type;
   if (typeof renderEstimateSheetManage === "function") renderEstimateSheetManage();
   renderEstimateRequestManage();
@@ -3048,7 +3060,7 @@ window.markEstimateSheetSent = function estimateWorkflowMarkEstimateSheetSent(in
   estimateWorkflowOriginalMarkSent?.(index);
   const rec = estimateSheetRecords[index];
   if (rec?.id) {
-    estimateRequestUpdateByEstimate(rec, "발송완료", "견적서 발송 처리 및 기간별 견적서관리 연결");
+    estimateRequestUpdateByEstimate(rec, "대기중", "견적서 발송 처리 및 기간별 견적서관리 연결");
     const period = (typeof estimatePeriodSentRows !== "undefined" ? estimatePeriodSentRows : []).find(x => x.sourceEstimateId === rec.id);
     if (period) {
       estimateRequestLoadRows();
@@ -3066,21 +3078,21 @@ function approveEstimateRequest(id) {
   const idx = estimateRequestRows.findIndex(r => r.id === id);
   if (idx < 0) return;
   const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
-  row.status = "승인완료";
-  estimateRequestAddHistory(row, "견적 승인 완료");
+  row.status = "작업시작";
+  estimateRequestAddHistory(row, "견적 확정 후 작업시작 처리");
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
   estimateRequestSyncPeriodStatus(row, "수주", "견적 승인 완료");
   renderEstimateRequestManage();
   if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
 }
-function startEstimateRequest(id, mode = "착수완료") {
+function startEstimateRequest(id, mode = "작업시작") {
   estimateRequestLoadRows();
   const idx = estimateRequestRows.findIndex(r => r.id === id);
   if (idx < 0) return;
   const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
-  row.status = mode === "선착수" ? "선착수" : "착수완료";
-  row.startMode = mode === "선착수" ? "승인 전 선착수" : "승인 후 착수";
+  row.status = mode === "선착수" ? "선착수" : "작업시작";
+  row.startMode = mode === "선착수" ? "견적 확정 전 선착수" : "견적 확정 후 작업시작";
   estimateRequestAddHistory(row, row.startMode);
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
@@ -3102,7 +3114,7 @@ function estimateRequestSyncPeriodStatus(row, status, memo) {
   estimatePeriodSaveSentRows?.();
   estimateRequestSaveRows();
 }
-function syncEstimateRequestToDb(id) {
+function syncEstimateRequestToDb(id, options = {}) {
   estimateRequestLoadRows();
   const idx = estimateRequestRows.findIndex(r => r.id === id);
   if (idx < 0) return;
@@ -3121,23 +3133,24 @@ function syncEstimateRequestToDb(id) {
       put("작업공종", row.memo);
       put("업무성격", row.startMode || row.status);
       put("상담 / 이메일 / 특기사항", row.memo);
-      put("수주일자", row.status === "승인완료" || row.status === "착수완료" ? row.date : "");
+      put("수주일자", row.status === "작업시작" ? row.date : "");
       sheet.rows = sheet.rows || [];
       const exists = sheet.rows.findIndex(r => r[headers.indexOf("프로젝트명")] === row.project && r[headers.indexOf("거래처명")] === row.company);
       if (exists >= 0) sheet.rows[exists] = next;
       else sheet.rows.unshift(next);
       row.dbLinked = true;
-      row.status = "DB등록";
-      estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 등록");
+      estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 자동 연결");
       estimateRequestRows[idx] = row;
       estimateRequestSaveRows();
-      if (typeof renderEstimateDbManage === "function") renderEstimateDbManage();
-      renderEstimateRequestManage();
-      showToast?.("DB관리(PJ관리)에 연결 등록했습니다.");
+      if (!options.silent) {
+        if (typeof renderEstimateDbManage === "function") renderEstimateDbManage();
+        renderEstimateRequestManage();
+        showToast?.("DB관리(PJ관리)에 연결 등록했습니다.");
+      }
     }
   } catch (e) {
     console.warn("DB관리 연결 실패", e);
-    showToast?.("DB관리 연결 중 오류가 발생했습니다.");
+    if (!options.silent) showToast?.("DB관리 연결 중 오류가 발생했습니다.");
   }
 }
 function cancelEstimateRequest(id) {
