@@ -9415,7 +9415,7 @@ function syncWorkSideAccordion(targetPanelId) {
 
   if (isEstimateQuote) {
     document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
-    document.querySelectorAll(".side-main[data-work-main='estimateSheetManage']").forEach(btn => btn.classList.add("active"));
+    document.querySelectorAll(".estimate-quote-side-group > .side-main[data-work-main]").forEach(btn => btn.classList.add("active"));
   } else if (isProjectReceive) {
     document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.add("active"));
     document.querySelectorAll(".side-main[data-work-main='projectReceive']").forEach(btn => btn.classList.add("active"));
@@ -9425,6 +9425,36 @@ function syncWorkSideAccordion(targetPanelId) {
   } else {
     document.querySelector(`.side-main[data-work-main="${target}"]`)?.classList.add("active");
   }
+}
+
+function activateWorkSideSelection(targetPanelId) {
+  const target = String(targetPanelId || "estimateRequestManage");
+  const estimatePanels = ["estimateRequestManage", "estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList"];
+  const projectReceivePanels = ["projectReceive", "projectReceiveList"];
+
+  if (estimatePanels.includes(target)) {
+    document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelectorAll(".estimate-quote-side-group > .side-main[data-work-main]").forEach(btn => btn.classList.add("active"));
+    document.querySelector(`.estimate-quote-sub-menu .side-item[data-work-main="${target}"]`)?.classList.add("active");
+    return;
+  }
+
+  if (projectReceivePanels.includes(target)) {
+    document.querySelectorAll(".project-receive-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelectorAll(".project-receive-side-group > .side-main[data-work-main]").forEach(btn => btn.classList.add("active"));
+    document.querySelector(`.project-receive-sub-menu .side-item[data-work-main="${target}"]`)?.classList.add("active");
+    return;
+  }
+
+  if (target === "pmSchedule") {
+    const activeSection = typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign";
+    document.querySelectorAll(".pm-schedule-sub-menu").forEach(menu => menu.classList.add("active"));
+    document.querySelectorAll(".pm-schedule-side-group > .side-main[data-work-main]").forEach(btn => btn.classList.add("active"));
+    document.querySelector(`.pm-schedule-sub-menu .side-item[data-work-main="pmSchedule"][data-pm-section="${activeSection}"]`)?.classList.add("active");
+    return;
+  }
+
+  document.querySelector(`.side-main[data-work-main="${target}"]`)?.classList.add("active");
 }
 
 function switchWorkPanel(panelId) {
@@ -9437,15 +9467,8 @@ function switchWorkPanel(panelId) {
   document.getElementById(targetPanelId)?.classList.add("active");
   syncWorkSideAccordion(targetPanelId);
 
-  if (targetPanelId === "estimateRequestManage" || targetPanelId === "estimateSheetManage" || targetPanelId === "estimatePeriodManage" || targetPanelId === "estimateDbManage" || targetPanelId === "estimateQuote" || targetPanelId === "estimateQuoteList") {
-    document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
-  } else if (targetPanelId === "projectReceive" || targetPanelId === "projectReceiveList") {
-    document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`)?.classList.add("active");
-  } else if (targetPanelId === "pmSchedule") {
-    const activeSection = typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign";
-    document.querySelector(`.side-item[data-work-main="pmSchedule"][data-pm-section="${activeSection}"]`)?.classList.add("active");
-  } else {
-    document.querySelector(`.side-main[data-work-main="${targetPanelId}"]`)?.classList.add("active");
+  if (typeof activateWorkSideSelection === "function") {
+    activateWorkSideSelection(targetPanelId);
   }
 
   const meta = workPageMeta[targetPanelId] || workPageMeta.estimateDbManage || workPageMeta.projectReceive;
@@ -12504,6 +12527,9 @@ document.addEventListener("click", event => {
   // DB관리 클릭 시 프로젝트 접수 하위 메뉴가 남아 있는 현상을 방지합니다.
   if (typeof syncWorkSideAccordion === "function") {
     syncWorkSideAccordion(targetPanelId);
+  }
+  if (typeof activateWorkSideSelection === "function") {
+    activateWorkSideSelection(targetPanelId);
   }
 
   if (btn.dataset.pmSection && typeof setPmScheduleSection === "function") {
