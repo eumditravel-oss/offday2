@@ -245,20 +245,23 @@ function removeEstimateDbPjReceiptColumnOnce() {
 }
 
 function ensureEstimateDbPjProjectLinkColumnOnce() {
+  // 현재 단계에서는 PJ관리의 "프로젝트 연결" 컬럼을 사용하지 않습니다.
+  // 기존 코드/브라우저 저장소에 남아 있는 컬럼이 있으면 1회 제거만 수행합니다.
   if (estimateDbPjProjectLinkColumnEnsured) return;
   const sheet = estimateDbSheets?.pj;
   if (!sheet) return;
-  const header = sheet.headerRows?.[0] || [];
-  if (header.some(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER)) {
-    estimateDbPjProjectLinkColumnEnsured = true;
-    return;
+  let removed = false;
+  while (true) {
+    const header = sheet.headerRows?.[0] || [];
+    const linkIndex = header.findIndex(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER);
+    if (linkIndex < 0) break;
+    (sheet.headerRows || []).forEach(row => row.splice(linkIndex, 1));
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(linkIndex, 1);
+    (sheet.rows || []).forEach(row => row.splice(linkIndex, 1));
+    removed = true;
   }
-  const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
-  const insertIndex = pjNoIndex >= 0 ? pjNoIndex + 1 : Math.min(2, header.length);
-  (sheet.headerRows || []).forEach(row => row.splice(insertIndex, 0, ESTIMATE_DB_PROJECT_LINK_HEADER));
-  if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(insertIndex, 0, "기존 DB 프로젝트와 연결할 경우 Enter로 프로젝트 리스트를 열어 선택");
-  (sheet.rows || []).forEach(row => row.splice(insertIndex, 0, ""));
   estimateDbPjProjectLinkColumnEnsured = true;
+  if (removed && typeof saveEstimateDbToStorage === "function") saveEstimateDbToStorage();
 }
 
 const estimateDbReportTabs = {
