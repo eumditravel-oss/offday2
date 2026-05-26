@@ -18712,23 +18712,28 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after{content:"작업취소 완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
 
 
-/* === 견적관리 좌측 세부카테고리 선택 표시 고정 패치 === */
-.side-nav .side-item.work-side-selected,
-.side-nav .side-item[data-work-selected="true"]{
+/* === 견적 하위 카테고리 선택 표시 강제 보정 ===
+   다른 클릭 보정 스크립트가 active 클래스를 다시 지우더라도
+   work-side-selected/data-work-selected 기준으로 선택 액션을 유지합니다. */
+.estimate-quote-side-group > .side-main.active,
+.estimate-quote-side-group > .side-main.work-side-selected,
+.estimate-quote-side-group > .side-main[data-work-selected="true"]{
   background:#111827 !important;
-  color:#fff !important;
   border-color:#111827 !important;
-  box-shadow:inset 4px 0 0 #f97316 !important;
+  color:#fff !important;
 }
-.side-nav .side-main.work-side-selected,
-.side-nav .side-main[data-work-selected="true"]{
+.estimate-quote-sub-menu .side-item.active,
+.estimate-quote-sub-menu .side-item.work-side-selected,
+.estimate-quote-sub-menu .side-item[data-work-selected="true"]{
   background:#111827 !important;
-  color:#fff !important;
   border-color:#111827 !important;
+  color:#fff !important;
+  box-shadow:none !important;
 }
-.estimate-quote-sub-menu.active .side-item[data-work-selected="true"],
-.estimate-quote-sub-menu.active .side-item.work-side-selected{
+.estimate-quote-sub-menu .side-item.active:hover,
+.estimate-quote-sub-menu .side-item.work-side-selected:hover,
+.estimate-quote-sub-menu .side-item[data-work-selected="true"]:hover{
   background:#111827 !important;
-  color:#fff !important;
   border-color:#111827 !important;
+  color:#fff !important;
 }
