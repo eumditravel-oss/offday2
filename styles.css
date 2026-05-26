@@ -18603,3 +18603,60 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-help { margin-top:10px; padding:12px; border-radius:12px; background:#fff7ed; color:#9a3412; font-weight:700; font-size:12px; }
 .estimate-flow-tag { display:block; margin-top:4px; color:#475569; font-size:11px; }
 @media (max-width:1200px){ .estimate-workflow-stepbar{grid-template-columns:repeat(2,minmax(160px,1fr));} }
+
+/* 견적 의뢰관리 개선: 큰 메모장 새 창, 드롭다운 표시, 관리 버튼 축약 */
+.estimate-workflow-table select,
+.estimate-workflow-table .estimate-request-select,
+.estimate-workflow-table .estimate-row-action-select {
+  color:#111827 !important;
+  -webkit-text-fill-color:#111827 !important;
+  opacity:1 !important;
+  background-color:#fff !important;
+  font-weight:800;
+  line-height:30px;
+  appearance:auto;
+}
+.estimate-workflow-table select option {
+  color:#111827 !important;
+  background:#fff !important;
+  font-weight:500;
+}
+.estimate-workflow-table td.memo {
+  white-space:normal !important;
+  overflow:visible;
+}
+.estimate-workflow-table .memo-open-btn {
+  min-width:52px;
+  margin-right:8px;
+  vertical-align:middle;
+}
+.estimate-workflow-table .memo-preview {
+  display:inline-block;
+  max-width:210px;
+  color:#475569;
+  font-weight:700;
+  vertical-align:middle;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.estimate-workflow-row-actions.compact {
+  display:grid;
+  grid-template-columns:64px 96px minmax(110px,1fr) 56px;
+  align-items:center;
+  gap:6px;
+}
+.estimate-workflow-row-actions.compact .btn,
+.estimate-workflow-row-actions.compact select {
+  width:100%;
+  min-width:0;
+  height:30px;
+  padding-left:8px;
+  padding-right:8px;
+  white-space:nowrap;
+}
+.estimate-workflow-table td:nth-child(6){width:260px;}
+.estimate-workflow-table td:nth-child(9){width:360px;}
+@media (max-width:1280px){
+  .estimate-workflow-row-actions.compact{grid-template-columns:1fr 1fr;}
+}
