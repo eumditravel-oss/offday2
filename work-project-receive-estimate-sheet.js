@@ -2396,9 +2396,17 @@ function estimatePeriodExtractCompanyName(text) {
 function estimatePeriodFormatDateCode(value) {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return `${raw.slice(2, 4)}${raw.slice(5, 7)}${raw.slice(8, 10)}`;
   const digits = raw.replace(/\D/g, "");
+  if (digits.length === 8) return digits.slice(2, 8);
   if (digits.length >= 6) return digits.slice(0, 6);
   return raw;
+}
+
+function estimatePeriodDateCodeToIso(value) {
+  const code = estimatePeriodFormatDateCode(value);
+  if (!/^\d{6}$/.test(code)) return "";
+  return `20${code.slice(0, 2)}-${code.slice(2, 4)}-${code.slice(4, 6)}`;
 }
 
 function estimatePeriodTodayCode() {
@@ -2555,8 +2563,8 @@ function renderEstimatePeriodFilters() {
   const host = document.getElementById("estimatePeriodFilterControls");
   if (!host) return;
   host.innerHTML = `
-    <label class="estimate-period-filter-field"><span>시작일(YYMMDD)</span><input id="estimatePeriodFilterFrom" value="${estimateSheetHtml(estimatePeriodFilters.from || "")}" placeholder="260501"></label>
-    <label class="estimate-period-filter-field"><span>종료일(YYMMDD)</span><input id="estimatePeriodFilterTo" value="${estimateSheetHtml(estimatePeriodFilters.to || "")}" placeholder="260531"></label>
+    <label class="estimate-period-filter-field"><span>시작일(YYMMDD)</span><input id="estimatePeriodFilterFrom" type="date" value="${estimateSheetHtml(estimatePeriodDateCodeToIso(estimatePeriodFilters.from || ""))}" data-date-code="${estimateSheetHtml(estimatePeriodFormatDateCode(estimatePeriodFilters.from || ""))}" placeholder="260501"></label>
+    <label class="estimate-period-filter-field"><span>종료일(YYMMDD)</span><input id="estimatePeriodFilterTo" type="date" value="${estimateSheetHtml(estimatePeriodDateCodeToIso(estimatePeriodFilters.to || ""))}" data-date-code="${estimateSheetHtml(estimatePeriodFormatDateCode(estimatePeriodFilters.to || ""))}" placeholder="260531"></label>
     <label class="estimate-period-filter-field"><span>상태</span><select id="estimatePeriodFilterStatus"><option>전체</option>${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option ${estimatePeriodFilters.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
     <label class="estimate-period-filter-field search"><span>검색</span><input id="estimatePeriodFilterQ" value="${estimateSheetHtml(estimatePeriodFilters.q || "")}" placeholder="업체명, 프로젝트명, 작업내용"></label>
     <button class="btn btn-line" type="button" id="estimatePeriodFilterApply">기간 조회</button>
@@ -2565,8 +2573,8 @@ function renderEstimatePeriodFilters() {
     <button class="btn btn-line" type="button" id="estimatePeriodSaveRows">수정 저장</button>
   `;
   host.querySelector("#estimatePeriodFilterApply")?.addEventListener("click", () => {
-    estimatePeriodFilters.from = host.querySelector("#estimatePeriodFilterFrom")?.value || "";
-    estimatePeriodFilters.to = host.querySelector("#estimatePeriodFilterTo")?.value || "";
+    estimatePeriodFilters.from = estimatePeriodFormatDateCode(host.querySelector("#estimatePeriodFilterFrom")?.value || "");
+    estimatePeriodFilters.to = estimatePeriodFormatDateCode(host.querySelector("#estimatePeriodFilterTo")?.value || "");
     estimatePeriodFilters.status = host.querySelector("#estimatePeriodFilterStatus")?.value || "전체";
     estimatePeriodFilters.q = host.querySelector("#estimatePeriodFilterQ")?.value || "";
     estimatePeriodSaveFilters();
@@ -2589,7 +2597,7 @@ function renderEstimatePeriodFilters() {
   });
 }
 
-function estimatePeriodPersistRenderedRows() {
+function estimatePeriodPersistRenderedRows(rerender = true) {
   const rows = Array.from(document.querySelectorAll("#estimatePeriodSheetBody tr[data-period-row-id]"));
   estimatePeriodLoadEdits();
   const editMap = new Map(estimatePeriodEditRows.map(row => [row.id, row]));
@@ -2604,6 +2612,7 @@ function estimatePeriodPersistRenderedRows() {
       const el = tr.querySelector(`[data-period-key="${col.key}"]`);
       row[col.key] = col.type === "status" ? (el?.value || "") : estimatePeriodNormalizeText(el?.innerText || el?.textContent || "");
     });
+    row.modified = true;
     row.company = estimatePeriodExtractCompanyName(row.company || row.companyRaw || "");
     if (source === "sent") {
       const index = Number(tr.getAttribute("data-sent-index"));
@@ -2636,7 +2645,7 @@ function estimatePeriodPersistRenderedRows() {
   estimatePeriodEditRows = Array.from(editMap.values()).filter(row => row.source !== "template" || row.id.startsWith("manual") || row.modified);
   estimatePeriodSaveEdits();
   if (sentChanged) estimatePeriodSaveSentRows();
-  renderEstimatePeriodManage();
+  if (rerender) renderEstimatePeriodManage();
 }
 
 
@@ -2815,7 +2824,10 @@ function renderEstimatePeriodManage() {
     });
   });
   host.querySelectorAll(".status-select").forEach(sel => {
-    sel.addEventListener("change", estimatePeriodPersistRenderedRows);
+    sel.addEventListener("change", () => {
+      estimatePeriodPersistRenderedRows(false);
+      renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodAllRowsForList()));
+    });
     sel.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, sel));
   });
   const count = document.getElementById("estimatePeriodSentCount");
