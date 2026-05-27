@@ -2475,7 +2475,9 @@ function estimatePeriodBaseListRows() {
       if (v !== "" && v !== null && typeof v !== "undefined") values[c] = v;
     }
     const has = Object.keys(values).some(c => !String(values[c]).startsWith("="));
-    if (has) rows.push(estimatePeriodRowFromValues(values, `template-${r}`, "template"));
+    const dateCode = estimatePeriodFormatDateCode(values[2]);
+    const hasRequiredData = /^\d{6}$/.test(dateCode) && (values[3] || values[4] || values[15]);
+    if (has && hasRequiredData) rows.push(estimatePeriodRowFromValues(values, `template-${r}`, "template"));
   }
   return rows;
 }
@@ -2790,8 +2792,8 @@ function renderEstimatePeriodManage() {
   estimatePeriodLoadSentRows();
   estimatePeriodLoadEdits();
   const allRows = estimatePeriodAllRowsForList().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.sentAt || "").localeCompare(String(a.sentAt || "")));
-  const summary = estimatePeriodSummary(allRows);
   const filtered = estimatePeriodFilterRows(allRows);
+  const summary = estimatePeriodSummary(filtered);
   renderEstimatePeriodSummaryCards(summary);
   renderEstimatePeriodFilters();
   const colGroup = `<colgroup>${ESTIMATE_PERIOD_COLUMNS.map(col => `<col style="width:${col.width}px">`).join("")}</colgroup>`;
@@ -2826,7 +2828,8 @@ function renderEstimatePeriodManage() {
   host.querySelectorAll(".status-select").forEach(sel => {
     sel.addEventListener("change", () => {
       estimatePeriodPersistRenderedRows(false);
-      renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodAllRowsForList()));
+      const refreshedRows = estimatePeriodAllRowsForList().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.sentAt || "").localeCompare(String(a.sentAt || "")));
+      renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodFilterRows(refreshedRows)));
     });
     sel.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, sel));
   });
