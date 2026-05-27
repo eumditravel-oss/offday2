@@ -19408,3 +19408,57 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   opacity: .45;
   cursor: not-allowed;
 }
+
+/* === 2026-05 기간별 견적서 관리 보정: 상단/헤더 틀고정 + 날짜 미니달력 === */
+.estimate-period-shell .project-receive-hero.quote-hero{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 45 !important;
+  background: #f8fafc !important;
+  border: 1px solid #dbe3ee !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .08) !important;
+}
+.estimate-period-toolbar.estimate-period-filter-toolbar{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 42 !important;
+  background: #fff !important;
+}
+.estimate-period-sheet-wrap{
+  position: relative !important;
+}
+.estimate-period-manage-table thead,
+.estimate-period-manage-table thead tr,
+.estimate-period-manage-table th{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 35 !important;
+}
+.estimate-period-manage-table th{
+  background: #f1f5f9 !important;
+  box-shadow: 0 1px 0 #cbd5e1, 0 3px 8px rgba(15, 23, 42, .06) !important;
+}
+.estimate-period-filter-field input[type="date"]{
+  min-width: 160px !important;
+  cursor: pointer !important;
+}
+.estimate-period-filter-field input[type="date"]::-webkit-calendar-picker-indicator{
+  cursor: pointer !important;
+}
+
+/* === 2026-05 견적 의뢰관리 보정: 테이블 타이틀 행 틀고정 === */
+.estimate-workflow-table-wrap{
+  position: relative !important;
+  overflow: auto !important;
+}
+.estimate-workflow-table thead,
+.estimate-workflow-table thead tr,
+.estimate-workflow-table thead th{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
+}
+.estimate-workflow-table thead th{
+  background: #f3f6fa !important;
+  box-shadow: 0 1px 0 #dbe4ef, 0 3px 8px rgba(15, 23, 42, .06) !important;
+}
