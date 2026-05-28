@@ -1217,14 +1217,34 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
     </tr>
   `;
 }
+function refreshEstimateDbProgressDoneCellOnly(rowIndex, colIndex, checked, history) {
+  const rowEl = document.querySelector(`#estimateDbBody .quote-db-data-row[data-row-index="${rowIndex}"]`);
+  const cellEl = rowEl?.querySelector(`.quote-db-done-cell[data-resize-col="${colIndex}"]`);
+  if (rowEl) rowEl.classList.toggle("quote-db-row-complete", !!checked);
+  const input = cellEl?.querySelector('input[type="checkbox"]');
+  if (input && input.checked !== !!checked) input.checked = !!checked;
+  const historyEl = cellEl?.querySelector(".quote-db-done-history");
+  if (historyEl) historyEl.textContent = history || "";
+}
+
 function toggleEstimateDbProgressDone(event, rowIndex, colIndex) {
-  const checked = !!event?.currentTarget?.checked;
+  const checkbox = event?.currentTarget;
+  const checked = !!checkbox?.checked;
   const row = getEstimateDbRows()?.[rowIndex];
+  if (!row) return;
   const current = parseEstimateDbProgressDoneValue(row?.[colIndex]);
   const history = checked ? (current.history || getEstimateDbProgressDoneHistory()) : "";
-  updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbProgressDoneValue(checked, history), { commit: true, silentRender: true });
-  renderEstimateDbManage();
-  requestAnimationFrame(() => focusEstimateDbCell(rowIndex, colIndex));
+
+  // 기성청구완료 체크박스는 계산/정렬/연계 대상이 아닌 상태값입니다.
+  // 기존처럼 renderEstimateDbManage()를 다시 호출하면 60개 이상 컬럼의 기성관리 전체 표,
+  // 합계행, 리포트가 모두 재생성되어 체크 한 번에도 로딩이 발생합니다.
+  // 따라서 해당 셀 값과 현재 행의 완료 표시만 즉시 갱신합니다.
+  row[colIndex] = stringifyEstimateDbProgressDoneValue(checked, history);
+  refreshEstimateDbProgressDoneCellOnly(rowIndex, colIndex, checked, history);
+  setEstimateDbPendingEdit?.(estimateDbActiveTab, rowIndex, colIndex, row[colIndex]);
+  updateEstimateDbSaveButtonState?.();
+  if (typeof scheduleEstimateDbPersist === "function") scheduleEstimateDbPersist();
+  requestAnimationFrame(() => checkbox?.focus?.());
 }
 
 function selectEstimateDbCell(rowIndex, colIndex) {
