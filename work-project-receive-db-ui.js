@@ -161,6 +161,37 @@ ${sub}`;
     return main || sub || "";
   });
 }
+
+
+/* === 2026-05-28 DB관리 렌더링 경량화/컬럼 정합성 보강 === */
+let estimateDbInitialSanitizeDone = false;
+const estimateDbNormalizedTabSet = new Set();
+function normalizeEstimateDbSheetColumnLengths(sheet = getEstimateDbSheet()) {
+  if (!sheet) return 0;
+  const headerRows = Array.isArray(sheet.headerRows) ? sheet.headerRows : [];
+  const maxHeaderLen = Math.max(0, ...headerRows.map(row => Array.isArray(row) ? row.length : 0));
+  const requestLen = Array.isArray(sheet.requestRow) ? sheet.requestRow.length : 0;
+  const rowLen = Math.max(0, ...(sheet.rows || []).map(row => Array.isArray(row) ? row.length : 0));
+  const colCount = Math.max(maxHeaderLen, requestLen, rowLen);
+  headerRows.forEach(row => {
+    while (row.length < colCount) row.push("");
+    if (row.length > colCount) row.length = colCount;
+  });
+  if (Array.isArray(sheet.requestRow)) {
+    while (sheet.requestRow.length < colCount) sheet.requestRow.push("");
+    if (sheet.requestRow.length > colCount) sheet.requestRow.length = colCount;
+  }
+  (sheet.rows || []).forEach(row => {
+    while (row.length < colCount) row.push("");
+    if (row.length > colCount) row.length = colCount;
+  });
+  return colCount;
+}
+function normalizeEstimateDbActiveSheetColumns() {
+  normalizeEstimateDbSheetColumnLengths(getEstimateDbSheet(estimateDbActiveTab));
+  estimateDbNormalizedTabSet.add(estimateDbActiveTab);
+}
+
 function getEstimateDbRows(sheet = getEstimateDbSheet()) { return sheet.rows || []; }
 function getEstimateDbYears() {
   const years = new Set();
@@ -989,8 +1020,14 @@ function renderEstimateDbManage() {
   syncEstimateDbYearOptions();
   ensureEstimateDbManualSaveButton();
   document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === estimateDbActiveTab));
-  sanitizeEstimateDbSheetsBeforeRender();
-  ensureEstimateDbProgressStageTotalColumns();
+  if (!estimateDbInitialSanitizeDone) {
+    sanitizeEstimateDbSheetsBeforeRender();
+    ensureEstimateDbProgressStageTotalColumns();
+    Object.keys(estimateDbSheets || {}).forEach(tab => normalizeEstimateDbSheetColumnLengths(estimateDbSheets[tab]));
+    estimateDbInitialSanitizeDone = true;
+  } else if (!estimateDbNormalizedTabSet.has(estimateDbActiveTab)) {
+    normalizeEstimateDbActiveSheetColumns();
+  }
   recalcEstimateDbRowsByTab(estimateDbActiveTab);
   renderEstimateDbSearchBox();
   updateEstimateDbSaveButtonState();
