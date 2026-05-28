@@ -55,6 +55,37 @@ function isEstimateDbDateInputColumn(tab = estimateDbActiveTab, colIndex = 0) {
   return group.includes("납품예정일") && /^\d+차납품$/.test(header);
 }
 
+function isEstimateDbCreatedDateColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "pj") return false;
+  const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  return header === "최초생성날짜" || header === "년도";
+}
+
+function formatEstimateDbFullKoreanDate(value) {
+  const raw = normalizeEstimateDbText(value);
+  if (!raw) return "";
+  const pad = v => String(v).padStart(2, "0");
+  let match = raw.match(/^(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일$/);
+  if (match) return `${match[1]}년 ${pad(match[2])}월 ${pad(match[3])}일`;
+  match = raw.match(/^(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
+  if (match) return `${match[1]}년 ${pad(match[2])}월 ${pad(match[3])}일`;
+  const digits = raw.replace(/[^0-9]/g, "");
+  match = digits.match(/^(20\d{2})(\d{2})(\d{2})$/);
+  if (match) return `${match[1]}년 ${match[2]}월 ${match[3]}일`;
+  match = digits.match(/^(\d{2})(\d{2})(\d{2})$/);
+  if (match) {
+    const year = 2000 + Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${year}년 ${pad(month)}월 ${pad(day)}일`;
+    }
+  }
+  match = raw.match(/(20\d{2})/);
+  if (match) return `${match[1]}년 00월 00일`;
+  return raw;
+}
+
 function formatEstimateDbCompactDate(value) {
   const raw = normalizeEstimateDbText(value);
   if (!raw) return "";
@@ -71,6 +102,7 @@ function formatEstimateDbCompactDate(value) {
 
 function normalizeEstimateDbCellForStorage(tab, colIndex, value) {
   if (parseEstimateDbRichCellValue(value)) return value;
+  if (isEstimateDbCreatedDateColumn(tab, colIndex)) return formatEstimateDbFullKoreanDate(value);
   if (isEstimateDbDateInputColumn(tab, colIndex)) return formatEstimateDbCompactDate(value);
   const sheetForStorage = estimateDbSheets[tab];
   if (isEstimateDbOutsourceAmountCell(tab, colIndex)) return normalizeEstimateDbAmountCellStorage(value);
