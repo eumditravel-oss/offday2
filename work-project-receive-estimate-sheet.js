@@ -5222,3 +5222,186 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
     window.setEstimateDbTab = setEstimateDbTab;
   }
 })();
+
+
+/* === 2026-05-28 기성관리 탭 멈춤 방지 최종 패치
+   - 기성관리(progress) 탭 전환 시 전체 DB/견적 연계 재동기화, 전체 리포트 렌더링, 전체 행 합계 재계산을 실행하지 않는다.
+   - 데이터 연계는 저장/셀 수정 시점의 targeted sync로 유지하고, 탭 클릭은 화면 렌더링만 수행한다.
+   - progress는 30행 단위로 가볍게 렌더링한다. */
+(function estimateDbProgressTabFreezeGuard() {
+  const FAST_PROGRESS_PAGE_SIZE = 30;
+  let progressPrepared = false;
+
+  function safeCall(fn, ...args) {
+    try {
+      if (typeof fn === "function") return fn(...args);
+    } catch (err) {
+      console.warn("[DB관리/기성관리] 경량 렌더링 보조 처리 중 오류:", err);
+    }
+    return undefined;
+  }
+
+  function getProgressSheet() {
+    return estimateDbSheets?.progress || null;
+  }
+
+  function prepareProgressSheetOnce() {
+    const sheet = getProgressSheet();
+    if (!sheet) return null;
+    if (!progressPrepared) {
+      safeCall(window.ensureEstimateDbProgressDoneColumn || (typeof ensureEstimateDbProgressDoneColumn === "function" ? ensureEstimateDbProgressDoneColumn : null));
+      safeCall(window.pruneEstimateDbProgressInitialStageColumns || (typeof pruneEstimateDbProgressInitialStageColumns === "function" ? pruneEstimateDbProgressInitialStageColumns : null));
+      safeCall(window.ensureEstimateDbProgressStageTotalColumns || (typeof ensureEstimateDbProgressStageTotalColumns === "function" ? ensureEstimateDbProgressStageTotalColumns : null));
+      safeCall(window.normalizeEstimateDbSheetColumnLengths || (typeof normalizeEstimateDbSheetColumnLengths === "function" ? normalizeEstimateDbSheetColumnLengths : null), sheet);
+      progressPrepared = true;
+    } else {
+      safeCall(window.normalizeEstimateDbSheetColumnLengths || (typeof normalizeEstimateDbSheetColumnLengths === "function" ? normalizeEstimateDbSheetColumnLengths : null), sheet);
+    }
+    return sheet;
+  }
+
+  function progressRowsForDisplay(sheet) {
+    const rows = Array.isArray(sheet?.rows) ? sheet.rows : [];
+    const keyword = String(typeof estimateDbSearchKeyword !== "undefined" ? estimateDbSearchKeyword : "").trim();
+    let entries = rows.map((row, sourceIndex) => ({ row, sourceIndex }));
+    if (keyword && typeof rowMatchesEstimateDbSearch === "function") {
+      entries = entries.filter(entry => {
+        try {
+          return rowMatchesEstimateDbSearch(entry.row, keyword, "progress", entry.sourceIndex);
+        } catch (_) {
+          return String(entry.row || []).includes(keyword);
+        }
+      });
+    }
+    const sort = typeof getEstimateDbEffectiveSortState === "function" ? getEstimateDbEffectiveSortState("progress") : null;
+    if (sort && typeof compareEstimateDbValues === "function" && typeof getEstimateDbCellDisplayValue === "function") {
+      entries.sort((a, b) => {
+        const av = getEstimateDbCellDisplayValue("progress", a.sourceIndex, sort.colIndex, a.row?.[sort.colIndex]);
+        const bv = getEstimateDbCellDisplayValue("progress", b.sourceIndex, sort.colIndex, b.row?.[sort.colIndex]);
+        return compareEstimateDbValues(av, bv, sort.direction) || a.sourceIndex - b.sourceIndex;
+      });
+    }
+    return entries;
+  }
+
+  function renderFastProgressPager(paged) {
+    if (typeof renderEstimateDbPager === "function") {
+      renderEstimateDbPager(paged);
+      return;
+    }
+    const wrap = document.querySelector(".quote-db-grid-wrap");
+    if (!wrap) return;
+    let pager = document.getElementById("estimateDbPager");
+    if (!pager) {
+      pager = document.createElement("div");
+      pager.id = "estimateDbPager";
+      pager.className = "quote-db-pager";
+      wrap.insertAdjacentElement("afterend", pager);
+    }
+    pager.innerHTML = `<div class="quote-db-pager-info">표시 ${paged.total ? paged.start + 1 : 0}~${paged.end} / 전체 ${paged.total}행</div>
+      <div class="quote-db-pager-actions">
+        <button class="btn btn-line btn-sm" type="button" ${paged.page <= 0 ? "disabled" : ""} onclick="moveEstimateDbPage(-1)">이전</button>
+        <span>${paged.page + 1} / ${paged.maxPage + 1}</span>
+        <button class="btn btn-line btn-sm" type="button" ${paged.page >= paged.maxPage ? "disabled" : ""} onclick="moveEstimateDbPage(1)">다음</button>
+      </div>`;
+  }
+
+  function renderEstimateDbProgressFast() {
+    const head = document.getElementById("estimateDbHead");
+    const body = document.getElementById("estimateDbBody");
+    if (!head || !body) return;
+    const sheet = prepareProgressSheetOnce();
+    if (!sheet) return;
+
+    safeCall(typeof syncEstimateDbYearOptions === "function" ? syncEstimateDbYearOptions : null);
+    safeCall(typeof ensureEstimateDbManualSaveButton === "function" ? ensureEstimateDbManualSaveButton : null);
+    safeCall(typeof renderEstimateDbSearchBox === "function" ? renderEstimateDbSearchBox : null);
+    safeCall(typeof updateEstimateDbSaveButtonState === "function" ? updateEstimateDbSaveButtonState : null);
+
+    document.querySelectorAll(".quote-db-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.dbTab === "progress"));
+
+    const displayColumns = typeof getEstimateDbDisplayColumns === "function"
+      ? getEstimateDbDisplayColumns(sheet)
+      : (typeof getEstimateDbLeafColumns === "function" ? getEstimateDbLeafColumns(sheet) : (sheet.headerRows?.[0] || []));
+    const colCount = displayColumns.length || (typeof getEstimateDbLeafColumns === "function" ? getEstimateDbLeafColumns(sheet).length : (sheet.headerRows?.[0]?.length || 0));
+    const sort = typeof getEstimateDbEffectiveSortState === "function" ? getEstimateDbEffectiveSortState("progress") : { colIndex: 1, direction: "desc" };
+
+    head.innerHTML = `
+      <tr class="quote-db-head-row quote-db-head-row-1 quote-db-head-row-merged">
+        ${displayColumns.map((col, colIndex) => {
+          const sortMark = sort?.colIndex === colIndex ? (sort.direction === "asc" ? " ▲" : " ▼") : "";
+          const style = typeof makeEstimateDbCellStyle === "function" ? makeEstimateDbCellStyle(colIndex, sheet) : "";
+          const boundary = typeof getEstimateDbGroupBoundaryClass === "function" ? getEstimateDbGroupBoundaryClass("progress", colIndex, sheet) : "";
+          const contact = typeof getEstimateDbContactDetailClass === "function" ? getEstimateDbContactDetailClass("progress", colIndex) : "";
+          const resize = typeof renderEstimateDbColumnResizeHandle === "function" ? renderEstimateDbColumnResizeHandle(colIndex) : "";
+          return `<th ${style} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head${boundary}${contact}" onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."><span class="quote-db-head-label">${escapeEstimateDbHtml(String((col || "") + sortMark)).replace(/\n/g, "<br>")}</span>${resize}</th>`;
+        }).join("")}
+        <th class="quote-db-manage-col">관리</th>
+      </tr>`;
+
+    const allEntries = progressRowsForDisplay(sheet);
+    const total = allEntries.length;
+    const currentPage = typeof getEstimateDbPageIndex === "function" ? getEstimateDbPageIndex("progress") : 0;
+    const maxPage = Math.max(0, Math.ceil(total / FAST_PROGRESS_PAGE_SIZE) - 1);
+    const page = Math.min(Math.max(0, Number(currentPage) || 0), maxPage);
+    if (typeof setEstimateDbPageIndex === "function") setEstimateDbPageIndex("progress", page);
+    const start = page * FAST_PROGRESS_PAGE_SIZE;
+    const entries = allEntries.slice(start, start + FAST_PROGRESS_PAGE_SIZE);
+
+    entries.forEach(({ row }) => {
+      if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", row);
+    });
+
+    body.innerHTML = entries.length
+      ? entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("")
+      : `<tr><td colspan="${colCount + 1}" class="empty-cell">검색 조건에 맞는 DB 행이 없습니다.</td></tr>`;
+
+    renderFastProgressPager({ entries, page, maxPage, total, start, end: Math.min(total, start + FAST_PROGRESS_PAGE_SIZE) });
+    safeCall(typeof applyEstimateDbCommaFormatToRenderedInputs === "function" ? applyEstimateDbCommaFormatToRenderedInputs : null);
+    safeCall(typeof restoreEstimateDbFocus === "function" ? restoreEstimateDbFocus : null);
+  }
+
+  if (typeof renderEstimateDbManage === "function") {
+    const baseRenderEstimateDbManage = renderEstimateDbManage;
+    renderEstimateDbManage = function estimateDbGuardedRenderManage() {
+      if (typeof estimateDbActiveTab !== "undefined" && estimateDbActiveTab === "progress") {
+        return renderEstimateDbProgressFast();
+      }
+      return baseRenderEstimateDbManage();
+    };
+    window.renderEstimateDbManage = renderEstimateDbManage;
+  }
+
+  if (typeof setEstimateDbTab === "function") {
+    const baseSetEstimateDbTab = setEstimateDbTab;
+    setEstimateDbTab = function estimateDbGuardedSetTab(tab) {
+      if (tab === "progress") {
+        if (typeof estimateDbHasUnsavedChanges !== "undefined" && estimateDbHasUnsavedChanges) {
+          safeCall(typeof commitEstimateDbPendingEdits === "function" ? commitEstimateDbPendingEdits : null, { silent: true, silentRender: true });
+        }
+        estimateDbActiveTab = "progress";
+        if (typeof setEstimateDbPageIndex === "function") setEstimateDbPageIndex("progress", 0);
+        estimateDbSelectedCell = { tab: "progress", sectionIndex: null, rowIndex: 0, colIndex: 0 };
+        return renderEstimateDbProgressFast();
+      }
+      return baseSetEstimateDbTab(tab);
+    };
+    window.setEstimateDbTab = setEstimateDbTab;
+  }
+
+  if (typeof moveEstimateDbPage === "function") {
+    const baseMoveEstimateDbPage = moveEstimateDbPage;
+    moveEstimateDbPage = function estimateDbGuardedMovePage(delta = 0) {
+      if (typeof estimateDbActiveTab !== "undefined" && estimateDbActiveTab === "progress") {
+        const current = typeof getEstimateDbPageIndex === "function" ? getEstimateDbPageIndex("progress") : 0;
+        if (typeof setEstimateDbPageIndex === "function") setEstimateDbPageIndex("progress", current + Number(delta || 0));
+        estimateDbSelectedCell = { tab: "progress", sectionIndex: null, rowIndex: 0, colIndex: 0 };
+        return renderEstimateDbProgressFast();
+      }
+      return baseMoveEstimateDbPage(delta);
+    };
+    window.moveEstimateDbPage = moveEstimateDbPage;
+  }
+
+  window.renderEstimateDbProgressFast = renderEstimateDbProgressFast;
+})();
