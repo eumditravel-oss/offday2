@@ -77,27 +77,66 @@ const pmProjectData = [
   }
 ];
 
-let pmCurrentProjectIndex = 0;
+let pmCurrentProjectIndex = null;
 let pmInitialized = false;
 
 function initProjectManage() {
-  if (!document.getElementById("pmProjectList")) return;
+  if (!document.getElementById("pmProjectListScreen")) return;
   if (!pmInitialized) {
     pmRenderProjectList();
     pmInitialized = true;
   }
-  pmRenderProject(pmCurrentProjectIndex);
+  if (pmCurrentProjectIndex === null) {
+    pmOpenProjectList();
+  } else {
+    pmRenderProject(pmCurrentProjectIndex);
+  }
+}
+
+function pmOpenProjectList() {
+  const listScreen = document.getElementById("pmProjectListScreen");
+  const detailScreen = document.getElementById("pmProjectDetailScreen");
+  if (listScreen) listScreen.classList.remove("hidden");
+  if (detailScreen) detailScreen.classList.add("hidden");
+  pmCurrentProjectIndex = null;
+  pmRenderProjectList();
 }
 
 function pmRenderProjectList() {
-  const list = document.getElementById("pmProjectList");
-  if (!list) return;
-  list.innerHTML = pmProjectData.map((p, index) => `
-    <button class="pm-project-item ${index === pmCurrentProjectIndex ? "active" : ""}" type="button" onclick="pmRenderProject(${index})">
-      <strong>${pmEscapeHtml(p.name)}</strong>
-      <span>${pmEscapeHtml(p.client)} · ${pmEscapeHtml(p.pm)}</span>
-    </button>
-  `).join("");
+  const board = document.getElementById("pmProjectListBoard");
+  if (!board) return;
+  board.innerHTML = `
+    <div class="pm-project-list-table-wrap">
+      <table class="pm-project-list-table">
+        <thead>
+          <tr>
+            <th>PJ NO</th>
+            <th>프로젝트명</th>
+            <th>발주처</th>
+            <th>담당부서</th>
+            <th>PM</th>
+            <th>상태</th>
+            <th>수주일자</th>
+            <th>완료예정일</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pmProjectData.map((p, index) => `
+            <tr class="pm-project-list-row" onclick="pmRenderProject(${index})">
+              <td>${pmEscapeHtml(p.id)}</td>
+              <td><strong>${pmEscapeHtml(p.name)}</strong></td>
+              <td>${pmEscapeHtml(p.client)}</td>
+              <td>${pmEscapeHtml(p.dept)}</td>
+              <td>${pmEscapeHtml(p.pm)}</td>
+              <td><span class="status-badge">${pmEscapeHtml(p.status)}</span></td>
+              <td>${pmEscapeHtml(p.orderDate)}</td>
+              <td>${pmEscapeHtml(p.dueDate)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function pmRenderProject(index = 0) {
@@ -105,7 +144,10 @@ function pmRenderProject(index = 0) {
   const p = pmProjectData[index] || pmProjectData[0];
   if (!p) return;
 
-  pmRenderProjectList();
+  const listScreen = document.getElementById("pmProjectListScreen");
+  const detailScreen = document.getElementById("pmProjectDetailScreen");
+  if (listScreen) listScreen.classList.add("hidden");
+  if (detailScreen) detailScreen.classList.remove("hidden");
   pmSetText("pmProjectTitle", p.name);
   pmSetText("pmProjectSubtitle", `${p.client} · ${p.dept} · ${p.pm}`);
   pmSetText("pmProjectStatusBadge", p.status);
