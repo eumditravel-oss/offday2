@@ -72,8 +72,18 @@ function normalizeEstimateDbCreatedDate(value, fallbackDate = null) {
   if (/^20\d{2}년\s*\d{1,2}월\s*\d{1,2}일$/.test(raw)) return raw.replace(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/, (_m, y, mo, d) => `${y}년 ${String(mo).padStart(2, "0")}월 ${String(d).padStart(2, "0")}일`);
   const ymd = raw.match(/^(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
   if (ymd) return `${ymd[1]}년 ${String(ymd[2]).padStart(2, "0")}월 ${String(ymd[3]).padStart(2, "0")}일`;
-  const compact = raw.replace(/[^0-9]/g, "").match(/^(20\d{2})(\d{2})(\d{2})$/);
+  const digits = raw.replace(/[^0-9]/g, "");
+  const compact = digits.match(/^(20\d{2})(\d{2})(\d{2})$/);
   if (compact) return `${compact[1]}년 ${compact[2]}월 ${compact[3]}일`;
+  const shortCompact = digits.match(/^(\d{2})(\d{2})(\d{2})$/);
+  if (shortCompact) {
+    const year = 2000 + Number(shortCompact[1]);
+    const month = Number(shortCompact[2]);
+    const day = Number(shortCompact[3]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${year}년 ${String(month).padStart(2, "0")}월 ${String(day).padStart(2, "0")}일`;
+    }
+  }
   const yearOnly = raw.match(/(20\d{2})/);
   if (yearOnly) return `${yearOnly[1]}년 00월 00일`;
   return fallbackDate || formatEstimateDbKoreanDate();
@@ -1949,7 +1959,11 @@ function handleEstimateDbKeydown(event) {
     // 날짜 입력 컬럼은 저장 대기값을 확정한 직후 현재 선택된 입력칸에도
     // 260105 → 26년1월5일 형식으로 즉시 반영합니다.
     // 적용 범위: 견적서일자, 수주일자, 계약일자, 납품예정일 1~3차납품.
-    if (isEstimateDbDateInputColumn(estimateDbActiveTab, colIndex)) {
+    if (isEstimateDbCreatedDateColumn(estimateDbActiveTab, colIndex)) {
+      const storedValue = getEstimateDbRows()?.[rowIndex]?.[colIndex] || "";
+      input.value = formatEstimateDbFullKoreanDate(storedValue);
+      applyEstimateDbPjDefaultSort();
+    } else if (isEstimateDbDateInputColumn(estimateDbActiveTab, colIndex)) {
       const storedValue = getEstimateDbRows()?.[rowIndex]?.[colIndex] || "";
       input.value = formatEstimateDbCompactDate(storedValue);
     }
