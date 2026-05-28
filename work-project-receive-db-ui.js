@@ -253,16 +253,36 @@ function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, 
   return display || "";
 }
 
+
+function getEstimateDbForcedColumnKind(tab, colIndex, sheet = getEstimateDbSheet(tab)) {
+  if (tab !== "pj") return "";
+  const values = [
+    sheet?.headerRows?.[0]?.[colIndex],
+    getEstimateDbLeafColumns(sheet)[colIndex],
+    getEstimateDbDisplayColumns(sheet)[colIndex],
+    getEstimateDbDisplayColumns(sheet)[colIndex]?.split(/\n/)[0]
+  ].map(value => normalizeEstimateDbText(value).replace(/\s+/g, ""));
+  if (values.some(value => value === "프로젝트명" || value === "PJ명" || value === "프로젝트")) return "project-name";
+  if (values.some(value => value === "거래처명" || value === "거래처")) return "client-name";
+  if (values.some(value => value === "국내/해외" || value === "국내해외")) return "domestic";
+  return "";
+}
+
+function getEstimateDbColumnCssClass(tab, colIndex, sheet = getEstimateDbSheet(tab)) {
+  const kind = getEstimateDbForcedColumnKind(tab, colIndex, sheet);
+  if (!kind) return "";
+  return ` quote-db-col-${kind}`;
+}
+
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
   const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   if (tab === "pj") {
     // PJ관리 고정 가독성 폭: 기존 localStorage 열 너비 조절값보다 우선 적용합니다.
-    // - 국내/해외는 절반 수준으로 축소
-    // - 거래처명은 줄어든 폭을 흡수하고 2줄 표시 가능하게 확보
-    // - 프로젝트명은 현재 화면 기준 2배 수준으로 확대
-    if (headerName === "국내/해외") return 68;
-    if (headerName === "거래처명") return 180;
-    if (headerName === "프로젝트명") return 880;
+    // 헤더명/leaf/display 값이 조금 달라도 강제 컬럼 종류를 먼저 판정합니다.
+    const forcedKind = getEstimateDbForcedColumnKind(tab, colIndex, sheet);
+    if (forcedKind === "domestic") return 58;
+    if (forcedKind === "client-name") return 230;
+    if (forcedKind === "project-name") return 1040;
     if (headerName === "건물용도") return 90;
     // 프로젝트 연결은 Enter 명령 셀이므로 최소 폭만 확보합니다.
     if (headerName === ESTIMATE_DB_PROJECT_LINK_HEADER) return 130;
@@ -1081,7 +1101,7 @@ function renderEstimateDbManage() {
         const reorderAttrs = estimateDbColumnReorderMode
           ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="헤더를 좌클릭 드래그해서 바꿀 열 위치에 놓으면 두 열이 서로 바뀝니다."`
           : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
-        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}${getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex)}${getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbColumnCssClass(estimateDbActiveTab, colIndex, sheet)}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}${getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex)}${getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
@@ -1111,7 +1131,7 @@ function renderEstimateDbTotalRow(sheet, colCount) {
       <td class="quote-db-total-label" colspan="4">합계</td>
       ${Array.from({ length: Math.max(0, colCount - 4) }, (_, offset) => {
         const colIndex = offset + 4;
-        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${getEstimateDbGroupBoundaryClass(tabName, colIndex, sheet).trim()}"><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
+        return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${(getEstimateDbColumnCssClass(tabName, colIndex, sheet) + getEstimateDbGroupBoundaryClass(tabName, colIndex, sheet)).trim()}"><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
       }).join("")}
       <td class="quote-db-manage-col"></td>
     </tr>`;
@@ -1216,7 +1236,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
-        const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
+        const cellExtraClass = getEstimateDbColumnCssClass(estimateDbActiveTab, colIndex, sheet) + getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
         const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
         const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명", "거래처명"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
