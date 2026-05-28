@@ -19859,3 +19859,15 @@ button.btn-orange{
 .checklist-category-filter .category-name{font-size:12px;line-height:1.2}
 .checklist-category-filter .category-count{font-size:11px;min-width:24px;height:22px}
 .pm-project-list-row td:first-child,.pm-project-list-row td:nth-child(2){font-weight:700}
+
+/* DB관리 PJ관리: 거래처 상세열은 화면에서는 숨기고 엑셀 내보내기에는 유지 */
+.quote-db-pj-contact-hidden{display:none!important;}
+.estimate-db-contact-box{max-width:min(1480px,96vw)!important;}
+.estimate-db-contact-grid-wrap{overflow:auto;max-height:62vh;}
+.estimate-db-contact-grid{min-width:1380px;}
+.estimate-db-contact-grid th,.estimate-db-contact-grid td{white-space:nowrap;}
+.estimate-db-contact-grid input{min-width:92px;}
+.estimate-db-contact-grid input[data-contact-field="dept"]{min-width:120px;}
+.estimate-db-contact-grid input[data-contact-field="email"],
+.estimate-db-contact-grid input[data-contact-field="email2"],
+.estimate-db-contact-grid input[data-contact-field="webhard"]{min-width:150px;}
