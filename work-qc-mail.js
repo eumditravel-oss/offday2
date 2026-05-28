@@ -13815,3 +13815,112 @@ setTimeout(() => {
   if (input) input.addEventListener("change", () => { updateChecklistLinkedProjectContext(); scheduleChecklistGridRender(0); });
   updateChecklistLinkedProjectContext();
 }, 0);
+
+/* =========================================================
+   2026-05-28 질의응답 프로젝트 연결 안정화 패치
+   - 프로젝트 리스트의 receiveId/PJ NO 기준으로 질의응답 행 분리
+   - QC팀 전달사항만 공통행 허용, 그 외 미연결 행은 프로젝트 선택 시 숨김
+   - 행 추가/복제 시 현재 선택 프로젝트 키를 즉시 부여
+   - 질의사항(N차) 버튼은 Z1~Z7/질의사항 전체를 묶어 필터링
+   ========================================================= */
+(function installChecklistStableProjectLinkPatch(){
+  function txt(v){ return String(v ?? '').replace(/\s+/g, ' ').trim(); }
+  function projectKey(data = {}){
+    if (typeof projectReceiveLinkKey === 'function') return projectReceiveLinkKey(data);
+    const receiveId = txt(data.receiveId || data.internalReceiveId || data.linkedReceiveId);
+    if (receiveId) return `RCV:${receiveId}`;
+    const no = txt(data.projectNo || data.pjNo);
+    if (no) return `NO:${no}`;
+    return '';
+  }
+  function rowKey(row = {}){ return txt(row.receiveId || row.linkedReceiveId || row.projectLinkKey || row.pjNo || row.projectNo || row.linkedProjectNo); }
+  function isQcCommon(row = {}){ return normalizeChecklistGroupName(row.group) === 'QC팀 전달사항' && !row.projectNo && !row.receiveId && !row.projectLinkKey; }
+  function applyProjectToRow(row = {}){
+    if (!row || !checklistLinkedProjectNo) return row;
+    if (normalizeChecklistGroupName(row.group) === 'QC팀 전달사항') return row;
+    if (!row.projectLinkKey && !row.receiveId && !row.projectNo) {
+      row.projectLinkKey = checklistLinkedProjectNo;
+      row.linkedReceiveId = checklistLinkedProjectNo;
+      row.linkedProjectNo = checklistLinkedProjectNo;
+    }
+    return row;
+  }
+  checklistFindProjectByInput = function checklistFindProjectByInputStable(value = ''){
+    const text = txt(value);
+    if (!text) return null;
+    return checklistProjectItems().map(item => item.data || item).find(data => {
+      const key = projectKey(data);
+      const no = txt(data.projectNo || data.pjNo);
+      const receiveId = txt(data.receiveId || data.internalReceiveId);
+      const name = txt(data.projectName || data.name);
+      return text === key || text === no || text === receiveId || text.includes(no) || text.includes(receiveId) || (name && (text.includes(name) || name.includes(text)));
+    }) || null;
+  };
+  updateChecklistLinkedProjectContext = function updateChecklistLinkedProjectContextStable(){
+    refreshChecklistProjectOptions?.();
+    const input = document.getElementById('checklistProject');
+    const data = checklistFindProjectByInput(input?.value || '');
+    checklistLinkedProjectNo = data ? projectKey(data) : '';
+    let panel = document.getElementById('checklistLinkedProjectContext');
+    const filter = document.getElementById('checklistCategoryFilter');
+    if (!panel && filter?.parentElement) {
+      panel = document.createElement('div');
+      panel.id = 'checklistLinkedProjectContext';
+      panel.className = 'checklist-project-context';
+      filter.parentElement.insertBefore(panel, filter);
+    }
+    if (panel) {
+      panel.innerHTML = data ? `
+        <div><strong>프로젝트 연결</strong><span>${escapeHtml(data.projectNo || data.receiveId || 'NO 미입력')}</span><b>${escapeHtml(data.projectName || '프로젝트명 미입력')}</b><em>${escapeHtml(data.client || '')}</em></div>
+        <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('전체')">전체</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('프로젝트 초기')">초기</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('PM 전달사항')">PM</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('질의사항(N차)')">질의 N차</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('최종자료 검토사항')">최종</button>
+      ` : `<div><strong>프로젝트 연결</strong><span>프로젝트 리스트의 프로젝트를 선택하면 receiveId/PJ NO 기준으로 질의응답을 분리합니다.</span></div>`;
+    }
+  };
+  window.updateChecklistLinkedProjectContext = updateChecklistLinkedProjectContext;
+  const baseFiltered = typeof getChecklistFilteredRows === 'function' ? getChecklistFilteredRows : null;
+  getChecklistFilteredRows = function checklistFilteredRowsByStableProject(){
+    updateChecklistLinkedProjectContext?.();
+    const rows = baseFiltered ? baseFiltered() : checklistRows.map((row, realIndex) => ({ row, realIndex }));
+    const isQuestionBundle = selectedChecklistCategoryFilter === '질의사항(N차)';
+    return rows.filter(({ row }) => {
+      const group = normalizeChecklistGroupName(row.group);
+      if (isQuestionBundle && !/질의사항|Z\d+/i.test(group)) return false;
+      if (!checklistLinkedProjectNo) return true;
+      if (isQcCommon(row)) return true;
+      const key = rowKey(row);
+      return key === checklistLinkedProjectNo;
+    });
+  };
+  window.getChecklistFilteredRows = getChecklistFilteredRows;
+  const baseInsert = typeof insertChecklistRowInGroup === 'function' ? insertChecklistRowInGroup : null;
+  insertChecklistRowInGroup = function insertChecklistRowInGroupWithProject(group = ''){
+    const before = checklistRows.length;
+    const result = baseInsert ? baseInsert(group) : undefined;
+    if (checklistRows.length > before) {
+      const inserted = checklistRows.find((row, idx) => idx >= before && row) || checklistRows[before];
+      applyProjectToRow(inserted);
+      renderChecklistGrid?.();
+    }
+    return result;
+  };
+  window.insertChecklistRowInGroup = insertChecklistRowInGroup;
+  const baseUpdate = typeof updateChecklistCell === 'function' ? updateChecklistCell : null;
+  updateChecklistCell = function updateChecklistCellWithStableProject(realIndex, field, value){
+    applyProjectToRow(checklistRows[realIndex]);
+    return baseUpdate ? baseUpdate(realIndex, field, value) : undefined;
+  };
+  window.updateChecklistCell = updateChecklistCell;
+  const baseDuplicate = typeof duplicateCheckedRows === 'function' ? duplicateCheckedRows : null;
+  duplicateCheckedRows = function duplicateCheckedRowsWithProject(){
+    const before = checklistRows.length;
+    const result = baseDuplicate ? baseDuplicate() : undefined;
+    checklistRows.slice(before).forEach(applyProjectToRow);
+    renderChecklistGrid?.();
+    return result;
+  };
+  window.duplicateCheckedRows = duplicateCheckedRows;
+})();
