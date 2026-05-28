@@ -259,8 +259,10 @@ function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = 
 
   const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   if (tab === "pj") {
-    // 프로젝트명은 2줄 표기를 유지하되 가로폭이 과도하게 커지지 않도록 고정합니다.
-    if (headerName === "프로젝트명") return 220;
+    // PJ관리 화면 가독성 보정: 거래처명은 줄이고, 프로젝트명은 길게 확보합니다.
+    if (headerName === "거래처명") return 110;
+    if (headerName === "프로젝트명") return 440;
+    if (headerName === "건물용도") return 90;
     // 프로젝트 연결은 Enter 명령 셀이므로 최소 폭만 확보합니다.
     if (headerName === ESTIMATE_DB_PROJECT_LINK_HEADER) return 130;
   }
@@ -833,7 +835,7 @@ function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = esti
 function getEstimateDbGroupBoundaryClass(tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet()) {
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   const boundaryHeadersByTab = {
-    pj: ["프로젝트명", "작업공종", "PM(철거)", "세대수"],
+    pj: ["프로젝트명", "작업공종", "세대수"],
     progress: ["작업취소", "외주금액합계", "2차납품공종"],
     mep: ["작업취소", "외주금액합계", "2차납품공종"]
   };
@@ -877,7 +879,7 @@ function migrateEstimateDbPjColumns() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const desired = [
-    "최초생성날짜","접수번호","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
+    "최초생성날짜","접수번호","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항"
   ];
   const current = sheet.headerRows[0];
   if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
@@ -1649,6 +1651,7 @@ function saveEstimateDbContactModal() {
 function isEstimateDbDropdownCell(tab, colIndex) {
   const request = getEstimateDbColumnRequest(tab, colIndex);
   const header = getEstimateDbColumnName(tab, colIndex);
+  if (tab === "pj" && header === "PM(철거)") return false;
   if (isEstimateDbContactColumn(tab, colIndex)) return true;
   return isEstimateDbProjectLinkColumn(tab, colIndex) || /드롭다운|대분류|소분류|추가 가능|선택/i.test(request) || ["국내/해외", "거래처명", "작업공종", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도"].includes(header);
 }
