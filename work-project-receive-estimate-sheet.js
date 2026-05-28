@@ -2454,6 +2454,37 @@ function estimatePeriodExtractSheetAreaPy(state) {
   return "";
 }
 
+
+function estimatePeriodExtractSheetUnitPriceSum(state) {
+  if (!state) return "";
+  const maxRow = Number(state.maxRow || ESTIMATE_EXCEL_SPECS?.[state.type]?.maxRow || 80);
+  let headerRow = 0;
+  for (let r = 1; r <= Math.min(maxRow, 40); r += 1) {
+    const label = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, 5) || "");
+    if (label.includes("단가")) {
+      headerRow = r;
+      break;
+    }
+  }
+  const startRow = headerRow ? headerRow + 1 : 12;
+  let endRow = maxRow;
+  for (let r = startRow; r <= maxRow; r += 1) {
+    const rowText = [1, 2, 3, 4, 5, 6, 7]
+      .map(c => estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || ""))
+      .join(" ");
+    if (rowText.includes("총계") || rowText.includes("합계")) {
+      endRow = r - 1;
+      break;
+    }
+  }
+  let sum = 0;
+  for (let r = startRow; r <= endRow; r += 1) {
+    const value = estimatePeriodToNumber(estimateSheetDisplayValue?.(state, r, 5) || "");
+    if (value) sum += value;
+  }
+  return sum ? sum : "";
+}
+
 function estimatePeriodExtractSheetTotalAmount(state) {
   if (!state) return "";
   const candidates = [
@@ -2907,6 +2938,7 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
   const service = estimateSheetDisplayValue(state, 7, 2) || "";
   const totalText = estimateSheetDisplayValue(state, 10, 2) || "";
   const areaPy = estimatePeriodExtractSheetAreaPy(state);
+  const unitPriceSum = estimatePeriodExtractSheetUnitPriceSum(state);
   const totalAmount = estimatePeriodExtractSheetTotalAmount(state) || estimatePeriodToNumber(totalText) || "";
   const sentAt = record.sentAt || estimateSheetNow();
   const recordId = record.id || estimateSheetMakeId("estimate");
@@ -2926,7 +2958,7 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
       3: recipient,
       4: project,
       5: areaPy,
-      6: "",
+      6: unitPriceSum,
       7: totalAmount,
       8: "",
       9: "",
