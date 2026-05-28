@@ -877,7 +877,7 @@ function migrateEstimateDbPjColumns() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const desired = [
-    "최초생성날짜","접수번호","PJ NO","국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
+    "최초생성날짜","접수번호","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
   ];
   const current = sheet.headerRows[0];
   if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
@@ -1373,24 +1373,20 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
   const rows = sheet.rows || [];
   const columns = getEstimateDbLeafColumns(sheet);
   const linkIndex = columns.findIndex(c => normalizeEstimateDbText(c) === ESTIMATE_DB_PROJECT_LINK_HEADER);
-  const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
-  const yearIndex = columns.findIndex(c => [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"].includes(normalizeEstimateDbText(c)));
   const selected = getEstimateDbProjectLinkOptions(rowIndex).find(item => item.label === selectedLabel || item.pjNo === selectedLabel || selectedLabel.startsWith(`${item.pjNo} |`));
   const target = rows[rowIndex];
-  const source = selected ? rows[selected.sourceIndex] : null;
   if (!target) return false;
-  if (!source) {
-    if (linkIndex >= 0) target[linkIndex] = selectedLabel || "";
-    return false;
+
+  // 프로젝트 연결은 기존 프로젝트와 현재 추가계약/후속계약 행을 묶는 참조값입니다.
+  // 수주금액, 작업일자, 담당자 등 현재 행의 계약 정보는 추가계약 시점 기준으로 별도 관리해야 하므로
+  // 기존 프로젝트 행의 값을 복사하지 않고 연결 PJ NO만 저장합니다.
+  const linkValue = selected ? selected.pjNo : normalizeEstimateDbText(selectedLabel);
+  if (linkIndex >= 0) {
+    while (target.length <= linkIndex) target.push("");
+    target[linkIndex] = linkValue || "";
   }
-  const keepIndexes = new Set([yearIndex, pjNoIndex, linkIndex].filter(i => i >= 0));
-  columns.forEach((_col, index) => {
-    if (keepIndexes.has(index)) return;
-    target[index] = source[index] || "";
-  });
-  if (linkIndex >= 0) target[linkIndex] = selected.pjNo;
   recalcEstimateDbRow("pj", target);
-  return true;
+  return Boolean(linkValue);
 }
 
 let estimateDbContactDetailsCollapsed = false;
