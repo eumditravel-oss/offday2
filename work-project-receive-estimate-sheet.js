@@ -2341,7 +2341,7 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "unitPrice", label: "단가(₩)", width: 92, align: "right" },
   { key: "amount", label: "금액(₩)", width: 112, align: "right" },
   { key: "scope", label: "작업범위", width: 140 },
-  { key: "usage", label: "건물용도", width: 35, cls: "usage" },
+  { key: "usage", label: "건물용도", width: 70, cls: "usage" },
   { key: "count", label: "작업횟수", width: 88, align: "center" },
   { key: "unitWork", label: "단가작업", width: 104, align: "center" },
   { key: "bid", label: "실행/입찰", width: 104, align: "center" },
@@ -2512,6 +2512,20 @@ function estimatePeriodAllRowsForList() {
     ...edits.filter(row => !sentKeys.has(row.id)),
     ...base.filter(row => !sentKeys.has(row.id) && !editKeys.has(row.id))
   ];
+}
+
+function estimatePeriodDateSortValue(row = {}) {
+  const code = estimatePeriodFormatDateCode(row.date || row.sentAt || row.result || "");
+  const n = Number(code);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function estimatePeriodSortRowsDesc(rows = []) {
+  return [...rows].sort((a, b) => {
+    const dateDiff = estimatePeriodDateSortValue(b) - estimatePeriodDateSortValue(a);
+    if (dateDiff) return dateDiff;
+    return String(b.sentAt || b.result || b.id || "").localeCompare(String(a.sentAt || a.result || a.id || ""));
+  });
 }
 
 function estimatePeriodSummary(allRows) {
@@ -2755,7 +2769,7 @@ function estimatePeriodCreateDemoStateFromRow(row = {}) {
   estimatePeriodSetStateCell(state, 23, 1, row.usage ? `- 건물용도: ${row.usage}` : "- 기계, 전기공사는 평당공사비로 작업");
   estimatePeriodSetStateCell(state, 24, 1, row.bid ? `- 실행/입찰: ${row.bid}` : "- 인테리어, 철거공사 제외");
   estimatePeriodSetStateCell(state, 25, 1, row.tender ? `- 투찰: ${row.tender}` : "- 고려전산 프로그램으로 작업");
-  estimatePeriodSetStateCell(state, 26, 1, row.memo ? `- ${row.memo}` : "- 부가세 별도 금액임");
+  estimatePeriodSetStateCell(state, 26, 1, "- 부가세 별도 금액임");
   state.__periodDemoRow = JSON.parse(JSON.stringify(row));
   return state;
 }
@@ -2791,7 +2805,7 @@ function renderEstimatePeriodManage() {
   estimatePeriodLoadFilters();
   estimatePeriodLoadSentRows();
   estimatePeriodLoadEdits();
-  const allRows = estimatePeriodAllRowsForList().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.sentAt || "").localeCompare(String(a.sentAt || "")));
+  const allRows = estimatePeriodSortRowsDesc(estimatePeriodAllRowsForList());
   const filtered = estimatePeriodFilterRows(allRows);
   const summary = estimatePeriodSummary(filtered);
   renderEstimatePeriodSummaryCards(summary);
@@ -2828,7 +2842,7 @@ function renderEstimatePeriodManage() {
   host.querySelectorAll(".status-select").forEach(sel => {
     sel.addEventListener("change", () => {
       estimatePeriodPersistRenderedRows(false);
-      const refreshedRows = estimatePeriodAllRowsForList().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.sentAt || "").localeCompare(String(a.sentAt || "")));
+      const refreshedRows = estimatePeriodSortRowsDesc(estimatePeriodAllRowsForList());
       renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodFilterRows(refreshedRows)));
     });
     sel.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, sel));
@@ -3235,7 +3249,7 @@ function createEstimateSheetFromRequest(id) {
   const state = estimateSheetCreateState(type);
   estimateRequestSetCell(state, 5, 2, row.company || row.client || "");
   estimateRequestSetCell(state, 6, 2, row.project || "");
-  if (row.memo) estimateRequestSetCell(state, 7, 2, row.memo.split(/\n/)[0].slice(0, 80));
+  // 견적 의뢰 메모는 내부 참고용이므로 견적서 용역내용에는 자동 반영하지 않습니다.
   const record = {
     id: row.estimateId || estimateSheetMakeId("estimate"),
     requestId: row.id,
