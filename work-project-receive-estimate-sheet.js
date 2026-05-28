@@ -1672,12 +1672,12 @@ function registerEstimatePeriodSentRecord(record, recordIndex = null) {
       10: "",
       11: record.type || "",
       12: record.type || "",
-      13: service,
+      13: "",
       14: "견적서 발송",
       15: "대기중",
       16: "견적서 종류별 관리 발송 처리",
-      17: sentAt,
-      18: "발송"
+      17: "",
+      18: ""
     }
   };
   estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
@@ -2288,12 +2288,12 @@ function registerEstimatePeriodSentRecord(record, recordIndex = null) {
       10: "",
       11: record.type || "",
       12: record.type || "",
-      13: service,
+      13: "",
       14: "견적서 발송",
       15: "대기중",
       16: "견적서 종류별 관리 발송 처리",
-      17: sentAt,
-      18: "발송"
+      17: "",
+      18: ""
     }
   };
   estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
@@ -2426,6 +2426,48 @@ function estimatePeriodDisplayNumber(value) {
   return n.toLocaleString("ko-KR");
 }
 
+const ESTIMATE_PERIOD_DIRECT_INPUT_KEYS = ["scope", "description", "result", "stage"];
+
+function estimatePeriodIsDirectInputSource(source) {
+  return ["sent", "db", "manual", "request", "project-receive"].includes(String(source || ""));
+}
+
+function estimatePeriodDirectValue(values = {}, key, colNo, source = "") {
+  if (estimatePeriodIsDirectInputSource(source) && !values.manualPeriodFields) return "";
+  return values[colNo] || values[key] || "";
+}
+
+function estimatePeriodExtractSheetAreaPy(state) {
+  if (!state) return "";
+  const candidates = [
+    [14, 10], // 우측 보조표: 평 값
+    [14, 9],
+    [13, 3], // 산출 품목 첫 번째 수량
+    [14, 3],
+    [15, 3],
+    [16, 3]
+  ];
+  for (const [r, c] of candidates) {
+    const value = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || "");
+    if (value && estimatePeriodToNumber(value)) return value;
+  }
+  return "";
+}
+
+function estimatePeriodExtractSheetTotalAmount(state) {
+  if (!state) return "";
+  const candidates = [
+    [20, 6], // 총계 금액
+    [10, 2], // 합계금액 문구
+    [20, 7]
+  ];
+  for (const [r, c] of candidates) {
+    const value = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || "");
+    if (value && estimatePeriodToNumber(value)) return value;
+  }
+  return "";
+}
+
 function estimatePeriodRowFromValues(values = {}, key = "", source = "template", extra = {}) {
   const date = estimatePeriodFormatDateCode(values[2]);
   const companySource = values[3] || values.recipient || extra.recipient || "";
@@ -2447,17 +2489,18 @@ function estimatePeriodRowFromValues(values = {}, key = "", source = "template",
     area,
     unitPrice,
     amount,
-    scope: values[8] || values.scope || "",
+    scope: estimatePeriodDirectValue(values, "scope", 8, source),
     usage: values[9] || values.usage || "",
     count: values[10] || values.count || "",
     unitWork: values[11] || values.unitWork || "",
     bid: values[12] || values.bid || "",
-    description: values[13] || values.description || "",
+    description: estimatePeriodDirectValue(values, "description", 13, source),
     tender: values[14] || values.tender || "",
     status: values[15] || values.status || "대기중",
     memo: values[16] || values.memo || "",
-    result: values[17] || values.result || "",
-    stage: values[18] || values.stage || "",
+    result: estimatePeriodDirectValue(values, "result", 17, source),
+    stage: estimatePeriodDirectValue(values, "stage", 18, source),
+    manualPeriodFields: !!values.manualPeriodFields,
     sentAt: extra.sentAt || values.sentAt || "",
     linked: !!extra.linked,
     detailSnapshot: extra.detailSnapshot || null,
@@ -2495,7 +2538,8 @@ function estimatePeriodSentListRows() {
       recipient: item.values?.[3] || item.recordSnapshot?.recipient || ""
     });
     row.status = item.values?.[15] || row.status || "대기중";
-    row.stage = item.values?.[18] || row.stage || "발송";
+    row.manualPeriodFields = !!item.manualPeriodFields || !!item.values?.manualPeriodFields;
+    if (row.manualPeriodFields) row.stage = item.values?.[18] || row.stage || "";
     return row;
   });
 }
@@ -2652,6 +2696,8 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
         item.values[16] = row.memo;
         item.values[17] = row.result;
         item.values[18] = row.stage;
+        item.values.manualPeriodFields = true;
+        item.manualPeriodFields = true;
         sentChanged = true;
       }
     } else {
@@ -2860,7 +2906,8 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
   const project = estimateSheetDisplayValue(state, 6, 2) || record.title || "";
   const service = estimateSheetDisplayValue(state, 7, 2) || "";
   const totalText = estimateSheetDisplayValue(state, 10, 2) || "";
-  const totalAmount = estimateSheetDisplayValue(state, 20, 6) || estimatePeriodToNumber(totalText) || "";
+  const areaPy = estimatePeriodExtractSheetAreaPy(state);
+  const totalAmount = estimatePeriodExtractSheetTotalAmount(state) || estimatePeriodToNumber(totalText) || "";
   const sentAt = record.sentAt || estimateSheetNow();
   const recordId = record.id || estimateSheetMakeId("estimate");
   record.id = recordId;
@@ -2878,20 +2925,20 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
       2: estimatePeriodTodayCode(),
       3: recipient,
       4: project,
-      5: "",
+      5: areaPy,
       6: "",
       7: totalAmount,
-      8: service,
+      8: "",
       9: "",
       10: "",
       11: record.type || "",
       12: record.type || "",
-      13: service,
+      13: "",
       14: "견적서 발송",
       15: "대기중",
       16: "견적서 종류별 관리 발송 처리",
-      17: sentAt,
-      18: "발송"
+      17: "",
+      18: ""
     }
   };
   estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
@@ -3588,17 +3635,17 @@ function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
     area: get("연면적(평)"),
     unitPrice: "",
     amount: get("계약금액"),
-    scope: get("작업공종"),
+    scope: "",
     usage: get("건물용도"),
     count: get("업무단계2"),
     unitWork: get("단가작업여부"),
     bid: get("작업구분"),
-    description: get("상담 / 이메일 / 특기사항") || get("작업공종"),
+    description: "",
     tender: get("작업구분"),
     status: estimateCentralNormalizeStatusForPeriod(get("수주일자") ? "수주" : "대기중"),
     memo: get("수주시 요청사항"),
-    result: "DB관리 연동",
-    stage: tab === "pj" ? "DB" : tab,
+    result: "",
+    stage: "",
     dbPjNo: get("PJ NO") || ""
   };
   row.centralKey = estimateCentralMakeKey(row);
@@ -3707,7 +3754,7 @@ function estimateCentralSyncFromDbRow(tab, rowIndex, options = {}) {
     estimateCentralEnsureDbRows(row, { overwrite: false });
     estimatePeriodLoadEdits?.();
     const idx = estimatePeriodEditRows.findIndex(item => item.id === row.id || item.centralKey === row.centralKey || (estimateCentralText(item.project) === estimateCentralText(row.project) && estimateCentralText(item.company) === estimateCentralText(row.company)));
-    const periodRow = { ...row, source: "db", linked: true, result: "DB관리 수정 연동" };
+    const periodRow = { ...row, source: "db", linked: true, scope: "", description: "", result: "", stage: "" };
     if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
     else estimatePeriodEditRows.unshift(periodRow);
     estimatePeriodSaveEdits?.();
@@ -4369,7 +4416,7 @@ function estimateLinkageSyncAllDbRows(options = {}) {
       if (typeof estimatePeriodEditRows !== "undefined") {
         estimatePeriodLoadEdits?.();
         const idx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText(item.project) === estimateLinkageText(row.project) && estimateLinkageText(item.company) === estimateLinkageText(row.company)));
-        const periodRow = { ...row, source: "db", linked: true, result: "DB관리 수정 연동" };
+        const periodRow = { ...row, source: "db", linked: true, scope: "", description: "", result: "", stage: "" };
         if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
         else estimatePeriodEditRows.unshift(periodRow);
       }
@@ -4715,7 +4762,7 @@ function estimatePerformanceSyncDbRow(tab = estimateDbActiveTab, rowIndex = 0, o
     if (typeof estimatePeriodEditRows !== "undefined") {
       estimatePeriodLoadEdits?.();
       const idx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText?.(item.project) === estimateLinkageText?.(row.project) && estimateLinkageText?.(item.company) === estimateLinkageText?.(row.company)));
-      const periodRow = { ...row, source: "db", linked: true, result: "DB관리 수정 연동" };
+      const periodRow = { ...row, source: "db", linked: true, scope: "", description: "", result: "", stage: "" };
       if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
       else estimatePeriodEditRows.unshift(periodRow);
       estimatePeriodSaveEdits?.();
