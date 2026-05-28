@@ -466,3 +466,70 @@ pmRefreshLinkedEstimateProjects = function pmRefreshProjectListMirror() {
   pmProjectData.splice(0, pmProjectData.length, ...items.map(pmBuildProjectFromReceiveItem));
 };
 window.pmRefreshLinkedEstimateProjects = pmRefreshLinkedEstimateProjects;
+
+/* =========================================================
+   2026-05-28 프로젝트 관리 상세 이력 보존 패치
+   - 프로젝트 관리 목록은 프로젝트 리스트를 1:1 미러링
+   - 회의록/전화내용/관련메일/납품/완료변경 등 상세 이력은 별도 store로 보존
+   - receiveId 기준으로 PJ NO 변경 전/후에도 상세 이력 유지
+   ========================================================= */
+(function installProjectManagementStableMirrorPatch(){
+  function txt(v){ return String(v ?? '').replace(/\s+/g, ' ').trim(); }
+  function keyFromData(data = {}){
+    if (typeof projectReceiveLinkKey === 'function') return projectReceiveLinkKey(data);
+    const receiveId = txt(data.receiveId || data.internalReceiveId || data.linkedReceiveId);
+    if (receiveId) return `RCV:${receiveId}`;
+    const no = txt(data.projectNo || data.pjNo);
+    if (no) return `NO:${no}`;
+    return `LEGACY:${txt(data.projectName || data.name)}::${txt(data.client)}`;
+  }
+  window.pmProjectDetailStore = window.pmProjectDetailStore || {};
+  function extractDetail(p = {}){
+    return {
+      delayReasonRequired: !!p.delayReasonRequired,
+      delayReasonApproved: !!p.delayReasonApproved,
+      delayReasonText: p.delayReasonText || '',
+      orderHistory: Array.isArray(p.orderHistory) ? p.orderHistory : [],
+      completionChanged: !!p.completionChanged,
+      completionHistory: Array.isArray(p.completionHistory) ? p.completionHistory : [],
+      meetings: Array.isArray(p.meetings) ? p.meetings : [],
+      phoneCalls: Array.isArray(p.phoneCalls) ? p.phoneCalls : [],
+      emails: Array.isArray(p.emails) ? p.emails : [],
+      deliveries: Array.isArray(p.deliveries) ? p.deliveries : []
+    };
+  }
+  function saveExistingDetails(){
+    (pmProjectData || []).forEach(p => {
+      const key = p.__linkKey || keyFromData(p);
+      if (!key) return;
+      window.pmProjectDetailStore[key] = { ...(window.pmProjectDetailStore[key] || {}), ...extractDetail(p) };
+    });
+  }
+  const baseBuilder = typeof pmBuildProjectFromReceiveItem === 'function' ? pmBuildProjectFromReceiveItem : null;
+  pmBuildProjectFromReceiveItem = function pmBuildProjectFromReceiveItemStable(item = {}){
+    const data = item.data || item;
+    const key = keyFromData(data);
+    const built = baseBuilder ? baseBuilder(item) : {
+      id: data.projectNo || data.receiveId || key,
+      name: data.projectName || '프로젝트명 미입력',
+      client: data.client || '-',
+      dept: data.usage || '프로젝트 리스트 연계',
+      pm: [data.pmFinish, data.pmStructure, data.pmBim, data.pmCivil].filter(Boolean).join(' / ') || '미배정',
+      status: data.status || '진행중',
+      orderDate: data.bidDate || '-',
+      startDate: data.startDate || '-',
+      dueDate: data.finalDelivery || data.firstDelivery || '-'
+    };
+    built.__linkKey = key;
+    built.receiveId = data.receiveId || data.internalReceiveId || built.receiveId;
+    const detail = window.pmProjectDetailStore[key] || extractDetail(built);
+    return { ...built, ...detail, id: built.id || data.projectNo || data.receiveId || key };
+  };
+  window.pmBuildProjectFromReceiveItem = pmBuildProjectFromReceiveItem;
+  pmRefreshLinkedEstimateProjects = function pmRefreshProjectListMirrorStable(){
+    saveExistingDetails();
+    const items = typeof projectReceiveGetCanonicalListItems === 'function' ? projectReceiveGetCanonicalListItems() : (typeof getProjectReceiveListItems === 'function' ? getProjectReceiveListItems() : []);
+    pmProjectData.splice(0, pmProjectData.length, ...items.map(pmBuildProjectFromReceiveItem));
+  };
+  window.pmRefreshLinkedEstimateProjects = pmRefreshLinkedEstimateProjects;
+})();
