@@ -19875,3 +19875,42 @@ button.btn-orange{
 .estimate-db-contact-grid input[data-contact-field="email"],
 .estimate-db-contact-grid input[data-contact-field="email2"],
 .estimate-db-contact-grid input[data-contact-field="webhard"]{min-width:150px;}
+
+
+/* === DB관리 PJ관리 열 폭/스크롤 겹침 보정 ===
+   - 국내/해외 축소, 거래처명 2줄 표시, 프로젝트명 대폭 확장
+   - 세로 스크롤 시 본문 주황 구분선/Enter 띠지가 고정 헤더 위로 겹쳐 보이지 않도록 z-index 정리
+*/
+#estimateDbManage .quote-db-grid-wrap{
+  position:relative !important;
+}
+#estimateDbManage .quote-db-table thead th,
+#estimateDbManage .quote-db-table .quote-db-head-row th,
+#estimateDbManage .quote-db-table .quote-db-head-row-merged th{
+  position:sticky !important;
+  top:0 !important;
+  z-index:60 !important;
+  background:#f1f5f9 !important;
+  background-clip:padding-box !important;
+}
+#estimateDbManage .quote-db-table tbody td{
+  z-index:0 !important;
+}
+#estimateDbManage .quote-db-table tbody td.quote-db-group-boundary,
+#estimateDbManage .quote-db-table tbody td.quote-db-command-td{
+  z-index:0 !important;
+}
+#estimateDbManage .quote-db-table thead th.quote-db-group-boundary{
+  z-index:70 !important;
+}
+#estimateDbManage .quote-db-table .quote-db-data-row .quote-db-wrap-text-td,
+#estimateDbManage .quote-db-table .quote-db-data-row .quote-db-wrap-text-cell{
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  word-break:keep-all !important;
+  line-height:1.18 !important;
+}
+#estimateDbManage .quote-db-table .quote-db-data-row .quote-db-wrap-text-cell{
+  max-height:calc(var(--estimate-db-row-height,44px) * 1.8) !important;
+  overflow:hidden !important;
+}
