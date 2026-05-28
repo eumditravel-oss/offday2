@@ -867,13 +867,16 @@ function migrateEstimateDbPjColumns() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const desired = [
-    "최초생성날짜","접수번호","PJ NO","국내/해외","거래처명","프로젝트명","부서명","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
+    "최초생성날짜","접수번호","PJ NO","국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
   ];
   const current = sheet.headerRows[0];
   if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
   const oldIndex = new Map(current.map((h, i) => [h, i]));
+  const aliases = { "거래처": ["거래처", "부서명"] };
   const remap = row => desired.map(h => {
-    const i = oldIndex.get(h);
+    const names = aliases[h] || [h];
+    const key = names.find(name => oldIndex.has(name));
+    const i = key == null ? null : oldIndex.get(key);
     return i == null ? "" : (row?.[i] || "");
   });
   sheet.headerRows[0] = desired;
@@ -1014,6 +1017,7 @@ function swapEstimateDbColumns(a, b) {
 
 function renderEstimateDbManage() {
   initializeEstimateDbVisibleSeedRows();
+  migrateEstimateDbPjColumns();
   const head = document.getElementById("estimateDbHead");
   const body = document.getElementById("estimateDbBody");
   if (!head || !body) return;
@@ -1376,26 +1380,30 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
 
 let estimateDbContactDetailsCollapsed = false;
 
+const ESTIMATE_DB_CONTACT_VISIBLE_HEADER = "거래처";
+const ESTIMATE_DB_CONTACT_HIDDEN_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타"];
+
 function isEstimateDbContactDetailColumn(tab = estimateDbActiveTab, colIndex = 0) {
   if (tab !== "pj") return false;
   const name = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
-  return ["직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2"].includes(name);
+  return ESTIMATE_DB_CONTACT_HIDDEN_HEADERS.includes(name);
 }
 
 function getEstimateDbContactDetailClass(tab = estimateDbActiveTab, colIndex = 0) {
-  return estimateDbContactDetailsCollapsed && isEstimateDbContactDetailColumn(tab, colIndex) ? " quote-db-contact-detail-collapsed" : "";
+  return isEstimateDbContactDetailColumn(tab, colIndex) ? " quote-db-pj-contact-hidden" : "";
 }
 
 function toggleEstimateDbContactDetailColumns() {
-  estimateDbContactDetailsCollapsed = !estimateDbContactDetailsCollapsed;
+  // 거래처 세부정보는 화면에서는 숨기고, 거래처 셀 Enter 팝업과 엑셀 내보내기에서만 사용합니다.
+  estimateDbContactDetailsCollapsed = true;
   renderEstimateDbManage();
 }
 
-const ESTIMATE_DB_CONTACT_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2"];
-const ESTIMATE_DB_CONTACT_FIELDS = ["name", "role", "tel", "mobile", "direct", "email", "email2", "note"];
+const ESTIMATE_DB_CONTACT_HEADERS = ["거래처", "거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타"];
+const ESTIMATE_DB_CONTACT_FIELDS = ["dept", "name", "role", "tel", "mobile", "direct", "email", "email2", "webhard", "id", "pw", "etc", "note"];
 
 function isEstimateDbContactColumn(tab = estimateDbActiveTab, colIndex = 0) {
-  return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "거래처담당자";
+  return tab === "pj" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === ESTIMATE_DB_CONTACT_VISIBLE_HEADER;
 }
 
 function getEstimateDbContactColumnIndexes() {
@@ -1408,6 +1416,7 @@ function getEstimateDbRowContacts(row) {
   if (Array.isArray(row.__contacts) && row.__contacts.length) return row.__contacts;
   const idx = getEstimateDbContactColumnIndexes();
   const first = {
+    dept: idx["거래처"] >= 0 ? row[idx["거래처"]] || "" : "",
     name: idx["거래처담당자"] >= 0 ? row[idx["거래처담당자"]] || "" : "",
     role: idx["직급"] >= 0 ? row[idx["직급"]] || "" : "",
     tel: idx["일반전화"] >= 0 ? row[idx["일반전화"]] || "" : "",
@@ -1415,6 +1424,10 @@ function getEstimateDbRowContacts(row) {
     direct: idx["직통전화"] >= 0 ? row[idx["직통전화"]] || "" : "",
     email: idx["EMAIL"] >= 0 ? row[idx["EMAIL"]] || "" : "",
     email2: idx["EMAIL2"] >= 0 ? row[idx["EMAIL2"]] || "" : "",
+    webhard: idx["웹하드"] >= 0 ? row[idx["웹하드"]] || "" : "",
+    id: idx["ID"] >= 0 ? row[idx["ID"]] || "" : "",
+    pw: idx["PW"] >= 0 ? row[idx["PW"]] || "" : "",
+    etc: idx["기타"] >= 0 ? row[idx["기타"]] || "" : "",
     note: ""
   };
   return Object.values(first).some(value => normalizeEstimateDbText(value)) ? [first] : [];
@@ -1424,6 +1437,7 @@ function setEstimateDbRowContacts(row, contacts) {
   if (!row) return;
   const clean = (contacts || [])
     .map(contact => ({
+      dept: normalizeEstimateDbText(contact.dept),
       name: normalizeEstimateDbText(contact.name),
       role: normalizeEstimateDbText(contact.role),
       tel: normalizeEstimateDbText(contact.tel),
@@ -1431,6 +1445,10 @@ function setEstimateDbRowContacts(row, contacts) {
       direct: normalizeEstimateDbText(contact.direct),
       email: normalizeEstimateDbText(contact.email),
       email2: normalizeEstimateDbText(contact.email2),
+      webhard: normalizeEstimateDbText(contact.webhard),
+      id: normalizeEstimateDbText(contact.id),
+      pw: normalizeEstimateDbText(contact.pw),
+      etc: normalizeEstimateDbText(contact.etc),
       note: normalizeEstimateDbText(contact.note)
     }))
     .filter(contact => Object.values(contact).some(Boolean))
@@ -1440,13 +1458,18 @@ function setEstimateDbRowContacts(row, contacts) {
   const first = clean[0] || {};
   const idx = getEstimateDbContactColumnIndexes();
   const valueMap = {
+    "거래처": first.dept || "",
     "거래처담당자": clean.length > 1 && first.name ? `${first.name} 외 ${clean.length - 1}명` : (first.name || ""),
     "직급": first.role || "",
     "일반전화": first.tel || "",
     "휴대폰": first.mobile || "",
     "직통전화": first.direct || "",
     "EMAIL": first.email || "",
-    "EMAIL2": first.email2 || ""
+    "EMAIL2": first.email2 || "",
+    "웹하드": first.webhard || "",
+    "ID": first.id || "",
+    "PW": first.pw || "",
+    "기타": first.etc || ""
   };
   Object.entries(valueMap).forEach(([name, value]) => {
     if (idx[name] >= 0) row[idx[name]] = value;
@@ -1463,20 +1486,19 @@ function ensureEstimateDbContactModal() {
   modal.className = "estimate-db-dropdown-modal hidden estimate-db-contact-modal";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-contact-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title">거래처 담당자 관리</div>
-      <div class="estimate-db-contact-help">최대 10명까지 입력할 수 있습니다. 저장하면 첫 번째 담당자는 기존 열에 표시되고, 2명 이상이면 담당자명 뒤에 외 n명으로 표시됩니다.</div>
+      <div class="estimate-db-dropdown-title">거래처 / 담당자 / 웹하드 관리</div>
+      <div class="estimate-db-contact-help">거래처 셀에서 Enter를 누르면 열립니다. 화면에서는 거래처만 표시하고, 담당자·연락처·웹하드·ID·PW·기타는 이 창과 엑셀 내보내기에서 관리합니다.</div>
       <div class="estimate-db-contact-grid-wrap">
         <table class="estimate-db-contact-grid">
           <thead>
-            <tr><th>No</th><th>담당자</th><th>직급</th><th>일반전화</th><th>휴대폰</th><th>직통전화</th><th>EMAIL</th><th>EMAIL2</th><th>비고</th></tr>
+            <tr><th>No</th><th>거래처</th><th>담당자</th><th>직급</th><th>일반전화</th><th>휴대폰</th><th>직통전화</th><th>EMAIL</th><th>EMAIL2</th><th>웹하드</th><th>ID</th><th>PW</th><th>기타</th><th>비고</th></tr>
           </thead>
           <tbody id="estimateDbContactRows"></tbody>
         </table>
       </div>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="toggleEstimateDbContactDetailColumns()">상세열 접기/펼치기</button>
         <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContactModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContactModal()">담당자 저장</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContactModal()">거래처 정보 저장</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -1497,6 +1519,7 @@ function openEstimateDbContactModal(rowIndex = estimateDbSelectedCell.rowIndex |
     return `
       <tr>
         <td>${index + 1}</td>
+        <td><input data-contact-field="dept" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.dept || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="name" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.name || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="role" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.role || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="tel" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.tel || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
@@ -1504,11 +1527,15 @@ function openEstimateDbContactModal(rowIndex = estimateDbSelectedCell.rowIndex |
         <td><input data-contact-field="direct" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.direct || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="email" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="email2" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.email2 || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="webhard" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.webhard || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="id" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.id || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="pw" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.pw || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
+        <td><input data-contact-field="etc" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.etc || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
         <td><input data-contact-field="note" data-contact-index="${index}" value="${escapeEstimateDbHtml(contact.note || "")}" onkeydown="handleEstimateDbContactModalKeydown(event)" /></td>
       </tr>`;
   }).join("");
   modal.classList.remove("hidden");
-  setTimeout(() => modal.querySelector('input[data-contact-index="0"][data-contact-field="name"]')?.focus(), 0);
+  setTimeout(() => modal.querySelector('input[data-contact-index="0"][data-contact-field="dept"]')?.focus(), 0);
   return true;
 }
 
@@ -2585,6 +2612,7 @@ function downloadEstimateDbWorkbook(fileName, sheets) {
   URL.revokeObjectURL(url);
 }
 function exportEstimateDbToExcel() {
+  migrateEstimateDbPjColumns();
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const sheets = [
     { name: "DB_프로젝트", rows: getEstimateDbExportRows("pj") },
