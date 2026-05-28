@@ -5405,3 +5405,195 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
 
   window.renderEstimateDbProgressFast = renderEstimateDbProgressFast;
 })();
+
+/* =========================================================
+   2026-05-28 연계 안정화 최종 보정
+   - 작성중 프로젝트는 정식 연계 대상에서 제외
+   - 내부 receiveId를 기준으로 PJ NO 변경 전/후 이력 유지
+   - 선착수/작업시작/수주 상태일 때만 PJ NO 자동 활성화
+   - 프로젝트 접수 저장값을 PM/프로젝트관리/질의응답의 기준으로 사용
+   ========================================================= */
+(function installProjectReceiveCanonicalLinkagePatch(){
+  function txt(v){ return String(v ?? '').replace(/\s+/g, ' ').trim(); }
+  function todayText(){
+    const d = new Date();
+    return `${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일`;
+  }
+  function makeReceiveId(data){
+    const seed = [data?.projectName, data?.client, data?.createdAt, Date.now(), Math.random().toString(36).slice(2,8)].filter(Boolean).join('-');
+    return `RCV-${seed.replace(/[^0-9a-zA-Z가-힣]+/g,'-').replace(/^-+|-+$/g,'').slice(0,42)}`;
+  }
+  window.projectReceiveEnsureInternalId = function projectReceiveEnsureInternalId(data){
+    if (!data) return '';
+    if (!data.receiveId && !data.internalReceiveId) data.receiveId = makeReceiveId(data);
+    if (!data.internalReceiveId) data.internalReceiveId = data.receiveId;
+    if (!data.createdAt) data.createdAt = todayText();
+    return data.receiveId || data.internalReceiveId;
+  };
+  window.projectReceiveIsPjNoActiveStatus = function projectReceiveIsPjNoActiveStatus(data = {}){
+    const statusText = [
+      data.status, data.workStatus, data.progressStatus, data.estimateStatus, data.orderStatus,
+      data.state, data.periodStatus, data.sujuStatus, data.operationStatus, data.startStatus,
+      data.executionStatus, data.resultStatus
+    ].map(txt).join(' ');
+    return /(선착수|작업시작|수주|착수|진행중|진행)/.test(statusText);
+  };
+  window.projectReceiveNextProjectNo = function projectReceiveNextProjectNo(data = {}){
+    const y = String(data.createdAt || data.startDate || data.bidDate || new Date().getFullYear()).match(/20\d{2}/)?.[0] || String(new Date().getFullYear());
+    const nums = [];
+    if (typeof projectReceiveCompletedProjects !== 'undefined' && Array.isArray(projectReceiveCompletedProjects)) {
+      projectReceiveCompletedProjects.forEach(item => {
+        const no = txt((item.data || item).projectNo || (item.data || item).pjNo);
+        const m = no.match(new RegExp(`^${y}(\\d{3})$`));
+        if (m) nums.push(Number(m[1]));
+      });
+    }
+    if (typeof estimateDbSheets !== 'undefined' && estimateDbSheets?.pj && typeof getEstimateDbColumnIndexByHeader === 'function') {
+      const idx = getEstimateDbColumnIndexByHeader('pj', 'PJ NO');
+      if (idx >= 0) (estimateDbSheets.pj.rows || []).forEach(row => {
+        const no = txt(row[idx]);
+        const m = no.match(new RegExp(`^${y}(\\d{3})$`));
+        if (m) nums.push(Number(m[1]));
+      });
+    }
+    return `${y}${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0')}`;
+  };
+  window.projectReceiveActivateProjectNoIfNeeded = function projectReceiveActivateProjectNoIfNeeded(data = {}){
+    if (!data) return data;
+    projectReceiveEnsureInternalId(data);
+    if (projectReceiveIsPjNoActiveStatus(data)) {
+      if (!txt(data.projectNo || data.pjNo)) data.projectNo = projectReceiveNextProjectNo(data);
+      data.pjNoActivated = true;
+      data.pjNoActivatedAt = data.pjNoActivatedAt || todayText();
+    } else {
+      data.pjNoActivated = Boolean(txt(data.projectNo || data.pjNo)) && Boolean(data.pjNoActivated);
+    }
+    return data;
+  };
+  projectReceiveLinkKey = function projectReceiveStableLinkKey(data = {}){
+    const receiveId = txt(data.receiveId || data.internalReceiveId || data.linkedReceiveId);
+    if (receiveId) return `RCV:${receiveId}`;
+    const no = txt(data.projectNo || data.pjNo || data.dbPjNo);
+    if (no) return `NO:${no}`;
+    const project = txt(data.projectName || data.name);
+    const client = txt(data.client || data.company);
+    return `LEGACY:${project}::${client}`;
+  };
+  window.projectReceiveLinkKey = projectReceiveLinkKey;
+  projectReceiveFindCompletedIndexByKey = function projectReceiveFindCompletedIndexByStableKey(key){
+    if (!Array.isArray(projectReceiveCompletedProjects)) return -1;
+    return projectReceiveCompletedProjects.findIndex(item => projectReceiveLinkKey(item.data || item) === key);
+  };
+  window.projectReceiveFindCompletedIndexByKey = projectReceiveFindCompletedIndexByKey;
+  projectReceiveUpsertCompleted = function projectReceiveUpsertCompletedStable(data = {}, meta = {}){
+    if (!data || !txt(data.projectName)) return null;
+    const record = JSON.parse(JSON.stringify(data));
+    projectReceiveActivateProjectNoIfNeeded(record);
+    const key = projectReceiveLinkKey(record);
+    const now = new Date();
+    const completedAt = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const payload = { sourceFile: meta.sourceFile || '프로젝트 접수 저장', completedAt, data: record };
+    const idx = projectReceiveFindCompletedIndexByKey(key);
+    if (idx >= 0) {
+      const prev = projectReceiveCompletedProjects[idx];
+      const prevData = prev.data || prev;
+      payload.data = { ...prevData, ...record, receiveId: prevData.receiveId || record.receiveId, internalReceiveId: prevData.internalReceiveId || record.internalReceiveId };
+      projectReceiveCompletedProjects[idx] = { ...prev, ...payload };
+      return projectReceiveCompletedProjects[idx];
+    }
+    projectReceiveCompletedProjects.unshift(payload);
+    return payload;
+  };
+  window.projectReceiveUpsertCompleted = projectReceiveUpsertCompleted;
+  getProjectReceiveListItems = function getProjectReceiveListItemsCompletedOnly(){
+    const completed = (typeof projectReceiveCompletedProjects !== 'undefined' ? projectReceiveCompletedProjects : [])
+      .map((item, index) => {
+        const data = item.data || item;
+        projectReceiveEnsureInternalId(data);
+        return { source: 'completed', index, data, status: '작성완료', sourceFile: item.sourceFile || '', completedAt: item.completedAt || '' };
+      });
+    const seen = new Set();
+    return completed.filter(item => {
+      const data = item.data || {};
+      if (!txt(data.projectName)) return false;
+      const key = projectReceiveLinkKey(data);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+  window.getProjectReceiveListItems = getProjectReceiveListItems;
+  projectReceiveGetCanonicalListItems = function projectReceiveGetCanonicalListItemsCompletedOnly(){
+    return getProjectReceiveListItems();
+  };
+  window.projectReceiveGetCanonicalListItems = projectReceiveGetCanonicalListItems;
+  projectReceiveFindDbPjRowIndex = function projectReceiveFindDbPjRowIndexStable(projectNoOrId = ''){
+    const target = txt(projectNoOrId);
+    if (!target || typeof estimateDbSheets === 'undefined' || !estimateDbSheets?.pj) return -1;
+    const headers = ['PJ NO','receiveId','연계ID','DB연계ID'];
+    const idxs = headers.map(h => typeof getEstimateDbColumnIndexByHeader === 'function' ? getEstimateDbColumnIndexByHeader('pj', h) : -1).filter(i => i >= 0);
+    if (!idxs.length) return -1;
+    return (estimateDbSheets.pj.rows || []).findIndex(row => idxs.some(i => txt(row[i]) === target));
+  };
+  window.projectReceiveFindDbPjRowIndex = projectReceiveFindDbPjRowIndex;
+  projectReceiveSyncPmAssignmentToDb = function projectReceiveSyncPmAssignmentToDbStable(projectKey, assignment = {}){
+    const keyText = txt(projectKey);
+    const item = getProjectReceiveListItems().find(item => {
+      const data = item.data || item;
+      return txt(data.projectNo) === keyText || txt(data.receiveId) === keyText || projectReceiveLinkKey(data) === keyText;
+    });
+    const data = item?.data || {};
+    const rowIndex = projectReceiveFindDbPjRowIndex(data.dbLinkId || data.receiveId || data.projectNo || keyText);
+    if (rowIndex < 0) return;
+    projectReceiveSetDbPjCell(rowIndex, 'PM(마감)', assignment.pmFinish ?? '');
+    projectReceiveSetDbPjCell(rowIndex, 'PM(구조)', (assignment.pmStructure ?? '') || (assignment.pmBim ?? ''));
+    projectReceiveSetDbPjCell(rowIndex, 'PM(토목,조경)', assignment.pmCivil ?? '');
+    projectReceiveSetDbPjCell(rowIndex, '상담 / 이메일 / 특기사항', [
+      'PM배정/일정 최신 반영',
+      assignment.pmFinish ? `마감:${assignment.pmFinish}` : '',
+      assignment.pmStructure ? `구조:${assignment.pmStructure}` : '',
+      assignment.pmBim ? `BIM:${assignment.pmBim}` : '',
+      assignment.pmCivil ? `토목·조경:${assignment.pmCivil}` : ''
+    ].filter(Boolean).join(' / '));
+  };
+  window.projectReceiveSyncPmAssignmentToDb = projectReceiveSyncPmAssignmentToDb;
+  applyPmScheduleAssignmentToProjectReceiveData = function projectReceiveLatestPmAssignmentStable(projectKey, assignment = {}){
+    const keyText = txt(projectKey);
+    const assignTo = data => {
+      if (!data) return false;
+      const matched = txt(data.projectNo) === keyText || txt(data.receiveId) === keyText || projectReceiveLinkKey(data) === keyText;
+      if (!matched) return false;
+      data.pmFinish = assignment.pmFinish ?? '';
+      data.pmStructure = assignment.pmStructure ?? '';
+      data.pmBim = assignment.pmBim ?? '';
+      data.pmCivil = assignment.pmCivil ?? '';
+      data.pmTotal = [data.pmFinish, data.pmStructure, data.pmBim, data.pmCivil].filter(Boolean).join(' / ');
+      data.manualPmFields = { pmFinish: true, pmStructure: true, pmBim: true, pmCivil: true };
+      return true;
+    };
+    if (typeof projectReceiveState !== 'undefined') assignTo(projectReceiveState);
+    if (Array.isArray(projectReceiveCompletedProjects)) projectReceiveCompletedProjects.forEach(item => assignTo(item.data || item));
+    projectReceiveSyncPmAssignmentToDb(keyText, assignment);
+    if (document.getElementById('projectReceiveListBody')) renderProjectReceiveListView?.();
+    if (typeof pmRefreshLinkedEstimateProjects === 'function') pmRefreshLinkedEstimateProjects();
+    if (typeof pmRenderProjectList === 'function' && document.getElementById('pmProjectListBoard')) pmRenderProjectList();
+  };
+  window.applyPmScheduleAssignmentToProjectReceiveData = applyPmScheduleAssignmentToProjectReceiveData;
+  saveProjectReceiveDraft = function projectReceiveSaveAsCanonicalListStable(){
+    syncProjectReceiveInputsToState?.();
+    if (!validateProjectReceiveSkeletonScope?.()) {
+      renderProjectReceiveDashboard?.();
+      showToast?.('골조성을 선택한 경우 가설, 단열, 견출, 방수턱 중 최소 1개를 선택해야 접수저장이 가능합니다.');
+      return;
+    }
+    projectReceiveActivateProjectNoIfNeeded(projectReceiveState);
+    const input = document.getElementById('receiveProjectNo');
+    if (input) input.value = projectReceiveState.projectNo || '';
+    projectReceiveUpsertCompleted(projectReceiveState, { sourceFile: '프로젝트 접수 저장' });
+    renderProjectReceiveStatus?.();
+    if (typeof registerPmScheduleProjectFromReceive === 'function') registerPmScheduleProjectFromReceive(projectReceiveState);
+    if (document.getElementById('projectReceiveListBody')) renderProjectReceiveListView?.();
+    showToast?.('프로젝트 접수 내용이 프로젝트 리스트 기준 최신값으로 저장되었습니다.');
+  };
+  window.saveProjectReceiveDraft = saveProjectReceiveDraft;
+})();
