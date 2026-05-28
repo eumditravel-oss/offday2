@@ -1888,3 +1888,88 @@ registerPmScheduleProjectFromReceive = function registerPmScheduleProjectFromRec
 };
 window.registerPmScheduleProjectFromReceive = registerPmScheduleProjectFromReceive;
 window.initPmScheduleProjects = initPmScheduleProjects;
+
+/* =========================================================
+   2026-05-28 PM 배정 최신값/공란 저장 보정
+   - 프로젝트 리스트 completed 데이터만 PM배정/일정에 1:1 표시
+   - receiveId 기준으로 PJ NO 변경 전/후 연결 유지
+   - PM배정 화면에서 공란으로 삭제한 값도 최신값으로 인정
+   ========================================================= */
+(function installPmScheduleStableMirrorPatch(){
+  function txt(v){ return String(v ?? '').replace(/\s+/g, ' ').trim(); }
+  function keyFromData(data = {}){
+    if (typeof projectReceiveLinkKey === 'function') return projectReceiveLinkKey(data);
+    const receiveId = txt(data.receiveId || data.internalReceiveId || data.linkedReceiveId);
+    if (receiveId) return `RCV:${receiveId}`;
+    const no = txt(data.projectNo || data.pjNo);
+    if (no) return `NO:${no}`;
+    return `LEGACY:${txt(data.projectName)}::${txt(data.client)}`;
+  }
+  pmScheduleLinkKeyFromData = keyFromData;
+  window.pmScheduleLinkKeyFromData = pmScheduleLinkKeyFromData;
+  pmScheduleCanonicalReceiveItems = function pmScheduleCanonicalReceiveItemsCompletedOnly(){
+    if (typeof projectReceiveGetCanonicalListItems === 'function') return projectReceiveGetCanonicalListItems();
+    if (typeof getProjectReceiveListItems === 'function') return getProjectReceiveListItems().filter(item => item.source === 'completed' || item.status === '작성완료');
+    return [];
+  };
+  window.pmScheduleCanonicalReceiveItems = pmScheduleCanonicalReceiveItems;
+  initPmScheduleProjects = function initPmScheduleProjectsStableMirror(){
+    const items = pmScheduleCanonicalReceiveItems();
+    const validKeys = new Set(items.map(item => keyFromData(item.data || item)));
+    const existingMap = new Map((pmScheduleProjects || []).map(item => [keyFromData(item.project || {}), item]));
+    const next = [];
+    items.forEach(item => {
+      const data = item.data || item;
+      const key = keyFromData(data);
+      const old = existingMap.get(key);
+      const project = old || makePmScheduleProject(data, item.sourceFile || '프로젝트 리스트 연계', 'pending');
+      const touched = project.assignmentTouched || {};
+      project.project = clonePmScheduleData({ ...(project.project || {}), ...data, receiveId: data.receiveId || data.internalReceiveId || project.project?.receiveId });
+      project.id = project.id || `${data.projectNo || data.receiveId || 'PROJECT'}-${Date.now()}`;
+      project.source = item.sourceFile || project.source || '프로젝트 리스트 연계';
+      project.assignmentTouched = touched;
+      project.assignment = {
+        pmFinish: touched.pmFinish ? (project.assignment?.pmFinish ?? '') : (project.assignment?.pmFinish ?? data.pmFinish ?? ''),
+        pmStructure: touched.pmStructure ? (project.assignment?.pmStructure ?? '') : (project.assignment?.pmStructure ?? data.pmStructure ?? ''),
+        pmBim: touched.pmBim ? (project.assignment?.pmBim ?? '') : (project.assignment?.pmBim ?? data.pmBim ?? ''),
+        pmCivil: touched.pmCivil ? (project.assignment?.pmCivil ?? '') : (project.assignment?.pmCivil ?? data.pmCivil ?? '')
+      };
+      normalizeExistingPmScheduleRows(project);
+      applyPmScheduleSuwonApprovedDummy(project);
+      next.push(project);
+    });
+    pmScheduleProjects = next.filter(item => validKeys.has(keyFromData(item.project || {})));
+  };
+  window.initPmScheduleProjects = initPmScheduleProjects;
+  registerPmScheduleProjectFromReceive = function registerPmScheduleProjectFromReceiveStable(data){
+    initPmScheduleProjects();
+    const key = keyFromData(data);
+    let idx = pmScheduleProjects.findIndex(item => keyFromData(item.project || {}) === key);
+    if (idx < 0) {
+      const project = makePmScheduleProject(data, '프로젝트 접수 저장', 'pending');
+      project.project.receiveId = data.receiveId || data.internalReceiveId || project.project.receiveId;
+      project.assignmentTouched = {};
+      pmScheduleProjects.unshift(project);
+      idx = 0;
+    } else {
+      pmScheduleProjects[idx].project = clonePmScheduleData({ ...(pmScheduleProjects[idx].project || {}), ...data });
+    }
+    pmScheduleSelectedIndex = idx;
+    renderPmScheduleDashboard?.();
+  };
+  window.registerPmScheduleProjectFromReceive = registerPmScheduleProjectFromReceive;
+  updatePmScheduleAssignment = function updatePmScheduleAssignmentStable(key, value){
+    const item = getCurrentPmScheduleProject();
+    if (!item) return;
+    item.assignment = item.assignment || {};
+    item.assignmentTouched = item.assignmentTouched || {};
+    item.assignment[key] = value ?? '';
+    item.assignmentTouched[key] = true;
+    if (typeof applyPmScheduleAssignmentToProjectReceiveData === 'function') {
+      applyPmScheduleAssignmentToProjectReceiveData(item.project?.receiveId || item.project?.projectNo, item.assignment);
+    }
+    renderPmScheduleAssignmentWarnings(item);
+    renderPmScheduleRequestTargets(item);
+  };
+  window.updatePmScheduleAssignment = updatePmScheduleAssignment;
+})();
