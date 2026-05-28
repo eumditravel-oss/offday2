@@ -1827,3 +1827,64 @@ function escapePmScheduleAttr(value) {
 document.addEventListener("DOMContentLoaded", () => {
   renderPmScheduleDashboard();
 });
+
+/* =========================================================
+   2026-05-28 PM배정/일정 = 프로젝트 리스트 1:1 미러링 패치
+   - 프로젝트 리스트에 없는 프로젝트는 PM배정/일정에 표시하지 않음
+   - 프로젝트 접수/리스트 저장값을 기준으로 upsert
+   - PM배정 입력값은 프로젝트 리스트/DB관리로 역반영
+   ========================================================= */
+function pmScheduleLinkKeyFromData(data = {}) {
+  if (typeof projectReceiveLinkKey === "function") return projectReceiveLinkKey(data);
+  const no = String(data.projectNo || data.pjNo || "").trim();
+  if (no) return `NO:${no}`;
+  return `NAME:${String(data.projectName || "").trim()}::${String(data.client || "").trim()}`;
+}
+function pmScheduleCanonicalReceiveItems() {
+  if (typeof projectReceiveGetCanonicalListItems === "function") return projectReceiveGetCanonicalListItems();
+  if (typeof getProjectReceiveListItems === "function") return getProjectReceiveListItems();
+  return [];
+}
+buildPmScheduleSeedProjects = function buildPmScheduleSeedProjectsFromProjectList() {
+  return pmScheduleCanonicalReceiveItems().map(item => makePmScheduleProject(item.data || item, item.sourceFile || "프로젝트 리스트 연계", "pending"));
+};
+initPmScheduleProjects = function initPmScheduleProjectsFromProjectList() {
+  const items = pmScheduleCanonicalReceiveItems();
+  const validKeys = new Set(items.map(item => pmScheduleLinkKeyFromData(item.data || item)));
+  const existingMap = new Map((pmScheduleProjects || []).map(item => [pmScheduleLinkKeyFromData(item.project || {}), item]));
+  const next = [];
+  items.forEach(item => {
+    const data = item.data || item;
+    const key = pmScheduleLinkKeyFromData(data);
+    const old = existingMap.get(key);
+    const project = old || makePmScheduleProject(data, item.sourceFile || "프로젝트 리스트 연계", "pending");
+    project.project = clonePmScheduleData({ ...(project.project || {}), ...data });
+    project.id = project.id || `${data.projectNo || "PROJECT"}-${Date.now()}`;
+    project.source = item.sourceFile || project.source || "프로젝트 리스트 연계";
+    project.assignment = {
+      pmFinish: project.assignment?.pmFinish || data.pmFinish || "",
+      pmStructure: project.assignment?.pmStructure || data.pmStructure || "",
+      pmBim: project.assignment?.pmBim || data.pmBim || "",
+      pmCivil: project.assignment?.pmCivil || data.pmCivil || ""
+    };
+    normalizeExistingPmScheduleRows(project);
+    applyPmScheduleSuwonApprovedDummy(project);
+    next.push(project);
+  });
+  pmScheduleProjects = next.filter(item => validKeys.has(pmScheduleLinkKeyFromData(item.project || {})));
+};
+registerPmScheduleProjectFromReceive = function registerPmScheduleProjectFromReceiveUpsert(data) {
+  initPmScheduleProjects();
+  const key = pmScheduleLinkKeyFromData(data);
+  let idx = pmScheduleProjects.findIndex(item => pmScheduleLinkKeyFromData(item.project || {}) === key);
+  if (idx < 0) {
+    pmScheduleProjects.unshift(makePmScheduleProject(data, "프로젝트 접수 저장", "pending"));
+    idx = 0;
+  } else {
+    pmScheduleProjects[idx].project = clonePmScheduleData({ ...(pmScheduleProjects[idx].project || {}), ...data });
+  }
+  pmScheduleSelectedIndex = idx;
+  renderPmScheduleDashboard();
+};
+window.registerPmScheduleProjectFromReceive = registerPmScheduleProjectFromReceive;
+window.initPmScheduleProjects = initPmScheduleProjects;
