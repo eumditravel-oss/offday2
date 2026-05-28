@@ -1,6 +1,7 @@
 let estimateDbVisibleSeedRowsInitialized = false;
 let estimateDbPjReceiptColumnRemoved = false;
 let estimateDbPjProjectLinkColumnEnsured = false;
+let estimateDbPjIdentityColumnsEnsured = false;
 const ESTIMATE_DB_PROJECT_LINK_HEADER = "프로젝트 연결";
 let estimateDbSortState = { tab: "pj", colIndex: 1, direction: "desc" };
 let estimateDbColumnResizeMode = false;
@@ -191,6 +192,7 @@ function commitEstimateDbPendingEdits(options = {}) {
   Object.keys(estimateDbPendingEdits).forEach(key => delete estimateDbPendingEdits[key]);
   estimateDbHasUnsavedChanges = false;
   recalcAllEstimateDbRows();
+  ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   applyEstimateDbPjDefaultSort();
   renderEstimateDbManage();
   if (!options.silent && typeof showToast === "function") showToast(`DB관리 변경사항 ${changed}건을 저장했습니다.`);
@@ -206,6 +208,7 @@ function commitEstimateDbSinglePendingEdit(tab, rowIndex, colIndex, options = {}
   const storedValue = normalizeEstimateDbCellForStorage(tab, colIndex, pending.value);
   row[colIndex] = storedValue;
   recalcEstimateDbRow(tab, row);
+  if (tab === "pj") ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   delete estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
   estimateDbHasUnsavedChanges = Object.keys(estimateDbPendingEdits).length > 0;
   if (!options.skipRecalc) recalcAllEstimateDbRows();
@@ -223,6 +226,7 @@ function updateEstimateDbSaveButtonState() {
 
 function initializeEstimateDbVisibleSeedRows() {
   removeEstimateDbPjReceiptColumnOnce();
+  ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   if (estimateDbVisibleSeedRowsInitialized) return;
   estimateDbVisibleSeedRowsInitialized = true;
   if (estimateDbSheets?.pj?.rows) estimateDbSheets.pj.rows = estimateDbSheets.pj.rows.slice(0, 2);
