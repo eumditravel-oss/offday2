@@ -3794,7 +3794,7 @@ function estimateCentralRowToDbMap(row = {}) {
     "업체명": row.company || "",
     "프로젝트명": row.project || "",
     "PJ명": row.project || "",
-    "부서명": "견적부",
+    "거래처": "견적부",
     "작업공종": row.scope || row.description || "",
     "작업구분": row.bid || row.tender || "",
     "업무성격": type,
@@ -3804,7 +3804,6 @@ function estimateCentralRowToDbMap(row = {}) {
     "연면적(평)": row.area || "",
     "수주일자": row.status === "수주" || row.status === "실주" ? row.date : "",
     "상담 / 이메일 / 특기사항": row.description || row.memo || "",
-    "수주시 요청사항": row.memo || "",
     "계약금액": row.amount || "",
     "견적서일자": row.date || "",
     "계약업체": row.company || ""
@@ -3877,7 +3876,7 @@ function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
     description: "",
     tender: get("작업구분"),
     status: estimateCentralNormalizeStatusForPeriod(get("수주일자") ? "수주" : "대기중"),
-    memo: get("수주시 요청사항"),
+    memo: get("상담 / 이메일 / 특기사항"),
     result: "",
     stage: "",
     dbPjNo: get("PJ NO") || ""
