@@ -13722,3 +13722,96 @@ function importSelectedQcTeamTemplateRows() {
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof bootEstimateDbDefaultScreen === "function") setTimeout(bootEstimateDbDefaultScreen, 0);
 });
+
+/* =========================================================
+   2026-05-28 프로젝트 질의응답관리 프로젝트 리스트 연계/가독성 패치
+   - 프로젝트 리스트의 프로젝트 NO/프로젝트명을 질의응답 필터 기준으로 사용
+   - 프로젝트별 행 분리 기반 마련(pjNo/projectNo 필드 지원)
+   - 카테고리 버튼을 핵심 단계형 칩으로 정리
+   ========================================================= */
+let checklistLinkedProjectNo = "";
+function checklistLinkText(value) { return String(value ?? "").replace(/\s+/g, " ").trim(); }
+function checklistProjectItems() {
+  if (typeof projectReceiveGetCanonicalListItems === "function") return projectReceiveGetCanonicalListItems();
+  if (typeof getProjectReceiveListItems === "function") return getProjectReceiveListItems();
+  return [];
+}
+function checklistProjectLabel(data = {}) {
+  return [data.projectNo, data.projectName || data.name, data.client].filter(Boolean).join(" · ");
+}
+function checklistFindProjectByInput(value = "") {
+  const text = checklistLinkText(value);
+  if (!text) return null;
+  return checklistProjectItems().map(item => item.data || item).find(data => {
+    const no = checklistLinkText(data.projectNo || data.pjNo);
+    const name = checklistLinkText(data.projectName || data.name);
+    return text === no || text.includes(no) || text.includes(name) || name.includes(text);
+  }) || null;
+}
+function refreshChecklistProjectOptions() {
+  const list = document.getElementById("checklistProjectList");
+  if (!list) return;
+  const items = checklistProjectItems().map(item => item.data || item).filter(data => data.projectName || data.projectNo);
+  list.innerHTML = items.map(data => `<option value="${escapeHtml(checklistProjectLabel(data))}"></option>`).join("");
+}
+function updateChecklistLinkedProjectContext() {
+  refreshChecklistProjectOptions();
+  const input = document.getElementById("checklistProject");
+  const data = checklistFindProjectByInput(input?.value || "");
+  checklistLinkedProjectNo = checklistLinkText(data?.projectNo || "");
+  let panel = document.getElementById("checklistLinkedProjectContext");
+  const filter = document.getElementById("checklistCategoryFilter");
+  if (!panel && filter?.parentElement) {
+    panel = document.createElement("div");
+    panel.id = "checklistLinkedProjectContext";
+    panel.className = "checklist-project-context";
+    filter.parentElement.insertBefore(panel, filter);
+  }
+  if (panel) {
+    panel.innerHTML = data ? `
+      <div><strong>프로젝트 연결</strong><span>${escapeHtml(data.projectNo || "NO 미입력")}</span><b>${escapeHtml(data.projectName || "프로젝트명 미입력")}</b><em>${escapeHtml(data.client || "")}</em></div>
+      <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('전체')">전체 단계</button>
+      <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('프로젝트 초기')">초기</button>
+      <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('PM 전달사항')">PM</button>
+      <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('질의사항(N차)')">질의</button>
+      <button type="button" class="btn btn-line btn-sm" onclick="setChecklistCategoryFilter('최종자료 검토사항')">최종</button>
+    ` : `<div><strong>프로젝트 연결</strong><span>프로젝트 리스트에서 프로젝트를 선택하면 PJ NO 기준으로 질의응답을 분리합니다.</span></div>`;
+  }
+}
+const baseChecklistRenderSignature = typeof getChecklistRenderSignature === "function" ? getChecklistRenderSignature : null;
+getChecklistRenderSignature = function checklistRenderSignatureWithProjectNo() {
+  updateChecklistLinkedProjectContext();
+  const base = baseChecklistRenderSignature ? baseChecklistRenderSignature() : "";
+  return `${base}||${checklistLinkedProjectNo}`;
+};
+const baseGetChecklistFilteredRows = typeof getChecklistFilteredRows === "function" ? getChecklistFilteredRows : null;
+getChecklistFilteredRows = function checklistFilteredRowsByProjectNo() {
+  updateChecklistLinkedProjectContext();
+  const rows = baseGetChecklistFilteredRows ? baseGetChecklistFilteredRows() : checklistRows.map((row, realIndex) => ({ row, realIndex }));
+  if (!checklistLinkedProjectNo) return rows;
+  return rows.filter(({ row }) => {
+    const rowNo = checklistLinkText(row.pjNo || row.projectNo || row.linkedProjectNo);
+    return !rowNo || rowNo === checklistLinkedProjectNo;
+  });
+};
+const baseNormalizeChecklistRowForProject = typeof normalizeChecklistRow === "function" ? normalizeChecklistRow : null;
+normalizeChecklistRow = function normalizeChecklistRowWithProject(row = {}) {
+  if (baseNormalizeChecklistRowForProject) baseNormalizeChecklistRowForProject(row);
+  if (!row.projectNo && row.pjNo) row.projectNo = row.pjNo;
+  return row;
+};
+const baseUpdateChecklistCellForProject = typeof updateChecklistCell === "function" ? updateChecklistCell : null;
+updateChecklistCell = function updateChecklistCellWithProject(realIndex, field, value) {
+  const row = checklistRows[realIndex];
+  if (row && checklistLinkedProjectNo && !row.projectNo && normalizeChecklistGroupName(row.group) !== "QC팀 전달사항") {
+    row.projectNo = checklistLinkedProjectNo;
+    row.linkedProjectNo = checklistLinkedProjectNo;
+  }
+  return baseUpdateChecklistCellForProject ? baseUpdateChecklistCellForProject(realIndex, field, value) : undefined;
+};
+setTimeout(() => {
+  refreshChecklistProjectOptions();
+  const input = document.getElementById("checklistProject");
+  if (input) input.addEventListener("change", () => { updateChecklistLinkedProjectContext(); scheduleChecklistGridRender(0); });
+  updateChecklistLinkedProjectContext();
+}, 0);
