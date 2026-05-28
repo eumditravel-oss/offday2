@@ -19914,3 +19914,53 @@ button.btn-orange{
   max-height:calc(var(--estimate-db-row-height,44px) * 1.8) !important;
   overflow:hidden !important;
 }
+
+
+/* === DB관리 PJ관리 고정 열 폭 강제 보정 ===
+   프로젝트명 열이 브라우저 저장 열폭, 열 위치 변경, 기존 CSS보다 항상 우선 적용되도록
+   컬럼 class + !important 기준으로 강제합니다. */
+#estimateDbManage .quote-db-table th.quote-db-col-domestic,
+#estimateDbManage .quote-db-table td.quote-db-col-domestic{
+  min-width:58px !important;
+  width:58px !important;
+  max-width:58px !important;
+}
+
+#estimateDbManage .quote-db-table th.quote-db-col-client-name,
+#estimateDbManage .quote-db-table td.quote-db-col-client-name{
+  min-width:230px !important;
+  width:230px !important;
+  max-width:230px !important;
+}
+
+#estimateDbManage .quote-db-table th.quote-db-col-project-name,
+#estimateDbManage .quote-db-table td.quote-db-col-project-name{
+  min-width:1040px !important;
+  width:1040px !important;
+  max-width:1040px !important;
+}
+
+#estimateDbManage .quote-db-table td.quote-db-col-project-name .quote-db-command-wrap,
+#estimateDbManage .quote-db-table td.quote-db-col-project-name .quote-db-wrap-text-cell,
+#estimateDbManage .quote-db-table td.quote-db-col-project-name .quote-db-cell-input{
+  min-width:100% !important;
+  width:100% !important;
+  max-width:100% !important;
+}
+
+#estimateDbManage .quote-db-table td.quote-db-col-client-name .quote-db-command-wrap,
+#estimateDbManage .quote-db-table td.quote-db-col-client-name .quote-db-wrap-text-cell,
+#estimateDbManage .quote-db-table td.quote-db-col-client-name .quote-db-cell-input{
+  min-width:100% !important;
+  width:100% !important;
+  max-width:100% !important;
+}
+
+#estimateDbManage .quote-db-table td.quote-db-col-client-name .quote-db-wrap-text-cell{
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  word-break:keep-all !important;
+  line-height:1.18 !important;
+  max-height:calc(var(--estimate-db-row-height,44px) * 1.8) !important;
+  overflow:hidden !important;
+}
