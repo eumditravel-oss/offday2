@@ -9521,6 +9521,10 @@ function switchWorkPanel(panelId) {
     renderProjectReceiveListView();
   }
 
+  if (targetPanelId === "projectManage" && typeof initProjectManage === "function") {
+    initProjectManage();
+  }
+
   if (targetPanelId === "pmSchedule" && typeof renderPmScheduleDashboard === "function") {
     renderPmScheduleDashboard();
     if (typeof setPmScheduleSection === "function") setPmScheduleSection(typeof pmScheduleActiveSection !== "undefined" ? pmScheduleActiveSection : "assign");
