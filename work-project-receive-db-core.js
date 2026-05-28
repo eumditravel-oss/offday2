@@ -298,16 +298,34 @@ function ensureEstimateDbPjProjectLinkColumnOnce() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet) return;
   const header = sheet.headerRows?.[0] || [];
-  if (header.some(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER)) {
-    clearEstimateDbPjProjectLinkValues();
+  const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
+  const targetIndex = pjNoIndex >= 0 ? pjNoIndex + 1 : Math.min(2, header.length);
+  const currentIndex = header.findIndex(col => normalizeEstimateDbText(col) === ESTIMATE_DB_PROJECT_LINK_HEADER);
+
+  if (currentIndex >= 0) {
+    if (currentIndex !== targetIndex) {
+      (sheet.headerRows || []).forEach(row => {
+        const [cell] = row.splice(currentIndex, 1);
+        row.splice(targetIndex, 0, cell || ESTIMATE_DB_PROJECT_LINK_HEADER);
+      });
+      if (Array.isArray(sheet.requestRow)) {
+        const [cell] = sheet.requestRow.splice(currentIndex, 1);
+        sheet.requestRow.splice(targetIndex, 0, cell || "기존 프로젝트와 연결할 경우 Enter로 기존 PJ 리스트를 열어 선택");
+      }
+      (sheet.rows || []).forEach(row => {
+        const [cell] = row.splice(currentIndex, 1);
+        row.splice(targetIndex, 0, cell || "");
+      });
+    }
+    header[targetIndex] = ESTIMATE_DB_PROJECT_LINK_HEADER;
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow[targetIndex] = "기존 프로젝트와 연결할 경우 Enter로 기존 PJ 리스트를 열어 선택(수주금액은 현재 행 기준 별도 관리)";
     estimateDbPjProjectLinkColumnEnsured = true;
     return;
   }
-  const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
-  const insertIndex = pjNoIndex >= 0 ? pjNoIndex + 1 : Math.min(2, header.length);
-  (sheet.headerRows || []).forEach(row => row.splice(insertIndex, 0, ESTIMATE_DB_PROJECT_LINK_HEADER));
-  if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(insertIndex, 0, "기존 DB 프로젝트와 연결할 경우 Enter로 프로젝트 리스트를 열어 선택");
-  (sheet.rows || []).forEach(row => row.splice(insertIndex, 0, ""));
+
+  (sheet.headerRows || []).forEach(row => row.splice(targetIndex, 0, ESTIMATE_DB_PROJECT_LINK_HEADER));
+  if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(targetIndex, 0, "기존 프로젝트와 연결할 경우 Enter로 기존 PJ 리스트를 열어 선택(수주금액은 현재 행 기준 별도 관리)");
+  (sheet.rows || []).forEach(row => row.splice(targetIndex, 0, ""));
   estimateDbPjProjectLinkColumnEnsured = true;
 }
 
