@@ -463,7 +463,10 @@ function startProjectFromEstimateQuote(index) {
    - 동일/중복되는 항목만 자동 입력하고, 나머지는 기존 입력값 유지
 ========================================================= */
 function getEstimateDbPjCell(row, headerName) {
-  const idx = getEstimateDbColumnIndexByHeader("pj", headerName);
+  const aliases = { "부서명": "거래처", "수주시 요청사항": "상담 / 이메일 / 특기사항" };
+  const primary = getEstimateDbColumnIndexByHeader("pj", headerName);
+  const alias = aliases[headerName] ? getEstimateDbColumnIndexByHeader("pj", aliases[headerName]) : -1;
+  const idx = primary >= 0 ? primary : alias;
   if (idx < 0) return "";
   return String(row?.[idx] || "").trim();
 }
@@ -489,12 +492,9 @@ function setEstimateQuoteScopeByDbWorkType(workType) {
 }
 
 function mergeEstimateQuoteDbMemo(row) {
-  const parts = [];
-  const request = getEstimateDbPjCell(row, "수주시 요청사항");
-
-  if (request) parts.push(`수주시 요청사항: ${request}`);
-
-  return parts.join("\n");
+  // 수주시 요청사항 컬럼은 상담 / 이메일 / 특기사항으로 통합했습니다.
+  // 견적서 조건/용역내용과는 별도로 프로젝트 메모 성격으로만 사용합니다.
+  return "";
 }
 
 
