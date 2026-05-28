@@ -2930,6 +2930,8 @@ function estimatePeriodCreateDemoStateFromRow(row = {}) {
   const area = estimatePeriodToNumber(row.area) || 0;
   const unitPrice = estimatePeriodToNumber(row.unitPrice) || 0;
   const amount = estimatePeriodToNumber(row.amount) || (area && unitPrice ? area * unitPrice : 0);
+  // 견적 의뢰 메모(row.memo/rawMemo)는 내부 참고용입니다.
+  // 견적서의 용역내용/견적조건에는 연동하지 않고, 사용자가 직접 작성한 scope/description 또는 견적서 종류만 사용합니다.
   const serviceText = row.description || row.scope || row.unitWork || type;
   const paymentText = "작업착수 직전 계약금 50% 현금지급 및 납품후 30일이내 잔여 50% 현금지급조건";
   const totalKo = amount ? `일금${estimateSheetNumberToKorean(amount)}원정 (₩${amount.toLocaleString("ko-KR")})` : "일금영원정 (₩0)";
@@ -4053,8 +4055,9 @@ if (estimateCentralOriginalCreateEstimateSheetFromRequest) {
         date: req.date,
         company: req.company || req.client,
         project: req.project,
-        scope: req.memo,
-        description: req.memo,
+        scope: "",
+        description: "",
+        memo: req.memo || req.rawMemo || "",
         status: req.status,
         unitWork: req.estimateType,
         dbPjNo: req.dbPjNo || ""
@@ -4107,8 +4110,9 @@ if (estimateCentralOriginalSyncEstimateRequestToDb) {
         date: req.date,
         company: req.company || req.client,
         project: req.project,
-        scope: req.memo,
-        description: req.memo,
+        scope: "",
+        description: "",
+        memo: req.memo || req.rawMemo || "",
         status: req.status,
         unitWork: req.estimateType,
         dbPjNo: req.dbPjNo || ""
@@ -4345,9 +4349,9 @@ function estimateLinkageCanonicalRow(row = {}) {
     estimateType: type,
     unitWork: row.unitWork || type,
     status: row.status || "대기중",
-    memo: row.memo || row.description || row.scope || "",
-    description: row.description || row.memo || row.scope || "",
-    scope: row.scope || row.description || row.memo || ""
+    memo: row.memo || "",
+    description: row.description || row.scope || "",
+    scope: row.scope || row.description || ""
   };
   next.centralKey = row.centralKey || estimateLinkageMakeKey(next);
   next.dbPjNo = row.dbPjNo || estimateLinkageDbPjNo(next);
@@ -4554,8 +4558,8 @@ function estimateLinkageRequestToCentralRow(request = {}) {
     company: req.company || req.client,
     client: req.client,
     project: req.project,
-    scope: req.memo || req.rawMemo,
-    description: req.memo || req.rawMemo,
+    scope: "",
+    description: "",
     memo: req.memo || req.rawMemo,
     status: req.status,
     unitWork: req.estimateType,
@@ -4565,6 +4569,31 @@ function estimateLinkageRequestToCentralRow(request = {}) {
   });
   return row;
 }
+
+function estimateLinkageClearRequestMemoFromSheet(row = {}) {
+  const memoText = estimateLinkageText(row.memo || row.rawMemo || "");
+  const typeText = row.unitWork || row.estimateType || "개산견적";
+  const replacementServiceText = row.scope || row.description || typeText;
+  const keys = new Set([row.id, row.requestId, row.estimateId, row.centralKey, row.periodKey].filter(Boolean).map(String));
+  (estimateSheetRecords || []).forEach(record => {
+    const projectText = estimateLinkageText(row.project || "");
+    const matches = keys.has(String(record.id || "")) || keys.has(String(record.requestId || "")) || keys.has(String(record.centralKey || "")) || (projectText && estimateLinkageText(record.title || "").includes(projectText));
+    if (!matches || !record.state) return;
+    const cell7 = estimateSheetGetCellObj?.(record.state, 7, 2);
+    const cell22 = estimateSheetGetCellObj?.(record.state, 22, 1);
+    if (cell7 && memoText && estimateLinkageText(cell7.value) === memoText) {
+      cell7.value = replacementServiceText || "물량산출 및 원가계산서 작성";
+      cell7.formula = "";
+      cell7.userFormula = false;
+    }
+    if (cell22 && memoText && estimateLinkageText(cell22.value).replace(/^[-\s]+/, "") === memoText) {
+      cell22.value = `- ${replacementServiceText || "물량산출"}`;
+      cell22.formula = "";
+      cell22.userFormula = false;
+    }
+    if (typeof estimateSheetExtractQuoteDataFromState === "function") record.quoteData = estimateSheetExtractQuoteDataFromState(record.state);
+  });
+}
 function estimateLinkageSyncRequestRow(id, options = {}) {
   estimateRequestLoadRows?.();
   const idx = estimateRequestRows.findIndex(row => row.id === id || row.centralKey === id);
@@ -4572,6 +4601,7 @@ function estimateLinkageSyncRequestRow(id, options = {}) {
   const req = estimateRequestRows[idx];
   const row = estimateLinkageRequestToCentralRow(req);
   if (estimateLinkageHasBoq(row)) return;
+  estimateLinkageClearRequestMemoFromSheet(row);
   const sheetRecord = estimateCentralEnsureSheetRecord?.(row, { source: "request" });
   if (sheetRecord) {
     req.estimateId = req.estimateId || sheetRecord.id;
@@ -4581,7 +4611,7 @@ function estimateLinkageSyncRequestRow(id, options = {}) {
   estimateCentralEnsureDbRows?.(row, { overwrite: false });
   if (typeof estimatePeriodEditRows !== "undefined") {
     estimatePeriodLoadEdits?.();
-    const periodRow = { ...row, source: "request", linked: true, result: "견적 의뢰관리 연동", stage: "의뢰관리", status: estimateLinkageStatusForPeriod(req.status) };
+    const periodRow = { ...row, source: "request", linked: true, scope: "", description: "", result: "견적 의뢰관리 연동", stage: "의뢰관리", status: estimateLinkageStatusForPeriod(req.status) };
     const pIdx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText(item.project) === estimateLinkageText(row.project) && estimateLinkageText(item.company) === estimateLinkageText(row.company)));
     if (pIdx >= 0) estimatePeriodEditRows[pIdx] = { ...estimatePeriodEditRows[pIdx], ...periodRow };
     else estimatePeriodEditRows.unshift(periodRow);
