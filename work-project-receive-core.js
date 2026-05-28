@@ -1572,3 +1572,122 @@ function ensureProjectReceiveListViewerModal() {
    - 견적 기록 저장, 수정, 프로젝트 접수 화면 불러오기
    - 업로드된 견적서 XLSX 양식 다운로드
 ========================================================= */
+
+/* =========================================================
+   2026-05-28 프로젝트 리스트 중심 연계 패치
+   - DB관리까지는 정식 수주 전 후보 데이터로 유지
+   - 프로젝트 접수/리스트 저장 이후부터 PM배정/일정, 프로젝트 관리, 질의응답의 기준 데이터로 사용
+   - PM배정/일정에서 지정한 PM 값은 가장 최신값으로 프로젝트 리스트와 DB관리(PJ관리)에 역반영
+   ========================================================= */
+function projectReceiveLinkText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+function projectReceiveLinkKey(data = {}) {
+  const no = projectReceiveLinkText(data.projectNo || data.pjNo || data.dbPjNo);
+  if (no) return `NO:${no}`;
+  const project = projectReceiveLinkText(data.projectName || data.name);
+  const client = projectReceiveLinkText(data.client || data.company);
+  return `NAME:${project}::${client}`;
+}
+function projectReceiveFindCompletedIndexByKey(key) {
+  if (!Array.isArray(projectReceiveCompletedProjects)) return -1;
+  return projectReceiveCompletedProjects.findIndex(item => projectReceiveLinkKey(item.data || item) === key);
+}
+function projectReceiveUpsertCompleted(data = {}, meta = {}) {
+  if (!data || !projectReceiveLinkText(data.projectName)) return null;
+  const record = JSON.parse(JSON.stringify(data));
+  const key = projectReceiveLinkKey(record);
+  const now = new Date();
+  const completedAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const payload = {
+    sourceFile: meta.sourceFile || "프로젝트 접수 저장",
+    completedAt,
+    data: record
+  };
+  const idx = projectReceiveFindCompletedIndexByKey(key);
+  if (idx >= 0) {
+    projectReceiveCompletedProjects[idx] = {
+      ...projectReceiveCompletedProjects[idx],
+      ...payload,
+      completedAt: payload.completedAt || projectReceiveCompletedProjects[idx].completedAt
+    };
+    return projectReceiveCompletedProjects[idx];
+  }
+  projectReceiveCompletedProjects.unshift(payload);
+  return payload;
+}
+function projectReceiveGetCanonicalListItems() {
+  const items = typeof getProjectReceiveListItems === "function" ? getProjectReceiveListItems() : [];
+  const seen = new Set();
+  return items.filter(item => {
+    const data = item.data || item;
+    const key = projectReceiveLinkKey(data);
+    if (!projectReceiveLinkText(data.projectName) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function projectReceiveFindDbPjRowIndex(projectNo = "") {
+  const target = projectReceiveLinkText(projectNo);
+  if (!target || typeof estimateDbSheets === "undefined" || !estimateDbSheets?.pj) return -1;
+  const pjNoIdx = typeof getEstimateDbColumnIndexByHeader === "function" ? getEstimateDbColumnIndexByHeader("pj", "PJ NO") : -1;
+  if (pjNoIdx < 0) return -1;
+  return (estimateDbSheets.pj.rows || []).findIndex(row => projectReceiveLinkText(row[pjNoIdx]) === target);
+}
+function projectReceiveSetDbPjCell(rowIndex, header, value) {
+  if (rowIndex < 0 || typeof estimateDbSheets === "undefined" || !estimateDbSheets?.pj) return;
+  const col = typeof getEstimateDbColumnIndexByHeader === "function" ? getEstimateDbColumnIndexByHeader("pj", header) : -1;
+  if (col < 0) return;
+  estimateDbSheets.pj.rows[rowIndex][col] = value || "";
+}
+function projectReceiveSyncPmAssignmentToDb(projectNo, assignment = {}) {
+  const rowIndex = projectReceiveFindDbPjRowIndex(projectNo);
+  if (rowIndex < 0) return;
+  projectReceiveSetDbPjCell(rowIndex, "PM(마감)", assignment.pmFinish || "");
+  projectReceiveSetDbPjCell(rowIndex, "PM(구조)", assignment.pmStructure || assignment.pmBim || "");
+  projectReceiveSetDbPjCell(rowIndex, "PM(토목,조경)", assignment.pmCivil || "");
+  projectReceiveSetDbPjCell(rowIndex, "상담 / 이메일 / 특기사항", [
+    "PM배정/일정 최신 반영",
+    assignment.pmFinish ? `마감:${assignment.pmFinish}` : "",
+    assignment.pmStructure ? `구조:${assignment.pmStructure}` : "",
+    assignment.pmBim ? `BIM:${assignment.pmBim}` : "",
+    assignment.pmCivil ? `토목·조경:${assignment.pmCivil}` : ""
+  ].filter(Boolean).join(" / "));
+}
+const baseApplyPmScheduleAssignmentToProjectReceiveData = typeof applyPmScheduleAssignmentToProjectReceiveData === "function" ? applyPmScheduleAssignmentToProjectReceiveData : null;
+applyPmScheduleAssignmentToProjectReceiveData = function projectReceiveLatestPmAssignment(projectNo, assignment = {}) {
+  const targetNo = projectReceiveLinkText(projectNo);
+  if (!targetNo) return;
+  const assignTo = data => {
+    if (!data || projectReceiveLinkText(data.projectNo) !== targetNo) return;
+    data.pmFinish = assignment.pmFinish || "";
+    data.pmStructure = assignment.pmStructure || "";
+    data.pmBim = assignment.pmBim || "";
+    data.pmCivil = assignment.pmCivil || "";
+    data.pmTotal = [assignment.pmFinish, assignment.pmStructure, assignment.pmBim, assignment.pmCivil].filter(Boolean).join(" / ");
+  };
+  if (typeof projectReceiveState !== "undefined") assignTo(projectReceiveState);
+  if (Array.isArray(projectReceiveCompletedProjects)) projectReceiveCompletedProjects.forEach(item => assignTo(item.data || item));
+  projectReceiveSyncPmAssignmentToDb(targetNo, assignment);
+  if (document.getElementById("projectReceiveListBody")) renderProjectReceiveListView();
+  if (typeof pmRefreshLinkedEstimateProjects === "function") pmRefreshLinkedEstimateProjects();
+  if (typeof pmRenderProjectList === "function" && document.getElementById("pmProjectListBoard")) pmRenderProjectList();
+};
+const baseSaveProjectReceiveDraft = typeof saveProjectReceiveDraft === "function" ? saveProjectReceiveDraft : null;
+saveProjectReceiveDraft = function projectReceiveSaveAsCanonicalList() {
+  syncProjectReceiveInputsToState();
+  if (!validateProjectReceiveSkeletonScope()) {
+    renderProjectReceiveDashboard();
+    showToast("골조성을 선택한 경우 가설, 단열, 견출, 방수턱 중 최소 1개를 선택해야 접수저장이 가능합니다.");
+    return;
+  }
+  projectReceiveUpsertCompleted(projectReceiveState, { sourceFile: "프로젝트 접수 저장" });
+  renderProjectReceiveStatus();
+  if (typeof registerPmScheduleProjectFromReceive === "function") registerPmScheduleProjectFromReceive(projectReceiveState);
+  if (document.getElementById("projectReceiveListBody")) renderProjectReceiveListView();
+  showToast("프로젝트 접수 내용이 프로젝트 리스트 기준 최신값으로 저장되었습니다.");
+};
+window.projectReceiveGetCanonicalListItems = projectReceiveGetCanonicalListItems;
+window.projectReceiveLinkKey = projectReceiveLinkKey;
+window.applyPmScheduleAssignmentToProjectReceiveData = applyPmScheduleAssignmentToProjectReceiveData;
+window.saveProjectReceiveDraft = saveProjectReceiveDraft;
