@@ -122,7 +122,7 @@ function pmRenderProjectList() {
         </thead>
         <tbody>
           ${pmProjectData.map((p, index) => `
-            <tr class="pm-project-list-row" onclick="pmRenderProject(${index})">
+            <tr class="pm-project-list-row" onclick="pmOpenProjectDetailWindow(${index})">
               <td>${pmEscapeHtml(p.id)}</td>
               <td><strong>${pmEscapeHtml(p.name)}</strong></td>
               <td>${pmEscapeHtml(p.client)}</td>
@@ -137,6 +137,86 @@ function pmRenderProjectList() {
       </table>
     </div>
   `;
+}
+
+
+function pmOpenProjectDetailWindow(index = 0) {
+  const project = pmProjectData[index] || pmProjectData[0];
+  if (!project) return;
+  const popup = window.open("", "_blank", "width=1500,height=900,scrollbars=yes,resizable=yes");
+  if (!popup) {
+    alert("새 창이 차단되었습니다. 브라우저 팝업 허용 후 다시 선택해 주세요.");
+    return;
+  }
+  popup.document.open();
+  popup.document.write(pmBuildProjectDetailWindowHtml(project, index));
+  popup.document.close();
+}
+
+function pmBuildProjectDetailWindowHtml(p, index = 0) {
+  const title = pmEscapeHtml(p.name || "프로젝트 상세");
+  const subtitle = pmEscapeHtml(`${p.client || "-"} · ${p.dept || "-"} · ${p.pm || "-"}`);
+  return `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${title} - 프로젝트 관리</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#fff;--line:#e5e7eb;--line2:#dbe3ef;--text:#0f172a;--muted:#64748b;--orange:#f97316;--blue:#2563eb;}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,'Noto Sans KR',sans-serif;font-size:14px;font-weight:800;}
+    .pm-popup-shell{height:100vh;display:flex;flex-direction:column;min-width:1180px;}
+    .pm-popup-fixed{flex:0 0 auto;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 8px 22px rgba(15,23,42,.06);z-index:20;}
+    .pm-popup-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 28px 16px;}
+    .pm-popup-title{display:flex;gap:10px;align-items:flex-start}.pm-popup-title:before{content:'';width:4px;height:22px;background:var(--orange);border-radius:999px;margin-top:3px;}
+    h1{font-size:22px;margin:0 0 7px;letter-spacing:-.5px}.subcopy{margin:0;color:var(--muted);font-size:13px;}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{border:1px solid var(--line2);background:#fff;color:#111827;border-radius:12px;padding:11px 16px;font-weight:900;cursor:pointer;box-shadow:0 4px 10px rgba(15,23,42,.04)}.btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}.btn-line:hover{background:#f8fafc}
+    .pm-popup-tabs{display:flex;align-items:center;gap:8px;padding:10px 28px 14px;border-top:1px solid #f1f5f9;}
+    .pm-back-list-btn{margin-right:auto}.pm-anchor-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;border:1px solid var(--line2);background:#fbfdff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:900;color:#334155;text-decoration:none}.pm-anchor-link:hover{background:#eff6ff;color:#1d4ed8}
+    .pm-popup-scroll{flex:1 1 auto;overflow:auto;padding:28px;background:linear-gradient(180deg,#f8fafc 0,#f4f7fb 100%);}
+    .pm-project-content{display:grid;gap:16px;width:100%;max-width:1500px;margin:0 auto}.pm-card{background:#fff;border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.04);scroll-margin-top:150px}.pm-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.pm-card-header h3{font-size:17px;margin:0;letter-spacing:-.3px}.pm-card-header span{font-size:12px;color:var(--muted);font-weight:900}.pm-project-subtitle{color:var(--muted);font-weight:800;margin:0 0 14px}.status-badge{display:inline-flex;align-items:center;border-radius:999px;background:#eaf7ef;color:#16a34a;padding:6px 10px;font-weight:900;font-size:12px}.pm-overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pm-info-box{border:1px solid var(--line2);border-radius:14px;background:#fbfdff;padding:13px}.pm-info-box span{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}.pm-info-box strong{font-size:15px;line-height:1.35}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;table-layout:fixed}th{height:38px;background:#f8fafc;color:#334155;border-bottom:1px solid var(--line);font-size:12px;text-align:left;padding:0 12px}td{border-bottom:1px solid #edf2f7;padding:12px;color:#334155;font-size:13px;vertical-align:middle}.pm-assignment-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.pm-assignment-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px}.pm-assignment-card h4{font-size:15px;margin:0 0 10px;color:#1d4ed8}.pm-team-row{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:8px 0;border-top:1px solid #edf2f7;font-size:12px}.pm-team-row:first-of-type{border-top:0}.pm-team-row b{color:#6b7280}.pm-team-row span{color:var(--muted);font-weight:800}.pm-timeline{display:grid;gap:8px}.pm-timeline-item{border:1px solid var(--line2);border-radius:13px;background:#fbfdff;padding:11px 12px;font-weight:800;color:#334155}.pm-delivery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.pm-delivery-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px;display:grid;gap:6px}.pm-delivery-card strong{font-size:14px;color:#6b7280}.pm-delivery-card span,.pm-delivery-card small{color:var(--muted);font-weight:800}.pm-delivery-card em{font-style:normal;width:max-content;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}.pm-delivery-card em.done{background:#eaf7ef;color:#16a34a}.pm-delivery-card em.pending{background:#fff7ed;color:#d97706}
+  </style>
+</head>
+<body>
+  <div class="pm-popup-shell">
+    <div class="pm-popup-fixed">
+      <div class="pm-popup-head">
+        <div class="pm-popup-title"><div><h1>프로젝트 관리</h1><p class="subcopy">프로젝트별 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 한 화면에서 확인합니다.</p></div></div>
+        <div class="actions"><button class="btn btn-line" onclick="alert('착수지연 사유서 작성 화면 준비 영역입니다.')">착수지연 사유서 작성</button><button class="btn btn-line" onclick="alert('상부 승인 처리 화면 준비 영역입니다.')">상부 승인 처리</button><button class="btn btn-primary" onclick="alert('완료일정 변경 화면 준비 영역입니다.')">완료일정 변경</button></div>
+      </div>
+      <div class="pm-popup-tabs">
+        <button class="btn btn-line pm-back-list-btn" onclick="window.close()">프로젝트 목록 바로가기</button>
+        <a class="pm-anchor-link" href="#pmOverview">프로젝트 개요</a><a class="pm-anchor-link" href="#pmMeeting">회의록</a><a class="pm-anchor-link" href="#pmAssignment">배정인원</a><a class="pm-anchor-link" href="#pmEmails">관련메일</a><a class="pm-anchor-link" href="#pmOrder">수주일정</a><a class="pm-anchor-link" href="#pmCompletion">완료시점</a><a class="pm-anchor-link" href="#pmDelivery">납품관리</a>
+      </div>
+    </div>
+    <div class="pm-popup-scroll">
+      ${pmBuildProjectDetailContentHtml(p, title, subtitle)}
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function pmBuildProjectDetailContentHtml(p, title, subtitle) {
+  return `<main class="pm-project-content">
+    <section id="pmOverview" class="pm-card pm-overview-card">
+      <div class="pm-card-header"><h3>${title}</h3><span class="status-badge">${pmEscapeHtml(p.status || "-")}</span></div>
+      <p class="pm-project-subtitle">${subtitle}</p>
+      <div class="pm-overview-grid">
+        ${pmInfoBoxHtml("프로젝트명", p.name)}${pmInfoBoxHtml("발주처", p.client)}${pmInfoBoxHtml("담당부서", p.dept)}${pmInfoBoxHtml("프로젝트 PM", p.pm)}${pmInfoBoxHtml("수주일자", p.orderDate)}${pmInfoBoxHtml("착수일자", p.startDate)}${pmInfoBoxHtml("완료예정일", p.dueDate)}${pmInfoBoxHtml("납품차수", `${(p.deliveries || []).length}차`)}
+      </div>
+    </section>
+    <section id="pmMeeting" class="pm-card"><div class="pm-card-header"><h3>회의록</h3><span>날짜 / 회의명 / 작성자 / 상세보기</span></div><div class="table-wrap"><table><thead><tr><th>날짜</th><th>회의명</th><th>작성자</th><th>상세</th></tr></thead><tbody>${(p.meetings || []).map(m => `<tr><td>${pmEscapeHtml(m.date)}</td><td>${pmEscapeHtml(m.title)}</td><td>${pmEscapeHtml(m.author)}</td><td><button class="btn btn-line" onclick="alert('${pmEscapeJs(m.body || m.title || '')}')">상세</button></td></tr>`).join("")}</tbody></table></div></section>
+    <section id="pmAssignment" class="pm-card"><div class="pm-card-header"><h3>프로젝트 배정인원</h3><span>대분류 / 소분류 / 투입인원</span></div><div class="pm-assignment-grid">${(p.assignments || []).map(group => `<div class="pm-assignment-card"><h4>${pmEscapeHtml(group.category)}</h4>${(group.teams || []).map(team => `<div class="pm-team-row"><b>${pmEscapeHtml(team.name)}</b><span>${(team.members || []).map(pmEscapeHtml).join(" · ")}</span></div>`).join("")}</div>`).join("")}</div></section>
+    <section id="pmEmails" class="pm-card"><div class="pm-card-header"><h3>관련메일</h3><span>프로젝트 관련 송수신 메일 리스트</span></div><div class="table-wrap"><table><thead><tr><th>일자</th><th>구분</th><th>발신</th><th>수신</th><th>제목</th></tr></thead><tbody>${(p.emails || []).map(mail => `<tr><td>${pmEscapeHtml(mail.date)}</td><td>${pmEscapeHtml(mail.type)}</td><td>${pmEscapeHtml(mail.from)}</td><td>${pmEscapeHtml(mail.to)}</td><td>${pmEscapeHtml(mail.subject)}</td></tr>`).join("")}</tbody></table></div></section>
+    <section id="pmOrder" class="pm-card"><div class="pm-card-header"><h3>수주일정</h3><span>수주 등록부터 착수 승인까지 이력</span></div><div class="pm-timeline">${(p.orderHistory || []).map(item => `<div class="pm-timeline-item">${pmEscapeHtml(item)}</div>`).join("")}</div></section>
+    <section id="pmCompletion" class="pm-card"><div class="pm-card-header"><h3>완료시점 관리</h3><span>완료예정일 변경 이력</span></div><div class="pm-timeline">${(p.completionHistory || []).map(item => `<div class="pm-timeline-item">${pmEscapeHtml(item)}</div>`).join("")}</div></section>
+    <section id="pmDelivery" class="pm-card"><div class="pm-card-header"><h3>납품관리</h3><span>차수별 납품 파일과 승인 상태</span></div><div class="pm-delivery-grid">${(p.deliveries || []).map(d => `<div class="pm-delivery-card"><strong>${pmEscapeHtml(d.round)}</strong><span>${pmEscapeHtml(d.date)}</span><small>${pmEscapeHtml(d.fileName)}</small><em class="${d.approved ? 'done' : 'pending'}">${d.approved ? '승인완료' : '승인대기'}</em></div>`).join("")}</div></section>
+  </main>`;
+}
+
+function pmInfoBoxHtml(label, value) {
+  return `<div class="pm-info-box"><span>${pmEscapeHtml(label)}</span><strong>${pmEscapeHtml(value || "-")}</strong></div>`;
 }
 
 function pmRenderProject(index = 0) {
