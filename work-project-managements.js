@@ -33,6 +33,10 @@ const pmProjectData = [
       { date: "2026-03-08", title: "착수 전 외부 협력사 킥오프 미팅", author: "박용진", body: "구조/마감 산출 제출 기준 공유, 도면 납품 포맷 협의, 주간 회의 운영 주기 확정" },
       { date: "2026-03-22", title: "1차 진행 상황 점검 회의", author: "이정민", body: "구조 파트 선행 물량 산출 진행 현황 공유, 마감팀 초기 투입 시점 조정" }
     ],
+    phoneCalls: [
+      { date: "2026-03-06 10:20", caller: "박용진", target: "성수개발 주식회사 김대리", contact: "010-0000-1001", memo: "착수 가능 일정과 도면 추가 수령 범위를 유선 확인. 구조·BIM팀 우선 착수 후 마감 검토 자료는 2차로 전달받기로 협의.", followUp: "추가 도면 수령 후 관련메일에 저장" },
+      { date: "2026-03-12 15:40", caller: "김현수 실장", target: "성수개발 주식회사 설계팀", contact: "02-0000-2100", memo: "BIM 기준층 모델 수정본 전달 가능 일정을 확인하고, 1차 산출 기준을 기존 도면 기준으로 우선 진행하기로 협의.", followUp: "회의록 및 수주일정 이력에 반영" }
+    ],
     assignments: [
       { category: "구조", teams: ["기초", "주차장 수평", "주차장 수직", "아파트 수평", "아파트 수직"].map(name => ({ name, members: ["팀장", "직원1", "직원2", "직원3"] })) },
       { category: "마감", teams: ["내부", "외부", "조적", "창호"].map(name => ({ name, members: ["팀장", "직원1", "직원2", "직원3"] })) },
@@ -68,6 +72,9 @@ const pmProjectData = [
     completionChanged: false,
     completionHistory: ["2026-02-20 : 최초 완료예정일 2026-07-25 등록"],
     meetings: [{ date: "2026-02-21", title: "송도 주상복합 착수 회의", author: "최민우", body: "초기 투입 인력과 납품 일정 확인" }],
+    phoneCalls: [
+      { date: "2026-02-22 09:30", caller: "최민우 팀장", target: "송도도시개발 담당자", contact: "010-0000-2002", memo: "착수 자료 송부 여부와 마감 산출 우선순위를 유선 확인. 창호 자료는 별도 메일로 재송부 요청.", followUp: "창호 자료 수신 후 관련메일 업데이트" }
+    ],
     assignments: [
       { category: "마감", teams: ["내부", "외부", "창호"].map(name => ({ name, members: ["팀장", "직원1", "직원2"] })) },
       { category: "구조", teams: [{ name: "기초", members: ["팀장", "직원1"] }] }
@@ -186,7 +193,7 @@ function pmBuildProjectDetailWindowHtml(p, index = 0) {
       </div>
       <div class="pm-popup-tabs">
         <button class="btn btn-line pm-back-list-btn" onclick="window.close()">프로젝트 목록 바로가기</button>
-        <a class="pm-anchor-link" href="#pmOverview">프로젝트 개요</a><a class="pm-anchor-link" href="#pmMeeting">회의록</a><a class="pm-anchor-link" href="#pmAssignment">배정인원</a><a class="pm-anchor-link" href="#pmEmails">관련메일</a><a class="pm-anchor-link" href="#pmOrder">수주일정</a><a class="pm-anchor-link" href="#pmCompletion">완료시점</a><a class="pm-anchor-link" href="#pmDelivery">납품관리</a>
+        <a class="pm-anchor-link" href="#pmOverview">프로젝트 개요</a><a class="pm-anchor-link" href="#pmMeeting">회의록</a><a class="pm-anchor-link" href="#pmPhoneCall">전화내용</a><a class="pm-anchor-link" href="#pmAssignment">배정인원</a><a class="pm-anchor-link" href="#pmEmails">관련메일</a><a class="pm-anchor-link" href="#pmOrder">수주일정</a><a class="pm-anchor-link" href="#pmCompletion">완료시점</a><a class="pm-anchor-link" href="#pmDelivery">납품관리</a>
       </div>
     </div>
     <div class="pm-popup-scroll">
@@ -207,6 +214,7 @@ function pmBuildProjectDetailContentHtml(p, title, subtitle) {
       </div>
     </section>
     <section id="pmMeeting" class="pm-card"><div class="pm-card-header"><h3>회의록</h3><span>날짜 / 회의명 / 작성자 / 상세보기</span></div><div class="table-wrap"><table><thead><tr><th>날짜</th><th>회의명</th><th>작성자</th><th>상세</th></tr></thead><tbody>${(p.meetings || []).map(m => `<tr><td>${pmEscapeHtml(m.date)}</td><td>${pmEscapeHtml(m.title)}</td><td>${pmEscapeHtml(m.author)}</td><td><button class="btn btn-line" onclick="alert('${pmEscapeJs(m.body || m.title || '')}')">상세</button></td></tr>`).join("")}</tbody></table></div></section>
+    <section id="pmPhoneCall" class="pm-card"><div class="pm-card-header"><h3>전화내용</h3><span>통화일시 / 통화자 / 상대방 / 연락처 / 통화내용 / 후속조치</span></div><div class="table-wrap"><table><thead><tr><th style="width:130px">통화일시</th><th style="width:100px">통화자</th><th style="width:170px">상대방</th><th style="width:130px">연락처</th><th>통화내용</th><th>후속조치</th></tr></thead><tbody>${(p.phoneCalls || []).map(call => `<tr><td>${pmEscapeHtml(call.date)}</td><td>${pmEscapeHtml(call.caller)}</td><td>${pmEscapeHtml(call.target)}</td><td>${pmEscapeHtml(call.contact)}</td><td>${pmEscapeHtml(call.memo)}</td><td>${pmEscapeHtml(call.followUp)}</td></tr>`).join("")}</tbody></table></div></section>
     <section id="pmAssignment" class="pm-card"><div class="pm-card-header"><h3>프로젝트 배정인원</h3><span>대분류 / 소분류 / 투입인원</span></div><div class="pm-assignment-grid">${(p.assignments || []).map(group => `<div class="pm-assignment-card"><h4>${pmEscapeHtml(group.category)}</h4>${(group.teams || []).map(team => `<div class="pm-team-row"><b>${pmEscapeHtml(team.name)}</b><span>${(team.members || []).map(pmEscapeHtml).join(" · ")}</span></div>`).join("")}</div>`).join("")}</div></section>
     <section id="pmEmails" class="pm-card"><div class="pm-card-header"><h3>관련메일</h3><span>프로젝트 관련 송수신 메일 리스트</span></div><div class="table-wrap"><table><thead><tr><th>일자</th><th>구분</th><th>발신</th><th>수신</th><th>제목</th></tr></thead><tbody>${(p.emails || []).map(mail => `<tr><td>${pmEscapeHtml(mail.date)}</td><td>${pmEscapeHtml(mail.type)}</td><td>${pmEscapeHtml(mail.from)}</td><td>${pmEscapeHtml(mail.to)}</td><td>${pmEscapeHtml(mail.subject)}</td></tr>`).join("")}</tbody></table></div></section>
     <section id="pmOrder" class="pm-card"><div class="pm-card-header"><h3>수주일정</h3><span>수주 등록부터 착수 승인까지 이력</span></div><div class="pm-timeline">${(p.orderHistory || []).map(item => `<div class="pm-timeline-item">${pmEscapeHtml(item)}</div>`).join("")}</div></section>
@@ -241,6 +249,7 @@ function pmRenderProject(index = 0) {
   pmSetText("pmSummaryDeliveryCount", `${p.deliveries.length}차`);
 
   pmRenderMeetings(p.meetings);
+  pmRenderPhoneCalls(p.phoneCalls);
   pmRenderAssignments(p.assignments);
   pmRenderEmails(p.emails);
   pmRenderTimeline("pmOrderTimeline", p.orderHistory);
@@ -252,6 +261,12 @@ function pmRenderMeetings(items = []) {
   const body = document.getElementById("pmMeetingTableBody");
   if (!body) return;
   body.innerHTML = items.map(m => `<tr><td>${m.date}</td><td>${pmEscapeHtml(m.title)}</td><td>${pmEscapeHtml(m.author)}</td><td><button class="btn btn-line" onclick="showToast('${pmEscapeJs(m.title)} 회의록을 열었습니다.')">상세</button></td></tr>`).join("");
+}
+
+function pmRenderPhoneCalls(items = []) {
+  const body = document.getElementById("pmPhoneCallTableBody");
+  if (!body) return;
+  body.innerHTML = items.map(call => `<tr><td>${pmEscapeHtml(call.date)}</td><td>${pmEscapeHtml(call.caller)}</td><td>${pmEscapeHtml(call.target)}</td><td>${pmEscapeHtml(call.contact)}</td><td>${pmEscapeHtml(call.memo)}</td><td>${pmEscapeHtml(call.followUp)}</td></tr>`).join("");
 }
 
 function pmRenderAssignments(assignments = []) {
