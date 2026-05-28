@@ -19861,7 +19861,7 @@ button.btn-orange{
 .pm-project-list-row td:first-child,.pm-project-list-row td:nth-child(2){font-weight:700}
 
 /* DB관리 PJ관리: 거래처 상세열은 화면에서는 숨기고 엑셀 내보내기에는 유지 */
-.quote-db-pj-contact-hidden{display:none!important;}
+.quote-db-pj-contact-hidden,.quote-db-pj-screen-hidden{display:none!important;}
 .estimate-db-contact-box{max-width:min(1480px,96vw)!important;}
 .estimate-db-contact-grid-wrap{overflow:auto;max-height:62vh;}
 .estimate-db-contact-grid{min-width:1380px;}
