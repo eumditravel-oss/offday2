@@ -254,19 +254,22 @@ function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, 
 }
 
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
-  const override = estimateDbColumnWidthOverrides?.[tab]?.[colIndex];
-  if (Number.isFinite(Number(override)) && Number(override) > 0) return Number(override);
-
   const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   if (tab === "pj") {
-    // PJ관리 화면 가독성 보정: 국내/해외는 줄이고, 줄인 폭은 거래처명에 배분하며 프로젝트명은 넓게 확보합니다.
-    if (headerName === "국내/해외") return 72;
+    // PJ관리 고정 가독성 폭: 기존 localStorage 열 너비 조절값보다 우선 적용합니다.
+    // - 국내/해외는 절반 수준으로 축소
+    // - 거래처명은 줄어든 폭을 흡수하고 2줄 표시 가능하게 확보
+    // - 프로젝트명은 현재 화면 기준 2배 수준으로 확대
+    if (headerName === "국내/해외") return 68;
     if (headerName === "거래처명") return 180;
     if (headerName === "프로젝트명") return 880;
     if (headerName === "건물용도") return 90;
     // 프로젝트 연결은 Enter 명령 셀이므로 최소 폭만 확보합니다.
     if (headerName === ESTIMATE_DB_PROJECT_LINK_HEADER) return 130;
   }
+
+  const override = estimateDbColumnWidthOverrides?.[tab]?.[colIndex];
+  if (Number.isFinite(Number(override)) && Number(override) > 0) return Number(override);
 
   const values = [];
   (sheet.headerRows || []).forEach(row => values.push(row[colIndex] || ""));
@@ -1215,7 +1218,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
         const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
-        const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명"]);
+        const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명", "거래처명"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
           const done = parseEstimateDbProgressDoneValue(value);
           return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}${boundaryClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
