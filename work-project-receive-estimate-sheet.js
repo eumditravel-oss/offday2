@@ -349,7 +349,12 @@ function estimateSheetEnsureTotalAmountFormula(state) {
   totalObj.formula = `SUM(${colLabel}${startRow}:${colLabel}${endRow})`;
   totalObj.value = "";
   totalObj.userFormula = true;
-  return { amountCol, headerRow: amountHeader.r, startRow, endRow, totalRow };
+  return { amountCol, headerRow: amountHeader.r, startRow, endRow, totalRow, formula: `SUM(${colLabel}${startRow}:${colLabel}${endRow})` };
+}
+
+function estimateSheetRecalculateLinkedFormula(state) {
+  if (!state) return null;
+  return typeof estimateSheetEnsureTotalAmountFormula === "function" ? estimateSheetEnsureTotalAmountFormula(state) : null;
 }
 function estimatePeriodExtractRightHelperPy(state) {
   if (!state) return "";
@@ -1111,6 +1116,7 @@ function estimateSheetGetPopupCss() {
 function estimateSheetRenderExcelWindow() {
   const win = estimateSheetExcelWindowRef;
   if (!win || win.closed || !estimateSheetEditorState) return;
+  if (typeof estimateSheetRecalculateLinkedFormula === "function") estimateSheetRecalculateLinkedFormula(estimateSheetEditorState);
   const doc = win.document;
   const gridHost = doc.getElementById("estimateSheetPopupGrid");
   const imageHost = doc.getElementById("estimateSheetPopupImages");
@@ -1282,6 +1288,7 @@ function estimateSheetSetCellFromText(r, c, rawText, option = {}) {
     obj.userFormula = false;
     obj.value = /^-?[\d,]+(\.\d+)?$/.test(raw) ? Number(raw.replace(/,/g, "")) : raw;
   }
+  if (!option.skipLinkedFormula && typeof estimateSheetRecalculateLinkedFormula === "function") estimateSheetRecalculateLinkedFormula(estimateSheetEditorState);
 }
 
 function estimateSheetPopupUpdateCellFromElement(cell) {
@@ -2177,9 +2184,11 @@ function saveEstimateSheetRecord() {
     estimateSheetEditingIndex = 0;
   }
   estimateSheetEditorState = estimateSheetRecordToState(record);
+  if (typeof estimateSheetRecalculateLinkedFormula === "function") estimateSheetRecalculateLinkedFormula(estimateSheetEditorState);
+  if (typeof registerEstimatePeriodSentRecord === "function") registerEstimatePeriodSentRecord(record, estimateSheetEditingIndex);
   renderEstimateSheetManage();
   if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
-  if (typeof showToast === "function") showToast("원본 템플릿 기준으로 입력값/수식만 저장했습니다.");
+  if (typeof showToast === "function") showToast("원본 템플릿 기준으로 입력값/수식만 저장하고 기간별 견적서 관리에 계산값을 연동했습니다.");
 }
 
 function duplicateEstimateSheetRecord(index) {
@@ -2572,15 +2581,15 @@ function estimatePeriodExtractSheetUnitPriceSum(state) {
 
 function estimatePeriodExtractSheetTotalAmount(state) {
   if (!state) return "";
-  const formulaInfo = typeof estimateSheetEnsureTotalAmountFormula === "function" ? estimateSheetEnsureTotalAmountFormula(state) : null;
+  const formulaInfo = typeof estimateSheetRecalculateLinkedFormula === "function" ? estimateSheetRecalculateLinkedFormula(state) : (typeof estimateSheetEnsureTotalAmountFormula === "function" ? estimateSheetEnsureTotalAmountFormula(state) : null);
   if (formulaInfo) {
     const value = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, formulaInfo.totalRow, formulaInfo.amountCol) || "");
     if (value && estimatePeriodToNumber(value)) return value;
   }
   const candidates = [
     [20, 6], // 총계 금액
-    [10, 2], // 합계금액 문구
-    [20, 7]
+    [20, 7],
+    [10, 2] // 합계금액 문구
   ];
   for (const [r, c] of candidates) {
     const value = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || "");
@@ -3053,17 +3062,18 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
   if (!record) return;
   estimatePeriodLoadSentRows();
   const state = record.state || estimateSheetRecordToState(record);
+  if (typeof estimateSheetRecalculateLinkedFormula === "function") estimateSheetRecalculateLinkedFormula(state);
   const recipientRaw = estimateSheetDisplayValue(state, 5, 2) || "";
   const recipient = estimatePeriodExtractCompanyName(recipientRaw) || estimatePeriodExtractCompanyName(record.recipient || "") || recipientRaw;
   const project = estimateSheetDisplayValue(state, 6, 2) || record.title || "";
-  const service = estimateSheetDisplayValue(state, 7, 2) || "";
-  const totalText = estimateSheetDisplayValue(state, 10, 2) || "";
   const areaPy = estimatePeriodExtractSheetAreaPy(state);
   const unitPriceSum = estimatePeriodExtractSheetUnitPriceSum(state);
-  const totalAmount = estimatePeriodExtractSheetTotalAmount(state) || estimatePeriodToNumber(totalText) || "";
-  const sentAt = record.sentAt || estimateSheetNow();
+  const totalAmount = estimatePeriodExtractSheetTotalAmount(state);
+  const sentAt = record.sentAt || record.updatedAt || estimateSheetNow();
   const recordId = record.id || estimateSheetMakeId("estimate");
   record.id = recordId;
+  record.state = estimateSheetCloneState(state);
+  record.quoteData = estimateSheetExtractQuoteDataFromState(state);
   const key = `${recordId}|${sentAt}`;
   const previousSent = estimatePeriodSentRows.find(item => item.sourceEstimateId === recordId);
   const previousManual = (previousSent?.manualPeriodFields && typeof previousSent.manualPeriodFields === "object") ? previousSent.manualPeriodFields : (previousSent?.values?.manualPeriodFields && typeof previousSent.values.manualPeriodFields === "object" ? previousSent.values.manualPeriodFields : {});
@@ -3073,10 +3083,11 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
     sourceEstimateId: recordId,
     sourceEstimateIndex: recordIndex,
     sentAt,
-    type: record.type || "",
+    type: record.type || state.type || "",
     title: record.title || project,
     detailSnapshot: estimateSheetCloneState(state),
     recordSnapshot: JSON.parse(JSON.stringify(record)),
+    manualPeriodFields: previousManual,
     values: {
       2: estimatePeriodTodayCode(),
       3: recipient,
@@ -3085,16 +3096,17 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
       6: unitPriceSum,
       7: totalAmount,
       8: preserveManualValue("scope", ""),
-      9: "",
-      10: "",
-      11: record.type || "",
-      12: record.type || "",
+      9: previousSent?.values?.[9] || "",
+      10: previousSent?.values?.[10] || "",
+      11: record.type || state.type || "",
+      12: record.type || state.type || "",
       13: preserveManualValue("description", ""),
-      14: "견적서 발송",
-      15: "대기중",
-      16: "견적서 종류별 관리 발송 처리",
+      14: previousSent?.values?.[14] || "견적서 저장",
+      15: previousSent?.values?.[15] || "대기중",
+      16: previousSent?.values?.[16] || "견적서 계산값 자동 연동",
       17: preserveManualValue("result", ""),
-      18: preserveManualValue("stage", "")
+      18: preserveManualValue("stage", ""),
+      manualPeriodFields: previousManual
     }
   };
   estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
