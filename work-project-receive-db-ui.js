@@ -259,9 +259,10 @@ function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = 
 
   const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   if (tab === "pj") {
-    // PJ관리 화면 가독성 보정: 거래처명은 줄이고, 프로젝트명은 길게 확보합니다.
-    if (headerName === "거래처명") return 110;
-    if (headerName === "프로젝트명") return 440;
+    // PJ관리 화면 가독성 보정: 국내/해외는 줄이고, 줄인 폭은 거래처명에 배분하며 프로젝트명은 넓게 확보합니다.
+    if (headerName === "국내/해외") return 72;
+    if (headerName === "거래처명") return 180;
+    if (headerName === "프로젝트명") return 880;
     if (headerName === "건물용도") return 90;
     // 프로젝트 연결은 Enter 명령 셀이므로 최소 폭만 확보합니다.
     if (headerName === ESTIMATE_DB_PROJECT_LINK_HEADER) return 130;
