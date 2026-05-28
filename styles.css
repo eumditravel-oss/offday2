@@ -19700,3 +19700,30 @@ button.btn-orange{
 #projectManage .pm-project-list-screen .pm-project-list-table tbody tr:hover td{
   background:#fff7ed !important;
 }
+
+
+/* === 2026-05-28 추가 보정: 기간별 견적서 관리 가로 스크롤/건물용도 열/내부 메모 미반영 후속 === */
+.estimate-period-sheet-wrap{
+  width:100% !important;
+  max-width:100% !important;
+  max-height:none !important;
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  -webkit-overflow-scrolling:touch;
+}
+.estimate-period-manage-wrap{
+  width:max-content !important;
+  min-width:100% !important;
+  overflow:visible !important;
+}
+.estimate-period-manage-table{
+  width:max-content !important;
+  min-width:max-content !important;
+}
+.estimate-period-manage-table .usage,
+.estimate-period-manage-table th:nth-child(8),
+.estimate-period-manage-table td:nth-child(8){
+  width:70px !important;
+  min-width:70px !important;
+  max-width:70px !important;
+}
