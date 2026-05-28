@@ -3550,7 +3550,7 @@ function syncEstimateRequestToDb(id, options = {}) {
       const headers = (sheet.headerRows && sheet.headerRows[0]) || [];
       const next = Array(headers.length).fill("");
       const put = (name, value) => { const i = headers.indexOf(name); if (i >= 0) next[i] = value || ""; };
-      put("년도", `20${String(row.date || estimateRequestToday()).slice(0, 2)}`);
+      put("최초생성날짜", normalizeEstimateDbCreatedDate?.(`20${String(row.date || estimateRequestToday()).slice(0, 2)}`) || `20${String(row.date || estimateRequestToday()).slice(0, 2)}년 00월 00일`);
       put("거래처명", row.company);
       put("프로젝트명", row.project);
       put("거래처담당자", row.client);
@@ -3679,7 +3679,7 @@ function estimateCentralRowToDbMap(row = {}) {
   const pjNo = row.dbPjNo || estimateCentralDbPjNo(row);
   const type = estimatePeriodResolveEstimateType?.(row) || "개산견적";
   return {
-    "년도": year,
+    "최초생성날짜": normalizeEstimateDbCreatedDate?.(year) || `${year}년 00월 00일`,
     "PJ NO": pjNo,
     "국내/해외": "국내",
     "거래처명": row.company || "",
