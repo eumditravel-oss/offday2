@@ -413,3 +413,56 @@ function pmEscapeHtml(value) {
 function pmEscapeJs(value) {
   return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, " ");
 }
+
+/* =========================================================
+   2026-05-28 프로젝트 관리 = 프로젝트 리스트 1:1 미러링 패치
+   - 프로젝트 관리 목록은 프로젝트 리스트에 존재하는 건만 표시
+   - 견적관리/DB관리 후보 데이터는 직접 표시하지 않음
+   - PM배정/일정 최신 PM 값을 우선 표시
+   ========================================================= */
+function pmProjectLinkKeyFromReceive(data = {}) {
+  if (typeof projectReceiveLinkKey === "function") return projectReceiveLinkKey(data);
+  const no = pmEstimateText(data.projectNo || data.pjNo || data.dbPjNo);
+  if (no) return `NO:${no}`;
+  return `NAME:${pmEstimateText(data.projectName || data.name)}::${pmEstimateText(data.client || data.company)}`;
+}
+function pmProjectGetScheduleAssignment(projectNo = "") {
+  const no = pmEstimateText(projectNo);
+  if (!no || typeof pmScheduleProjects === "undefined") return {};
+  const matched = (pmScheduleProjects || []).find(item => pmEstimateText(item?.project?.projectNo) === no);
+  return matched?.assignment || {};
+}
+function pmBuildProjectFromReceiveItem(item = {}) {
+  const data = item.data || item;
+  const assignment = pmProjectGetScheduleAssignment(data.projectNo);
+  const pmText = [assignment.pmFinish, assignment.pmStructure, assignment.pmBim, assignment.pmCivil, data.pmTotal, data.pmFinish, data.pmStructure]
+    .filter(Boolean).join(" / ") || "미배정";
+  const scopes = Array.isArray(data.scopes) ? data.scopes.filter(s => typeof s === "string" ? s : s?.checked).map(s => typeof s === "string" ? s : s.label).join(" · ") : "";
+  return {
+    id: data.projectNo || pmProjectLinkKeyFromReceive(data),
+    name: data.projectName || "프로젝트명 미입력",
+    client: data.client || "-",
+    dept: scopes || data.usage || "프로젝트 리스트 연계",
+    pm: pmText,
+    status: data.status || "진행중",
+    orderDate: data.bidDate || data.orderDate || data.startDate || "-",
+    startDate: data.startDate || "-",
+    dueDate: data.finalDelivery || data.firstDelivery || "-",
+    delayReasonRequired: false,
+    delayReasonApproved: false,
+    delayReasonText: "프로젝트 리스트 기준 연계 프로젝트입니다.",
+    orderHistory: [`${item.completedAt || "-"} : 프로젝트 리스트 기준 최신값 반영`],
+    completionChanged: false,
+    completionHistory: [data.finalDelivery || data.firstDelivery ? `완료 예정: ${data.finalDelivery || data.firstDelivery}` : "완료예정일 미입력"],
+    meetings: [],
+    phoneCalls: data.phoneCalls || [],
+    assignments: [{ category: "PM", teams: [{ name: "PM 배정", members: pmText === "미배정" ? ["PM 미배정"] : pmText.split(" / ") }] }],
+    emails: [],
+    deliveries: []
+  };
+}
+pmRefreshLinkedEstimateProjects = function pmRefreshProjectListMirror() {
+  const items = typeof projectReceiveGetCanonicalListItems === "function" ? projectReceiveGetCanonicalListItems() : (typeof getProjectReceiveListItems === "function" ? getProjectReceiveListItems() : []);
+  pmProjectData.splice(0, pmProjectData.length, ...items.map(pmBuildProjectFromReceiveItem));
+};
+window.pmRefreshLinkedEstimateProjects = pmRefreshLinkedEstimateProjects;
