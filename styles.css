@@ -19462,3 +19462,192 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background: #f3f6fa !important;
   box-shadow: 0 1px 0 #dbe4ef, 0 3px 8px rgba(15, 23, 42, .06) !important;
 }
+
+/* === 2026-05-28 사용자 요청 반영: 버튼/견적관리/프로젝트관리 화면 보정 === */
+/* 주황색 주요 버튼은 항상 흰색 글씨로 표시 */
+.btn-primary,
+.btn.btn-primary,
+button.btn-primary,
+.project-receive-actions .btn-primary,
+.estimate-workflow-row-actions .btn-primary,
+.estimate-workflow-row-actions.compact .btn-primary,
+.btn-orange,
+button.btn-orange{
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+
+/* 견적서 종류별 관리 리스트의 본문 굵은글씨 해제 */
+.estimate-sheet-list-table tbody td,
+.estimate-sheet-list-table tbody td strong,
+.estimate-sheet-list-table tbody td small{
+  font-weight:400 !important;
+}
+.estimate-sheet-list-table tbody .quote-status-badge{
+  font-weight:700 !important;
+}
+
+/* 견적 의뢰관리: 카드 내부 세로 스크롤 제거, 전체 페이지 스크롤로 확인 */
+.estimate-workflow-card,
+.estimate-workflow-board,
+.estimate-workflow-table-wrap{
+  max-height:none !important;
+  overflow:visible !important;
+}
+.estimate-workflow-table thead,
+.estimate-workflow-table thead tr,
+.estimate-workflow-table thead th{
+  position:sticky !important;
+  top:0 !important;
+  z-index:40 !important;
+}
+
+/* 기간별 견적서 관리: 카드 내부 세로 스크롤 제거, 전체 페이지 스크롤로 확인 */
+.estimate-period-card,
+.estimate-period-sheet-wrap,
+.estimate-period-manage-wrap{
+  max-height:none !important;
+  overflow:visible !important;
+}
+.estimate-period-manage-table thead,
+.estimate-period-manage-table thead tr,
+.estimate-period-manage-table th{
+  position:sticky !important;
+  top:0 !important;
+  z-index:35 !important;
+}
+
+/* 프로젝트 관리: 리스트 선표시 + 상세 화면 전체폭 구성 */
+.project-manage-card{
+  overflow:visible !important;
+}
+.project-manage-head.pm-project-global-head{
+  position:sticky;
+  top:0;
+  z-index:60;
+  background:#fff;
+  border-bottom:1px solid var(--line2);
+  box-shadow:0 8px 18px rgba(15,23,42,.06);
+}
+.project-manage-body{
+  background:#f8fafc !important;
+}
+.pm-project-list-screen.hidden,
+.pm-project-detail-screen.hidden{
+  display:none !important;
+}
+.pm-project-list-screen,
+.pm-project-detail-screen{
+  width:100%;
+}
+.pm-list-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+.pm-list-head h3{
+  font-size:18px;
+  letter-spacing:-.3px;
+  margin-bottom:4px;
+}
+.pm-list-head p{
+  color:#64748b;
+  font-weight:800;
+  font-size:13px;
+}
+.pm-project-list-board{
+  width:100%;
+}
+.pm-project-list-table-wrap{
+  width:100%;
+  border:1px solid var(--line2);
+  border-radius:18px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 10px 24px rgba(15,23,42,.04);
+}
+.pm-project-list-table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+.pm-project-list-table th{
+  height:42px;
+  background:#f1f5f9;
+  border-bottom:1px solid var(--line2);
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+.pm-project-list-table td{
+  height:48px;
+  border-bottom:1px solid #edf2f7;
+  padding:8px 10px;
+  color:#334155;
+  font-size:13px;
+  font-weight:500;
+  vertical-align:middle;
+}
+.pm-project-list-table tbody tr:last-child td{
+  border-bottom:0;
+}
+.pm-project-list-row{
+  cursor:pointer;
+}
+.pm-project-list-row:hover td{
+  background:#fff7ed;
+}
+.pm-project-list-row strong{
+  color:#0f172a;
+  font-weight:700;
+}
+.pm-detail-sticky{
+  position:sticky;
+  top:86px;
+  z-index:55;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+  padding:10px 12px;
+  border:1px solid var(--line2);
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 8px 18px rgba(15,23,42,.06);
+}
+.pm-back-list-btn{
+  flex:0 0 auto;
+}
+.pm-detail-anchor-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.pm-detail-anchor-row .pm-anchor-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin:0;
+  padding:8px 10px;
+}
+.pm-project-content{
+  display:grid;
+  gap:16px;
+  width:100%;
+  min-width:0;
+}
+.pm-card{
+  scroll-margin-top:162px;
+}
+@media(max-width:1280px){
+  .pm-detail-sticky{top:70px;align-items:flex-start;flex-direction:column;}
+  .pm-detail-anchor-row{justify-content:flex-start;}
+  .pm-project-list-table{min-width:980px;}
+  .pm-project-list-table-wrap{overflow-x:auto;}
+}
