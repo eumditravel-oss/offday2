@@ -87,6 +87,79 @@ const pmProjectData = [
 let pmCurrentProjectIndex = null;
 let pmInitialized = false;
 
+function pmEstimateText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function pmEstimateProjectId(seed = "") {
+  return `PJT-LINK-${pmEstimateText(seed).replace(/[^0-9a-zA-Z가-힣]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24) || Date.now()}`;
+}
+
+function pmBuildLinkedProjectFromEstimate(row = {}) {
+  const name = pmEstimateText(row.project || row.title || row.projectName);
+  if (!name) return null;
+  const statusText = pmEstimateText(row.status);
+  if (!/(수주|작업시작|선착수|진행)/.test(statusText)) return null;
+  return {
+    id: row.dbPjNo || row.pjNo || pmEstimateProjectId(name),
+    name,
+    client: pmEstimateText(row.company || row.client || row.companyRaw) || "-",
+    dept: pmEstimateText(row.scope || row.usage || row.unitWork) || "견적관리 연계",
+    pm: pmEstimateText(row.pm || row.manager) || "미배정",
+    status: statusText.includes("선착수") ? "선착수" : "진행중",
+    orderDate: pmEstimateText(row.date) || "-",
+    startDate: statusText.includes("대기") ? "-" : (pmEstimateText(row.startDate) || pmEstimateText(row.date) || "-"),
+    dueDate: pmEstimateText(row.dueDate || row.endDate) || "-",
+    delayReasonRequired: false,
+    delayReasonApproved: false,
+    delayReasonText: "견적관리 연계 프로젝트입니다.",
+    orderHistory: [
+      `${pmEstimateText(row.date) || "-"} : 견적관리에서 프로젝트 후보 생성`,
+      `${statusText || "진행중"} 상태 기준 프로젝트 관리 표시`
+    ],
+    completionChanged: false,
+    completionHistory: ["완료예정일 미입력"],
+    meetings: [],
+    phoneCalls: [],
+    assignments: [{ category: "연계", teams: [{ name: pmEstimateText(row.unitWork || row.bid || "견적"), members: ["PM 미배정"] }] }],
+    emails: [],
+    deliveries: []
+  };
+}
+
+function pmRefreshLinkedEstimateProjects() {
+  const existingNames = new Set(pmProjectData.map(p => pmEstimateText(p.name)));
+  const existingLinked = new Set(pmProjectData.filter(p => p.__linkedEstimate).map(p => pmEstimateText(p.name)));
+  const candidates = [];
+  try {
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    if (Array.isArray(estimateRequestRows)) {
+      estimateRequestRows.forEach(row => {
+        const normalized = typeof estimateRequestNormalizeRow === "function" ? estimateRequestNormalizeRow(row) : row;
+        const project = pmBuildLinkedProjectFromEstimate(normalized);
+        if (project) candidates.push(project);
+      });
+    }
+    if (typeof estimatePeriodAllRowsForList === "function") {
+      estimatePeriodAllRowsForList().forEach(row => {
+        const project = pmBuildLinkedProjectFromEstimate(row);
+        if (project) candidates.push(project);
+      });
+    }
+  } catch (err) {
+    console.warn("프로젝트 관리 연계 후보 생성 실패", err);
+  }
+  candidates.forEach(project => {
+    const name = pmEstimateText(project.name);
+    if (!name || existingNames.has(name) || existingLinked.has(name)) return;
+    project.__linkedEstimate = true;
+    pmProjectData.push(project);
+    existingNames.add(name);
+    existingLinked.add(name);
+  });
+}
+
+
 function initProjectManage() {
   if (!document.getElementById("pmProjectListScreen")) return;
   if (!pmInitialized) {
@@ -110,6 +183,7 @@ function pmOpenProjectList() {
 }
 
 function pmRenderProjectList() {
+  pmRefreshLinkedEstimateProjects();
   const board = document.getElementById("pmProjectListBoard");
   if (!board) return;
   board.innerHTML = `
