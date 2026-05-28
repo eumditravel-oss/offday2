@@ -291,6 +291,80 @@ function estimateSheetDisplayValue(state, r, c) {
   const value = obj.formula ? estimateSheetEvaluateFormula(state, obj.formula, r, c) : obj.value;
   return typeof value === "number" ? estimateSheetFormatNumber(value) : String(value ?? "");
 }
+
+
+/* ========================================================================
+   2026-05 견적서 계산값 연동 보정
+   - 견적서 총계 셀은 금액 열의 시작행부터 총계 바로 위 행까지 SUM 수식 유지
+   - 기간별 견적서 관리 연동값은 견적서 우측 평/단가열 합계/총계금액에서 추출
+   ======================================================================== */
+function estimateSheetColumnA1(colNo) {
+  let n = Number(colNo) || 1;
+  let label = "";
+  while (n > 0) {
+    const mod = (n - 1) % 26;
+    label = String.fromCharCode(65 + mod) + label;
+    n = Math.floor((n - 1) / 26);
+  }
+  return label;
+}
+function estimateSheetFindHeaderCell(state, label, option = {}) {
+  if (!state) return null;
+  const maxRow = Math.min(Number(state.maxRow || 80), Number(option.maxRow || 30));
+  const maxCol = Math.min(Number(state.maxCol || 30), Number(option.maxCol || 12));
+  const target = estimatePeriodNormalizeText(label);
+  for (let r = Number(option.minRow || 1); r <= maxRow; r += 1) {
+    for (let c = Number(option.minCol || 1); c <= maxCol; c += 1) {
+      const text = estimatePeriodNormalizeText(estimateSheetDisplayValue(state, r, c));
+      if (!text) continue;
+      if (option.exact ? text === target : text.includes(target)) return { r, c, text };
+    }
+  }
+  return null;
+}
+function estimateSheetFindTotalRow(state, startRow = 1) {
+  if (!state) return 0;
+  const maxRow = Number(state.maxRow || 80);
+  const maxCol = Math.min(Number(state.maxCol || 30), 8);
+  for (let r = Math.max(1, Number(startRow || 1)); r <= maxRow; r += 1) {
+    const texts = [];
+    for (let c = 1; c <= maxCol; c += 1) texts.push(estimatePeriodNormalizeText(estimateSheetDisplayValue(state, r, c)));
+    const rowText = texts.join(" ");
+    if (/합\s*계\s*금\s*액/.test(rowText)) continue;
+    if (texts.some(t => t === "총계" || t === "합계" || /^총\s*계$/.test(t) || /^합\s*계$/.test(t))) return r;
+  }
+  return 0;
+}
+function estimateSheetEnsureTotalAmountFormula(state) {
+  if (!state) return null;
+  const amountHeader = estimateSheetFindHeaderCell(state, "금액", { minRow: 8, maxRow: 18, minCol: 1, maxCol: 8, exact: true }) || estimateSheetFindHeaderCell(state, "금액", { minRow: 8, maxRow: 18, minCol: 1, maxCol: 8 });
+  if (!amountHeader) return null;
+  const totalRow = estimateSheetFindTotalRow(state, amountHeader.r + 1);
+  if (!totalRow || totalRow <= amountHeader.r + 1) return null;
+  const amountCol = amountHeader.c;
+  const startRow = amountHeader.r + 2 <= totalRow - 1 ? amountHeader.r + 2 : amountHeader.r + 1;
+  const endRow = totalRow - 1;
+  const colLabel = estimateSheetColumnA1(amountCol);
+  const totalObj = estimateSheetGetCellObj(state, totalRow, amountCol);
+  totalObj.formula = `SUM(${colLabel}${startRow}:${colLabel}${endRow})`;
+  totalObj.value = "";
+  totalObj.userFormula = true;
+  return { amountCol, headerRow: amountHeader.r, startRow, endRow, totalRow };
+}
+function estimatePeriodExtractRightHelperPy(state) {
+  if (!state) return "";
+  const maxRow = Number(state.maxRow || 80);
+  const maxCol = Number(state.maxCol || 30);
+  for (let r = 1; r <= maxRow; r += 1) {
+    for (let c = 8; c < maxCol; c += 1) {
+      const label = estimatePeriodNormalizeText(estimateSheetDisplayValue(state, r, c));
+      if (label !== "평") continue;
+      const value = estimatePeriodNormalizeText(estimateSheetDisplayValue(state, r, c + 1));
+      if (value && estimatePeriodToNumber(value)) return value;
+    }
+  }
+  return "";
+}
 function estimateSheetMergeInfo(spec) {
   const starts = {}; const skips = new Set();
   (spec.merges || []).forEach(([r1, c1, r2, c2]) => {
@@ -1258,6 +1332,7 @@ function openEstimateSheetExcelWindow(index = null, option = {}) {
       estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
     }
   }
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(estimateSheetEditorState);
   estimateSheetExcelActiveCell = { r: 1, c: 1 };
   const features = "popup=yes,width=1500,height=940,left=40,top=20,resizable=yes,scrollbars=yes";
   const win = window.open("", "CONCOST_ESTIMATE_EXCEL_WINDOW", features);
@@ -2054,6 +2129,7 @@ function estimateSheetRecordToState(record) {
 
 function estimateSheetBuildRecordFromCurrent(existing) {
   const baseState = estimateSheetEditorState || estimateSheetCreateState(estimateSheetActiveType);
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(baseState);
   const quoteData = estimateSheetExtractQuoteDataFromState(baseState);
   quoteData.type = estimateSheetActiveType;
   const stableState = estimateSheetApplyQuoteDataToTemplate(quoteData);
@@ -2126,8 +2202,11 @@ function markEstimateSheetSent(index) {
   const record = estimateSheetRecords[index];
   if (!record) return;
   if (!record.id) record.id = estimateSheetMakeId("estimate");
-  if (!record.quoteData) record.quoteData = estimateSheetExtractQuoteDataFromState(record.state || estimateSheetCreateState(record.type));
+  const sourceStateForSend = record.state || estimateSheetCreateState(record.type);
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(sourceStateForSend);
+  record.quoteData = estimateSheetExtractQuoteDataFromState(sourceStateForSend);
   record.state = estimateSheetApplyQuoteDataToTemplate(record.quoteData);
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(record.state);
   record.status = "발송완료";
   record.sentAt = estimateSheetNow();
   record.updatedAt = estimateSheetNow();
@@ -2159,6 +2238,7 @@ function openEstimateSheetExcelWindow(index = null, option = {}) {
       estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
     }
   }
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(estimateSheetEditorState);
   estimateSheetExcelActiveCell = { r: 1, c: 1 };
   const features = "popup=yes,width=1500,height=940,left=40,top=20,resizable=yes,scrollbars=yes";
   const win = window.open("", "CONCOST_ESTIMATE_EXCEL_WINDOW", features);
@@ -2448,6 +2528,9 @@ function estimatePeriodDirectValue(values = {}, key, colNo, source = "") {
 
 function estimatePeriodExtractSheetAreaPy(state) {
   if (!state) return "";
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(state);
+  const helperPy = typeof estimatePeriodExtractRightHelperPy === "function" ? estimatePeriodExtractRightHelperPy(state) : "";
+  if (helperPy) return helperPy;
   const candidates = [
     [14, 10], // 우측 보조표: 평 값
     [14, 9],
@@ -2466,29 +2549,22 @@ function estimatePeriodExtractSheetAreaPy(state) {
 
 function estimatePeriodExtractSheetUnitPriceSum(state) {
   if (!state) return "";
+  const formulaInfo = typeof estimateSheetEnsureTotalAmountFormula === "function" ? estimateSheetEnsureTotalAmountFormula(state) : null;
   const maxRow = Number(state.maxRow || ESTIMATE_EXCEL_SPECS?.[state.type]?.maxRow || 80);
-  let headerRow = 0;
-  for (let r = 1; r <= Math.min(maxRow, 40); r += 1) {
-    const label = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, 5) || "");
-    if (label.includes("단가")) {
-      headerRow = r;
-      break;
+  let header = typeof estimateSheetFindHeaderCell === "function" ? estimateSheetFindHeaderCell(state, "단가", { minRow: 8, maxRow: 18, minCol: 1, maxCol: 8, exact: true }) : null;
+  let headerRow = header?.r || 0;
+  let unitCol = header?.c || 5;
+  if (!headerRow) {
+    for (let r = 1; r <= Math.min(maxRow, 40); r += 1) {
+      const label = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, 5) || "");
+      if (label.includes("단가")) { headerRow = r; unitCol = 5; break; }
     }
   }
-  const startRow = headerRow ? headerRow + 1 : 12;
-  let endRow = maxRow;
-  for (let r = startRow; r <= maxRow; r += 1) {
-    const rowText = [1, 2, 3, 4, 5, 6, 7]
-      .map(c => estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || ""))
-      .join(" ");
-    if (rowText.includes("총계") || rowText.includes("합계")) {
-      endRow = r - 1;
-      break;
-    }
-  }
+  const startRow = headerRow ? headerRow + 2 : 13;
+  const endRow = formulaInfo?.endRow || ((typeof estimateSheetFindTotalRow === "function" ? estimateSheetFindTotalRow(state, startRow) : 0) || maxRow) - 1;
   let sum = 0;
   for (let r = startRow; r <= endRow; r += 1) {
-    const value = estimatePeriodToNumber(estimateSheetDisplayValue?.(state, r, 5) || "");
+    const value = estimatePeriodToNumber(estimateSheetDisplayValue?.(state, r, unitCol) || "");
     if (value) sum += value;
   }
   return sum ? sum : "";
@@ -2496,6 +2572,11 @@ function estimatePeriodExtractSheetUnitPriceSum(state) {
 
 function estimatePeriodExtractSheetTotalAmount(state) {
   if (!state) return "";
+  const formulaInfo = typeof estimateSheetEnsureTotalAmountFormula === "function" ? estimateSheetEnsureTotalAmountFormula(state) : null;
+  if (formulaInfo) {
+    const value = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, formulaInfo.totalRow, formulaInfo.amountCol) || "");
+    if (value && estimatePeriodToNumber(value)) return value;
+  }
   const candidates = [
     [20, 6], // 총계 금액
     [10, 2], // 합계금액 문구
@@ -2568,18 +2649,31 @@ function estimatePeriodBaseListRows() {
 function estimatePeriodSentListRows() {
   estimatePeriodLoadSentRows();
   return estimatePeriodSentRows.map((item, index) => {
-    const row = estimatePeriodRowFromValues(item.values || {}, item.key || `sent-${index}`, "sent", {
+    const values = { ...(item.values || {}) };
+    let calcState = item.detailSnapshot || null;
+    if (!calcState && item.recordSnapshot?.quoteData && typeof estimateSheetApplyQuoteDataToTemplate === "function") calcState = estimateSheetApplyQuoteDataToTemplate(item.recordSnapshot.quoteData);
+    if (calcState) {
+      if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(calcState);
+      const calcArea = estimatePeriodExtractSheetAreaPy(calcState);
+      const calcUnit = estimatePeriodExtractSheetUnitPriceSum(calcState);
+      const calcAmount = estimatePeriodExtractSheetTotalAmount(calcState);
+      if (calcArea !== "") values[5] = calcArea;
+      if (calcUnit !== "") values[6] = calcUnit;
+      if (calcAmount !== "") values[7] = calcAmount;
+      item.detailSnapshot = calcState;
+    }
+    const row = estimatePeriodRowFromValues(values, item.key || `sent-${index}`, "sent", {
       linked: true,
       sentAt: item.sentAt || "",
       sourceEstimateId: item.sourceEstimateId || "",
       sourceSentIndex: index,
-      detailSnapshot: item.detailSnapshot || null,
+      detailSnapshot: calcState || item.detailSnapshot || null,
       recordSnapshot: item.recordSnapshot || null,
-      recipient: item.values?.[3] || item.recordSnapshot?.recipient || ""
+      recipient: values?.[3] || item.recordSnapshot?.recipient || ""
     });
-    row.status = item.values?.[15] || row.status || "대기중";
-    row.manualPeriodFields = (item.manualPeriodFields && typeof item.manualPeriodFields === "object") ? item.manualPeriodFields : (item.values?.manualPeriodFields && typeof item.values.manualPeriodFields === "object" ? item.values.manualPeriodFields : (item.manualPeriodFields || item.values?.manualPeriodFields ? { scope:true, description:true, result:true, stage:true } : {}));
-    if (row.manualPeriodFields?.stage) row.stage = item.values?.[18] || row.stage || "";
+    row.status = values?.[15] || row.status || "대기중";
+    row.manualPeriodFields = (item.manualPeriodFields && typeof item.manualPeriodFields === "object") ? item.manualPeriodFields : (values?.manualPeriodFields && typeof values.manualPeriodFields === "object" ? values.manualPeriodFields : (item.manualPeriodFields || values?.manualPeriodFields ? { scope:true, description:true, result:true, stage:true } : {}));
+    if (row.manualPeriodFields?.stage) row.stage = values?.[18] || row.stage || "";
     return row;
   });
 }
