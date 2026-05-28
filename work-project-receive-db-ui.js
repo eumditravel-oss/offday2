@@ -59,7 +59,82 @@ function parseEstimateDbMonth(value) {
   if (date) return Number(date[1]);
   return null;
 }
-function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjProjectLinkColumnOnce(); ensureEstimateDbPjDeliveryPlanColumnsOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
+
+const ESTIMATE_DB_CREATED_DATE_HEADER = "최초생성날짜";
+
+function formatEstimateDbKoreanDate(date = new Date()) {
+  const pad = value => String(value).padStart(2, "0");
+  return `${date.getFullYear()}년 ${pad(date.getMonth() + 1)}월 ${pad(date.getDate())}일`;
+}
+
+function normalizeEstimateDbCreatedDate(value, fallbackDate = null) {
+  const raw = normalizeEstimateDbText(value);
+  if (/^20\d{2}년\s*\d{1,2}월\s*\d{1,2}일$/.test(raw)) return raw.replace(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/, (_m, y, mo, d) => `${y}년 ${String(mo).padStart(2, "0")}월 ${String(d).padStart(2, "0")}일`);
+  const ymd = raw.match(/^(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
+  if (ymd) return `${ymd[1]}년 ${String(ymd[2]).padStart(2, "0")}월 ${String(ymd[3]).padStart(2, "0")}일`;
+  const compact = raw.replace(/[^0-9]/g, "").match(/^(20\d{2})(\d{2})(\d{2})$/);
+  if (compact) return `${compact[1]}년 ${compact[2]}월 ${compact[3]}일`;
+  const yearOnly = raw.match(/(20\d{2})/);
+  if (yearOnly) return `${yearOnly[1]}년 00월 00일`;
+  return fallbackDate || formatEstimateDbKoreanDate();
+}
+
+function getEstimateDbCreatedDateYear(value) {
+  const raw = normalizeEstimateDbText(value);
+  const match = raw.match(/(20\d{2})/);
+  return match ? match[1] : String(new Date().getFullYear());
+}
+
+function findEstimateDbColumnIndexByAnyName(columns = [], names = []) {
+  const targets = names.map(normalizeEstimateDbText);
+  return columns.findIndex(col => targets.includes(normalizeEstimateDbText(col)));
+}
+
+function getEstimateDbNextPjNoForYear(year, excludeRowIndex = -1) {
+  const sheet = estimateDbSheets?.pj;
+  const header = sheet?.headerRows?.[0] || [];
+  const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
+  const createdIndex = findEstimateDbColumnIndexByAnyName(header, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
+  let maxSeq = 0;
+  (sheet?.rows || []).forEach((row, rowIndex) => {
+    if (rowIndex === excludeRowIndex) return;
+    const value = normalizeEstimateDbText(row?.[pjNoIndex]);
+    const match = value.match(/^(20\d{2})(\d{3})$/);
+    const rowYear = match ? match[1] : getEstimateDbCreatedDateYear(row?.[createdIndex]);
+    if (rowYear !== String(year)) return;
+    if (match) maxSeq = Math.max(maxSeq, Number(match[2]));
+  });
+  return `${year}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+function ensureEstimateDbPjIdentityColumnsOnce(options = {}) {
+  const sheet = estimateDbSheets?.pj;
+  if (!sheet?.headerRows?.[0]) return;
+  const header = sheet.headerRows[0];
+  const legacyYearIndex = header.findIndex(col => normalizeEstimateDbText(col) === "년도");
+  if (legacyYearIndex >= 0) header[legacyYearIndex] = ESTIMATE_DB_CREATED_DATE_HEADER;
+  const createdIndex = header.findIndex(col => normalizeEstimateDbText(col) === ESTIMATE_DB_CREATED_DATE_HEADER);
+  const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
+  if (createdIndex < 0 || pjNoIndex < 0) return;
+
+  (sheet.rows || []).forEach((row, rowIndex) => {
+    if (!Array.isArray(row)) return;
+    while (row.length < header.length) row.push("");
+    row[createdIndex] = normalizeEstimateDbCreatedDate(row[createdIndex]);
+    const year = getEstimateDbCreatedDateYear(row[createdIndex]);
+    const currentPjNo = normalizeEstimateDbText(row[pjNoIndex]);
+    const isValidCurrent = new RegExp(`^${year}\\d{3}$`).test(currentPjNo);
+    const duplicateCount = (sheet.rows || []).filter((other, otherIndex) => otherIndex !== rowIndex && normalizeEstimateDbText(other?.[pjNoIndex]) === currentPjNo).length;
+    const shouldAutoSet = options.assignMissing || !estimateDbPjIdentityColumnsEnsured;
+    if (shouldAutoSet && (!currentPjNo || !isValidCurrent || duplicateCount > 0)) {
+      row[pjNoIndex] = getEstimateDbNextPjNoForYear(year, rowIndex);
+    }
+  });
+
+  estimateDbPjIdentityColumnsEnsured = true;
+}
+
+function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true }); ensureEstimateDbPjProjectLinkColumnOnce(); ensureEstimateDbPjDeliveryPlanColumnsOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   const rows = sheet.headerRows || [];
   if (!rows.length) return [];
@@ -761,7 +836,7 @@ function migrateEstimateDbPjColumns() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const desired = [
-    "년도","접수번호","PJ NO","국내/해외","거래처명","프로젝트명","부서명","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
+    "최초생성날짜","접수번호","PJ NO","국내/해외","거래처명","프로젝트명","부서명","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항","수주시 요청사항"
   ];
   const current = sheet.headerRows[0];
   if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
@@ -1223,7 +1298,7 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
   const columns = getEstimateDbLeafColumns(sheet);
   const linkIndex = columns.findIndex(c => normalizeEstimateDbText(c) === ESTIMATE_DB_PROJECT_LINK_HEADER);
   const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
-  const yearIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "년도");
+  const yearIndex = columns.findIndex(c => [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"].includes(normalizeEstimateDbText(c)));
   const selected = getEstimateDbProjectLinkOptions(rowIndex).find(item => item.label === selectedLabel || item.pjNo === selectedLabel || selectedLabel.startsWith(`${item.pjNo} |`));
   const target = rows[rowIndex];
   const source = selected ? rows[selected.sourceIndex] : null;
@@ -1856,7 +1931,7 @@ function getEstimateDbPjSyncPayload(pjRowIndex) {
   if (!row) return null;
   const value = name => row[pjCols.indexOf(name)] || "";
   const payload = {
-    year: value("년도"),
+    year: value(ESTIMATE_DB_CREATED_DATE_HEADER) || value("년도"),
     receiptNo: value("접수번호"),
     pjNo: value("PJ NO"),
     pjName: value("프로젝트명"),
@@ -1870,7 +1945,7 @@ function getEstimateDbPjSyncPayload(pjRowIndex) {
 }
 function estimateDbTargetRowKey(tab, row) {
   return makeEstimateDbSyncKey({
-    year: getEstimateDbRowValueByHeader(tab, row, "년도"),
+    year: getEstimateDbRowValueByHeader(tab, row, ESTIMATE_DB_CREATED_DATE_HEADER) || getEstimateDbRowValueByHeader(tab, row, "년도"),
     receiptNo: getEstimateDbRowValueByHeader(tab, row, "접수번호"),
     pjNo: getEstimateDbRowValueByHeader(tab, row, "PJ NO"),
     pjName: getEstimateDbRowValueByHeader(tab, row, "PJ명") || getEstimateDbRowValueByHeader(tab, row, "프로젝트명")
@@ -1881,6 +1956,7 @@ function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
   if (!payload) return 0;
   let changed = 0;
   changed += syncEstimateDbTargetRow("progress", payload.key, {
+    "최초생성날짜": payload.year,
     "년도": payload.year,
     "접수번호": payload.receiptNo,
     "PJ NO": payload.pjNo,
@@ -1888,6 +1964,7 @@ function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
     "PJ명": payload.pjName
   }, payload.sourceIndex);
   changed += syncEstimateDbTargetRow("mep", payload.key, {
+    "최초생성날짜": payload.year,
     "년도": payload.year,
     "접수번호": payload.receiptNo,
     "PJ NO": payload.pjNo,
@@ -1953,6 +2030,7 @@ function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const storedValue = normalizeEstimateDbCellForStorage(tab, colIndex, value);
   rows[rowIndex][colIndex] = storedValue;
   recalcEstimateDbRow(tab, rows[rowIndex]);
+  if (tab === "pj") ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   if (!options.silentRender) {
     refreshEstimateDbCalculatedCells(rowIndex);
     refreshEstimateDbTotalRowOnly();
@@ -1963,11 +2041,17 @@ function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const sheet = getEstimateDbSheet();
   const columns = getEstimateDbLeafColumns(sheet);
   const next = Array(columns.length).fill("");
-  const yearIndex = columns.findIndex(c => c === "년도");
-  if (yearIndex >= 0) next[yearIndex] = getSelectedEstimateDbYear();
+  const createdDateIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
+  const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
+  if (createdDateIndex >= 0) next[createdDateIndex] = estimateDbActiveTab === "pj" ? formatEstimateDbKoreanDate() : getSelectedEstimateDbYear();
+  if (estimateDbActiveTab === "pj" && pjNoIndex >= 0) {
+    const year = getEstimateDbCreatedDateYear(next[createdDateIndex]);
+    next[pjNoIndex] = getEstimateDbNextPjNoForYear(year);
+  }
   const rows = getEstimateDbRows(sheet);
   if (insertAt === null || insertAt === undefined || insertAt > rows.length) rows.push(next);
   else rows.splice(Math.max(0, insertAt), 0, next);
+  if (estimateDbActiveTab === "pj") ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   applyEstimateDbPjDefaultSort();
   renderEstimateDbManage();
 }
@@ -2020,6 +2104,7 @@ function syncEstimateDbNewPjRowsToLinkedSheets() {
 function exportEstimateDbJsonForAi() {
   removeEstimateDbPjReceiptColumnOnce();
   ensureEstimateDbPjProjectLinkColumnOnce();
+  ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   const payload = {
     exportedAt: new Date().toISOString(),
     note: "DB관리 더미데이터 요청용 JSON입니다. 이 값을 수정/추가해서 다시 전달하면 동일 구조로 반영할 수 있습니다.",
@@ -2045,7 +2130,7 @@ function exportEstimateDbJsonForAi() {
 function getEstimateDbRowsByYear(tab, year = getSelectedEstimateDbYear()) {
   const sheet = estimateDbSheets[tab];
   const columns = getEstimateDbLeafColumns(sheet);
-  const yearIndex = columns.findIndex(c => c === "년도");
+  const yearIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
   return (sheet.rows || []).filter(row => {
     const val = yearIndex >= 0 ? row[yearIndex] : row[0];
     return parseEstimateDbYear(val) === String(year);
