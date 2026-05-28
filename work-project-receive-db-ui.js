@@ -1710,7 +1710,8 @@ function getEstimateDbDropdownOptions(tab, rowIndex, colIndex) {
   } else if (estimateDbDefaultOptions[header]) {
     options = [...estimateDbDefaultOptions[header]];
   }
-  options = [...options, ...getEstimateDbUniqueColumnValues(tab, colIndex), ...custom];
+  const uniqueValues = header === "작업공종" ? [] : getEstimateDbUniqueColumnValues(tab, colIndex);
+  options = [...options, ...uniqueValues, ...custom];
   return [...new Set(options.map(normalizeEstimateDbText).filter(Boolean))];
 }
 function ensureEstimateDbDropdownModal() {
@@ -1723,6 +1724,7 @@ function ensureEstimateDbDropdownModal() {
     <div class="estimate-db-dropdown-box" role="dialog" aria-modal="true">
       <div class="estimate-db-dropdown-title" id="estimateDbDropdownTitle">목록 선택</div>
       <input id="estimateDbDropdownSearch" class="estimate-db-dropdown-search" placeholder="검색 또는 새 항목 입력" />
+      <div id="estimateDbDropdownMultiHelp" class="estimate-db-dropdown-help hidden">Ctrl+B 단축키로 중복선택이 가능합니다.</div>
       <div id="estimateDbDropdownList" class="estimate-db-dropdown-list"></div>
       <div class="estimate-db-dropdown-actions">
         <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbDropdown()">닫기</button>
@@ -1739,9 +1741,24 @@ function ensureEstimateDbDropdownModal() {
 function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
   if (!isEstimateDbDropdownCell(estimateDbActiveTab, colIndex)) return false;
   const modal = ensureEstimateDbDropdownModal();
-  estimateDbDropdownState = { tab: estimateDbActiveTab, rowIndex, colIndex, activeIndex: 0, options: getEstimateDbDropdownOptions(estimateDbActiveTab, rowIndex, colIndex), fresh: true };
+  const header = getEstimateDbColumnName(estimateDbActiveTab, colIndex);
+  const existingValues = normalizeEstimateDbText(getEstimateDbRows()[rowIndex]?.[colIndex] || "")
+    .split(/[,、，]+/)
+    .map(v => normalizeEstimateDbText(v))
+    .filter(Boolean);
+  estimateDbDropdownState = {
+    tab: estimateDbActiveTab,
+    rowIndex,
+    colIndex,
+    activeIndex: 0,
+    options: getEstimateDbDropdownOptions(estimateDbActiveTab, rowIndex, colIndex),
+    fresh: true,
+    multi: header === "작업공종",
+    selectedValues: header === "작업공종" ? existingValues : []
+  };
   modal.classList.remove("hidden");
-  modal.querySelector("#estimateDbDropdownTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 선택`;
+  modal.querySelector("#estimateDbDropdownTitle").textContent = `${header} 선택`;
+  modal.querySelector("#estimateDbDropdownMultiHelp")?.classList.toggle("hidden", header !== "작업공종");
   const search = modal.querySelector("#estimateDbDropdownSearch");
   search.value = "";
   search.placeholder = getEstimateDbRows()[rowIndex]?.[colIndex] || "검색 또는 새 항목 입력";
@@ -1771,14 +1788,40 @@ function renderEstimateDbDropdownList() {
     list.innerHTML = `<div class="estimate-db-dropdown-empty">${state.tab === "pj" && getEstimateDbColumnName(state.tab, state.colIndex) === ESTIMATE_DB_PROJECT_LINK_HEADER ? "연결할 프로젝트가 없습니다." : "기존 데이터에 작성된 내용이 없습니다.(Enter를 누를 시 해당 목록 추가)"}</div>`;
     return;
   }
-  list.innerHTML = filtered.map((option, index) => `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${escapeEstimateDbHtml(option)}</button>`).join("") || `<div class="estimate-db-dropdown-empty">목록이 없습니다. 입력 후 Enter를 누르면 해당 목록에 추가됩니다.</div>`;
+  list.innerHTML = filtered.map((option, index) => {
+    const selected = !!state.multi && (state.selectedValues || []).includes(option);
+    return `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""} ${selected ? "selected" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${selected ? "✓ " : ""}${escapeEstimateDbHtml(option)}</button>`;
+  }).join("") || `<div class="estimate-db-dropdown-empty">목록이 없습니다. 입력 후 Enter를 누르면 해당 목록에 추가됩니다.</div>`;
+}
+function toggleEstimateDbDropdownMultiSelection(index = estimateDbDropdownState?.activeIndex || 0) {
+  const state = estimateDbDropdownState;
+  if (!state || !state.multi) return;
+  const search = document.getElementById("estimateDbDropdownSearch");
+  const typed = normalizeEstimateDbText(search?.value || "");
+  const value = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
+  if (!value) return;
+  if (state.noMatch || !(state.options || []).includes(value)) {
+    addEstimateDbCustomOption(state.tab, state.colIndex, value);
+    if (!state.options.includes(value)) state.options.push(value);
+  }
+  const selected = state.selectedValues || (state.selectedValues = []);
+  const pos = selected.indexOf(value);
+  if (pos >= 0) selected.splice(pos, 1);
+  else selected.push(value);
+  if (search) {
+    search.value = selected.join(",");
+    search.dataset.fresh = "1";
+  }
+  state.fresh = true;
+  renderEstimateDbDropdownList();
 }
 function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeIndex || 0) {
   const state = estimateDbDropdownState;
   if (!state) return;
   const search = document.getElementById("estimateDbDropdownSearch");
   const typed = normalizeEstimateDbText(search?.value || "");
-  const value = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
+  const pickedValue = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
+  const value = state.multi && (state.selectedValues || []).length ? state.selectedValues.join(",") : pickedValue;
   if (!value) return;
   const header = getEstimateDbColumnName(state.tab, state.colIndex);
   const row = state.rowIndex;
@@ -1786,7 +1829,7 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
   if (state.tab === "pj" && header === ESTIMATE_DB_PROJECT_LINK_HEADER) {
     applyEstimateDbProjectLink(state.rowIndex, value);
   } else {
-    if (state.noMatch || !(state.options || []).includes(value)) addEstimateDbCustomOption(state.tab, state.colIndex, value);
+    if (!state.multi && (state.noMatch || !(state.options || []).includes(value))) addEstimateDbCustomOption(state.tab, state.colIndex, value);
     updateEstimateDbCell(state.rowIndex, state.colIndex, value, { silentRender: true });
   }
   closeEstimateDbDropdown();
@@ -1810,6 +1853,7 @@ function handleEstimateDbDropdownKeydown(event) {
   const state = estimateDbDropdownState;
   if (!state) return;
   if (event.key === "Escape") { event.preventDefault(); closeEstimateDbDropdown(); return; }
+  if (event.ctrlKey && String(event.key || "").toLowerCase() === "b") { event.preventDefault(); toggleEstimateDbDropdownMultiSelection(state.activeIndex || 0); return; }
   if (event.key === "ArrowDown") { event.preventDefault(); state.activeIndex = Math.min((state.filtered?.length || 1) - 1, (state.activeIndex || 0) + 1); renderEstimateDbDropdownList(); return; }
   if (event.key === "ArrowUp") { event.preventDefault(); state.activeIndex = Math.max(0, (state.activeIndex || 0) - 1); renderEstimateDbDropdownList(); return; }
   if (event.key === "Enter") { event.preventDefault(); selectEstimateDbDropdownOption(state.activeIndex || 0); return; }
