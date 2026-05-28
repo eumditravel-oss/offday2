@@ -1065,7 +1065,7 @@ function renderEstimateDbManage() {
         const reorderAttrs = estimateDbColumnReorderMode
           ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="헤더를 좌클릭 드래그해서 바꿀 열 위치에 놓으면 두 열이 서로 바뀝니다."`
           : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
-        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}${getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
+        return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}${getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex)}${getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
       <th class="quote-db-manage-col">관리</th>
     </tr>
@@ -1200,7 +1200,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
         const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
-        const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
+        const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
         const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
         const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
@@ -1275,6 +1275,11 @@ function restoreEstimateDbFocus() {
   requestAnimationFrame(() => selectEstimateDbCell(cell.rowIndex || 0, cell.colIndex || 0));
 }
 function focusEstimateDbCell(rowIndex, colIndex) {
+  if (!isEstimateDbColumnVisibleOnScreen(estimateDbActiveTab, colIndex)) {
+    colIndex = getEstimateDbNextScreenVisibleCol(colIndex, 1) !== colIndex
+      ? getEstimateDbNextScreenVisibleCol(colIndex, 1)
+      : getEstimateDbNextScreenVisibleCol(colIndex, -1);
+  }
   const rowEl = document.querySelector(`.quote-db-data-row[data-row-index="${rowIndex}"]`);
   const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`)
     || rowEl?.querySelector(`.quote-db-done-cell[data-resize-col="${colIndex}"] input[type="checkbox"]`);
@@ -1382,6 +1387,21 @@ let estimateDbContactDetailsCollapsed = false;
 
 const ESTIMATE_DB_CONTACT_VISIBLE_HEADER = "거래처";
 const ESTIMATE_DB_CONTACT_HIDDEN_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타"];
+const ESTIMATE_DB_PJ_SCREEN_HIDDEN_HEADERS = ["접수번호"];
+
+function isEstimateDbPjScreenHiddenColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "pj") return false;
+  const name = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  return ESTIMATE_DB_PJ_SCREEN_HIDDEN_HEADERS.includes(name);
+}
+
+function isEstimateDbColumnVisibleOnScreen(tab = estimateDbActiveTab, colIndex = 0) {
+  return !isEstimateDbPjScreenHiddenColumn(tab, colIndex) && !isEstimateDbContactDetailColumn(tab, colIndex);
+}
+
+function getEstimateDbScreenHiddenClass(tab = estimateDbActiveTab, colIndex = 0) {
+  return isEstimateDbPjScreenHiddenColumn(tab, colIndex) ? " quote-db-pj-screen-hidden" : "";
+}
 
 function isEstimateDbContactDetailColumn(tab = estimateDbActiveTab, colIndex = 0) {
   if (tab !== "pj") return false;
@@ -1544,8 +1564,18 @@ function focusEstimateDbContactModalCell(rowIndex, fieldIndex) {
   const field = ESTIMATE_DB_CONTACT_FIELDS[Math.max(0, Math.min(ESTIMATE_DB_CONTACT_FIELDS.length - 1, Number(fieldIndex) || 0))];
   const input = document.querySelector(`#estimateDbContactRows input[data-contact-index="${row}"][data-contact-field="${field}"]`);
   if (!input) return;
+  const wrap = input.closest(".estimate-db-contact-grid-wrap");
   input.focus({ preventScroll: true });
   input.select?.();
+  if (wrap) {
+    const wrapRect = wrap.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    const pad = 32;
+    if (inputRect.right > wrapRect.right - pad) wrap.scrollLeft += inputRect.right - wrapRect.right + pad;
+    if (inputRect.left < wrapRect.left + pad) wrap.scrollLeft -= wrapRect.left - inputRect.left + pad;
+    if (inputRect.bottom > wrapRect.bottom - pad) wrap.scrollTop += inputRect.bottom - wrapRect.bottom + pad;
+    if (inputRect.top < wrapRect.top + pad) wrap.scrollTop -= wrapRect.top - inputRect.top + pad;
+  }
 }
 
 function handleEstimateDbContactModalKeydown(event) {
@@ -1960,8 +1990,20 @@ function handleEstimateDbKeydown(event) {
   }
 }
 
+function getEstimateDbNextScreenVisibleCol(colIndex, colDelta, colCount = getEstimateDbLeafColumns().length) {
+  if (!colDelta) return colIndex;
+  let nextCol = Math.max(0, Math.min(colCount - 1, colIndex + colDelta));
+  while (nextCol >= 0 && nextCol < colCount && !isEstimateDbColumnVisibleOnScreen(estimateDbActiveTab, nextCol)) {
+    const candidate = nextCol + colDelta;
+    if (candidate < 0 || candidate >= colCount) break;
+    nextCol = candidate;
+  }
+  if (!isEstimateDbColumnVisibleOnScreen(estimateDbActiveTab, nextCol)) return colIndex;
+  return nextCol;
+}
+
 function getEstimateDbNextVisibleCell(rowIndex, colIndex, rowDelta, colDelta, colCount = getEstimateDbLeafColumns().length) {
-  const nextCol = Math.max(0, Math.min(colCount - 1, colIndex + colDelta));
+  const nextCol = getEstimateDbNextScreenVisibleCol(colIndex, colDelta, colCount);
 
   // 좌우 이동은 같은 데이터 행 안에서만 이동합니다.
   if (!rowDelta) {
