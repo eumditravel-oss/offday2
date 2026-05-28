@@ -19651,3 +19651,52 @@ button.btn-orange{
   .pm-project-list-table{min-width:980px;}
   .pm-project-list-table-wrap{overflow-x:auto;}
 }
+
+
+/* === 2026-05-28 프로젝트 관리 리스트 1행 표시 및 새 창 상세 보정 === */
+#projectManage .pm-project-list-screen .pm-project-list-table-wrap{
+  overflow:hidden !important;
+}
+#projectManage .pm-project-list-screen .pm-project-list-table{
+  display:table !important;
+  width:100% !important;
+  max-height:none !important;
+  overflow:visible !important;
+  border-collapse:collapse !important;
+  table-layout:fixed !important;
+}
+#projectManage .pm-project-list-screen .pm-project-list-table thead{display:table-header-group !important;}
+#projectManage .pm-project-list-screen .pm-project-list-table tbody{display:table-row-group !important;}
+#projectManage .pm-project-list-screen .pm-project-list-table tr,
+#projectManage .pm-project-list-screen .pm-project-list-row{
+  display:table-row !important;
+  width:auto !important;
+  min-height:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+}
+#projectManage .pm-project-list-screen .pm-project-list-table th,
+#projectManage .pm-project-list-screen .pm-project-list-table td{
+  display:table-cell !important;
+  height:44px !important;
+  min-height:0 !important;
+  padding:8px 10px !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  vertical-align:middle !important;
+  word-break:keep-all !important;
+}
+#projectManage .pm-project-list-screen .pm-project-list-table td strong,
+#projectManage .pm-project-list-screen .pm-project-list-table td span{
+  display:inline-block !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  vertical-align:middle !important;
+}
+#projectManage .pm-project-list-screen .pm-project-list-table tbody tr:hover td{
+  background:#fff7ed !important;
+}
