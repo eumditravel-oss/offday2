@@ -1651,6 +1651,9 @@ function registerEstimatePeriodSentRecord(record, recordIndex = null) {
   const recordId = record.id || estimateSheetMakeId("estimate");
   record.id = recordId;
   const key = `${recordId}|${sentAt}`;
+  const previousSent = estimatePeriodSentRows.find(item => item.sourceEstimateId === recordId);
+  const previousManual = (previousSent?.manualPeriodFields && typeof previousSent.manualPeriodFields === "object") ? previousSent.manualPeriodFields : (previousSent?.values?.manualPeriodFields && typeof previousSent.values.manualPeriodFields === "object" ? previousSent.values.manualPeriodFields : {});
+  const preserveManualValue = (slot, fallback = "") => previousManual[slot] ? (previousSent?.values?.[ESTIMATE_PERIOD_KEY_TO_COL?.[slot]] || "") : fallback;
   const row = {
     key,
     sourceEstimateId: recordId,
@@ -1680,6 +1683,9 @@ function registerEstimatePeriodSentRecord(record, recordIndex = null) {
       18: ""
     }
   };
+  row.values.manualPeriodFields = previousManual;
+  row.manualPeriodFields = previousManual;
+  row.lastSync = { source: "견적서 종류별 관리", field: "발송 스냅샷", syncedAt: estimateRequestNowLabel?.() || new Date().toLocaleString() };
   estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
   estimatePeriodSentRows.unshift(row);
   estimatePeriodSaveSentRows();
@@ -2426,7 +2432,10 @@ function estimatePeriodDisplayNumber(value) {
   return n.toLocaleString("ko-KR");
 }
 
-const ESTIMATE_PERIOD_DIRECT_INPUT_KEYS = ["scope", "description", "result", "stage"];
+const ESTIMATE_PERIOD_KEY_TO_COL = { date: 2, company: 3, project: 4, area: 5, unitPrice: 6, amount: 7, scope: 8, usage: 9, count: 10, unitWork: 11, bid: 12, description: 13, tender: 14, status: 15, memo: 16, result: 17, stage: 18 };
+const ESTIMATE_PERIOD_AUTO_KEYS = ["date", "company", "project", "area", "unitPrice", "amount", "usage", "count", "unitWork", "bid", "tender", "status", "memo"];
+const ESTIMATE_PERIOD_MANUAL_KEYS = ["scope", "description", "result", "stage"];
+const ESTIMATE_PERIOD_DIRECT_INPUT_KEYS = ESTIMATE_PERIOD_MANUAL_KEYS;
 
 function estimatePeriodIsDirectInputSource(source) {
   return ["sent", "db", "manual", "request", "project-receive"].includes(String(source || ""));
@@ -2569,8 +2578,8 @@ function estimatePeriodSentListRows() {
       recipient: item.values?.[3] || item.recordSnapshot?.recipient || ""
     });
     row.status = item.values?.[15] || row.status || "대기중";
-    row.manualPeriodFields = !!item.manualPeriodFields || !!item.values?.manualPeriodFields;
-    if (row.manualPeriodFields) row.stage = item.values?.[18] || row.stage || "";
+    row.manualPeriodFields = (item.manualPeriodFields && typeof item.manualPeriodFields === "object") ? item.manualPeriodFields : (item.values?.manualPeriodFields && typeof item.values.manualPeriodFields === "object" ? item.values.manualPeriodFields : (item.manualPeriodFields || item.values?.manualPeriodFields ? { scope:true, description:true, result:true, stage:true } : {}));
+    if (row.manualPeriodFields?.stage) row.stage = item.values?.[18] || row.stage || "";
     return row;
   });
 }
@@ -2660,6 +2669,7 @@ function renderEstimatePeriodFilters() {
     <label class="estimate-period-filter-field search"><span>검색</span><input id="estimatePeriodFilterQ" value="${estimateSheetHtml(estimatePeriodFilters.q || "")}" placeholder="업체명, 프로젝트명, 작업내용"></label>
     <button class="btn btn-line" type="button" id="estimatePeriodFilterApply">기간 조회</button>
     <button class="btn btn-line" type="button" id="estimatePeriodFilterReset">전체보기</button>
+    <button class="btn btn-line" type="button" id="estimatePeriodAuditBtn">연계 검증</button>
     <button class="btn btn-primary" type="button" id="estimatePeriodAddManualRow">행 추가</button>
     <button class="btn btn-line" type="button" id="estimatePeriodSaveRows">수정 저장</button>
   `;
@@ -2675,6 +2685,9 @@ function renderEstimatePeriodFilters() {
     estimatePeriodFilters = { from: "", to: "", status: "전체", q: "" };
     estimatePeriodSaveFilters();
     renderEstimatePeriodManage();
+  });
+  host.querySelector("#estimatePeriodAuditBtn")?.addEventListener("click", () => {
+    runEstimateLinkageAudit?.();
   });
   host.querySelector("#estimatePeriodAddManualRow")?.addEventListener("click", () => {
     estimatePeriodLoadEdits();
@@ -2698,12 +2711,21 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
     if (!id) return;
     const source = tr.getAttribute("data-source") || "manual";
     const row = { ...(editMap.get(id) || { id, source }) };
+    const previousRow = { ...row };
+    const manualMap = (row.manualPeriodFields && typeof row.manualPeriodFields === "object") ? { ...row.manualPeriodFields } : {};
     ESTIMATE_PERIOD_COLUMNS.forEach(col => {
       if (col.type === "detail") return;
       const el = tr.querySelector(`[data-period-key="${col.key}"]`);
-      row[col.key] = col.type === "status" ? (el?.value || "") : estimatePeriodNormalizeText(el?.innerText || el?.textContent || "");
+      const nextValue = col.type === "status" ? (el?.value || "") : estimatePeriodNormalizeText(el?.innerText || el?.textContent || "");
+      row[col.key] = nextValue;
+      if (typeof ESTIMATE_PERIOD_MANUAL_KEYS !== "undefined" && ESTIMATE_PERIOD_MANUAL_KEYS.includes(col.key)) {
+        const prevValue = estimatePeriodNormalizeText(previousRow[col.key] || "");
+        if (nextValue || nextValue !== prevValue) manualMap[col.key] = true;
+      }
     });
+    row.manualPeriodFields = manualMap;
     row.modified = true;
+    row.lastEditedAt = estimateRequestNowLabel?.() || new Date().toLocaleString();
     row.company = estimatePeriodExtractCompanyName(row.company || row.companyRaw || "");
     if (source === "sent") {
       const index = Number(tr.getAttribute("data-sent-index"));
@@ -2727,8 +2749,9 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
         item.values[16] = row.memo;
         item.values[17] = row.result;
         item.values[18] = row.stage;
-        item.values.manualPeriodFields = true;
-        item.manualPeriodFields = true;
+        item.values.manualPeriodFields = row.manualPeriodFields || {};
+        item.manualPeriodFields = row.manualPeriodFields || {};
+        item.lastEditedAt = row.lastEditedAt;
         sentChanged = true;
       }
     } else {
@@ -2905,7 +2928,9 @@ function renderEstimatePeriodManage() {
       }
       let value = row[col.key] ?? "";
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
-      return `<td class="editable ${cls}" contenteditable="true" data-period-key="${col.key}">${estimateSheetHtml(value)}</td>`;
+      const originClass = (typeof estimatePeriodFieldOriginClass === "function") ? estimatePeriodFieldOriginClass(row, col.key) : "";
+      const originBadge = (typeof estimatePeriodFieldOriginBadge === "function") ? estimatePeriodFieldOriginBadge(row, col.key) : "";
+      return `<td class="editable ${cls} ${originClass}" contenteditable="true" data-period-key="${col.key}">${estimateSheetHtml(value)}${originBadge}</td>`;
     }).join("");
     return `<tr${rowClass} data-period-row-id="${estimateSheetHtml(row.id)}" data-source="${estimateSheetHtml(row.source || "manual")}" data-sent-index="${sentIndex}" ondblclick="openEstimatePeriodRowDetail('${estimateSheetHtml(row.id || "")}')">${cells}</tr>`;
   }).join("") : `<tr><td colspan="${ESTIMATE_PERIOD_COLUMNS.length}" class="estimate-period-empty">조건에 맞는 견적서가 없습니다.</td></tr>`;
@@ -2944,6 +2969,9 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
   const recordId = record.id || estimateSheetMakeId("estimate");
   record.id = recordId;
   const key = `${recordId}|${sentAt}`;
+  const previousSent = estimatePeriodSentRows.find(item => item.sourceEstimateId === recordId);
+  const previousManual = (previousSent?.manualPeriodFields && typeof previousSent.manualPeriodFields === "object") ? previousSent.manualPeriodFields : (previousSent?.values?.manualPeriodFields && typeof previousSent.values.manualPeriodFields === "object" ? previousSent.values.manualPeriodFields : {});
+  const preserveManualValue = (slot, fallback = "") => previousManual[slot] ? (previousSent?.values?.[ESTIMATE_PERIOD_KEY_TO_COL?.[slot]] || "") : fallback;
   const row = {
     key,
     sourceEstimateId: recordId,
@@ -2960,22 +2988,88 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
       5: areaPy,
       6: unitPriceSum,
       7: totalAmount,
-      8: "",
+      8: preserveManualValue("scope", ""),
       9: "",
       10: "",
       11: record.type || "",
       12: record.type || "",
-      13: "",
+      13: preserveManualValue("description", ""),
       14: "견적서 발송",
       15: "대기중",
       16: "견적서 종류별 관리 발송 처리",
-      17: "",
-      18: ""
+      17: preserveManualValue("result", ""),
+      18: preserveManualValue("stage", "")
     }
   };
   estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.sourceEstimateId !== recordId);
   estimatePeriodSentRows.unshift(row);
   estimatePeriodSaveSentRows();
+}
+
+function estimatePeriodManualMap(row = {}) {
+  if (row.manualPeriodFields && typeof row.manualPeriodFields === "object") return row.manualPeriodFields;
+  if (row.manualPeriodFields === true) return { scope:true, description:true, result:true, stage:true };
+  return {};
+}
+
+function estimatePeriodFieldOriginClass(row = {}, key = "") {
+  if (ESTIMATE_PERIOD_MANUAL_KEYS.includes(key)) return estimatePeriodManualMap(row)[key] ? "period-cell-manual" : "period-cell-direct";
+  if (["area", "unitPrice", "amount"].includes(key)) return "period-cell-calc";
+  if (ESTIMATE_PERIOD_AUTO_KEYS.includes(key)) return "period-cell-auto";
+  return "";
+}
+
+function estimatePeriodFieldOriginBadge(row = {}, key = "") {
+  if (ESTIMATE_PERIOD_MANUAL_KEYS.includes(key) && estimatePeriodManualMap(row)[key]) return '<span class="period-origin-badge manual">수동</span>';
+  if (["area", "unitPrice", "amount"].includes(key) && row.source === "sent") return '<span class="period-origin-badge calc">계산</span>';
+  return "";
+}
+
+function estimatePeriodPreserveManualValues(nextRow = {}, prevRow = {}) {
+  const manual = estimatePeriodManualMap(prevRow);
+  ESTIMATE_PERIOD_MANUAL_KEYS.forEach(key => {
+    if (manual[key]) nextRow[key] = prevRow[key] || "";
+  });
+  nextRow.manualPeriodFields = manual;
+  return nextRow;
+}
+
+function estimateLinkageAuditRows() {
+  const problems = [];
+  const periodRows = (typeof estimatePeriodAllRowsForList === "function" ? estimatePeriodAllRowsForList() : []);
+  const periodByProject = new Map(periodRows.map(row => [estimatePeriodNormalizeText(row.project), row]));
+  if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+  const requestRows = (window.estimateRequestRows || estimateRequestRows || []).map(row => typeof estimateRequestNormalizeRow === "function" ? estimateRequestNormalizeRow(row) : row);
+  const keyCount = new Map();
+  periodRows.forEach(row => {
+    const key = estimatePeriodNormalizeText(row.dbPjNo || row.project || row.id);
+    if (!key) return;
+    keyCount.set(key, (keyCount.get(key) || 0) + 1);
+  });
+  keyCount.forEach((count, key) => { if (count > 1) problems.push({ level:"주의", target:key, item:"기간별 견적서 중복", message:`같은 기준키가 ${count}건 존재합니다.` }); });
+  requestRows.forEach(row => {
+    const project = estimatePeriodNormalizeText(row.project);
+    if (project && !periodByProject.has(project)) problems.push({ level:"누락", target:project, item:"기간별 관리 미생성", message:"견적 의뢰관리에는 있으나 기간별 견적서 관리 행이 없습니다." });
+    if ((row.status === "작업시작" || row.status === "선착수") && !row.dbLinked) problems.push({ level:"확인", target:project || row.company, item:"DB관리 연결", message:"작업 시작 상태이나 DB관리 연결 표시가 없습니다." });
+  });
+  periodRows.forEach(row => {
+    if (row.source === "sent" && (!estimatePeriodToNumber(row.area) || !estimatePeriodToNumber(row.amount))) problems.push({ level:"확인", target:row.project, item:"계산값 누락", message:"발송 견적서의 연면적 또는 금액 연동값이 비어 있습니다." });
+    ESTIMATE_PERIOD_MANUAL_KEYS.forEach(key => {
+      if (row[key] && !estimatePeriodManualMap(row)[key] && row.source !== "template") problems.push({ level:"주의", target:row.project, item:`${key} 수동보호`, message:"직접 관리 대상 값이지만 수동 보호 플래그가 없습니다. 저장하면 수동값으로 보호됩니다." });
+    });
+  });
+  return problems;
+}
+
+function runEstimateLinkageAudit() {
+  const problems = estimateLinkageAuditRows();
+  const htmlRows = problems.length ? problems.map(p => `<tr><td>${estimateSheetHtml(p.level)}</td><td>${estimateSheetHtml(p.target || "-")}</td><td>${estimateSheetHtml(p.item)}</td><td>${estimateSheetHtml(p.message)}</td></tr>`).join("") : `<tr><td colspan="4" class="empty-cell">현재 화면 기준으로 누락·중복·직접입력 보호 오류가 없습니다.</td></tr>`;
+  const modal = document.createElement("div");
+  modal.className = "estimate-linkage-audit-modal";
+  modal.innerHTML = `<div class="estimate-linkage-audit-panel"><div class="estimate-linkage-audit-head"><strong>업무관리 연계 검증</strong><button class="btn btn-line" type="button">닫기</button></div><p>기준: PJ NO/프로젝트명 연결, 견적 의뢰관리 → 견적서 종류별 관리 → 기간별 견적서 관리 → DB관리 누락 여부, 직접입력 보호 상태를 점검합니다.</p><div class="estimate-linkage-audit-table-wrap"><table><thead><tr><th>구분</th><th>대상</th><th>항목</th><th>내용</th></tr></thead><tbody>${htmlRows}</tbody></table></div></div>`;
+  modal.querySelector("button")?.addEventListener("click", () => modal.remove());
+  modal.addEventListener("click", event => { if (event.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
 }
 
 
