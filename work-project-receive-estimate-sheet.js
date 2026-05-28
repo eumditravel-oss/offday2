@@ -4033,11 +4033,15 @@ if (estimateCentralOriginalRenderEstimateRequestManage) {
   };
 }
 const estimateCentralOriginalInitializeEstimateDbVisibleSeedRows = typeof initializeEstimateDbVisibleSeedRows === "function" ? initializeEstimateDbVisibleSeedRows : null;
+let estimateCentralInitializeDbSeedOnceDone = false;
 if (estimateCentralOriginalInitializeEstimateDbVisibleSeedRows) {
   window.initializeEstimateDbVisibleSeedRows = function estimateCentralInitializeEstimateDbVisibleSeedRows() {
     estimateCentralOriginalInitializeEstimateDbVisibleSeedRows();
-    if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
-    estimateCentralRemoveBoqRowsEverywhere();
+    if (!estimateCentralInitializeDbSeedOnceDone) {
+      if (!estimateCentralSeedSynced) estimateCentralSyncSeedRows({ silent: true });
+      estimateCentralRemoveBoqRowsEverywhere();
+      estimateCentralInitializeDbSeedOnceDone = true;
+    }
   };
 }
 const estimateCentralOriginalRenderEstimatePeriodManage = typeof renderEstimatePeriodManage === "function" ? renderEstimatePeriodManage : null;
@@ -4263,11 +4267,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* DB관리 렌더링 초기에 기존 더미 2행 절단 로직이 실행된 뒤에도 기간별 원본 더미데이터가 다시 보존되도록 최종 보강 */
 const estimateCentralFinalInitializeEstimateDbVisibleSeedRows = typeof initializeEstimateDbVisibleSeedRows === "function" ? initializeEstimateDbVisibleSeedRows : null;
+let estimateCentralFinalInitializeDbSeedOnceDone = false;
 if (estimateCentralFinalInitializeEstimateDbVisibleSeedRows) {
   window.initializeEstimateDbVisibleSeedRows = function estimateCentralFinalInitializeEstimateDbVisibleSeedRowsWrapper() {
     estimateCentralFinalInitializeEstimateDbVisibleSeedRows();
-    estimateCentralSyncSeedRows({ silent: true });
-    estimateCentralRemoveBoqRowsEverywhere();
+    if (!estimateCentralFinalInitializeDbSeedOnceDone) {
+      estimateCentralSyncSeedRows({ silent: true });
+      estimateCentralRemoveBoqRowsEverywhere();
+      estimateCentralFinalInitializeDbSeedOnceDone = true;
+    }
   };
 }
 
@@ -4925,7 +4933,6 @@ if (estimateDummyHalfOriginalRenderRequestManage) {
 const estimateDummyHalfOriginalRenderDbManage = typeof renderEstimateDbManage === "function" ? renderEstimateDbManage : null;
 if (estimateDummyHalfOriginalRenderDbManage) {
   renderEstimateDbManage = function estimateDummyHalfRenderDbManage() {
-    estimateDummyHalfApplyPrune({ silent: true });
     return estimateDummyHalfOriginalRenderDbManage();
   };
   window.renderEstimateDbManage = renderEstimateDbManage;
@@ -5094,3 +5101,124 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
   };
   window.commitEstimateDbPendingEdits = commitEstimateDbPendingEdits;
 }
+
+
+/* =========================================================
+   2026-05-28 DB관리 즉각 연계 + 탭 전환 성능 최종 패치
+   - 탭 전환 시 전체 동기화/전체 렌더링을 반복하지 않음
+   - 셀 저장 시 변경된 PJ NO/행만 견적 의뢰관리·견적서 종류별·기간별 관리·DB관리로 즉각 반영
+   - 기성관리 탭은 현재 탭 데이터만 계산/렌더링
+   ========================================================= */
+(function estimateDbTargetedLinkagePerformanceFinalPatch(){
+  if (window.__estimateDbTargetedLinkagePerformanceFinalPatch) return;
+  window.__estimateDbTargetedLinkagePerformanceFinalPatch = true;
+
+  function getActiveDbTab(){ return estimateDbActiveTab || estimateDbSelectedCell?.tab || "pj"; }
+  function activeDbElement(){ return document.getElementById("estimateDbManage"); }
+  function isDbVisible(){ return activeDbElement()?.classList.contains("active"); }
+  function refreshVisibleDb(){ if (isDbVisible()) renderEstimateDbManage?.(); }
+
+  function syncDbRowTargeted(tab, rowIndex, options = {}) {
+    const sheet = estimateDbSheets?.[tab];
+    const row = sheet?.rows?.[rowIndex];
+    if (!row) return;
+    if (typeof estimatePerformanceSyncDbRow === "function") {
+      estimatePerformanceSyncDbRow(tab, rowIndex, { ...options, silent: true });
+      return;
+    }
+    if (typeof estimateCentralSyncFromDbRow === "function") {
+      estimateCentralSyncFromDbRow(tab, rowIndex, { ...options, silent: true });
+    }
+  }
+  window.estimateDbSyncCurrentRowTargeted = syncDbRowTargeted;
+
+  if (typeof estimateLinkageSyncAllDbRows === "function") {
+    estimateLinkageSyncAllDbRows = function estimateDbTargetedLinkageSyncAllDbRows(options = {}) {
+      if (options.forceAll) {
+        ["pj", "progress", "mep"].forEach(tab => (estimateDbSheets?.[tab]?.rows || []).forEach((_, index) => syncDbRowTargeted(tab, index, { silent: true })));
+        return;
+      }
+      const tab = options.tab || getActiveDbTab();
+      const rowIndex = Number.isFinite(Number(options.rowIndex)) ? Number(options.rowIndex) : Number(estimateDbSelectedCell?.rowIndex || 0);
+      syncDbRowTargeted(tab, rowIndex, options);
+    };
+    window.estimateLinkageSyncAllDbRows = estimateLinkageSyncAllDbRows;
+  }
+
+  if (typeof commitEstimateDbSinglePendingEdit === "function") {
+    commitEstimateDbSinglePendingEdit = function estimateDbTargetedCommitSingle(tab, rowIndex, colIndex, options = {}) {
+      const pending = getEstimateDbPendingEdit?.(tab, rowIndex, colIndex);
+      if (!pending) return 0;
+      const sheet = estimateDbSheets?.[tab];
+      const row = sheet?.rows?.[rowIndex];
+      if (!row) return 0;
+      const storedValue = normalizeEstimateDbCellForStorage?.(tab, colIndex, pending.value) ?? pending.value;
+      row[colIndex] = storedValue;
+      recalcEstimateDbRow?.(tab, row);
+      if (tab === "pj") ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
+      delete estimateDbPendingEdits[makeEstimateDbPendingKey(tab, rowIndex, colIndex)];
+      estimateDbHasUnsavedChanges = Object.keys(estimateDbPendingEdits).length > 0;
+      syncDbRowTargeted(tab, rowIndex, { silent: true });
+      if (!options.silentRender) {
+        refreshEstimateDbCalculatedCells?.(rowIndex);
+        refreshEstimateDbTotalRowOnly?.();
+        renderEstimateDbReports?.();
+      }
+      updateEstimateDbSaveButtonState?.();
+      return 1;
+    };
+    window.commitEstimateDbSinglePendingEdit = commitEstimateDbSinglePendingEdit;
+  }
+
+  if (typeof commitEstimateDbPendingEdits === "function") {
+    commitEstimateDbPendingEdits = function estimateDbTargetedCommitPending(options = {}) {
+      const entries = Object.values(estimateDbPendingEdits || {});
+      if (!entries.length) {
+        if (!options.silent && typeof showToast === "function") showToast("저장할 변경사항이 없습니다.");
+        return 0;
+      }
+      const changedRows = new Map();
+      let changed = 0;
+      entries.forEach(({ tab, rowIndex, colIndex, value }) => {
+        const sheet = estimateDbSheets?.[tab];
+        const row = sheet?.rows?.[rowIndex];
+        if (!row) return;
+        row[colIndex] = normalizeEstimateDbCellForStorage?.(tab, colIndex, value) ?? value;
+        recalcEstimateDbRow?.(tab, row);
+        if (tab === "pj") ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
+        const key = `${tab}::${rowIndex}`;
+        changedRows.set(key, { tab, rowIndex });
+        changed += 1;
+      });
+      Object.keys(estimateDbPendingEdits || {}).forEach(key => delete estimateDbPendingEdits[key]);
+      estimateDbHasUnsavedChanges = false;
+      changedRows.forEach(({ tab, rowIndex }) => syncDbRowTargeted(tab, rowIndex, { silent: true }));
+      if (getActiveDbTab() === "pj") applyEstimateDbPjDefaultSort?.();
+      updateEstimateDbSaveButtonState?.();
+      if (!options.silentRender) refreshVisibleDb();
+      if (!options.silent && typeof showToast === "function") showToast(`DB관리 변경사항 ${changed}건을 저장했습니다.`);
+      return changed;
+    };
+    window.commitEstimateDbPendingEdits = commitEstimateDbPendingEdits;
+  }
+
+  if (typeof updateEstimateDbCell === "function") {
+    const baseUpdateEstimateDbCell = updateEstimateDbCell;
+    updateEstimateDbCell = function estimateDbTargetedUpdateCell(rowIndex, colIndex, value, options = {}) {
+      const tab = options.tab || getActiveDbTab();
+      const result = baseUpdateEstimateDbCell(rowIndex, colIndex, value, options);
+      if (options.commit) syncDbRowTargeted(tab, rowIndex, { silent: true });
+      return result;
+    };
+    window.updateEstimateDbCell = updateEstimateDbCell;
+  }
+
+  if (typeof setEstimateDbTab === "function") {
+    const baseSetEstimateDbTab = setEstimateDbTab;
+    setEstimateDbTab = function estimateDbFastSetTab(tab) {
+      if (estimateDbHasUnsavedChanges) commitEstimateDbPendingEdits?.({ silent: true, silentRender: true });
+      return baseSetEstimateDbTab(tab);
+    };
+    window.setEstimateDbTab = setEstimateDbTab;
+  }
+})();
