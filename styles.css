@@ -19928,16 +19928,16 @@ button.btn-orange{
 
 #estimateDbManage .quote-db-table th.quote-db-col-client-name,
 #estimateDbManage .quote-db-table td.quote-db-col-client-name{
-  min-width:230px !important;
-  width:230px !important;
-  max-width:230px !important;
+  min-width:304px !important;
+  width:304px !important;
+  max-width:304px !important;
 }
 
 #estimateDbManage .quote-db-table th.quote-db-col-project-name,
 #estimateDbManage .quote-db-table td.quote-db-col-project-name{
-  min-width:1040px !important;
-  width:1040px !important;
-  max-width:1040px !important;
+  min-width:520px !important;
+  width:520px !important;
+  max-width:520px !important;
 }
 
 #estimateDbManage .quote-db-table td.quote-db-col-project-name .quote-db-command-wrap,
