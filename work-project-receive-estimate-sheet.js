@@ -3387,6 +3387,94 @@ function estimateRequestSyncProgressStatusDates(row, sourceIndex = null) {
   });
 }
 
+
+// 견적서 저장일 → DB관리 기성관리 견적서일자 보정
+// 견적 의뢰관리 행 연결이 없거나 requestId가 누락된 견적서도 프로젝트명/업체명 기준으로 기성관리 행을 찾아 갱신합니다.
+function estimateRequestGetRecordProjectCompany(record = {}) {
+  const state = record.state || estimateSheetEditorState || null;
+  const safeDisplay = (r, c) => {
+    try {
+      if (state && typeof estimateSheetDisplayValue === "function") return String(estimateSheetDisplayValue(state, r, c) || "").trim();
+    } catch (e) {}
+    return "";
+  };
+  const quote = record.quoteData || {};
+  return {
+    project: String(record.project || quote.project || safeDisplay(6, 2) || record.title || "").trim(),
+    company: String(record.company || quote.company || quote.client || safeDisplay(5, 2) || "").trim()
+  };
+}
+function estimateRequestFindRowIndexForEstimateRecord(record = {}) {
+  estimateRequestLoadRows?.();
+  const keys = new Set([record.requestId, record.id, record.estimateId, record.periodKey, record.centralKey].filter(Boolean).map(String));
+  let idx = estimateRequestRows.findIndex(row => {
+    const rowKeys = [row.id, row.estimateId, row.periodKey, row.centralKey].filter(Boolean).map(String);
+    return rowKeys.some(k => keys.has(k));
+  });
+  if (idx >= 0) return idx;
+  const info = estimateRequestGetRecordProjectCompany(record);
+  if (!info.project && !info.company) return -1;
+  const projectKey = info.project.replace(/\s+/g, "");
+  const companyKey = info.company.replace(/\s+/g, "");
+  return estimateRequestRows.findIndex(row => {
+    const rp = String(row.project || "").replace(/\s+/g, "");
+    const rc = String(row.company || row.client || "").replace(/\s+/g, "");
+    const projectMatch = projectKey && (rp === projectKey || rp.includes(projectKey) || projectKey.includes(rp));
+    const companyMatch = !companyKey || !rc || rc === companyKey || rc.includes(companyKey) || companyKey.includes(rc);
+    return projectMatch && companyMatch;
+  });
+}
+function estimateRequestFindProgressRowsByRecord(record = {}) {
+  const rows = (typeof estimateDbSheets !== "undefined" && estimateDbSheets?.progress?.rows) ? estimateDbSheets.progress.rows : [];
+  if (!rows.length || typeof getEstimateDbColumnIndexByHeader !== "function") return [];
+  const info = estimateRequestGetRecordProjectCompany(record);
+  const pjNameIndex = getEstimateDbColumnIndexByHeader("progress", "PJ명");
+  const companyIndex = getEstimateDbColumnIndexByHeader("progress", "업체명");
+  const pjNoIndex = getEstimateDbColumnIndexByHeader("progress", "PJ NO");
+  const pjNoText = String(record.dbPjNo || record.pjNo || "").trim();
+  const projectKey = String(info.project || "").replace(/\s+/g, "");
+  const companyKey = String(info.company || "").replace(/\s+/g, "");
+  return rows.filter(progressRow => {
+    if (!progressRow) return false;
+    if (pjNoText && pjNoIndex >= 0 && String(progressRow[pjNoIndex] || "").trim() === pjNoText) return true;
+    const rowProject = pjNameIndex >= 0 ? String(progressRow[pjNameIndex] || "").replace(/\s+/g, "") : "";
+    const rowCompany = companyIndex >= 0 ? String(progressRow[companyIndex] || "").replace(/\s+/g, "") : "";
+    const projectMatch = projectKey && (rowProject === projectKey || rowProject.includes(projectKey) || projectKey.includes(rowProject));
+    const companyMatch = !companyKey || !rowCompany || rowCompany === companyKey || rowCompany.includes(companyKey) || companyKey.includes(rowCompany);
+    return projectMatch && companyMatch;
+  });
+}
+function estimateRequestApplyEstimateSavedDateToProgress(record = {}, options = {}) {
+  const today = options.date || estimateRequestToday?.() || estimatePeriodTodayCode?.() || "";
+  if (!today) return;
+  let requestRow = null;
+  let requestIndex = estimateRequestFindRowIndexForEstimateRecord(record);
+  if (requestIndex >= 0) {
+    const row = estimateRequestNormalizeRow(estimateRequestRows[requestIndex]);
+    row.estimateId = record.id || row.estimateId;
+    row.periodKey = row.periodKey || record.periodKey || "";
+    if (!row.estimateDate) row.estimateDate = today;
+    row.statusDates = row.statusDates && typeof row.statusDates === "object" ? row.statusDates : {};
+    if (!row.statusDates.waiting) row.statusDates.waiting = row.estimateDate;
+    if (["의뢰메모", "견적작성중", ""].includes(row.status)) row.status = "대기중";
+    estimateRequestRows[requestIndex] = row;
+    estimateRequestSaveRows?.();
+    requestRow = row;
+    estimateRequestSyncProgressStatusDates(row);
+  }
+
+  const targetRows = requestRow ? estimateRequestFindProgressRows(requestRow) : estimateRequestFindProgressRowsByRecord(record);
+  if (!targetRows.length || typeof getEstimateDbColumnIndexByHeader !== "function") return;
+  const estimateIdx = getEstimateDbColumnIndexByHeader("progress", "견적서일자");
+  if (estimateIdx < 0) return;
+  const label = estimateRequestDbDateLabel(today);
+  targetRows.forEach(progressRow => {
+    // 기존 견적서일자가 없는 경우 저장일을 채우고, 이미 있으면 최초 대기중 날짜를 보존합니다.
+    if (!String(progressRow[estimateIdx] || "").trim()) progressRow[estimateIdx] = label;
+    if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
+  });
+}
+
 function estimateRequestFilteredRows() {
   estimateRequestLoadRows();
   const q = String(estimateRequestFilters.q || "").toLowerCase().trim();
@@ -3711,9 +3799,11 @@ function estimateRequestUpdateByEstimate(record, status, message) {
 const estimateWorkflowOriginalSaveRecord = typeof saveEstimateSheetRecord === "function" ? saveEstimateSheetRecord : null;
 window.saveEstimateSheetRecord = function estimateWorkflowSaveEstimateSheetRecord() {
   const beforeId = estimateSheetEditingIndex !== null ? estimateSheetRecords[estimateSheetEditingIndex]?.id : null;
-  estimateWorkflowOriginalSaveRecord?.();
+  const result = estimateWorkflowOriginalSaveRecord?.();
   const rec = beforeId ? estimateSheetRecords.find(r => r.id === beforeId) : estimateSheetRecords[estimateSheetEditingIndex || 0];
   if (rec?.requestId) estimateRequestUpdateByEstimate(rec, rec.status || "대기중", "견적서 종류별 관리 저장 반영");
+  if (rec) estimateRequestApplyEstimateSavedDateToProgress(rec);
+  return result;
 };
 const estimateWorkflowOriginalMarkSent = typeof markEstimateSheetSent === "function" ? markEstimateSheetSent : null;
 window.markEstimateSheetSent = function estimateWorkflowMarkEstimateSheetSent(index) {
@@ -4263,6 +4353,7 @@ if (estimateCentralOriginalSaveEstimateSheetRecord) {
       row.centralKey = rec.centralKey || estimateCentralMakeKey(row);
       row.dbPjNo = row.dbPjNo || estimateCentralDbPjNo(row);
       estimateCentralPeriodRowToRequestDb(row);
+      estimateRequestApplyEstimateSavedDateToProgress(rec, { date: row.date });
       renderEstimateRequestManage?.();
       renderEstimateDbManage?.();
     }
