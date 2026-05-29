@@ -26,6 +26,36 @@ function estimateSheetColumnLabel(index) {
   return out;
 }
 
+function estimateSheetNumberToKorean(value) {
+  const raw = String(value ?? "").replace(/[^0-9.-]/g, "");
+  let n = Math.floor(Math.abs(Number(raw || 0)));
+  if (!Number.isFinite(n) || n <= 0) return "영";
+
+  const smallUnits = ["", "십", "백", "천"];
+  const bigUnits = ["", "만", "억", "조", "경"];
+  const digits = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
+  const groups = [];
+
+  while (n > 0) {
+    groups.push(n % 10000);
+    n = Math.floor(n / 10000);
+  }
+
+  const parts = groups.map((group, groupIndex) => {
+    if (!group) return "";
+    const nums = String(group).padStart(4, "0").split("").map(Number);
+    const text = nums.map((num, i) => {
+      if (!num) return "";
+      const unit = smallUnits[3 - i];
+      return `${digits[num]}${unit}`;
+    }).join("");
+    return `${text}${bigUnits[groupIndex] || ""}`;
+  }).filter(Boolean).reverse().join("");
+
+  return parts || "영";
+}
+if (typeof window !== "undefined") window.estimateSheetNumberToKorean = estimateSheetNumberToKorean;
+
 
 /* 2026-05-25 견적서 4종 공통 수동 치수/색상 보정
    - 개산견적/공내역서/설계예가/공사비검증 모두 같은 열 너비/행 높이/폰트/포인트색 기준 적용
