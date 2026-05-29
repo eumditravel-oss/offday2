@@ -3251,3 +3251,103 @@ document.addEventListener("click", event => {
 
 
 /* === 견적서 종류별 관리 v1: 업로드 엑셀 양식 4종 웹 작성 화면 === */
+
+/* =========================================================
+   2026-05-29 PM배정 → 기성관리 총괄PM 연계 보정
+   - 총괄PM 우선순위: 마감팀 PM → 구조팀 PM → BIM파트 PM → 토목·조경 PM
+   - PJ관리 PM 변경 시 기성관리 총괄PM 즉시 반영
+   ========================================================= */
+(function installEstimateDbTotalPmSyncPatch(){
+  function text(value){
+    return String(value ?? '').replace(/\s+/g, ' ').trim();
+  }
+  function headerIndex(tab, header){
+    return typeof getEstimateDbColumnIndexByHeader === 'function' ? getEstimateDbColumnIndexByHeader(tab, header) : -1;
+  }
+  function rowValue(tab, row, header){
+    const idx = headerIndex(tab, header);
+    return idx >= 0 && row ? row[idx] : '';
+  }
+  function setRowValue(tab, row, header, value){
+    const idx = headerIndex(tab, header);
+    if (idx < 0 || !row) return false;
+    const next = value ?? '';
+    if (text(row[idx]) === text(next)) return false;
+    row[idx] = next;
+    return true;
+  }
+  function selectTotalPm(assignment = {}, pjRow = null){
+    const finish = text(assignment.pmFinish ?? rowValue('pj', pjRow, 'PM(마감)'));
+    const structure = text(assignment.pmStructure ?? rowValue('pj', pjRow, 'PM(구조)'));
+    const bim = text(assignment.pmBim ?? rowValue('pj', pjRow, 'PM(BIM)'));
+    const civil = text(assignment.pmCivil ?? rowValue('pj', pjRow, 'PM(토목,조경)'));
+    return finish || structure || bim || civil || '';
+  }
+  function progressKeyFromPjRow(pjRow){
+    if (!pjRow) return '';
+    if (typeof makeEstimateDbSyncKey === 'function') {
+      return makeEstimateDbSyncKey({
+        year: rowValue('pj', pjRow, '최초생성날짜') || rowValue('pj', pjRow, '년도'),
+        receiptNo: rowValue('pj', pjRow, '접수번호'),
+        pjNo: rowValue('pj', pjRow, 'PJ NO'),
+        pjName: rowValue('pj', pjRow, '프로젝트명') || rowValue('pj', pjRow, 'PJ명')
+      });
+    }
+    return [rowValue('pj', pjRow, 'PJ NO'), rowValue('pj', pjRow, '프로젝트명')].map(text).filter(Boolean).join('::');
+  }
+  function findProgressRow(pjRowIndex){
+    const pjSheet = estimateDbSheets?.pj;
+    const progressSheet = estimateDbSheets?.progress;
+    const pjRow = pjSheet?.rows?.[pjRowIndex];
+    if (!pjRow || !progressSheet) return null;
+    let target = (progressSheet.rows || []).find(row => row && row.__sourcePjRowIndex === pjRowIndex);
+    if (target) return target;
+    const key = progressKeyFromPjRow(pjRow);
+    if (key && typeof estimateDbTargetRowKey === 'function') {
+      target = (progressSheet.rows || []).find(row => estimateDbTargetRowKey('progress', row) === key);
+      if (target) return target;
+    }
+    if (typeof syncEstimateDbLinkedRowsFromPj === 'function') {
+      syncEstimateDbLinkedRowsFromPj(pjRowIndex);
+      target = (progressSheet.rows || []).find(row => row && row.__sourcePjRowIndex === pjRowIndex);
+      if (target) return target;
+      if (key && typeof estimateDbTargetRowKey === 'function') {
+        target = (progressSheet.rows || []).find(row => estimateDbTargetRowKey('progress', row) === key);
+      }
+    }
+    return target || null;
+  }
+  function syncOne(pjRowIndex, assignment = {}){
+    const pjRow = estimateDbSheets?.pj?.rows?.[pjRowIndex];
+    const progressRow = findProgressRow(pjRowIndex);
+    if (!pjRow || !progressRow) return false;
+    const totalPm = selectTotalPm(assignment, pjRow);
+    const changed = setRowValue('progress', progressRow, '총괄PM', totalPm);
+    if (changed && typeof recalcEstimateDbRow === 'function') recalcEstimateDbRow('progress', progressRow);
+    return changed;
+  }
+  window.estimateDbSelectTotalPm = selectTotalPm;
+  window.estimateDbSyncProgressTotalPmFromPjRow = syncOne;
+  window.estimateDbSyncProgressTotalPmByKey = function estimateDbSyncProgressTotalPmByKey(projectKey, assignment = {}){
+    if (!estimateDbSheets?.pj?.rows) return false;
+    const keyText = text(projectKey);
+    const idxs = ['PJ NO','receiveId','연계ID','DB연계ID'].map(h => headerIndex('pj', h)).filter(i => i >= 0);
+    let rowIndex = -1;
+    if (keyText && idxs.length) {
+      rowIndex = estimateDbSheets.pj.rows.findIndex(row => idxs.some(i => text(row?.[i]) === keyText));
+    }
+    if (rowIndex < 0 && typeof projectReceiveFindDbPjRowIndex === 'function') rowIndex = projectReceiveFindDbPjRowIndex(projectKey);
+    if (rowIndex < 0) return false;
+    return syncOne(rowIndex, assignment);
+  };
+  const prevSyncEstimateDbLinkedRowsFromPj = typeof syncEstimateDbLinkedRowsFromPj === 'function' ? syncEstimateDbLinkedRowsFromPj : null;
+  if (prevSyncEstimateDbLinkedRowsFromPj && !prevSyncEstimateDbLinkedRowsFromPj.__totalPmPatched) {
+    syncEstimateDbLinkedRowsFromPj = function syncEstimateDbLinkedRowsFromPjTotalPmPatched(pjRowIndex){
+      const result = prevSyncEstimateDbLinkedRowsFromPj(pjRowIndex);
+      syncOne(pjRowIndex);
+      return result;
+    };
+    syncEstimateDbLinkedRowsFromPj.__totalPmPatched = true;
+    window.syncEstimateDbLinkedRowsFromPj = syncEstimateDbLinkedRowsFromPj;
+  }
+})();
