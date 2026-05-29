@@ -909,6 +909,185 @@ function recalcAllEstimateDbRows() {
    ========================================================= */
 const ESTIMATE_DB_RENDER_PAGE_SIZE = 50;
 let estimateDbPageState = { pj: 0, progress: 0, mep: 0 };
+let estimateDbMepSelectedVendorIndex = null;
+
+function getEstimateDbMepVendorHeaders() {
+  const sheet = estimateDbSheets?.mep || {};
+  return Array.isArray(sheet.vendorHeaders) && sheet.vendorHeaders.length
+    ? sheet.vendorHeaders
+    : ["NO", "업체명", "공종", "대표이사", "일반전화", "휴대폰", "직통전화", "EMAIL (대표)", "대표번호", "EMAIL", "EMAIL1", "연락처(경지)", "연락처(기술)", "계좌", "은행", "주소", "웹하드", "기타"];
+}
+
+function ensureEstimateDbMepVendorRows() {
+  const sheet = estimateDbSheets?.mep;
+  if (!sheet) return [];
+  const headers = getEstimateDbMepVendorHeaders();
+  if (!Array.isArray(sheet.vendorRows)) sheet.vendorRows = [];
+  if (!sheet.vendorRows.length) {
+    const companyIdx = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+    const rows = Array.isArray(sheet.rows) ? sheet.rows : [];
+    const names = [...new Set(rows.map(row => normalizeEstimateDbText(row?.[companyIdx])).filter(Boolean))];
+    sheet.vendorRows = names.map((name, index) => {
+      const next = Array(headers.length).fill("");
+      next[0] = String(index + 1);
+      next[1] = name;
+      return next;
+    });
+  }
+  sheet.vendorRows.forEach((row, index) => {
+    while (row.length < headers.length) row.push("");
+    if (!normalizeEstimateDbText(row[0])) row[0] = String(index + 1);
+  });
+  return sheet.vendorRows;
+}
+
+function getEstimateDbMepSelectedVendor() {
+  const rows = ensureEstimateDbMepVendorRows();
+  if (estimateDbMepSelectedVendorIndex === null || estimateDbMepSelectedVendorIndex === undefined) return null;
+  return rows[Number(estimateDbMepSelectedVendorIndex)] || null;
+}
+
+function selectEstimateDbMepVendor(index) {
+  estimateDbMepSelectedVendorIndex = Number(index);
+  renderEstimateDbManage({ renderReportsNow: false });
+}
+
+function updateEstimateDbMepVendorCell(rowIndex, colIndex, value) {
+  const rows = ensureEstimateDbMepVendorRows();
+  if (!rows[rowIndex]) return;
+  rows[rowIndex][colIndex] = value;
+  estimateDbHasUnsavedChanges = true;
+  updateEstimateDbSaveButtonState?.();
+}
+
+function getEstimateDbMepVendorName(vendorRow) {
+  return normalizeEstimateDbText(vendorRow?.[1]);
+}
+
+function getEstimateDbMepDetailRowsForVendor(vendorName) {
+  const sheet = estimateDbSheets?.mep;
+  const rows = Array.isArray(sheet?.rows) ? sheet.rows : [];
+  if (!vendorName) return [];
+  const companyIdx = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+  if (companyIdx < 0) return rows.map((row, sourceIndex) => ({ row, sourceIndex }));
+  const matched = rows
+    .map((row, sourceIndex) => ({ row, sourceIndex }))
+    .filter(({ row }) => normalizeEstimateDbText(row?.[companyIdx]) === vendorName);
+  return matched;
+}
+
+function addEstimateDbMepRowForSelectedVendor() {
+  const sheet = estimateDbSheets?.mep;
+  const vendor = getEstimateDbMepSelectedVendor();
+  const vendorName = getEstimateDbMepVendorName(vendor);
+  if (!sheet || !vendorName) {
+    if (typeof showToast === "function") showToast("업체 리스트에서 업체를 먼저 선택해 주세요.");
+    return;
+  }
+  const columns = getEstimateDbLeafColumns(sheet);
+  const next = Array(columns.length).fill("");
+  const createdIdx = getEstimateDbColumnIndexByHeader("mep", "최초생성날짜");
+  const companyIdx = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+  if (createdIdx >= 0) next[createdIdx] = formatEstimateDbKoreanDate?.() || "";
+  if (companyIdx >= 0) next[companyIdx] = vendorName;
+  sheet.rows.push(next);
+  estimateDbMepSelectedVendorIndex = estimateDbMepSelectedVendorIndex ?? 0;
+  renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
+}
+
+function renderEstimateDbMepManage(options = {}) {
+  const head = document.getElementById("estimateDbHead");
+  const body = document.getElementById("estimateDbBody");
+  if (!head || !body) return;
+  const sheet = getEstimateDbSheet("mep");
+  const vendorHeaders = getEstimateDbMepVendorHeaders();
+  const vendorRows = ensureEstimateDbMepVendorRows();
+  const selectedVendor = getEstimateDbMepSelectedVendor();
+  const selectedVendorName = getEstimateDbMepVendorName(selectedVendor);
+  const detailRows = getEstimateDbMepDetailRowsForVendor(selectedVendorName);
+  const leafColumns = getEstimateDbLeafColumns(sheet);
+  document.querySelectorAll(".quote-db-table").forEach(table => table.style.setProperty("--estimate-db-row-height", `${estimateDbRowHeightPx}px`));
+  head.innerHTML = "";
+  body.innerHTML = `
+    <tr class="quote-db-mep-layout-row">
+      <td class="quote-db-mep-layout-cell" colspan="${Math.max(leafColumns.length + 1, 12)}">
+        <div class="quote-db-mep-panel">
+          <div class="quote-db-mep-section-head">
+            <div>
+              <strong>업체 리스트</strong>
+              <span>업체를 클릭하면 아래에 해당 업체의 기전 계약/지급 내역이 표시됩니다.</span>
+            </div>
+            <button type="button" class="btn btn-line btn-xs" onclick="addEstimateDbMepVendorRow()">+ 업체 추가</button>
+          </div>
+          <div class="quote-db-mep-vendor-wrap">
+            <table class="quote-db-mep-vendor-table">
+              <thead>
+                <tr>${vendorHeaders.map(h => `<th>${escapeEstimateDbHtml(h)}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${vendorRows.map((row, rowIndex) => `
+                  <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})">
+                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" onclick="event.stopPropagation()" onfocus="selectEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
+                  </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>
+          <div class="quote-db-mep-section-head quote-db-mep-detail-head">
+            <div>
+              <strong>${selectedVendorName ? escapeEstimateDbHtml(selectedVendorName) : "업체를 선택하세요"}</strong>
+              <span>${selectedVendorName ? "선택 업체의 기전업체 계약/지급 내역" : "상단 업체 리스트에서 하나를 선택하면 아래 표가 표시됩니다."}</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-xs" onclick="addEstimateDbMepRowForSelectedVendor()" ${selectedVendorName ? "" : "disabled"}>+ 계약행 추가</button>
+          </div>
+          <div class="quote-db-mep-detail-wrap">
+            ${selectedVendorName ? renderEstimateDbMepDetailTable(detailRows, leafColumns, sheet) : `<div class="quote-db-mep-empty">업체 리스트에서 업체를 선택해 주세요.</div>`}
+          </div>
+        </div>
+      </td>
+    </tr>
+  `;
+  applyEstimateDbCommaFormatToRenderedInputs();
+  if (options.renderReportsNow) renderEstimateDbReports();
+  else scheduleEstimateDbReportsRender(220);
+}
+
+function renderEstimateDbMepDetailTable(detailRows, leafColumns, sheet) {
+  if (!detailRows.length) {
+    return `<div class="quote-db-mep-empty">선택한 업체와 연결된 계약/지급 내역이 없습니다. <button type="button" class="btn btn-primary btn-xs" onclick="addEstimateDbMepRowForSelectedVendor()">계약행 추가</button></div>`;
+  }
+  return `
+    <table class="quote-db-mep-detail-table">
+      <thead>
+        <tr>${leafColumns.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}<th class="quote-db-manage-col">관리</th></tr>
+      </thead>
+      <tbody>
+        ${detailRows.map(({ row, sourceIndex }) => `
+          <tr class="quote-db-mep-detail-row" data-row-index="${sourceIndex}">
+            ${leafColumns.map((_, colIndex) => {
+              const displayValue = formatEstimateDbMoneyDisplay(getEstimateDbCellDisplayValue("mep", sourceIndex, colIndex, row?.[colIndex] || ""), "mep", colIndex, sheet);
+              const dirtyClass = getEstimateDbPendingEdit("mep", sourceIndex, colIndex) ? " quote-db-cell-dirty" : "";
+              return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input${dirtyClass}" value="${escapeEstimateDbHtml(displayValue)}" data-row-index="${sourceIndex}" data-col-index="${colIndex}" onfocus="estimateDbSelectedCell={tab:'mep',sectionIndex:null,rowIndex:${sourceIndex},colIndex:${colIndex}}" oninput="handleEstimateDbCellInput(event, ${sourceIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" /></td>`;
+            }).join("")}
+            <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${sourceIndex})">삭제</button></td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function addEstimateDbMepVendorRow() {
+  const sheet = estimateDbSheets?.mep;
+  if (!sheet) return;
+  const headers = getEstimateDbMepVendorHeaders();
+  const rows = ensureEstimateDbMepVendorRows();
+  const next = Array(headers.length).fill("");
+  next[0] = String(rows.length + 1);
+  rows.push(next);
+  estimateDbMepSelectedVendorIndex = rows.length - 1;
+  estimateDbHasUnsavedChanges = true;
+  updateEstimateDbSaveButtonState?.();
+  renderEstimateDbManage({ renderReportsNow: false });
+}
+
 function recalcEstimateDbRowsByTab(tab = estimateDbActiveTab, options = {}) {
   const sheet = estimateDbSheets?.[tab];
   if (!sheet || !Array.isArray(sheet.rows)) return;
@@ -1363,6 +1542,10 @@ function renderEstimateDbManage(options = {}) {
   if (contractBtn) contractBtn.style.display = estimateDbActiveTab === "progress" ? "inline-flex" : "none";
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
+  if (estimateDbActiveTab === "mep") {
+    renderEstimateDbMepManage(options);
+    return;
+  }
   const sheet = getEstimateDbSheet();
   document.querySelectorAll(".quote-db-table").forEach(table => table.style.setProperty("--estimate-db-row-height", `${estimateDbRowHeightPx}px`));
   const colCount = getEstimateDbLeafColumns(sheet).length;
