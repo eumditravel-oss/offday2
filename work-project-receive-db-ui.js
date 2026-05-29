@@ -952,6 +952,10 @@ function selectEstimateDbMepVendor(index) {
   renderEstimateDbManage({ renderReportsNow: false });
 }
 
+function focusEstimateDbMepVendor(index) {
+  estimateDbMepSelectedVendorIndex = Number(index);
+}
+
 function updateEstimateDbMepVendorCell(rowIndex, colIndex, value) {
   const rows = ensureEstimateDbMepVendorRows();
   if (!rows[rowIndex]) return;
@@ -1108,6 +1112,7 @@ function openEstimateDbMepVendorDetailWindow(vendorIndex) {
 }
 
 window.openEstimateDbMepVendorDetailWindow = openEstimateDbMepVendorDetailWindow;
+window.focusEstimateDbMepVendor = focusEstimateDbMepVendor;
 window.updateEstimateDbMepDetailCellFromPopup = updateEstimateDbMepDetailCellFromPopup;
 window.addEstimateDbMepRowForVendorIndex = addEstimateDbMepRowForVendorIndex;
 window.removeEstimateDbMepDetailRowFromPopup = removeEstimateDbMepDetailRowFromPopup;
@@ -1129,10 +1134,10 @@ function renderEstimateDbMepManage(options = {}) {
     <tr class="quote-db-mep-layout-row">
       <td class="quote-db-mep-layout-cell" colspan="${Math.max(leafColumns.length + 1, 12)}">
         <div class="quote-db-mep-panel">
-          <div class="quote-db-mep-section-head">
+          <div class="quote-db-mep-section-head quote-db-mep-vendor-head">
             <div>
               <strong>업체 리스트</strong>
-              <span>업체를 클릭하면 아래에 해당 업체의 기전 계약/지급 내역이 표시됩니다.</span>
+              <span>상단은 업체 기본정보 입력 영역입니다. 업체 행을 더블클릭하면 계약/지급내역을 큰 새 창으로 확인·수정할 수 있습니다.</span>
             </div>
             <button type="button" class="btn btn-line btn-xs" onclick="addEstimateDbMepVendorRow()">+ 업체 추가</button>
           </div>
@@ -1144,20 +1149,17 @@ function renderEstimateDbMepManage(options = {}) {
               <tbody>
                 ${vendorRows.map((row, rowIndex) => `
                   <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})" ondblclick="openEstimateDbMepVendorDetailWindow(${rowIndex})" title="더블클릭하면 계약/지급 내역을 새 창으로 엽니다.">
-                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" onclick="event.stopPropagation()" ondblclick="event.stopPropagation(); openEstimateDbMepVendorDetailWindow(${rowIndex})" onfocus="selectEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
+                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" onclick="event.stopPropagation()" ondblclick="event.stopPropagation(); openEstimateDbMepVendorDetailWindow(${rowIndex})" onfocus="focusEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
                   </tr>`).join("")}
               </tbody>
             </table>
           </div>
-          <div class="quote-db-mep-section-head quote-db-mep-detail-head">
+          <div class="quote-db-mep-open-panel">
             <div>
               <strong>${selectedVendorName ? escapeEstimateDbHtml(selectedVendorName) : "업체를 선택하세요"}</strong>
-              <span>${selectedVendorName ? "선택 업체의 기전업체 계약/지급 내역" : "상단 업체 리스트에서 하나를 선택하면 아래 표가 표시됩니다."}</span>
+              <span>${selectedVendorName ? "선택된 업체입니다. 계약/지급내역은 업체 행을 더블클릭하면 새 창으로 열립니다." : "업체 행을 클릭해 선택하고, 더블클릭하면 계약/지급내역을 큰 화면으로 볼 수 있습니다."}</span>
             </div>
-            <button type="button" class="btn btn-primary btn-xs" onclick="addEstimateDbMepRowForSelectedVendor()" ${selectedVendorName ? "" : "disabled"}>+ 계약행 추가</button>
-          </div>
-          <div class="quote-db-mep-detail-wrap">
-            ${selectedVendorName ? renderEstimateDbMepDetailTable(detailRows, leafColumns, sheet) : `<div class="quote-db-mep-empty">업체 리스트에서 업체를 선택해 주세요.</div>`}
+            <button type="button" class="btn btn-primary btn-xs" onclick="openEstimateDbMepVendorDetailWindow(${Number(estimateDbMepSelectedVendorIndex) || 0})" ${selectedVendorName ? "" : "disabled"}>계약/지급내역 열기</button>
           </div>
         </div>
       </td>
