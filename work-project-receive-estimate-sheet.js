@@ -3291,9 +3291,38 @@ function estimateRequestNormalizeRow(row = {}) {
     periodKey: row.periodKey || "",
     dbLinked: !!row.dbLinked, // 내부 DB관리 후보 연결 여부(UI에는 표시하지 않음)
     startMode: row.startMode || "",
+    estimateDate: row.estimateDate || row.waitingDate || "",
+    orderDate: row.orderDate || row.awardDate || "",
+    contractDate: row.contractDate || "",
     updatedAt: row.updatedAt || estimateRequestNowLabel(),
     history: Array.isArray(row.history) ? row.history : []
   };
+}
+function estimateRequestDbDateLabel(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (typeof formatEstimateDbCompactDate === "function") return formatEstimateDbCompactDate(raw);
+  const digits = raw.replace(/[^0-9]/g, "");
+  const yy = digits.length >= 8 ? digits.slice(2, 4) : digits.slice(0, 2);
+  const mm = digits.length >= 8 ? digits.slice(4, 6) : digits.slice(2, 4);
+  const dd = digits.length >= 8 ? digits.slice(6, 8) : digits.slice(4, 6);
+  if (yy && mm && dd) return `${yy}년${Number(mm)}월${Number(dd)}일`;
+  return raw;
+}
+function estimateRequestApplyStatusDates(row, nextStatus) {
+  if (!row) return row;
+  const today = estimateRequestToday();
+  const status = estimateRequestNormalizeStatus(nextStatus || row.status);
+  if (status === "대기중" && !row.estimateDate) row.estimateDate = today;
+  if (status === "선착수") {
+    if (!row.orderDate) row.orderDate = today;
+    if (!row.contractDate || row.contractDate !== "대기중") row.contractDate = "대기중";
+  }
+  if (status === "작업시작") {
+    if (!row.orderDate) row.orderDate = today;
+    if (!row.contractDate || row.contractDate === "대기중") row.contractDate = today;
+  }
+  return row;
 }
 function estimateRequestFilteredRows() {
   estimateRequestLoadRows();
@@ -3517,6 +3546,7 @@ function runEstimateRequestAction(id) {
     if (idx >= 0) {
       const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
       row.status = status;
+      estimateRequestApplyStatusDates(row, status);
       estimateRequestAddHistory(row, `상태 변경: ${status}`);
       estimateRequestRows[idx] = row;
       estimateRequestSaveRows();
@@ -3577,6 +3607,7 @@ function createEstimateSheetFromRequest(id) {
   else estimateSheetRecords.unshift(record);
   row.estimateId = (existingIndex >= 0 ? estimateSheetRecords[existingIndex].id : record.id);
   row.status = "대기중";
+  estimateRequestApplyStatusDates(row, "대기중");
   estimateRequestAddHistory(row, "견적서 작성 요청 및 견적서 종류별 관리 대기중 등록");
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
@@ -3606,6 +3637,7 @@ function estimateRequestUpdateByEstimate(record, status, message) {
   const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
   row.estimateId = record.id;
   row.status = status || row.status;
+  estimateRequestApplyStatusDates(row, row.status);
   row.periodKey = row.periodKey || record.periodKey || "";
   estimateRequestAddHistory(row, message || `견적서 종류별 관리 상태 변경: ${row.status}`);
   estimateRequestRows[idx] = row;
@@ -3642,6 +3674,7 @@ function approveEstimateRequest(id) {
   if (idx < 0) return;
   const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
   row.status = "작업시작";
+  estimateRequestApplyStatusDates(row, "작업시작");
   estimateRequestAddHistory(row, "견적 확정 후 작업시작 처리");
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
@@ -3655,6 +3688,7 @@ function startEstimateRequest(id, mode = "작업시작") {
   if (idx < 0) return;
   const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
   row.status = mode === "선착수" ? "선착수" : "작업시작";
+  estimateRequestApplyStatusDates(row, row.status);
   row.startMode = mode === "선착수" ? "견적 확정 전 선착수" : "견적 확정 후 작업시작";
   estimateRequestAddHistory(row, row.startMode);
   estimateRequestRows[idx] = row;
@@ -3696,11 +3730,24 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("작업공종", row.memo);
       put("업무성격", row.startMode || row.status);
       put("상담 / 이메일 / 특기사항", row.memo);
-      put("수주일자", row.status === "작업시작" ? row.date : "");
+      put("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
       sheet.rows = sheet.rows || [];
       const exists = sheet.rows.findIndex(r => r[headers.indexOf("프로젝트명")] === row.project && r[headers.indexOf("거래처명")] === row.company);
+      const targetIndex = exists >= 0 ? exists : 0;
       if (exists >= 0) sheet.rows[exists] = next;
       else sheet.rows.unshift(next);
+      if (typeof syncEstimateDbLinkedRowsFromPj === "function") syncEstimateDbLinkedRowsFromPj(targetIndex);
+      if (typeof getEstimateDbColumnIndexByHeader === "function" && estimateDbSheets?.progress) {
+        const progressRows = estimateDbSheets.progress.rows || [];
+        const progressRow = progressRows.find(r => r?.__sourcePjRowIndex === targetIndex) || progressRows.find(r => r?.[getEstimateDbColumnIndexByHeader("progress", "PJ명")] === row.project);
+        if (progressRow) {
+          const setProgress = (name, value) => { const i = getEstimateDbColumnIndexByHeader("progress", name); if (i >= 0) progressRow[i] = value || ""; };
+          setProgress("견적서일자", row.estimateDate ? estimateRequestDbDateLabel(row.estimateDate) : "");
+          setProgress("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
+          setProgress("계약일자", row.contractDate === "대기중" ? "대기중" : (row.contractDate ? estimateRequestDbDateLabel(row.contractDate) : ""));
+          if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
+        }
+      }
       row.dbLinked = true;
       estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 자동 연결(내부 처리)");
       estimateRequestRows[idx] = row;
