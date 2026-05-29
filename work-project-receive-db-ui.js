@@ -995,6 +995,123 @@ function addEstimateDbMepRowForSelectedVendor() {
   renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
 }
 
+function addEstimateDbMepRowForVendorIndex(vendorIndex) {
+  estimateDbMepSelectedVendorIndex = Number(vendorIndex);
+  addEstimateDbMepRowForSelectedVendor();
+}
+
+function updateEstimateDbMepDetailCellFromPopup(sourceIndex, colIndex, value) {
+  const sheet = estimateDbSheets?.mep;
+  const row = sheet?.rows?.[Number(sourceIndex)];
+  if (!sheet || !row) return;
+  row[Number(colIndex)] = value;
+  recalcEstimateDbRow("mep", row);
+  estimateDbHasUnsavedChanges = true;
+  updateEstimateDbSaveButtonState?.();
+}
+
+function removeEstimateDbMepDetailRowFromPopup(sourceIndex) {
+  const sheet = estimateDbSheets?.mep;
+  if (!sheet?.rows?.[Number(sourceIndex)]) return;
+  sheet.rows.splice(Number(sourceIndex), 1);
+  estimateDbHasUnsavedChanges = true;
+  updateEstimateDbSaveButtonState?.();
+  if (estimateDbActiveTab === "mep") renderEstimateDbManage({ renderReportsNow: false });
+}
+
+function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
+  const sheet = getEstimateDbSheet("mep");
+  const vendorRows = ensureEstimateDbMepVendorRows();
+  const vendor = vendorRows[Number(vendorIndex)] || null;
+  const vendorName = getEstimateDbMepVendorName(vendor);
+  const leafColumns = getEstimateDbLeafColumns(sheet);
+  const detailRows = getEstimateDbMepDetailRowsForVendor(vendorName);
+  const title = vendorName ? `${vendorName} 기전업체 계약/지급 내역` : "기전업체 계약/지급 내역";
+  const rowsHtml = detailRows.length ? detailRows.map(({ row, sourceIndex }) => `
+      <tr>
+        ${leafColumns.map((col, colIndex) => {
+          const raw = row?.[colIndex] || "";
+          const value = formatEstimateDbMoneyDisplay(getEstimateDbCellDisplayValue("mep", sourceIndex, colIndex, raw), "mep", colIndex, sheet);
+          return `<td><input value="${escapeEstimateDbHtml(value)}" data-row-index="${sourceIndex}" data-col-index="${colIndex}" oninput="markDirty(this)" onchange="saveCell(this)" /></td>`;
+        }).join("")}
+        <td class="manage"><button type="button" onclick="deleteRow(${sourceIndex})">삭제</button></td>
+      </tr>`).join("") : `<tr><td class="empty" colspan="${leafColumns.length + 1}">선택한 업체와 연결된 계약/지급 내역이 없습니다.</td></tr>`;
+  return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>${escapeEstimateDbHtml(title)}</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;background:#f5f7fb;color:#0f172a;font-family:Inter,Apple SD Gothic Neo,Malgun Gothic,sans-serif;font-size:13px} .top{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #dbe3ee;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px} h1{margin:0;font-size:20px;font-weight:900} .sub{margin-top:6px;color:#64748b;font-size:12px;font-weight:700} .btns{display:flex;gap:8px} button{height:34px;border:1px solid #d8e1ee;background:#fff;border-radius:10px;padding:0 14px;font-weight:900;cursor:pointer} button.primary{background:#f97316;color:#fff;border-color:#f97316} .wrap{padding:18px 22px}.card{background:#fff;border:1px solid #dbe3ee;border-radius:16px;box-shadow:0 10px 24px rgba(15,23,42,.08);overflow:hidden}.table-wrap{overflow:auto;max-height:calc(100vh - 145px)} table{border-collapse:separate;border-spacing:0;min-width:max-content;width:100%} th{position:sticky;top:0;background:#f1f5f9;z-index:2;color:#0f172a;font-size:12px;font-weight:900;border-bottom:1px solid #dbe3ee} th,td{border-right:1px solid #e5ebf3;border-bottom:1px solid #e5ebf3;padding:6px;vertical-align:middle;min-width:120px} td input{width:100%;height:30px;border:1px solid #d8e1ee;border-radius:8px;padding:0 8px;font-weight:800;background:#fff} td input.dirty{border-color:#f97316;background:#fff7ed}.manage{position:sticky;right:0;background:#fff;min-width:82px;text-align:center;box-shadow:-4px 0 8px rgba(15,23,42,.06)} th.manage{background:#f1f5f9}.empty{padding:28px;text-align:center;color:#64748b;font-weight:900}.notice{margin:0 0 10px;color:#475569;font-size:12px;font-weight:800}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div><h1>${escapeEstimateDbHtml(title)}</h1><div class="sub">업체 리스트를 더블클릭해 열린 계약/지급 내역 새 창입니다. 입력값 변경 후 저장 버튼을 누르세요.</div></div>
+    <div class="btns"><button type="button" onclick="refreshWindow()">새로고침</button><button type="button" class="primary" onclick="addRow()">+ 계약행 추가</button><button type="button" onclick="window.close()">닫기</button></div>
+  </div>
+  <div class="wrap">
+    <p class="notice">선택 업체: ${escapeEstimateDbHtml(vendorName || "-")}</p>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr>${leafColumns.map(col => `<th>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}<th class="manage">관리</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div></div>
+  </div>
+<script>
+  const VENDOR_INDEX = ${Number(vendorIndex) || 0};
+  function markDirty(input){ input.classList.add('dirty'); }
+  function saveCell(input){
+    if(!window.opener || !window.opener.updateEstimateDbMepDetailCellFromPopup) return;
+    window.opener.updateEstimateDbMepDetailCellFromPopup(Number(input.dataset.rowIndex), Number(input.dataset.colIndex), input.value);
+    input.classList.remove('dirty');
+  }
+  function addRow(){
+    if(window.opener && window.opener.addEstimateDbMepRowForVendorIndex){
+      window.opener.addEstimateDbMepRowForVendorIndex(VENDOR_INDEX);
+      setTimeout(refreshWindow, 120);
+    }
+  }
+  function deleteRow(sourceIndex){
+    if(!confirm('해당 계약/지급 내역 행을 삭제할까요?')) return;
+    if(window.opener && window.opener.removeEstimateDbMepDetailRowFromPopup){
+      window.opener.removeEstimateDbMepDetailRowFromPopup(sourceIndex);
+      setTimeout(refreshWindow, 120);
+    }
+  }
+  function refreshWindow(){
+    if(window.opener && window.opener.openEstimateDbMepVendorDetailWindow){
+      window.opener.openEstimateDbMepVendorDetailWindow(VENDOR_INDEX);
+      window.close();
+    } else {
+      location.reload();
+    }
+  }
+</script>
+</body></html>`;
+}
+
+function openEstimateDbMepVendorDetailWindow(vendorIndex) {
+  estimateDbMepSelectedVendorIndex = Number(vendorIndex);
+  const vendor = ensureEstimateDbMepVendorRows()[Number(vendorIndex)] || null;
+  const vendorName = getEstimateDbMepVendorName(vendor) || "기전업체";
+  const safeName = String(vendorName).replace(/[^a-zA-Z0-9가-힣_-]/g, "_").slice(0, 40) || "mep_vendor";
+  const win = window.open("", `CONCOST_MEP_VENDOR_${safeName}`, "width=1500,height=900,left=60,top=40,resizable=yes,scrollbars=yes");
+  if (!win) {
+    if (typeof showToast === "function") showToast("팝업 차단을 해제해 주세요.");
+    return;
+  }
+  win.document.open();
+  win.document.write(buildEstimateDbMepVendorDetailWindowHtml(vendorIndex));
+  win.document.close();
+  win.focus?.();
+  renderEstimateDbManage({ renderReportsNow: false });
+}
+
+window.openEstimateDbMepVendorDetailWindow = openEstimateDbMepVendorDetailWindow;
+window.updateEstimateDbMepDetailCellFromPopup = updateEstimateDbMepDetailCellFromPopup;
+window.addEstimateDbMepRowForVendorIndex = addEstimateDbMepRowForVendorIndex;
+window.removeEstimateDbMepDetailRowFromPopup = removeEstimateDbMepDetailRowFromPopup;
+
 function renderEstimateDbMepManage(options = {}) {
   const head = document.getElementById("estimateDbHead");
   const body = document.getElementById("estimateDbBody");
@@ -1026,8 +1143,8 @@ function renderEstimateDbMepManage(options = {}) {
               </thead>
               <tbody>
                 ${vendorRows.map((row, rowIndex) => `
-                  <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})">
-                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" onclick="event.stopPropagation()" onfocus="selectEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
+                  <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})" ondblclick="openEstimateDbMepVendorDetailWindow(${rowIndex})" title="더블클릭하면 계약/지급 내역을 새 창으로 엽니다.">
+                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" onclick="event.stopPropagation()" ondblclick="event.stopPropagation(); openEstimateDbMepVendorDetailWindow(${rowIndex})" onfocus="selectEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
                   </tr>`).join("")}
               </tbody>
             </table>
