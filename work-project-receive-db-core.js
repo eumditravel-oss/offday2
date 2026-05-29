@@ -147,11 +147,19 @@ function isEstimateDbTotalExcludedColumn(tab = estimateDbActiveTab, colIndex = 0
   return /일자|날짜|예정일|연락|전화|담당자|스토리|특이사항|조건|PM/.test(`${group} ${header}`);
 }
 
+function isEstimateDbContractAmountCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "progress") return false;
+  if (typeof isEstimateDbContractAmountBreakdownColumn === "function" && isEstimateDbContractAmountBreakdownColumn(tab, colIndex)) return true;
+  const header = normalizeEstimateDbText(typeof getEstimateDbColumnName === "function" ? getEstimateDbColumnName(tab, colIndex) : "");
+  return /^A-\d+$/.test(header);
+}
+
 function isEstimateDbEnterCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
   return isEstimateDbStoryCell(tab, colIndex)
     || isEstimateDbStageEntryCell(tab, colIndex)
     || isEstimateDbOutsourceAmountCell(tab, colIndex)
     || isEstimateDbContactColumn(tab, colIndex)
+    || isEstimateDbContractAmountCommandCell(tab, colIndex)
     || isEstimateDbDropdownCell(tab, colIndex);
 }
 
