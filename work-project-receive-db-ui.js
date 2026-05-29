@@ -165,7 +165,19 @@ function ensureEstimateDbPjIdentityColumnsOnce(options = {}) {
   estimateDbPjIdentityColumnsEnsured = true;
 }
 
-function getEstimateDbSheet(tab = estimateDbActiveTab) { migrateEstimateDbCreatedDateHeaders?.(); removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true }); ensureEstimateDbPjProjectLinkColumnOnce(); ensureEstimateDbPjDeliveryPlanColumnsOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
+let estimateDbMaintenanceOnceDone = false;
+function runEstimateDbStructureMaintenanceOnce(options = {}) {
+  if (estimateDbMaintenanceOnceDone && !options.force) return;
+  migrateEstimateDbCreatedDateHeaders?.();
+  removeEstimateDbPjReceiptColumnOnce?.();
+  ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: options.assignMissing !== false });
+  ensureEstimateDbPjProjectLinkColumnOnce?.();
+  ensureEstimateDbPjDeliveryPlanColumnsOnce?.();
+  estimateDbMaintenanceOnceDone = true;
+}
+function getEstimateDbSheet(tab = estimateDbActiveTab) {
+  return estimateDbSheets?.[tab] || estimateDbSheets?.pj;
+}
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   const rows = sheet.headerRows || [];
   if (!rows.length) return [];
@@ -250,7 +262,7 @@ function setEstimateDbTab(tab) {
   estimateDbActiveTab = tab;
   setEstimateDbPageIndex(tab, 0);
   estimateDbSelectedCell = { tab, sectionIndex: null, rowIndex: 0, colIndex: 0 };
-  renderEstimateDbManage();
+  renderEstimateDbManage({ renderReportsNow: false });
 }
 function setEstimateDbReportTab(tab) {
   if (!estimateDbReportTabs[tab]) return;
@@ -675,9 +687,13 @@ function recalcAllEstimateDbRows() {
    ========================================================= */
 const ESTIMATE_DB_RENDER_PAGE_SIZE = 50;
 let estimateDbPageState = { pj: 0, progress: 0, mep: 0 };
-function recalcEstimateDbRowsByTab(tab = estimateDbActiveTab) {
+function recalcEstimateDbRowsByTab(tab = estimateDbActiveTab, options = {}) {
   const sheet = estimateDbSheets?.[tab];
   if (!sheet || !Array.isArray(sheet.rows)) return;
+  // 기성관리/기전업체는 컬럼 수가 많으므로 탭 진입 시 전체 행을 재계산하지 않습니다.
+  // 셀 수정/저장 시 변경 행만 recalcEstimateDbRow()로 계산하고,
+  // 전체 재계산이 꼭 필요한 경우에만 force 옵션을 사용합니다.
+  if ((tab === "progress" || tab === "mep") && !options.force) return;
   sheet.rows.forEach(row => recalcEstimateDbRow(tab, row));
 }
 function getEstimateDbPageIndex(tab = estimateDbActiveTab) {
@@ -1062,7 +1078,29 @@ function swapEstimateDbColumns(a, b) {
   updateEstimateDbSaveButtonState?.();
 }
 
-function renderEstimateDbManage() {
+let estimateDbReportRenderTimer = null;
+function scheduleEstimateDbReportsRender(delay = 180) {
+  if (estimateDbReportRenderTimer) clearTimeout(estimateDbReportRenderTimer);
+  const run = () => {
+    estimateDbReportRenderTimer = null;
+    try { renderEstimateDbReports(); } catch (error) { console.warn("DB report render skipped", error); }
+  };
+  if (typeof window !== "undefined" && typeof window.requestIdleCallback === "function") {
+    estimateDbReportRenderTimer = window.setTimeout(() => window.requestIdleCallback(run, { timeout: 800 }), delay);
+  } else {
+    estimateDbReportRenderTimer = window.setTimeout(run, delay);
+  }
+}
+
+function recalcEstimateDbVisibleRows(tab, entries = []) {
+  if (tab !== "progress" && tab !== "mep") return;
+  entries.forEach(entry => {
+    if (entry?.row) recalcEstimateDbRow(tab, entry.row);
+  });
+}
+
+function renderEstimateDbManage(options = {}) {
+  runEstimateDbStructureMaintenanceOnce?.();
   initializeEstimateDbVisibleSeedRows();
   migrateEstimateDbPjColumns();
   const head = document.getElementById("estimateDbHead");
@@ -1079,7 +1117,7 @@ function renderEstimateDbManage() {
   } else if (!estimateDbNormalizedTabSet.has(estimateDbActiveTab)) {
     normalizeEstimateDbActiveSheetColumns();
   }
-  recalcEstimateDbRowsByTab(estimateDbActiveTab);
+  if (options.forceRecalc) recalcEstimateDbRowsByTab(estimateDbActiveTab, { force: true });
   renderEstimateDbSearchBox();
   updateEstimateDbSaveButtonState();
   const resizeBtn = document.getElementById("estimateDbColumnResizeBtn");
@@ -1120,11 +1158,13 @@ function renderEstimateDbManage() {
   const allEntries = getEstimateDbDisplayRowEntries(sheet, estimateDbActiveTab);
   const paged = getEstimateDbPagedEntries(allEntries, estimateDbActiveTab);
   const entries = paged.entries;
+  recalcEstimateDbVisibleRows(estimateDbActiveTab, entries);
   const totalRow = renderEstimateDbTotalRow(sheet, colCount);
   body.innerHTML = totalRow + (entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">검색 조건에 맞는 DB 행이 없습니다.</td></tr>`);
   renderEstimateDbPager(paged);
   applyEstimateDbCommaFormatToRenderedInputs();
-  renderEstimateDbReports();
+  if (options.renderReportsNow) renderEstimateDbReports();
+  else scheduleEstimateDbReportsRender(estimateDbActiveTab === "progress" ? 650 : 220);
   restoreEstimateDbFocus();
 }
 function isEstimateDbTotalEnabled(sheet = getEstimateDbSheet()) {
@@ -1133,7 +1173,6 @@ function isEstimateDbTotalEnabled(sheet = getEstimateDbSheet()) {
 function renderEstimateDbTotalRow(sheet, colCount) {
   if (!isEstimateDbTotalEnabled(sheet)) return "";
   const rows = getEstimateDbDataRowsForTotal(sheet);
-  rows.forEach(row => recalcEstimateDbRow(sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, row));
   const tabName = sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab;
   const totals = Array.from({ length: colCount }, (_, colIndex) => isEstimateDbTotalExcludedColumn(tabName, colIndex, sheet) ? 0 : rows.reduce((sum, row) => sum + getEstimateDbNumericValueForTotal(row, colIndex, tabName, sheet), 0));
   const formatTotal = (value, colIndex) => value ? formatEstimateDbMoneyDisplay(value, sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
@@ -2968,5 +3007,3 @@ document.addEventListener("click", event => {
 
 
 /* === 견적서 종류별 관리 v1: 업로드 엑셀 양식 4종 웹 작성 화면 === */
-
-
