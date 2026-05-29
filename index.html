@@ -1493,30 +1493,32 @@
             </section>
 
             <section id="deliveryData" class="work-panel">
-              <article class="card work-ready-card">
-                <div class="card-head">
-                  <h2>납품 및 데이터관리</h2>
-                </div>
-                <div class="card-body">
-                  <div class="placeholder-box work-placeholder-box">
-                    <h3>납품 및 데이터관리 화면 준비 영역</h3>
-                    <p>현재 세부 기능은 미구현 상태입니다. 향후 업무관리 기능 확장 시 화면 구성 및 데이터 연동 영역으로 사용됩니다.</p>
+              <article class="quote-shell central-project-shell">
+                <div class="project-receive-hero quote-hero">
+                  <div>
+                    <h2>납품 및 데이터관리</h2>
+                    <p class="subcopy">중앙 프로젝트 저장소 기준으로 프로젝트별 납품자료, 납품차수, 메모, 납품기록을 분리 관리합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="refreshCentralProjectStore(); renderDeliveryData();">중앙 데이터 새로고침</button>
                   </div>
                 </div>
+                <div id="deliveryDataBoard" class="central-project-board"></div>
               </article>
             </section>
 
             <section id="dailyReport" class="work-panel">
-              <article class="card work-ready-card">
-                <div class="card-head">
-                  <h2>업무일지 / 진행률</h2>
-                </div>
-                <div class="card-body">
-                  <div class="placeholder-box work-placeholder-box">
-                    <h3>업무일지 / 진행률 화면 준비 영역</h3>
-                    <p>현재 세부 기능은 미구현 상태입니다. 향후 업무관리 기능 확장 시 화면 구성 및 데이터 연동 영역으로 사용됩니다.</p>
+              <article class="quote-shell central-project-shell">
+                <div class="project-receive-hero quote-hero">
+                  <div>
+                    <h2>업무일지 / 진행률</h2>
+                    <p class="subcopy">PM배정/일정 승인값과 매칭하여 1차 작성, 퇴근 전 최종 작성, 야근 사전 보고, 지연사유 보고를 관리합니다.</p>
+                  </div>
+                  <div class="project-receive-actions">
+                    <button class="btn btn-line" type="button" onclick="refreshCentralProjectStore(); renderDailyReport();">일정/업무일지 새로고침</button>
                   </div>
                 </div>
+                <div id="dailyReportBoard" class="central-project-board"></div>
               </article>
             </section>
           </section>
@@ -1694,6 +1696,7 @@
   <script src="./data-core.js"></script>
   <script src="./support-hr.js"></script>
   <script src="./support-org.js"></script>
+  <script src="./project-store.js"></script>
   <script src="./work-qc-mail.js"></script>
   <script src="./work-project-receive-core.js"></script>
   <script src="./work-project-receive-quote.js"></script>
@@ -1705,6 +1708,7 @@
   <script src="./work-project-receive-estimate-exact.js"></script>
   <script src="./work-pm-schedule.js"></script>
   <script src="./work-project-managements.js"></script>
+  <script src="./work-delivery-daily.js"></script>
   <script src="./app.js"></script>
 
   <div class="modal-backdrop" id="objectionModal">
