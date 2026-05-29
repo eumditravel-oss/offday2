@@ -839,6 +839,7 @@ function recalcEstimateDbProgressOutsourceTotal(row) {
     const parsed = parseEstimateDbAmountCellValue(row[i]);
     return acc + toEstimateDbNumber(parsed.amount || row[i]);
   }, 0);
+  // 외주금액 기계/전기/외주/송무/기타의 합산값은 항상 외주금액 합계에 반영합니다.
   row[totalIndex] = sum ? String(sum) : "";
 }
 function recalcEstimateDbProgressStageTotals(row) {
@@ -1465,9 +1466,11 @@ function refreshEstimateDbCalculatedCells(rowIndex) {
   if (!calculatedHeaders.length) return;
   cols.forEach((header, colIndex) => {
     const topHeader = sheet.headerRows?.[0]?.[colIndex] || "";
+    const topText = normalizeEstimateDbText(topHeader).replace(/\s+/g, "");
     const isStageTotal = normalizeEstimateDbText(header) === "합계" && /세금계산서|입금예정일|입금일/.test(String(topHeader));
+    const isOutsourceTotal = estimateDbActiveTab === "progress" && normalizeEstimateDbText(header) === "합계" && topText.includes("외주금액");
     const isCalculated = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, calculatedHeaders);
-    if (!isCalculated && !isStageTotal) return;
+    if (!isCalculated && !isStageTotal && !isOutsourceTotal) return;
     const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
     const nextValue = formatEstimateDbMoneyDisplay(row[colIndex] || "", estimateDbActiveTab, colIndex, sheet);
     if (input && input.value !== String(nextValue || "")) input.value = nextValue || "";
