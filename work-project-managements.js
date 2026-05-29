@@ -242,7 +242,7 @@ function pmBuildProjectDetailWindowHtml(p, index = 0) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${title} - 프로젝트 관리</title>
+  <title>${title} - 프로젝트 운영현황</title>
   <style>
     :root{--bg:#f4f7fb;--card:#fff;--line:#e5e7eb;--line2:#dbe3ef;--text:#0f172a;--muted:#64748b;--orange:#f97316;--blue:#2563eb;}
     *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,'Noto Sans KR',sans-serif;font-size:14px;font-weight:800;}
@@ -262,7 +262,7 @@ function pmBuildProjectDetailWindowHtml(p, index = 0) {
   <div class="pm-popup-shell">
     <div class="pm-popup-fixed">
       <div class="pm-popup-head">
-        <div class="pm-popup-title"><div><h1>프로젝트 관리</h1><p class="subcopy">프로젝트별 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 한 화면에서 확인합니다.</p></div></div>
+        <div class="pm-popup-title"><div><h1>프로젝트 운영현황</h1><p class="subcopy">프로젝트별 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 한 화면에서 확인합니다.</p></div></div>
         <div class="actions"><button class="btn btn-line" onclick="alert('착수지연 사유서 작성 화면 준비 영역입니다.')">착수지연 사유서 작성</button><button class="btn btn-line" onclick="alert('상부 승인 처리 화면 준비 영역입니다.')">상부 승인 처리</button><button class="btn btn-primary" onclick="alert('완료일정 변경 화면 준비 영역입니다.')">완료일정 변경</button></div>
       </div>
       <div class="pm-popup-tabs">
