@@ -9534,6 +9534,14 @@ function switchWorkPanel(panelId) {
     renderChecklistCategoryButtons();
     renderChecklistGrid();
   }
+
+  if (targetPanelId === "deliveryData" && typeof renderDeliveryData === "function") {
+    renderDeliveryData();
+  }
+
+  if (targetPanelId === "dailyReport" && typeof renderDailyReport === "function") {
+    renderDailyReport();
+  }
 }
 
 
