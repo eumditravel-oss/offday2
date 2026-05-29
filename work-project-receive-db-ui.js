@@ -290,7 +290,7 @@ function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, 
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
   const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   const topHeaderName = normalizeEstimateDbText(sheet?.headerRows?.[0]?.[colIndex] || "");
-  if (headerName === "PJ NO") return 72;
+  if (headerName === "PJ NO") return 94;
   if (tab === "progress") {
     if (headerName === "계약금액(VAT포함)" || topHeaderName === "계약금액(VAT포함)") return 170;
     if (headerName === "계약금액" || topHeaderName === "계약금액") return 140;
@@ -1065,8 +1065,10 @@ function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = esti
 
 
 function getEstimateDbColumnVisualClass(tab = estimateDbActiveTab, colIndex = 0) {
-  if (tab !== "pj") return "";
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  // PJ관리 / 기성관리 / 기전업체 공통: PJ NO 열은 기존 저장 열폭보다 고정폭을 우선 적용합니다.
+  if (header === "PJ NO") return " quote-db-col-pj-no";
+  if (tab !== "pj") return "";
   if (header === "국내/해외") return " quote-db-col-domestic";
   if (header === "거래처명") return " quote-db-col-client-name";
   if (header === "프로젝트명") return " quote-db-col-project-name";
