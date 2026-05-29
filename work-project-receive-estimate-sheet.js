@@ -3550,6 +3550,7 @@ function runEstimateRequestAction(id) {
       estimateRequestAddHistory(row, `상태 변경: ${status}`);
       estimateRequestRows[idx] = row;
       estimateRequestSaveRows();
+      syncEstimateRequestToDb(id, { silent: true });
       renderEstimateRequestManage();
       showToast?.(`${status} 상태로 변경되었습니다.`);
     }
@@ -3642,6 +3643,7 @@ function estimateRequestUpdateByEstimate(record, status, message) {
   estimateRequestAddHistory(row, message || `견적서 종류별 관리 상태 변경: ${row.status}`);
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
+  syncEstimateRequestToDb(row.id, { silent: true });
 }
 const estimateWorkflowOriginalSaveRecord = typeof saveEstimateSheetRecord === "function" ? saveEstimateSheetRecord : null;
 window.saveEstimateSheetRecord = function estimateWorkflowSaveEstimateSheetRecord() {
@@ -3679,6 +3681,7 @@ function approveEstimateRequest(id) {
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
   estimateRequestSyncPeriodStatus(row, "수주", "견적 승인 완료");
+  syncEstimateRequestToDb(row.id, { silent: true });
   renderEstimateRequestManage();
   if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
 }
@@ -3694,6 +3697,7 @@ function startEstimateRequest(id, mode = "작업시작") {
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
   estimateRequestSyncPeriodStatus(row, row.status === "선착수" ? "실주" : "수주", row.startMode);
+  syncEstimateRequestToDb(row.id, { silent: true });
   renderEstimateRequestManage();
   if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
 }
@@ -3739,14 +3743,23 @@ function syncEstimateRequestToDb(id, options = {}) {
       if (typeof syncEstimateDbLinkedRowsFromPj === "function") syncEstimateDbLinkedRowsFromPj(targetIndex);
       if (typeof getEstimateDbColumnIndexByHeader === "function" && estimateDbSheets?.progress) {
         const progressRows = estimateDbSheets.progress.rows || [];
-        const progressRow = progressRows.find(r => r?.__sourcePjRowIndex === targetIndex) || progressRows.find(r => r?.[getEstimateDbColumnIndexByHeader("progress", "PJ명")] === row.project);
-        if (progressRow) {
+        const pjNameIndex = getEstimateDbColumnIndexByHeader("progress", "PJ명");
+        const companyIndex = getEstimateDbColumnIndexByHeader("progress", "업체명");
+        const targetRows = progressRows.filter(r => {
+          if (!r) return false;
+          if (r.__sourcePjRowIndex === targetIndex) return true;
+          const sameProject = pjNameIndex >= 0 && String(r[pjNameIndex] || "").trim() === String(row.project || "").trim();
+          const sameCompany = companyIndex < 0 || !row.company || String(r[companyIndex] || "").trim() === String(row.company || "").trim();
+          return sameProject && sameCompany;
+        });
+        if (!targetRows.length && progressRows[targetIndex]) targetRows.push(progressRows[targetIndex]);
+        targetRows.forEach(progressRow => {
           const setProgress = (name, value) => { const i = getEstimateDbColumnIndexByHeader("progress", name); if (i >= 0) progressRow[i] = value || ""; };
           setProgress("견적서일자", row.estimateDate ? estimateRequestDbDateLabel(row.estimateDate) : "");
           setProgress("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
           setProgress("계약일자", row.contractDate === "대기중" ? "대기중" : (row.contractDate ? estimateRequestDbDateLabel(row.contractDate) : ""));
           if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
-        }
+        });
       }
       row.dbLinked = true;
       estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 자동 연결(내부 처리)");
@@ -3773,6 +3786,7 @@ function cancelEstimateRequest(id) {
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
   estimateRequestSyncPeriodStatus(row, "작업취소", "작업취소 처리");
+  syncEstimateRequestToDb(row.id, { silent: true });
   renderEstimateRequestManage();
   if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
   showToast?.("작업취소 처리되었습니다.");
