@@ -568,6 +568,7 @@ const projectReceiveCompletedProjects = [
 ];
 
 let selectedProjectReceiveCompletedIndex = 0;
+let selectedProjectReceiveDbImportIndex = 0;
 
 let projectReceiveState = JSON.parse(JSON.stringify(projectReceiveSampleData));
 
@@ -1181,6 +1182,216 @@ function loadSelectedProjectReceiveCompleted() {
   closeProjectReceiveCompletedList();
   showToast(`${selected.data.projectNo} 수주소식을 수정 화면으로 불러왔습니다.`);
 }
+
+
+/* =========================================================
+   프로젝트 접수: DB자료 불러오기
+   - DB관리(PJ관리)에만 존재하고 프로젝트 접수/리스트에 등록되지 않은 데이터를 수동 선택해 정식 프로젝트 리스트에 등록
+   - DB 단계는 후보 데이터이므로 자동 등록하지 않고, 사용자가 선택한 건만 프로젝트 리스트 기준 데이터로 편입
+========================================================= */
+function projectReceiveNormalizeText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function projectReceiveDbHeaderIndex(headerName) {
+  if (typeof getEstimateDbColumnIndexByHeader === "function") {
+    const idx = getEstimateDbColumnIndexByHeader("pj", headerName);
+    if (idx >= 0) return idx;
+  }
+  const sheet = typeof estimateDbSheets !== "undefined" ? estimateDbSheets?.pj : null;
+  const headers = Array.isArray(sheet?.headerRows?.[0]) ? sheet.headerRows[0] : [];
+  return headers.findIndex(header => projectReceiveNormalizeText(header) === projectReceiveNormalizeText(headerName));
+}
+
+function projectReceiveDbCell(row, headerName) {
+  const idx = projectReceiveDbHeaderIndex(headerName);
+  return idx >= 0 ? String(row?.[idx] ?? "").trim() : "";
+}
+
+function projectReceiveFormatDbDate(value) {
+  const text = projectReceiveNormalizeText(value);
+  if (!text) return "";
+  const m = text.match(/^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일$/);
+  if (m) return `${m[1]}.${String(m[2]).padStart(2, "0")}.${String(m[3]).padStart(2, "0")}`;
+  const compact = text.replace(/[^0-9]/g, "");
+  if (compact.length === 6) return `20${compact.slice(0, 2)}.${compact.slice(2, 4)}.${compact.slice(4, 6)}`;
+  if (compact.length === 8) return `${compact.slice(0, 4)}.${compact.slice(4, 6)}.${compact.slice(6, 8)}`;
+  return text;
+}
+
+function projectReceiveBuildContactsFromDbRow(row) {
+  const name = projectReceiveDbCell(row, "거래처담당자") || projectReceiveDbCell(row, "담당자");
+  const dept = projectReceiveDbCell(row, "거래처");
+  const role = projectReceiveDbCell(row, "직급");
+  const tel = projectReceiveDbCell(row, "일반전화") || projectReceiveDbCell(row, "직통전화");
+  const mobile = projectReceiveDbCell(row, "휴대폰");
+  const email = projectReceiveDbCell(row, "EMAIL") || projectReceiveDbCell(row, "EMAIL2");
+  return [{ name, role, dept, tel, mobile, email }];
+}
+
+function projectReceiveApplyLabelChecks(sourceText, items) {
+  const source = projectReceiveNormalizeText(sourceText);
+  return (items || []).map(item => ({
+    ...item,
+    checked: source ? source.includes(item.label) || item.label.split(/[ㆍ·,/]/).some(part => part && source.includes(part.trim())) : false,
+    children: item.children ? item.children.map(child => ({
+      ...child,
+      checked: source ? source.includes(child.label) : false
+    })) : undefined
+  }));
+}
+
+function projectReceiveDataFromDbPjRow(row, sourceIndex = -1) {
+  const projectName = projectReceiveDbCell(row, "프로젝트명");
+  const client = projectReceiveDbCell(row, "거래처명") || projectReceiveDbCell(row, "의뢰처");
+  const floors = projectReceiveDbCell(row, "층수");
+  const parsedFloors = typeof parseProjectReceiveFloors === "function" ? parseProjectReceiveFloors(floors) : { basementFloors: "", groundFloors: "" };
+  const workType = projectReceiveDbCell(row, "작업공종");
+  const businessType = [projectReceiveDbCell(row, "업무성격"), projectReceiveDbCell(row, "업무단계2")].filter(Boolean).join(" ");
+  const webhardNote = [
+    projectReceiveDbCell(row, "폴더명 / 자료위치") ? `폴더명 / 자료위치: ${projectReceiveDbCell(row, "폴더명 / 자료위치")}` : "",
+    projectReceiveDbCell(row, "기타") ? `기타: ${projectReceiveDbCell(row, "기타")}` : ""
+  ].filter(Boolean).join(" / ");
+  const memo = projectReceiveDbCell(row, "상담 / 이메일 / 특기사항");
+  const data = JSON.parse(JSON.stringify(projectReceiveDefaultData));
+  data.projectNo = projectReceiveDbCell(row, "PJ NO");
+  data.dbPjNo = data.projectNo;
+  data.dbPjRowIndex = sourceIndex;
+  data.projectLink = projectReceiveDbCell(row, "프로젝트 연결");
+  data.projectName = projectName;
+  data.client = client;
+  data.usage = projectReceiveDbCell(row, "건물용도");
+  data.area = projectReceiveDbCell(row, "연면적(평)") || projectReceiveDbCell(row, "연면적(m2)");
+  data.buildings = projectReceiveDbCell(row, "동수");
+  data.floors = floors;
+  data.basementFloors = parsedFloors.basementFloors || "";
+  data.groundFloors = parsedFloors.groundFloors || "";
+  data.bidDate = projectReceiveFormatDbDate(projectReceiveDbCell(row, "입찰일") || projectReceiveDbCell(row, "입찰월"));
+  data.unitPrice = projectReceiveDbCell(row, "단가작업여부") || projectReceiveDbCell(row, "작업구분");
+  data.businessTypes = projectReceiveApplyLabelChecks(businessType || projectName, projectReceiveDefaultData.businessTypes);
+  data.scopes = projectReceiveApplyLabelChecks(`${workType} ${projectName}`, projectReceiveDefaultData.scopes);
+  data.contacts = projectReceiveBuildContactsFromDbRow(row);
+  data.webhardUrl = projectReceiveDbCell(row, "웹하드");
+  data.webhardId = projectReceiveDbCell(row, "ID");
+  data.webhardPw = projectReceiveDbCell(row, "PW");
+  data.webhardNote = webhardNote;
+  data.pmFinish = projectReceiveDbCell(row, "PM(마감)");
+  data.pmStructure = projectReceiveDbCell(row, "PM(구조)");
+  data.pmBim = projectReceiveDbCell(row, "PM(BIM)") || projectReceiveDbCell(row, "BIM파트 PM");
+  data.pmCivil = projectReceiveDbCell(row, "PM(토목,조경)");
+  data.pmTotal = [data.pmFinish, data.pmStructure, data.pmBim, data.pmCivil].filter(Boolean).join(" / ");
+  data.startDate = projectReceiveFormatDbDate(projectReceiveDbCell(row, "작업착수일자"));
+  data.firstDelivery = projectReceiveFormatDbDate(projectReceiveDbCell(row, "1차납품예정일"));
+  data.finalDelivery = projectReceiveFormatDbDate(projectReceiveDbCell(row, "2차납품예정일"));
+  data.workContent = [workType, projectReceiveDbCell(row, "작업구분"), projectReceiveDbCell(row, "업무성격")].filter(Boolean).join(" / ");
+  data.notes = memo;
+  data.request = memo || projectName;
+  return data;
+}
+
+function getProjectReceiveDbImportItems() {
+  const sheet = typeof estimateDbSheets !== "undefined" ? estimateDbSheets?.pj : null;
+  const rows = Array.isArray(sheet?.rows) ? sheet.rows : [];
+  const registeredKeys = new Set((Array.isArray(projectReceiveCompletedProjects) ? projectReceiveCompletedProjects : []).map(item => projectReceiveLinkKey(item.data || item)));
+  return rows.map((row, sourceIndex) => {
+    const data = projectReceiveDataFromDbPjRow(row, sourceIndex);
+    return { row, sourceIndex, data, key: projectReceiveLinkKey(data) };
+  }).filter(item => projectReceiveNormalizeText(item.data.projectName) && !registeredKeys.has(item.key));
+}
+
+function openProjectReceiveDbImportList() {
+  ensureProjectReceiveDbImportModal();
+  selectedProjectReceiveDbImportIndex = 0;
+  renderProjectReceiveDbImportList();
+  document.getElementById("projectReceiveDbImportModal")?.classList.add("active");
+}
+
+function closeProjectReceiveDbImportList() {
+  document.getElementById("projectReceiveDbImportModal")?.classList.remove("active");
+}
+
+function ensureProjectReceiveDbImportModal() {
+  if (document.getElementById("projectReceiveDbImportModal")) return;
+  const modal = document.createElement("div");
+  modal.id = "projectReceiveDbImportModal";
+  modal.className = "modal-backdrop project-receive-completed-modal project-receive-db-import-modal";
+  modal.innerHTML = `
+    <div class="modal project-receive-completed-box">
+      <div class="modal-head">
+        <div>
+          <h3>DB자료 불러오기</h3>
+          <p>DB관리(PJ관리)에만 있는 후보 프로젝트를 선택해 프로젝트 리스트에 등록합니다.</p>
+        </div>
+        <button class="close" type="button" onclick="closeProjectReceiveDbImportList()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="project-receive-completed-summary" id="projectReceiveDbImportSummary"></div>
+        <div class="project-receive-completed-list" id="projectReceiveDbImportList"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-line" type="button" onclick="closeProjectReceiveDbImportList()">닫기</button>
+        <button class="btn btn-primary" type="button" onclick="loadSelectedProjectReceiveDbImport()">선택 DB자료 등록</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", event => {
+    if (event.target === modal) closeProjectReceiveDbImportList();
+  });
+  document.body.appendChild(modal);
+}
+
+function renderProjectReceiveDbImportList() {
+  const list = document.getElementById("projectReceiveDbImportList");
+  const summary = document.getElementById("projectReceiveDbImportSummary");
+  if (!list) return;
+  const items = getProjectReceiveDbImportItems();
+  if (summary) {
+    summary.innerHTML = `<strong>등록 가능 ${items.length}건</strong><span>이미 프로젝트 리스트에 등록된 DB자료는 제외됩니다.</span>`;
+  }
+  if (!items.length) {
+    list.innerHTML = `<div class="project-list-empty">등록할 DB자료가 없습니다.</div>`;
+    return;
+  }
+  if (selectedProjectReceiveDbImportIndex >= items.length) selectedProjectReceiveDbImportIndex = 0;
+  list.innerHTML = items.map((item, index) => {
+    const data = item.data || {};
+    const scopeText = getProjectReceiveListScopeText(data);
+    return `
+      <button class="project-receive-completed-item ${selectedProjectReceiveDbImportIndex === index ? "active" : ""}" type="button" onclick="selectProjectReceiveDbImport(${index})">
+        <span class="completed-no">${escapeProjectReceiveHtml(data.projectNo || "DB")}</span>
+        <span class="completed-main">
+          <strong>${escapeProjectReceiveHtml(data.projectName || "프로젝트명 미입력")}</strong>
+          <em>${escapeProjectReceiveHtml(data.client || "거래처명 미입력")} · ${escapeProjectReceiveHtml(scopeText)}</em>
+          <small>DB관리 PJ관리 ${item.sourceIndex + 1}행</small>
+        </span>
+        <span class="completed-date">DB후보<br>${escapeProjectReceiveHtml(data.firstDelivery || data.startDate || "-")}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function selectProjectReceiveDbImport(index) {
+  selectedProjectReceiveDbImportIndex = index;
+  renderProjectReceiveDbImportList();
+}
+
+function loadSelectedProjectReceiveDbImport() {
+  const items = getProjectReceiveDbImportItems();
+  const selected = items[selectedProjectReceiveDbImportIndex];
+  if (!selected) return;
+  projectReceiveState = JSON.parse(JSON.stringify(selected.data));
+  projectReceiveUpsertCompleted(projectReceiveState, { sourceFile: "DB관리 PJ관리 수동 불러오기" });
+  renderProjectReceiveDashboard();
+  if (document.getElementById("projectReceiveListBody")) renderProjectReceiveListView();
+  if (typeof registerPmScheduleProjectFromReceive === "function") registerPmScheduleProjectFromReceive(projectReceiveState);
+  if (typeof pmRefreshLinkedEstimateProjects === "function") pmRefreshLinkedEstimateProjects();
+  closeProjectReceiveDbImportList();
+  showToast(`${projectReceiveState.projectNo || projectReceiveState.projectName} DB자료를 프로젝트 리스트에 등록했습니다.`);
+}
+
+window.openProjectReceiveDbImportList = openProjectReceiveDbImportList;
+window.closeProjectReceiveDbImportList = closeProjectReceiveDbImportList;
+window.loadSelectedProjectReceiveDbImport = loadSelectedProjectReceiveDbImport;
 
 
 function getProjectReceiveConfirmStamp() {
