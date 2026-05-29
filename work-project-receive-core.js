@@ -1646,6 +1646,9 @@ function projectReceiveSyncPmAssignmentToDb(projectNo, assignment = {}) {
   projectReceiveSetDbPjCell(rowIndex, "PM(마감)", assignment.pmFinish || "");
   projectReceiveSetDbPjCell(rowIndex, "PM(구조)", assignment.pmStructure || assignment.pmBim || "");
   projectReceiveSetDbPjCell(rowIndex, "PM(토목,조경)", assignment.pmCivil || "");
+  if (typeof estimateDbSyncProgressTotalPmFromPjRow === "function") {
+    estimateDbSyncProgressTotalPmFromPjRow(rowIndex, assignment);
+  }
   projectReceiveSetDbPjCell(rowIndex, "상담 / 이메일 / 특기사항", [
     "PM배정/일정 최신 반영",
     assignment.pmFinish ? `마감:${assignment.pmFinish}` : "",
