@@ -806,6 +806,41 @@ function ensureEstimateDbProgressStageTotalColumns() {
     (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
   });
 }
+function getEstimateDbProgressOutsourceIndexes() {
+  const sheet = estimateDbSheets.progress;
+  const top = sheet?.headerRows?.[0] || [];
+  const leaf = getEstimateDbLeafColumns(sheet);
+  const targets = ["기계", "전기", "외주", "송무", "기타"];
+  let activeGroup = "";
+  return leaf.reduce((list, label, index) => {
+    const topLabel = normalizeEstimateDbText(top[index]);
+    if (topLabel) activeGroup = topLabel.replace(/\s+/g, "");
+    if (activeGroup.includes("외주금액") && targets.includes(normalizeEstimateDbText(label))) list.push(index);
+    return list;
+  }, []);
+}
+function getEstimateDbProgressOutsourceTotalIndex() {
+  const sheet = estimateDbSheets.progress;
+  const top = sheet?.headerRows?.[0] || [];
+  const leaf = getEstimateDbLeafColumns(sheet);
+  let activeGroup = "";
+  for (let i = 0; i < leaf.length; i += 1) {
+    const topLabel = normalizeEstimateDbText(top[i]);
+    if (topLabel) activeGroup = topLabel.replace(/\s+/g, "");
+    if (activeGroup.includes("외주금액") && normalizeEstimateDbText(leaf[i]) === "합계") return i;
+  }
+  return -1;
+}
+function recalcEstimateDbProgressOutsourceTotal(row) {
+  if (!row) return;
+  const totalIndex = getEstimateDbProgressOutsourceTotalIndex();
+  if (totalIndex < 0) return;
+  const sum = getEstimateDbProgressOutsourceIndexes().reduce((acc, i) => {
+    const parsed = parseEstimateDbAmountCellValue(row[i]);
+    return acc + toEstimateDbNumber(parsed.amount || row[i]);
+  }, 0);
+  row[totalIndex] = sum ? String(sum) : "";
+}
 function recalcEstimateDbProgressStageTotals(row) {
   if (!row) return;
   const sheet = estimateDbSheets.progress;
@@ -850,11 +885,7 @@ function recalcEstimateDbRow(tab, row) {
     if (vatIndex >= 0) row[vatIndex] = contractBreakdownSum ? String(Math.round(contractBreakdownSum * 1.1)) : "";
     const balance = contractBreakdownSum - get("수령액");
     set("잔액", balance);
-    const outsource = ["기계", "전기", "외주", "송무", "기타"].reduce((sum, name) => {
-      const i = idx(name);
-      return sum + (i >= 0 ? toEstimateDbNumber(parseEstimateDbAmountCellValue(row[i]).amount || row[i]) : 0);
-    }, 0);
-    set("합계", outsource);
+    recalcEstimateDbProgressOutsourceTotal(row);
     const waiting = balance - get("발행완료") - get("납품완료") - get("작업진행중") - get("작업취소");
     set("작업대기중", waiting);
     recalcEstimateDbProgressStageTotals(row);
