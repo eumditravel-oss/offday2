@@ -1,4 +1,3 @@
-```javascript
 let estimateDbActiveTab = "pj";
 let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
@@ -2970,4 +2969,4 @@ document.addEventListener("click", event => {
 
 /* === 견적서 종류별 관리 v1: 업로드 엑셀 양식 4종 웹 작성 화면 === */
 
-```
+
