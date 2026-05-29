@@ -1,3 +1,4 @@
+```javascript
 let estimateDbVisibleSeedRowsInitialized = false;
 let estimateDbPjReceiptColumnRemoved = false;
 let estimateDbPjProjectLinkColumnEnsured = false;
@@ -56,7 +57,6 @@ function isEstimateDbDateInputColumn(tab = estimateDbActiveTab, colIndex = 0) {
 }
 
 function isEstimateDbCreatedDateColumn(tab = estimateDbActiveTab, colIndex = 0) {
-  if (tab !== "pj") return false;
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   return header === "최초생성날짜" || header === "년도";
 }
@@ -408,3 +408,5 @@ function formatEstimateDbReportCell(value) {
   if (!raw || raw.includes("%") || /월$/.test(raw) || /년$/.test(raw)) return raw;
   return isEstimateDbPureNumber(raw) ? formatEstimateDbCommaNumber(raw) : raw;
 }
+
+```
