@@ -622,6 +622,76 @@ function saveEstimateDbStageFormulaModal() {
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
 }
+
+let estimateDbContractAmountModalState = null;
+function ensureEstimateDbContractAmountModal() {
+  let modal = document.getElementById("estimateDbContractAmountModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbContractAmountModal";
+  modal.className = "estimate-db-dropdown-modal hidden";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-contract-amount-box" role="dialog" aria-modal="true" style="max-width:620px;">
+      <div class="estimate-db-dropdown-title" id="estimateDbContractAmountTitle">계약금액 분할 입력</div>
+      <label class="estimate-db-amount-label">금액<input id="estimateDbContractAmountValue" class="estimate-db-dropdown-search" placeholder="예: 272250000" inputmode="numeric" /></label>
+      <label class="estimate-db-amount-label">날짜<input id="estimateDbContractAmountDate" class="estimate-db-dropdown-search" placeholder="예: 260529 또는 2026-05-29" /></label>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContractAmountModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContractAmountModal()">저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => {
+    if (event.target === modal) closeEstimateDbContractAmountModal();
+  });
+  modal.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbContractAmountModal(); return; }
+    if (event.key === "ArrowDown" && event.target?.id === "estimateDbContractAmountValue") {
+      event.preventDefault();
+      modal.querySelector("#estimateDbContractAmountDate")?.focus();
+      return;
+    }
+    if (event.key === "ArrowUp" && event.target?.id === "estimateDbContractAmountDate") {
+      event.preventDefault();
+      modal.querySelector("#estimateDbContractAmountValue")?.focus();
+      return;
+    }
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); saveEstimateDbContractAmountModal(); }
+  });
+  return modal;
+}
+function openEstimateDbContractAmountModal(rowIndex = estimateDbSelectedCell?.rowIndex || 0, colIndex = estimateDbSelectedCell?.colIndex || 0) {
+  if (!isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex)) return false;
+  commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+  const row = getEstimateDbRows()?.[rowIndex];
+  const parsed = parseEstimateDbContractAmountValue(row?.[colIndex] || "");
+  estimateDbContractAmountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
+  const modal = ensureEstimateDbContractAmountModal();
+  modal.querySelector("#estimateDbContractAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 금액/날짜 입력`;
+  modal.querySelector("#estimateDbContractAmountValue").value = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
+  modal.querySelector("#estimateDbContractAmountDate").value = parsed.date ? formatEstimateDbFullKoreanDate(parsed.date) : "";
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector("#estimateDbContractAmountValue")?.focus(), 0);
+  return true;
+}
+function closeEstimateDbContractAmountModal() {
+  document.getElementById("estimateDbContractAmountModal")?.classList.add("hidden");
+  estimateDbContractAmountModalState = null;
+}
+function saveEstimateDbContractAmountModal() {
+  const state = estimateDbContractAmountModalState;
+  if (!state) return;
+  const amountInput = document.getElementById("estimateDbContractAmountValue");
+  const dateInput = document.getElementById("estimateDbContractAmountDate");
+  const amount = normalizeEstimateDbText(amountInput?.value || "");
+  const date = normalizeEstimateDbText(dateInput?.value || "");
+  const value = stringifyEstimateDbContractAmountValue(amount, date);
+  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
+  closeEstimateDbContractAmountModal();
+  renderEstimateDbManage({ forceRecalc: true });
+  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+
 function ensureEstimateDbProgressDoneColumn() {
   const sheet = estimateDbSheets.progress;
   if (!sheet?.headerRows?.length) return;
@@ -2066,69 +2136,6 @@ function parseEstimateDbAmountCellValue(value) {
   if (parts.length >= 2) return { company: parts[0], amount: parts.slice(1).join(" / ") };
   return /^[-+]?\d[\d,]*$/.test(parts[0] || "") ? { company: "", amount: parts[0] } : { company: parts[0] || "", amount: "" };
 }
-
-function ensureEstimateDbContractAmountModal() {
-  let modal = document.getElementById("estimateDbContractAmountModal");
-  if (modal) return modal;
-  modal = document.createElement("div");
-  modal.id = "estimateDbContractAmountModal";
-  modal.className = "estimate-db-dropdown-modal hidden";
-  modal.innerHTML = `
-    <div class="estimate-db-dropdown-box estimate-db-amount-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title" id="estimateDbContractAmountTitle">계약금액 분할 입력</div>
-      <label class="estimate-db-amount-label">금액<input id="estimateDbContractAmountValue" class="estimate-db-dropdown-search" placeholder="예: 272250000" /></label>
-      <label class="estimate-db-amount-label">날짜<input id="estimateDbContractAmountDate" class="estimate-db-dropdown-search" placeholder="예: 260529 또는 2026-05-29" /></label>
-      <div class="estimate-db-dropdown-help">저장하면 금액은 셀 위, 날짜는 셀 아래에 표시됩니다. Enter 키로 저장할 수 있습니다.</div>
-      <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContractAmountModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContractAmountModal()">저장</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbContractAmountModal(); });
-  modal.querySelectorAll("input").forEach(input => input.addEventListener("keydown", event => {
-    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbContractAmountModal(); return; }
-    if (event.key === "ArrowDown" && event.target?.id === "estimateDbContractAmountValue") { event.preventDefault(); modal.querySelector("#estimateDbContractAmountDate")?.focus(); return; }
-    if (event.key === "ArrowUp" && event.target?.id === "estimateDbContractAmountDate") { event.preventDefault(); modal.querySelector("#estimateDbContractAmountValue")?.focus(); return; }
-    if (event.key === "Enter") { event.preventDefault(); saveEstimateDbContractAmountModal(); }
-  }));
-  return modal;
-}
-let estimateDbContractAmountModalState = null;
-function openEstimateDbContractAmountModal(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
-  if (!isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex)) return false;
-  const modal = ensureEstimateDbContractAmountModal();
-  const row = getEstimateDbRows()?.[rowIndex] || [];
-  const parsed = parseEstimateDbContractAmountValue(row[colIndex]);
-  estimateDbContractAmountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
-  modal.classList.remove("hidden");
-  modal.querySelector("#estimateDbContractAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 계약금액 입력`;
-  modal.querySelector("#estimateDbContractAmountValue").value = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
-  modal.querySelector("#estimateDbContractAmountDate").value = parsed.date ? formatEstimateDbFullKoreanDate(parsed.date) : "";
-  setTimeout(() => modal.querySelector("#estimateDbContractAmountValue")?.focus(), 0);
-  return true;
-}
-function closeEstimateDbContractAmountModal() {
-  document.getElementById("estimateDbContractAmountModal")?.classList.add("hidden");
-  const state = estimateDbContractAmountModalState;
-  estimateDbContractAmountModalState = null;
-  if (state) requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
-}
-function saveEstimateDbContractAmountModal() {
-  const state = estimateDbContractAmountModalState;
-  if (!state) return;
-  const amount = normalizeEstimateDbText(document.getElementById("estimateDbContractAmountValue")?.value || "");
-  const date = normalizeEstimateDbText(document.getElementById("estimateDbContractAmountDate")?.value || "");
-  const value = stringifyEstimateDbContractAmountValue(amount, date);
-  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
-  closeEstimateDbContractAmountModal();
-  refreshEstimateDbCalculatedCells(state.rowIndex);
-  refreshEstimateDbTotalRowOnly();
-  renderEstimateDbReports();
-  updateEstimateDbSaveButtonState();
-  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
-}
-
 function ensureEstimateDbAmountModal() {
   let modal = document.getElementById("estimateDbAmountModal");
   if (modal) return modal;
