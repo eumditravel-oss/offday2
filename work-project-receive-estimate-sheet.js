@@ -3277,6 +3277,7 @@ function estimateRequestExtractCompany(text) {
   return src.split(/[\n,;]/).map(x => x.trim()).filter(Boolean)[0] || "";
 }
 function estimateRequestNormalizeRow(row = {}) {
+  const statusDates = row.statusDates && typeof row.statusDates === "object" ? row.statusDates : {};
   return {
     id: row.id || estimateRequestSafeId(),
     date: row.date || estimateRequestToday(),
@@ -3291,8 +3292,9 @@ function estimateRequestNormalizeRow(row = {}) {
     periodKey: row.periodKey || "",
     dbLinked: !!row.dbLinked, // 내부 DB관리 후보 연결 여부(UI에는 표시하지 않음)
     startMode: row.startMode || "",
-    estimateDate: row.estimateDate || row.waitingDate || "",
-    orderDate: row.orderDate || row.awardDate || "",
+    statusDates,
+    estimateDate: row.estimateDate || row.waitingDate || statusDates.waiting || "",
+    orderDate: row.orderDate || row.awardDate || statusDates.preStart || statusDates.workStart || "",
     contractDate: row.contractDate || "",
     updatedAt: row.updatedAt || estimateRequestNowLabel(),
     history: Array.isArray(row.history) ? row.history : []
@@ -3313,17 +3315,78 @@ function estimateRequestApplyStatusDates(row, nextStatus) {
   if (!row) return row;
   const today = estimateRequestToday();
   const status = estimateRequestNormalizeStatus(nextStatus || row.status);
-  if (status === "대기중" && !row.estimateDate) row.estimateDate = today;
+  row.statusDates = row.statusDates && typeof row.statusDates === "object" ? row.statusDates : {};
+
+  // 상태별 최초 발생일을 별도로 보관합니다.
+  // 수주일자는 선착수 또는 작업시작이 처음 발생한 날이며, 선착수 후 작업시작으로 바뀌어도 유지됩니다.
+  if (status === "대기중") {
+    if (!row.statusDates.waiting) row.statusDates.waiting = today;
+    if (!row.estimateDate) row.estimateDate = row.statusDates.waiting;
+  }
   if (status === "선착수") {
-    if (!row.orderDate) row.orderDate = today;
-    if (!row.contractDate || row.contractDate !== "대기중") row.contractDate = "대기중";
+    if (!row.statusDates.preStart) row.statusDates.preStart = today;
+    if (!row.orderDate) row.orderDate = row.statusDates.preStart;
+    row.contractDate = "대기중";
   }
   if (status === "작업시작") {
-    if (!row.orderDate) row.orderDate = today;
-    if (!row.contractDate || row.contractDate === "대기중") row.contractDate = today;
+    if (!row.statusDates.workStart) row.statusDates.workStart = today;
+    if (!row.orderDate) row.orderDate = row.statusDates.preStart || row.statusDates.workStart;
+    row.contractDate = row.statusDates.workStart;
   }
   return row;
 }
+
+function estimateRequestProgressDateValue(row, field) {
+  if (!row) return "";
+  row.statusDates = row.statusDates && typeof row.statusDates === "object" ? row.statusDates : {};
+  if (field === "estimate") return row.estimateDate || row.statusDates.waiting || "";
+  if (field === "order") return row.orderDate || row.statusDates.preStart || row.statusDates.workStart || "";
+  if (field === "contract") {
+    if (row.contractDate === "대기중") return "대기중";
+    return row.contractDate || row.statusDates.workStart || "";
+  }
+  return "";
+}
+function estimateRequestFindProgressRows(row, sourceIndex = null) {
+  const rows = (typeof estimateDbSheets !== "undefined" && estimateDbSheets?.progress?.rows) ? estimateDbSheets.progress.rows : [];
+  if (!rows.length || typeof getEstimateDbColumnIndexByHeader !== "function") return [];
+  const pjNameIndex = getEstimateDbColumnIndexByHeader("progress", "PJ명");
+  const companyIndex = getEstimateDbColumnIndexByHeader("progress", "업체명");
+  const pjNoIndex = getEstimateDbColumnIndexByHeader("progress", "PJ NO");
+  const projectText = String(row?.project || "").trim();
+  const companyText = String(row?.company || "").trim();
+  const pjNoText = String(row?.dbPjNo || row?.pjNo || "").trim();
+  const matched = rows.filter(progressRow => {
+    if (!progressRow) return false;
+    if (sourceIndex !== null && sourceIndex !== undefined && progressRow.__sourcePjRowIndex === sourceIndex) return true;
+    const samePjNo = pjNoText && pjNoIndex >= 0 && String(progressRow[pjNoIndex] || "").trim() === pjNoText;
+    const sameProject = projectText && pjNameIndex >= 0 && String(progressRow[pjNameIndex] || "").trim() === projectText;
+    const sameCompany = !companyText || companyIndex < 0 || String(progressRow[companyIndex] || "").trim() === companyText;
+    return samePjNo || (sameProject && sameCompany);
+  });
+  if (matched.length) return matched;
+  if (sourceIndex !== null && sourceIndex !== undefined && rows[sourceIndex]) return [rows[sourceIndex]];
+  return [];
+}
+function estimateRequestSyncProgressStatusDates(row, sourceIndex = null) {
+  if (!row || typeof getEstimateDbColumnIndexByHeader !== "function") return;
+  const targetRows = estimateRequestFindProgressRows(row, sourceIndex);
+  if (!targetRows.length) return;
+  const setProgress = (progressRow, name, value) => {
+    const i = getEstimateDbColumnIndexByHeader("progress", name);
+    if (i >= 0) progressRow[i] = value || "";
+  };
+  const estimateDate = estimateRequestProgressDateValue(row, "estimate");
+  const orderDate = estimateRequestProgressDateValue(row, "order");
+  const contractDate = estimateRequestProgressDateValue(row, "contract");
+  targetRows.forEach(progressRow => {
+    setProgress(progressRow, "견적서일자", estimateDate ? estimateRequestDbDateLabel(estimateDate) : "");
+    setProgress(progressRow, "수주일자", orderDate ? estimateRequestDbDateLabel(orderDate) : "");
+    setProgress(progressRow, "계약일자", contractDate === "대기중" ? "대기중" : (contractDate ? estimateRequestDbDateLabel(contractDate) : ""));
+    if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
+  });
+}
+
 function estimateRequestFilteredRows() {
   estimateRequestLoadRows();
   const q = String(estimateRequestFilters.q || "").toLowerCase().trim();
@@ -3761,6 +3824,7 @@ function syncEstimateRequestToDb(id, options = {}) {
           if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
         });
       }
+      estimateRequestSyncProgressStatusDates(row, targetIndex);
       row.dbLinked = true;
       estimateRequestAddHistory(row, "DB관리 PJ관리 후보 행 자동 연결(내부 처리)");
       estimateRequestRows[idx] = row;
