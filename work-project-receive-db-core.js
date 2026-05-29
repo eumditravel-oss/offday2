@@ -1,4 +1,3 @@
-```javascript
 let estimateDbVisibleSeedRowsInitialized = false;
 let estimateDbPjReceiptColumnRemoved = false;
 let estimateDbPjProjectLinkColumnEnsured = false;
@@ -408,5 +407,3 @@ function formatEstimateDbReportCell(value) {
   if (!raw || raw.includes("%") || /월$/.test(raw) || /년$/.test(raw)) return raw;
   return isEstimateDbPureNumber(raw) ? formatEstimateDbCommaNumber(raw) : raw;
 }
-
-```
