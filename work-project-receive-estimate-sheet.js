@@ -5687,3 +5687,171 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
   };
   window.saveProjectReceiveDraft = saveProjectReceiveDraft;
 })();
+
+
+/* ========================================================================
+   2026-05-29 견적서 합계금액/총계 계산식 안정화 패치
+   - 모든 견적서 양식에서 금액 열 합산값을 총계 셀에 반영
+   - 총계 셀 기준으로 상단 합계금액(일금...원정) 문구 자동 갱신
+   - 기존에 직접 입력/불러오기/행추가 과정에서 0으로 깨지는 문제 방지
+   ======================================================================== */
+(function(){
+  const previousEstimateSheetParseNumber = typeof estimateSheetParseNumber === "function" ? estimateSheetParseNumber : null;
+
+  estimateSheetParseNumber = function(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const raw = String(value ?? "").replace(/,/g, "").replace(/₩|원|정/g, "").trim();
+    if (!raw || raw === "-") return 0;
+    const direct = Number(raw);
+    if (Number.isFinite(direct)) return direct;
+    const matches = raw.match(/-?\d+(?:\.\d+)?/g);
+    if (matches && matches.length) {
+      const picked = matches[matches.length - 1];
+      const n = Number(picked);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return previousEstimateSheetParseNumber ? previousEstimateSheetParseNumber(value) : 0;
+  };
+  if (typeof window !== "undefined") window.estimateSheetParseNumber = estimateSheetParseNumber;
+
+  function estimateSheetPatchNormalize(value) {
+    if (typeof estimatePeriodNormalizeText === "function") return estimatePeriodNormalizeText(value);
+    return String(value ?? "").replace(/\s+/g, "").trim();
+  }
+
+  function estimateSheetPatchColumnA1(colNo) {
+    if (typeof estimateSheetColumnA1 === "function") return estimateSheetColumnA1(colNo);
+    let n = Number(colNo) || 1;
+    let label = "";
+    while (n > 0) {
+      const mod = (n - 1) % 26;
+      label = String.fromCharCode(65 + mod) + label;
+      n = Math.floor((n - 1) / 26);
+    }
+    return label;
+  }
+
+  function estimateSheetPatchCellNumber(state, r, c) {
+    if (!state || !r || !c) return 0;
+    const obj = typeof estimateSheetGetCellObj === "function" ? estimateSheetGetCellObj(state, r, c) : null;
+    if (!obj) return 0;
+    if (obj.formula && !String(obj.formula).toUpperCase().includes("SUM(")) {
+      const evaluated = typeof estimateSheetEvaluateFormula === "function" ? estimateSheetEvaluateFormula(state, obj.formula, r, c) : "";
+      return estimateSheetParseNumber(evaluated);
+    }
+    if (obj.formula && String(obj.formula).toUpperCase().includes("SUM(")) {
+      const evaluated = typeof estimateSheetEvaluateFormula === "function" ? estimateSheetEvaluateFormula(state, obj.formula, r, c) : "";
+      return estimateSheetParseNumber(evaluated);
+    }
+    return estimateSheetParseNumber(obj.value);
+  }
+
+  function estimateSheetPatchFindAmountHeader(state) {
+    if (!state) return null;
+    const maxRow = Math.min(Number(state.maxRow || 80), 28);
+    const maxCol = Math.min(Number(state.maxCol || 30), 12);
+    for (let r = 1; r <= maxRow; r += 1) {
+      for (let c = 1; c <= maxCol; c += 1) {
+        const text = estimateSheetPatchNormalize(typeof estimateSheetDisplayValue === "function" ? estimateSheetDisplayValue(state, r, c) : "");
+        if (text === "금액") {
+          const rowText = Array.from({length: maxCol}, (_, i) => estimateSheetPatchNormalize(estimateSheetDisplayValue(state, r, i + 1))).join(" ");
+          if (/(품목|수량|단위|단가)/.test(rowText)) return { r, c };
+        }
+      }
+    }
+    if (typeof estimateSheetFindHeaderCell === "function") {
+      return estimateSheetFindHeaderCell(state, "금액", { minRow: 8, maxRow: 22, minCol: 1, maxCol: 12, exact: true });
+    }
+    return null;
+  }
+
+  function estimateSheetPatchFindTotalRow(state, startRow) {
+    if (!state) return 0;
+    const maxRow = Number(state.maxRow || 80);
+    const maxCol = Math.min(Number(state.maxCol || 30), 12);
+    for (let r = Math.max(1, Number(startRow || 1)); r <= maxRow; r += 1) {
+      const texts = [];
+      for (let c = 1; c <= maxCol; c += 1) {
+        texts.push(estimateSheetPatchNormalize(typeof estimateSheetDisplayValue === "function" ? estimateSheetDisplayValue(state, r, c) : ""));
+      }
+      const rowText = texts.join(" ");
+      if (/합계금액/.test(rowText)) continue;
+      if (texts.some(t => t === "총계" || t === "합계")) return r;
+    }
+    return 0;
+  }
+
+  function estimateSheetPatchFindKoreanTotalLine(state) {
+    if (!state) return null;
+    const maxRow = Math.min(Number(state.maxRow || 80), 20);
+    const maxCol = Math.min(Number(state.maxCol || 30), 12);
+    for (let r = 1; r <= maxRow; r += 1) {
+      for (let c = 1; c <= maxCol; c += 1) {
+        const text = estimateSheetPatchNormalize(typeof estimateSheetDisplayValue === "function" ? estimateSheetDisplayValue(state, r, c) : "");
+        if (text.includes("합계금액")) return { r, c };
+      }
+    }
+    return null;
+  }
+
+  function estimateSheetPatchKoreanTotalText(amount) {
+    const n = Math.round(estimateSheetParseNumber(amount));
+    const ko = typeof estimateSheetNumberToKorean === "function" ? estimateSheetNumberToKorean(n) : (typeof estimateSheetKoreanNumber === "function" ? estimateSheetKoreanNumber(n) : String(n));
+    return `일금${ko}원정 (₩${n.toLocaleString("ko-KR")})`;
+  }
+
+  function estimateSheetPatchSetKoreanTotalLine(state, amount) {
+    const target = estimateSheetPatchFindKoreanTotalLine(state) || { r: 10, c: 1 };
+    const valueCol = Math.min(Number(state?.maxCol || 7), target.c + 1);
+    const obj = estimateSheetGetCellObj(state, target.r, valueCol);
+    obj.value = estimateSheetPatchKoreanTotalText(amount);
+    obj.formula = "";
+    obj.userFormula = false;
+    return { r: target.r, c: valueCol };
+  }
+
+  estimateSheetEnsureTotalAmountFormula = function(state) {
+    if (!state || typeof estimateSheetGetCellObj !== "function") return null;
+    const amountHeader = estimateSheetPatchFindAmountHeader(state);
+    if (!amountHeader) return null;
+    const totalRow = estimateSheetPatchFindTotalRow(state, amountHeader.r + 1);
+    if (!totalRow || totalRow <= amountHeader.r) return null;
+    const amountCol = amountHeader.c;
+    let startRow = amountHeader.r + 1;
+    while (startRow < totalRow) {
+      const rowText = Array.from({ length: Math.min(Number(state.maxCol || 8), 8) }, (_, i) => estimateSheetPatchNormalize(estimateSheetDisplayValue(state, startRow, i + 1))).join(" ");
+      const n = estimateSheetPatchCellNumber(state, startRow, amountCol);
+      if (n || /공사|단수|품목|물량|원가|산출/.test(rowText)) break;
+      startRow += 1;
+    }
+    const endRow = totalRow - 1;
+    const colLabel = estimateSheetPatchColumnA1(amountCol);
+    let sum = 0;
+    for (let r = startRow; r <= endRow; r += 1) {
+      sum += estimateSheetPatchCellNumber(state, r, amountCol);
+    }
+    const totalObj = estimateSheetGetCellObj(state, totalRow, amountCol);
+    totalObj.formula = `SUM(${colLabel}${startRow}:${colLabel}${endRow})`;
+    totalObj.value = "";
+    totalObj.userFormula = true;
+    estimateSheetPatchSetKoreanTotalLine(state, sum);
+    return { amountCol, headerRow: amountHeader.r, startRow, endRow, totalRow, formula: `SUM(${colLabel}${startRow}:${colLabel}${endRow})`, sum };
+  };
+  if (typeof window !== "undefined") window.estimateSheetEnsureTotalAmountFormula = estimateSheetEnsureTotalAmountFormula;
+
+  estimateSheetRecalculateLinkedFormula = function(state) {
+    if (!state) return null;
+    return estimateSheetEnsureTotalAmountFormula(state);
+  };
+  if (typeof window !== "undefined") window.estimateSheetRecalculateLinkedFormula = estimateSheetRecalculateLinkedFormula;
+
+  const previousEstimatePeriodExtractSheetTotalAmount = typeof estimatePeriodExtractSheetTotalAmount === "function" ? estimatePeriodExtractSheetTotalAmount : null;
+  estimatePeriodExtractSheetTotalAmount = function(state) {
+    if (!state) return "";
+    const info = estimateSheetEnsureTotalAmountFormula(state);
+    if (info && estimateSheetParseNumber(info.sum)) return info.sum;
+    if (previousEstimatePeriodExtractSheetTotalAmount) return previousEstimatePeriodExtractSheetTotalAmount(state);
+    return "";
+  };
+  if (typeof window !== "undefined") window.estimatePeriodExtractSheetTotalAmount = estimatePeriodExtractSheetTotalAmount;
+})();
