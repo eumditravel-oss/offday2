@@ -62,6 +62,7 @@ function normalizeEstimateDbText(value) { return String(value ?? "").trim(); }
 function toEstimateDbNumber(value) {
   const rich = parseEstimateDbRichCellValue(value);
   if (rich && rich.type === "stageFormula") value = rich.amount || 0;
+  if (rich && rich.type === "contractAmount") value = rich.amount || 0;
   const raw = normalizeEstimateDbText(value).replace(/,/g, "").replace(/원/g, "");
   const num = Number(raw);
   return Number.isFinite(num) ? num : 0;
@@ -288,6 +289,13 @@ function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, 
 
 function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = estimateDbActiveTab) {
   const headerName = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  const topHeaderName = normalizeEstimateDbText(sheet?.headerRows?.[0]?.[colIndex] || "");
+  if (headerName === "PJ NO") return 72;
+  if (tab === "progress") {
+    if (headerName === "계약금액(VAT포함)" || topHeaderName === "계약금액(VAT포함)") return 170;
+    if (headerName === "계약금액" || topHeaderName === "계약금액") return 140;
+    if (/^A-\d+$/.test(headerName)) return 150;
+  }
   if (tab === "pj") {
     // PJ관리 고정 가독성 폭: 기존 localStorage 열 너비 조절값보다 우선 적용합니다.
     // - 국내/해외는 절반 수준으로 축소
@@ -410,12 +418,55 @@ function getEstimateDbRichDisplayValue(value) {
   const parsed = parseEstimateDbRichCellValue(value);
   if (!parsed) return value;
   if (parsed.type === "stageFormula") return parsed.amount ? String(parsed.amount) : "";
+  if (parsed.type === "contractAmount") {
+    const amount = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
+    const date = parsed.date ? formatEstimateDbFullKoreanDate(parsed.date) : "";
+    return [amount, date].filter(Boolean).join("\n");
+  }
   if (parsed.type === "progressStory") return parsed.summary || parsed.full || "";
   return value;
 }
 function getEstimateDbStoryColumnIndex() {
   return getEstimateDbColumnIndexByHeader("progress", "기성스토리");
 }
+function isEstimateDbContractAmountBreakdownColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "progress") return false;
+  const label = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
+  return /^A-\d+$/.test(label);
+}
+function getEstimateDbContractAmountBreakdownIndexes() {
+  const sheet = estimateDbSheets.progress;
+  return getEstimateDbLeafColumns(sheet)
+    .map((label, index) => ({ label: normalizeEstimateDbText(label), index }))
+    .filter(item => /^A-\d+$/.test(item.label))
+    .sort((a, b) => Number(a.label.replace("A-", "")) - Number(b.label.replace("A-", "")))
+    .map(item => item.index);
+}
+function getEstimateDbContractAmountColumnIndex() {
+  return getEstimateDbColumnIndexByHeader("progress", "계약금액");
+}
+function getEstimateDbContractVatColumnIndex() {
+  return getEstimateDbColumnIndexByHeader("progress", "계약금액(VAT포함)");
+}
+function parseEstimateDbContractAmountValue(value) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "contractAmount") return { amount: String(rich.amount || ""), date: String(rich.date || "") };
+  const text = String(value || "");
+  const lines = text.split(/\n+/).map(v => v.trim()).filter(Boolean);
+  return { amount: String(toEstimateDbNumber(lines[0] || text) || ""), date: lines[1] || "" };
+}
+function stringifyEstimateDbContractAmountValue(amount = "", date = "") {
+  const normalizedAmount = String(amount || "").replace(/[^0-9.-]/g, "");
+  const normalizedDate = normalizeEstimateDbCreatedDate(date || "");
+  return stringifyEstimateDbRichCellValue({ type: "contractAmount", amount: normalizedAmount, date: normalizedDate });
+}
+function formatEstimateDbContractAmountDisplay(value) {
+  const parsed = parseEstimateDbContractAmountValue(value);
+  const amount = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
+  const date = parsed.date ? formatEstimateDbFullKoreanDate(parsed.date) : "";
+  return [amount, date].filter(Boolean).join("\n");
+}
+
 function isEstimateDbStoryCell(tab = estimateDbActiveTab, colIndex = 0) {
   return tab === "progress" && colIndex === getEstimateDbStoryColumnIndex();
 }
@@ -583,6 +634,7 @@ function ensureEstimateDbProgressDoneColumn() {
 
 function sanitizeEstimateDbSheetsBeforeRender() {
   ensureEstimateDbProgressDoneColumn();
+  ensureEstimateDbProgressContractAmountColumns();
   pruneEstimateDbProgressInitialStageColumns();
   sanitizeEstimateDbSheetRows(estimateDbSheets.progress);
   sanitizeEstimateDbSheetRows(estimateDbSheets.mep);
@@ -604,6 +656,69 @@ function getEstimateDbProgressGroupIndexes(groupKeyword) {
   });
   return indexes;
 }
+function ensureEstimateDbProgressContractAmountColumns() {
+  const sheet = estimateDbSheets.progress;
+  if (!sheet?.headerRows || sheet.headerRows.length < 2) return;
+  const top = sheet.headerRows[0];
+  const bottom = sheet.headerRows[1];
+  const leaf = getEstimateDbLeafColumns(sheet);
+  let contractIndex = leaf.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
+  if (contractIndex < 0) contractIndex = top.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
+  if (contractIndex < 0) return;
+
+  const hasVat = leaf.some(v => normalizeEstimateDbText(v) === "계약금액(VAT포함)") || top.some(v => normalizeEstimateDbText(v) === "계약금액(VAT포함)");
+  if (!hasVat) {
+    top.splice(contractIndex, 0, "계약금액(VAT포함)");
+    bottom.splice(contractIndex, 0, "");
+    if (sheet.requestRow) sheet.requestRow.splice(contractIndex, 0, "계약금액A × 1.1 자동 계산");
+    (sheet.rows || []).forEach(row => row.splice(contractIndex, 0, ""));
+    contractIndex += 1;
+  }
+
+  const currentLeaf = getEstimateDbLeafColumns(sheet);
+  contractIndex = currentLeaf.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
+  if (contractIndex < 0) contractIndex = top.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
+  const existingBreakdowns = getEstimateDbLeafColumns(sheet).filter(v => /^A-\d+$/.test(normalizeEstimateDbText(v)));
+  if (!existingBreakdowns.length) {
+    const existingAmounts = (sheet.rows || []).map(row => row?.[contractIndex] || "");
+    for (let n = 1; n <= 3; n += 1) {
+      const insertAt = contractIndex + n;
+      top.splice(insertAt, 0, "");
+      bottom.splice(insertAt, 0, `A-${n}`);
+      if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "계약금액 분할 입력: Enter로 금액/날짜 입력");
+      (sheet.rows || []).forEach((row, rowIndex) => row.splice(insertAt, 0, n === 1 ? existingAmounts[rowIndex] || "" : ""));
+    }
+  } else {
+    const nums = existingBreakdowns.map(v => Number(normalizeEstimateDbText(v).replace("A-", ""))).filter(Number.isFinite);
+    const max = nums.length ? Math.max(...nums) : 0;
+    for (let n = max + 1; n <= 3; n += 1) {
+      const indexes = getEstimateDbContractAmountBreakdownIndexes();
+      const insertAt = indexes.length ? Math.max(...indexes) + 1 : contractIndex + 1;
+      top.splice(insertAt, 0, "");
+      bottom.splice(insertAt, 0, `A-${n}`);
+      if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "계약금액 분할 입력: Enter로 금액/날짜 입력");
+      (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
+    }
+  }
+  sanitizeEstimateDbSheetRows(sheet);
+}
+function addEstimateDbProgressContractAmountColumn() {
+  const sheet = estimateDbSheets.progress;
+  if (!sheet?.headerRows || sheet.headerRows.length < 2) return;
+  ensureEstimateDbProgressContractAmountColumns();
+  const indexes = getEstimateDbContractAmountBreakdownIndexes();
+  const next = indexes.length ? Math.max(...indexes.map(i => Number(normalizeEstimateDbText(getEstimateDbColumnName("progress", i)).replace("A-", "")))) + 1 : 1;
+  const insertAt = indexes.length ? Math.max(...indexes) + 1 : getEstimateDbContractAmountColumnIndex() + 1;
+  sheet.headerRows[0].splice(insertAt, 0, "");
+  sheet.headerRows[1].splice(insertAt, 0, `A-${next}`);
+  if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "추가 계약금액 분할 입력: Enter로 금액/날짜 입력");
+  (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
+  estimateDbSelectedCell = { tab: "progress", sectionIndex: null, rowIndex: estimateDbSelectedCell?.rowIndex || 0, colIndex: insertAt };
+  renderEstimateDbManage({ forceRecalc: true });
+  requestAnimationFrame(() => focusEstimateDbCell(estimateDbSelectedCell.rowIndex || 0, insertAt));
+  if (typeof showToast === "function") showToast(`계약금액A-${next} 열을 추가했습니다.`);
+}
+
 function ensureEstimateDbProgressStageTotalColumns() {
   const sheet = estimateDbSheets.progress;
   if (!sheet?.headerRows || sheet.headerRows.length < 2) return;
@@ -658,7 +773,12 @@ function recalcEstimateDbRow(tab, row) {
     }
   }
   if (tab === "progress") {
-    const balance = get("계약금액") - get("수령액");
+    const contractBreakdownSum = getEstimateDbContractAmountBreakdownIndexes().reduce((sum, i) => sum + toEstimateDbNumber(row[i]), 0);
+    const contractIndex = getEstimateDbContractAmountColumnIndex();
+    const vatIndex = getEstimateDbContractVatColumnIndex();
+    if (contractIndex >= 0) row[contractIndex] = contractBreakdownSum ? String(contractBreakdownSum) : "";
+    if (vatIndex >= 0) row[vatIndex] = contractBreakdownSum ? String(Math.round(contractBreakdownSum * 1.1)) : "";
+    const balance = contractBreakdownSum - get("수령액");
     set("잔액", balance);
     const outsource = ["기계", "전기", "외주", "송무", "기타"].reduce((sum, name) => {
       const i = idx(name);
@@ -1135,6 +1255,8 @@ function renderEstimateDbManage(options = {}) {
   bindEstimateDbColumnReorderOkButton();
   const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
   if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
+  const contractBtn = document.getElementById("estimateDbAddContractAmountBtn");
+  if (contractBtn) contractBtn.style.display = estimateDbActiveTab === "progress" ? "inline-flex" : "none";
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
   if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   const sheet = getEstimateDbSheet();
@@ -1282,9 +1404,13 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const projectLinkCell = isEstimateDbProjectLinkColumn(estimateDbActiveTab, colIndex);
         const cls = `${dropdown ? "quote-db-cell-input quote-db-cell-dropdown" : "quote-db-cell-input"}${amountCell ? " quote-db-amount-cell" : ""}${commandCell ? " quote-db-enter-command-cell" : ""}`;
         const title = request ? ` title="${escapeEstimateDbHtml(request)}"` : "";
-        const dbl = memoCell ? `openEstimateDbPjMemoModal(${rowIndex}, ${colIndex})` : (isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`))));
+        const dbl = memoCell ? `openEstimateDbPjMemoModal(${rowIndex}, ${colIndex})` : (isEstimateDbStoryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStoryModal(${rowIndex}, ${colIndex})` : (isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex) ? `openEstimateDbStageFormulaModal(${rowIndex}, ${colIndex})` : (isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContractAmountModal(${rowIndex}, ${colIndex})` : (amountCell ? `openEstimateDbAmountModal(${rowIndex}, ${colIndex})` : (isEstimateDbContactColumn(estimateDbActiveTab, colIndex) ? `openEstimateDbContactModal(${rowIndex}, ${colIndex})` : `openEstimateDbDropdown(${rowIndex}, ${colIndex})`)))));
         const displayValue = getEstimateDbCellDisplayValue(estimateDbActiveTab, rowIndex, colIndex, value);
-        const formattedDisplayValue = memoCell ? summarizeEstimateDbPjMemoCell(displayValue) : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet));
+        const formattedDisplayValue = memoCell
+          ? summarizeEstimateDbPjMemoCell(displayValue)
+          : (isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex)
+            ? formatEstimateDbContractAmountDisplay(value)
+            : (amountCell ? formatEstimateDbAmountCellDisplay(displayValue) : formatEstimateDbMoneyDisplay(displayValue, estimateDbActiveTab, colIndex, sheet)));
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex) + getEstimateDbColumnVisualClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
         const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
@@ -1293,7 +1419,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
           const done = parseEstimateDbProgressDoneValue(value);
           return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}${boundaryClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
         }
-        if (amountCell) {
+        if (amountCell || isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex)) {
           const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
           return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}${boundaryClass}"><div class="quote-db-command-wrap"><textarea class="${cls}${dirtyClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, true)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}">${escapeEstimateDbHtml(formattedDisplayValue)}</textarea>${opener}</div></td>`;
         }
@@ -2018,7 +2144,13 @@ function handleEstimateDbKeydown(event) {
   }
   if (event.altKey && event.key === "Insert") {
     event.preventDefault();
-    if (estimateDbActiveTab === "progress") addEstimateDbProgressStageColumns();
+    if (estimateDbActiveTab === "progress") {
+      if (isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex) || [getEstimateDbContractAmountColumnIndex(), getEstimateDbContractVatColumnIndex()].includes(colIndex)) {
+        addEstimateDbProgressContractAmountColumn();
+      } else {
+        addEstimateDbProgressStageColumns();
+      }
+    }
     return;
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbPjNoColumn(estimateDbActiveTab, colIndex)) {
@@ -2042,6 +2174,12 @@ function handleEstimateDbKeydown(event) {
     const current = parseEstimateDbRichCellValue(row?.[colIndex]) || {};
     updateEstimateDbCell(rowIndex, colIndex, stringifyEstimateDbRichCellValue({ type: "progressStory", summary, full: current.full || summary }), { commit: true, silentRender: true });
     openEstimateDbStoryModal(rowIndex, colIndex);
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbContractAmountModal(rowIndex, colIndex);
     return;
   }
   if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbStageEntryCell(estimateDbActiveTab, colIndex)) {
