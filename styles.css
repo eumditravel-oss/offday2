@@ -20096,3 +20096,98 @@ button.btn-orange{
   color: #64748b;
   text-align: center;
 }
+
+/* DB관리 > 기전업체: 업체 리스트 입력형 카드 UI 보정 */
+.quote-db-mep-panel {
+  gap: 12px;
+}
+.quote-db-mep-vendor-head {
+  background: #ffffff !important;
+  border: 1px solid #dbe5f0 !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+.quote-db-mep-vendor-wrap {
+  border: 1px solid #dbe5f0 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  padding: 10px !important;
+}
+.quote-db-mep-vendor-table {
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+  table-layout: fixed !important;
+}
+.quote-db-mep-vendor-table th {
+  height: 30px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e5edf6 !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+}
+.quote-db-mep-vendor-table td {
+  height: 38px !important;
+  border: 0 !important;
+  border-top: 1px solid #edf2f7 !important;
+  border-bottom: 1px solid #edf2f7 !important;
+  background: #ffffff !important;
+  padding: 4px 4px !important;
+}
+.quote-db-mep-vendor-table td:first-child {
+  border-left: 1px solid #edf2f7 !important;
+  border-radius: 10px 0 0 10px !important;
+}
+.quote-db-mep-vendor-table td:last-child {
+  border-right: 1px solid #edf2f7 !important;
+  border-radius: 0 10px 10px 0 !important;
+}
+.quote-db-mep-vendor-row:hover td,
+.quote-db-mep-vendor-row.active td {
+  background: #fff7ed !important;
+}
+.quote-db-mep-vendor-input {
+  height: 30px !important;
+  border: 1px solid #dbe3ed !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+.quote-db-mep-vendor-input:focus {
+  border-color: #f97316 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.14) !important;
+}
+.quote-db-mep-vendor-table th:nth-child(1),
+.quote-db-mep-vendor-table td:nth-child(1) { width: 52px !important; }
+.quote-db-mep-vendor-table th:nth-child(2),
+.quote-db-mep-vendor-table td:nth-child(2) { width: 220px !important; }
+.quote-db-mep-vendor-table th:nth-child(3),
+.quote-db-mep-vendor-table td:nth-child(3) { width: 120px !important; }
+.quote-db-mep-vendor-table th:nth-child(n+4),
+.quote-db-mep-vendor-table td:nth-child(n+4) { width: 150px !important; }
+.quote-db-mep-open-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #334155;
+}
+.quote-db-mep-open-panel strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+}
+.quote-db-mep-open-panel span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
