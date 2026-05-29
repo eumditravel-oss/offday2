@@ -1,3 +1,4 @@
+```javascript
 let estimateDbActiveTab = "pj";
 let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
@@ -27,6 +28,27 @@ function ensureEstimateDbPjDeliveryPlanColumnsOnce() {
     const secondActualIndex = colsAfterFirst.findIndex(v => normalizeEstimateDbText(v) === "2차납품일자");
     if (secondActualIndex >= 0) insertEstimateDbColumn(sheet, secondActualIndex, "2차납품예정일", "", "2차 납품 예정일 입력란");
   }
+}
+
+function migrateEstimateDbCreatedDateHeaders() {
+  ["pj", "progress", "mep"].forEach(tab => {
+    const sheet = estimateDbSheets?.[tab];
+    if (!sheet?.headerRows?.length) return;
+    (sheet.headerRows || []).forEach(headerRow => {
+      if (!Array.isArray(headerRow)) return;
+      headerRow.forEach((value, index) => {
+        if (normalizeEstimateDbText(value) === "년도") headerRow[index] = "최초생성날짜";
+      });
+    });
+    const cols = getEstimateDbLeafColumns(sheet);
+    const createdIndex = cols.findIndex(col => normalizeEstimateDbText(col) === "최초생성날짜");
+    if (createdIndex < 0) return;
+    (sheet.rows || []).forEach(row => {
+      if (!Array.isArray(row)) return;
+      while (row.length < cols.length) row.push("");
+      row[createdIndex] = normalizeEstimateDbCreatedDate(row[createdIndex]);
+    });
+  });
 }
 function getEstimateDbNumericValueForTotal(row, colIndex, tabName, sheet) {
   const isProgress = sheet === estimateDbSheets.progress || tabName === "progress";
@@ -144,7 +166,7 @@ function ensureEstimateDbPjIdentityColumnsOnce(options = {}) {
   estimateDbPjIdentityColumnsEnsured = true;
 }
 
-function getEstimateDbSheet(tab = estimateDbActiveTab) { removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true }); ensureEstimateDbPjProjectLinkColumnOnce(); ensureEstimateDbPjDeliveryPlanColumnsOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
+function getEstimateDbSheet(tab = estimateDbActiveTab) { migrateEstimateDbCreatedDateHeaders?.(); removeEstimateDbPjReceiptColumnOnce(); ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true }); ensureEstimateDbPjProjectLinkColumnOnce(); ensureEstimateDbPjDeliveryPlanColumnsOnce(); return estimateDbSheets[tab] || estimateDbSheets.pj; }
 function getEstimateDbLeafColumns(sheet = getEstimateDbSheet()) {
   const rows = sheet.headerRows || [];
   if (!rows.length) return [];
@@ -2240,7 +2262,7 @@ function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const next = Array(columns.length).fill("");
   const createdDateIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
   const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
-  if (createdDateIndex >= 0) next[createdDateIndex] = estimateDbActiveTab === "pj" ? formatEstimateDbKoreanDate() : getSelectedEstimateDbYear();
+  if (createdDateIndex >= 0) next[createdDateIndex] = formatEstimateDbKoreanDate();
   if (estimateDbActiveTab === "pj" && pjNoIndex >= 0) {
     const year = getEstimateDbCreatedDateYear(next[createdDateIndex]);
     next[pjNoIndex] = getEstimateDbNextPjNoForYear(year);
@@ -2947,3 +2969,5 @@ document.addEventListener("click", event => {
 
 
 /* === 견적서 종류별 관리 v1: 업로드 엑셀 양식 4종 웹 작성 화면 === */
+
+```
