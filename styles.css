@@ -19916,6 +19916,22 @@ button.btn-orange{
 }
 
 
+
+#estimateDbManage .quote-db-table th.quote-db-col-pj-no,
+#estimateDbManage .quote-db-table td.quote-db-col-pj-no{
+  min-width:94px !important;
+  width:94px !important;
+  max-width:94px !important;
+}
+
+#estimateDbManage .quote-db-table td.quote-db-col-pj-no .quote-db-command-wrap,
+#estimateDbManage .quote-db-table td.quote-db-col-pj-no .quote-db-wrap-text-cell,
+#estimateDbManage .quote-db-table td.quote-db-col-pj-no .quote-db-cell-input{
+  min-width:100% !important;
+  width:100% !important;
+  max-width:100% !important;
+}
+
 /* === DB관리 PJ관리 고정 열 폭 강제 보정 ===
    프로젝트명 열이 브라우저 저장 열폭, 열 위치 변경, 기존 CSS보다 항상 우선 적용되도록
    컬럼 class + !important 기준으로 강제합니다. */
