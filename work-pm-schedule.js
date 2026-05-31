@@ -463,14 +463,8 @@ function makePmScheduleProject(data, source = "프로젝트 접수", status = "p
 }
 
 function buildPmScheduleSeedProjects() {
-  const list = [];
-  if (typeof projectReceiveCompletedProjects !== "undefined") {
-    projectReceiveCompletedProjects.forEach(item => list.push(makePmScheduleProject(item.data, item.sourceFile, "pending")));
-  }
-  if (typeof projectReceiveSampleData !== "undefined") {
-    list.unshift(makePmScheduleProject(projectReceiveSampleData, "현재 작성 중인 프로젝트 접수", "pending"));
-  }
-  return list;
+  // 연계 테스트를 위해 PM 배정 / 일정 초기 더미데이터는 생성하지 않습니다.
+  return [];
 }
 
 function initPmScheduleProjects() {
@@ -479,9 +473,6 @@ function initPmScheduleProjects() {
     return;
   }
   pmScheduleProjects = buildPmScheduleSeedProjects();
-  if (!pmScheduleProjects.length && typeof projectReceiveState !== "undefined") {
-    pmScheduleProjects = [makePmScheduleProject(projectReceiveState, "프로젝트 접수", "pending")];
-  }
   pmScheduleProjects.forEach(item => { normalizeExistingPmScheduleRows(item); applyPmScheduleSuwonApprovedDummy(item); });
 }
 
