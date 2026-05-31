@@ -268,9 +268,9 @@ function initializeEstimateDbVisibleSeedRows() {
   // 구조 보정/PJ NO 보정은 renderEstimateDbManage()의 runEstimateDbStructureMaintenanceOnce()에서 1회만 실행합니다.
   // 이 함수는 화면에 표시할 초기 더미 행 제한만 담당해 탭 전환 시 반복 계산을 막습니다.
   estimateDbVisibleSeedRowsInitialized = true;
-  if (estimateDbSheets?.pj?.rows) estimateDbSheets.pj.rows = estimateDbSheets.pj.rows.slice(0, 2);
-  if (estimateDbSheets?.progress?.rows) estimateDbSheets.progress.rows = estimateDbSheets.progress.rows.slice(0, 2);
-  if (estimateDbSheets?.mep?.rows) estimateDbSheets.mep.rows = estimateDbSheets.mep.rows.slice(0, 2);
+  if (estimateDbSheets?.pj?.rows) estimateDbSheets.pj.rows = [];
+  if (estimateDbSheets?.progress?.rows) estimateDbSheets.progress.rows = [];
+  if (estimateDbSheets?.mep?.rows) estimateDbSheets.mep.rows = [];
 }
 
 function removeEstimateDbPjReceiptColumnOnce() {
