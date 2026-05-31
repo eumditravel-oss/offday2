@@ -554,9 +554,7 @@ function estimateSheetNormalizeUploadedFormat(state) {
   return state;
 }
 function renderEstimateSheetManage() {
-  if (!estimateSheetRecords.length) {
-    ESTIMATE_SHEET_TYPE_ORDER.forEach(type => estimateSheetRecords.push({ type, title: `${type} 견적서 초안`, status: "작성중", updatedAt: estimateSheetNow(), state: estimateSheetCreateState(type) }));
-  }
+  // 연계 테스트를 위해 견적서 종류별 관리 초기 초안 더미데이터는 생성하지 않습니다.
   document.querySelectorAll(".estimate-sheet-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.sheetType === estimateSheetActiveType));
   renderEstimateSheetList();
   if (estimateSheetEditorState) renderEstimateSheetGrid();
@@ -1047,15 +1045,7 @@ let estimateSheetExcelActiveCell = { r: 1, c: 1 };
 let estimateSheetExcelAutoOpenTried = false;
 
 function estimateSheetEnsureDefaultRecords() {
-  if (!estimateSheetRecords.length) {
-    ESTIMATE_SHEET_TYPE_ORDER.forEach(type => estimateSheetRecords.push({
-      type,
-      title: `${type} 견적서 초안`,
-      status: "작성중",
-      updatedAt: estimateSheetNow(),
-      state: estimateSheetCreateState(type)
-    }));
-  }
+  // 연계 테스트를 위해 견적서 종류별 관리 초기 초안 더미데이터는 생성하지 않습니다.
 }
 
 function estimateSheetCellInlineStyle(styleText) {
@@ -6012,4 +6002,120 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
     return "";
   };
   if (typeof window !== "undefined") window.estimatePeriodExtractSheetTotalAmount = estimatePeriodExtractSheetTotalAmount;
+})();
+
+
+/* =========================================================
+   2026-06-01 견적관리 더미데이터 제거 패치
+   - 프로젝트 관리 > 견적 의뢰관리 / 견적서 종류별 관리 / 기간별 견적서 관리 / DB관리 초기 더미데이터 제거
+   - 기간별 템플릿 기반 자동 연계 시드 생성 중단
+   - 기존 브라우저 localStorage에 남은 더미/자동연계 데이터 1회 정리
+   ========================================================= */
+(function estimateManagementDummyDataClearPatch(){
+  if (window.__estimateManagementDummyDataClearPatch) return;
+  window.__estimateManagementDummyDataClearPatch = true;
+
+  const CLEAR_VERSION_KEY = "concost.estimate.management.dummy.clear.v20260601";
+  const REQUEST_KEY = typeof ESTIMATE_REQUEST_STORAGE_KEY !== "undefined" ? ESTIMATE_REQUEST_STORAGE_KEY : "concostEstimateRequestWorkflowRows.v1";
+  const PERIOD_SENT_KEY = typeof ESTIMATE_PERIOD_STORAGE_KEY !== "undefined" ? ESTIMATE_PERIOD_STORAGE_KEY : "concostEstimatePeriodSentRowsV1";
+  const PERIOD_EDIT_KEY = typeof ESTIMATE_PERIOD_EDIT_KEY !== "undefined" ? ESTIMATE_PERIOD_EDIT_KEY : "concostEstimatePeriodEditRows.v1";
+
+  function emptyEstimateDbSeedRows(){
+    try {
+      ["pj", "progress", "mep"].forEach(tab => {
+        if (estimateDbSheets?.[tab] && Array.isArray(estimateDbSheets[tab].rows)) estimateDbSheets[tab].rows = [];
+      });
+    } catch (e) {}
+  }
+
+  function clearEstimateManagementDummyState(force = false){
+    let alreadyCleared = false;
+    try { alreadyCleared = localStorage.getItem(CLEAR_VERSION_KEY) === "1"; } catch (e) {}
+    if (alreadyCleared && !force) return;
+
+    try {
+      if (Array.isArray(estimateSheetRecords)) estimateSheetRecords = [];
+      if (Array.isArray(estimateRequestRows)) estimateRequestRows = [];
+      if (Array.isArray(estimatePeriodSentRows)) estimatePeriodSentRows = [];
+      if (Array.isArray(estimatePeriodEditRows)) estimatePeriodEditRows = [];
+      emptyEstimateDbSeedRows();
+
+      localStorage.setItem(REQUEST_KEY, "[]");
+      localStorage.setItem(PERIOD_SENT_KEY, "[]");
+      localStorage.setItem(PERIOD_EDIT_KEY, "[]");
+      localStorage.setItem("concost.estimate.performance.bootstrap.v1", "1");
+      localStorage.setItem("concost.estimate.dummy.half-sync.v1", String(Date.now()));
+      localStorage.setItem(CLEAR_VERSION_KEY, "1");
+    } catch (e) {
+      console.warn("견적관리 더미데이터 정리 실패", e);
+    }
+  }
+
+  window.clearEstimateManagementDummyState = function(){
+    clearEstimateManagementDummyState(true);
+    renderEstimateRequestManage?.();
+    renderEstimateSheetManage?.();
+    renderEstimatePeriodManage?.();
+    renderEstimateDbManage?.();
+    if (typeof showToast === "function") showToast("견적관리 더미데이터를 정리했습니다.");
+  };
+
+  if (typeof estimateCentralTemplateRows === "function") {
+    estimateCentralTemplateRows = function estimateNoDummyCentralTemplateRows(){ return []; };
+    window.estimateCentralTemplateRows = estimateCentralTemplateRows;
+  }
+  if (typeof estimatePeriodBaseDataRows === "function") {
+    estimatePeriodBaseDataRows = function estimateNoDummyPeriodBaseDataRows(){ return []; };
+    window.estimatePeriodBaseDataRows = estimatePeriodBaseDataRows;
+  }
+  if (typeof estimatePeriodBaseListRows === "function") {
+    estimatePeriodBaseListRows = function estimateNoDummyPeriodBaseListRows(){ return []; };
+    window.estimatePeriodBaseListRows = estimatePeriodBaseListRows;
+  }
+  if (typeof estimateRequestEnsurePeriodDummyRows === "function") {
+    estimateRequestEnsurePeriodDummyRows = function estimateNoDummyRequestRows(){ return; };
+    window.estimateRequestEnsurePeriodDummyRows = estimateRequestEnsurePeriodDummyRows;
+  }
+  if (typeof estimateCentralSyncSeedRows === "function") {
+    estimateCentralSyncSeedRows = function estimateNoDummyCentralSyncSeedRows(){
+      estimateCentralSeedSynced = true;
+      return;
+    };
+    window.estimateCentralSyncSeedRows = estimateCentralSyncSeedRows;
+  }
+  if (typeof estimatePerformanceRunBootstrap === "function") {
+    estimatePerformanceRunBootstrap = function estimateNoDummyPerformanceBootstrap(){
+      clearEstimateManagementDummyState(false);
+      estimatePerformanceBootstrapDone = true;
+      return;
+    };
+    window.estimatePerformanceRunBootstrap = estimatePerformanceRunBootstrap;
+  }
+  if (typeof estimateSheetEnsureDefaultRecords === "function") {
+    estimateSheetEnsureDefaultRecords = function estimateNoDummySheetDefaultRecords(){ return; };
+    window.estimateSheetEnsureDefaultRecords = estimateSheetEnsureDefaultRecords;
+  }
+  if (typeof renderEstimateSheetManage === "function") {
+    const baseRenderEstimateSheetManageNoDummy = renderEstimateSheetManage;
+    renderEstimateSheetManage = function renderEstimateSheetManageNoDummy(){
+      clearEstimateManagementDummyState(false);
+      if (Array.isArray(estimateSheetRecords)) {
+        estimateSheetRecords = estimateSheetRecords.filter(record => record && !/견적서 초안/.test(String(record.title || "")) && !/period-template|template|더미데이터|자동 연계|DB관리 기준 자동 연계/.test(String(record.source || record.dataMode || "")));
+      }
+      return baseRenderEstimateSheetManageNoDummy();
+    };
+    window.renderEstimateSheetManage = renderEstimateSheetManage;
+  }
+
+  clearEstimateManagementDummyState(false);
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      clearEstimateManagementDummyState(false);
+      emptyEstimateDbSeedRows();
+      if (document.getElementById("estimateRequestManage")?.classList.contains("active")) renderEstimateRequestManage?.();
+      if (document.getElementById("estimateSheetManage")?.classList.contains("active")) renderEstimateSheetManage?.();
+      if (document.getElementById("estimatePeriodManage")?.classList.contains("active")) renderEstimatePeriodManage?.();
+      if (document.getElementById("estimateDbManage")?.classList.contains("active")) renderEstimateDbManage?.();
+    }, 120);
+  });
 })();
