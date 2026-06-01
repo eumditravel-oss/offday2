@@ -1727,6 +1727,46 @@ function estimatePeriodLoadSentRows() {
       item.values.manualPeriodFields = manual;
       return true;
     });
+    // 동일 견적/동일 의뢰가 여러 경로에서 저장된 경우 기간별 관리에는 1건만 유지합니다.
+    const deduped = [];
+    const keyMap = new Map();
+    const sentKey = item => {
+      const sourceId = String(item?.sourceEstimateId || "").trim();
+      if (sourceId) return `estimate:${sourceId}`;
+      const values = item?.values || {};
+      return [
+        estimatePeriodFormatDateCode(values[2] || item?.sentAt || ""),
+        estimatePeriodNormalizeText(values[3] || "").replace(/\s+/g, ""),
+        estimatePeriodNormalizeText(values[4] || item?.title || "").replace(/\s+/g, ""),
+        estimatePeriodNormalizeText(values[11] || values[12] || item?.type || "")
+      ].join("|");
+    };
+    const sentScore = item => {
+      const values = item?.values || {};
+      let score = 0;
+      if (item?.detailSnapshot || item?.quoteDataSnapshot || item?.recordSnapshot) score += 20;
+      if (estimatePeriodToNumber(values[7])) score += 10;
+      if (estimatePeriodToNumber(values[5])) score += 5;
+      if (String(item?.sourceEstimateId || "").trim()) score += 3;
+      if (String(item?.sentAt || "").trim()) score += 1;
+      return score;
+    };
+    estimatePeriodSentRows.forEach(item => {
+      const key = sentKey(item);
+      if (!key || key === "|||" || !keyMap.has(key)) {
+        keyMap.set(key, deduped.length);
+        deduped.push(item);
+        return;
+      }
+      const i = keyMap.get(key);
+      if (sentScore(item) >= sentScore(deduped[i])) {
+        deduped[i] = { ...deduped[i], ...item, manualPeriodFields: item.manualPeriodFields || deduped[i].manualPeriodFields || {}, values: { ...(deduped[i].values || {}), ...(item.values || {}) } };
+        changed = true;
+      } else {
+        changed = true;
+      }
+    });
+    estimatePeriodSentRows = deduped;
     if (changed) localStorage.setItem(ESTIMATE_PERIOD_STORAGE_KEY, JSON.stringify(estimatePeriodSentRows));
   } catch (err) {
     estimatePeriodSentRows = [];
@@ -2748,11 +2788,11 @@ function estimatePeriodAllRowsForList() {
   const base = estimatePeriodBaseListRows();
   const sentKeys = new Set(sent.map(row => row.id));
   const editKeys = new Set(edits.map(row => row.id));
-  return [
+  return estimatePeriodMergeDuplicateRows([
     ...sent,
     ...edits.filter(row => !sentKeys.has(row.id)),
     ...base.filter(row => !sentKeys.has(row.id) && !editKeys.has(row.id))
-  ];
+  ]);
 }
 
 function estimatePeriodDateSortValue(row = {}) {
@@ -2768,6 +2808,61 @@ function estimatePeriodSortRowsDesc(rows = []) {
     return String(b.sentAt || b.result || b.id || "").localeCompare(String(a.sentAt || a.result || a.id || ""));
   });
 }
+function estimatePeriodIdentityKey(row = {}) {
+  const company = estimatePeriodNormalizeText(row.company || row.companyRaw || "").replace(/\s+/g, "");
+  const project = estimatePeriodNormalizeText(row.project || row.title || "").replace(/\s+/g, "");
+  const type = estimatePeriodNormalizeText(row.unitWork || row.bid || row.type || row.estimateType || "").replace(/\s+/g, "");
+  const date = estimatePeriodFormatDateCode(row.date || row.sentAt || "");
+  // 화면 중복의 핵심은 같은 의뢰가 request/edit 행과 sent 행으로 동시에 들어오는 경우입니다.
+  // 따라서 업체명+프로젝트명+견적유형+날짜가 있으면 이 조합을 최우선 기준으로 병합합니다.
+  if (company || project) return `record:${date}|${company}|${project}|${type}`;
+  const sourceEstimateId = String(row.sourceEstimateId || row.estimateId || "").trim();
+  if (sourceEstimateId) return `estimate:${sourceEstimateId}`;
+  const centralKey = String(row.centralKey || "").trim();
+  if (centralKey) return `central:${centralKey}`;
+  const dbPjNo = String(row.dbPjNo || row.pjNo || "").trim();
+  if (dbPjNo) return `pj:${dbPjNo}`;
+  return `id:${row.id || row.key || Math.random()}`;
+}
+
+function estimatePeriodRowCompletenessScore(row = {}) {
+  let score = 0;
+  if (row.source === "sent") score += 100;
+  if (row.linked) score += 20;
+  if (estimatePeriodToNumber(row.amount)) score += 10;
+  if (estimatePeriodToNumber(row.area)) score += 5;
+  if (row.detailSnapshot || row.recordSnapshot) score += 5;
+  if (row.status && row.status !== "대기중") score += 3;
+  if (row.source === "request") score += 2;
+  if (row.source === "template") score -= 50;
+  return score;
+}
+
+function estimatePeriodMergeDuplicateRows(rows = []) {
+  const map = new Map();
+  const merged = [];
+  rows.forEach(row => {
+    if (!row) return;
+    const key = estimatePeriodIdentityKey(row);
+    if (!map.has(key)) {
+      map.set(key, merged.length);
+      merged.push(row);
+      return;
+    }
+    const i = map.get(key);
+    const prev = merged[i] || {};
+    const primary = estimatePeriodRowCompletenessScore(row) >= estimatePeriodRowCompletenessScore(prev) ? row : prev;
+    const secondary = primary === row ? prev : row;
+    const manual = { ...(estimatePeriodManualMap?.(secondary) || {}), ...(estimatePeriodManualMap?.(primary) || {}) };
+    const next = { ...secondary, ...primary, manualPeriodFields: manual };
+    ESTIMATE_PERIOD_MANUAL_KEYS.forEach(keyName => {
+      if (manual[keyName]) next[keyName] = primary[keyName] || secondary[keyName] || "";
+    });
+    merged[i] = next;
+  });
+  return merged;
+}
+
 
 function estimatePeriodSummary(allRows) {
   const result = {};
@@ -3403,6 +3498,7 @@ function estimateRequestSyncProgressStatusDates(row, sourceIndex = null) {
   targetRows.forEach(progressRow => {
     setProgress(progressRow, "견적서일자", estimateDate ? estimateRequestDbDateLabel(estimateDate) : "");
     setProgress(progressRow, "수주일자", orderDate ? estimateRequestDbDateLabel(orderDate) : "");
+    setProgress(progressRow, "작업착수일자", contractDate === "대기중" ? "" : (contractDate ? estimateRequestDbDateLabel(contractDate) : ""));
     setProgress(progressRow, "계약일자", contractDate === "대기중" ? "대기중" : (contractDate ? estimateRequestDbDateLabel(contractDate) : ""));
     if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
   });
@@ -3939,8 +4035,8 @@ function estimateRequestSyncPeriodStatus(row, status, memo) {
   if (!item) return;
   item.values = item.values || {};
   item.values[15] = status;
-  item.values[16] = memo || item.values[16] || "";
-  item.values[17] = estimateRequestNowLabel();
+  // 비고(16)와 결과내용(17)은 기간별 견적서 관리에서 직접 작성하는 칸이므로
+  // 견적 의뢰관리 상태 변경 시 자동으로 덮어쓰지 않습니다.
   item.values[18] = row.status;
   row.periodKey = item.key;
   estimatePeriodSaveSentRows?.();
@@ -3969,6 +4065,7 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("업무성격", row.startMode || row.status);
       put("상담 / 이메일 / 특기사항", row.memo);
       put("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
+      put("작업착수일자", row.contractDate && row.contractDate !== "대기중" ? estimateRequestDbDateLabel(row.contractDate) : "");
       sheet.rows = sheet.rows || [];
       const exists = sheet.rows.findIndex(r => r[headers.indexOf("프로젝트명")] === row.project && r[headers.indexOf("거래처명")] === row.company);
       const targetIndex = exists >= 0 ? exists : 0;
@@ -3998,6 +4095,7 @@ function syncEstimateRequestToDb(id, options = {}) {
           const setProgress = (name, value) => { const i = getEstimateDbColumnIndexByHeader("progress", name); if (i >= 0) progressRow[i] = value || ""; };
           setProgress("견적서일자", row.estimateDate ? estimateRequestDbDateLabel(row.estimateDate) : "");
           setProgress("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
+          setProgress("작업착수일자", row.contractDate && row.contractDate !== "대기중" ? estimateRequestDbDateLabel(row.contractDate) : "");
           setProgress("계약일자", row.contractDate === "대기중" ? "대기중" : (row.contractDate ? estimateRequestDbDateLabel(row.contractDate) : ""));
           if (typeof recalcEstimateDbRow === "function") recalcEstimateDbRow("progress", progressRow);
         });
