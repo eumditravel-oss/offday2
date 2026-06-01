@@ -1,3 +1,4 @@
+```javascript
 let estimateDbActiveTab = "pj";
 let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
@@ -1101,6 +1102,42 @@ function updateEstimateDbMepVendorCell(rowIndex, colIndex, value) {
   updateEstimateDbSaveButtonState?.();
 }
 
+function focusEstimateDbMepVendorCell(rowIndex, colIndex) {
+  const input = document.querySelector(`.quote-db-mep-vendor-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
+  if (!input) return false;
+  input.focus({ preventScroll: true });
+  requestAnimationFrame(() => {
+    input.scrollIntoView({ block: "nearest", inline: "nearest" });
+    try { input.select(); } catch (error) {}
+  });
+  return true;
+}
+
+function handleEstimateDbMepVendorKeydown(event, rowIndex, colIndex) {
+  const key = event?.key;
+  if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) return;
+  const rows = ensureEstimateDbMepVendorRows();
+  const headers = getEstimateDbMepVendorHeaders();
+  const maxRow = Math.max(0, rows.length - 1);
+  const maxCol = Math.max(0, headers.length - 1);
+  let nextRow = Number(rowIndex);
+  let nextCol = Number(colIndex);
+
+  if (key === "ArrowUp") nextRow -= 1;
+  if (key === "ArrowDown") nextRow += 1;
+  if (key === "ArrowLeft") nextCol -= 1;
+  if (key === "ArrowRight") nextCol += 1;
+
+  nextRow = Math.max(0, Math.min(maxRow, nextRow));
+  nextCol = Math.max(0, Math.min(maxCol, nextCol));
+  if (nextRow === Number(rowIndex) && nextCol === Number(colIndex)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  estimateDbMepSelectedVendorIndex = nextRow;
+  focusEstimateDbMepVendorCell(nextRow, nextCol);
+}
+
 function getEstimateDbMepVendorName(vendorRow) {
   return normalizeEstimateDbText(vendorRow?.[1]);
 }
@@ -1308,7 +1345,7 @@ function renderEstimateDbMepManage(options = {}) {
               <tbody>
                 ${vendorRows.map((row, rowIndex) => `
                   <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})" ondblclick="openEstimateDbMepVendorDetailWindow(${rowIndex})" title="더블클릭하면 계약/지급 내역을 새 창으로 엽니다.">
-                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" onclick="event.stopPropagation()" ondblclick="event.stopPropagation(); openEstimateDbMepVendorDetailWindow(${rowIndex})" onfocus="focusEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" /></td>`).join("")}
+                    ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" data-row-index="${rowIndex}" data-col-index="${colIndex}" onclick="event.stopPropagation()" ondblclick="event.stopPropagation(); openEstimateDbMepVendorDetailWindow(${rowIndex})" onfocus="focusEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbMepVendorKeydown(event, ${rowIndex}, ${colIndex})" /></td>`).join("")}
                   </tr>`).join("")}
               </tbody>
             </table>
@@ -4381,3 +4418,5 @@ document.addEventListener("click", event => {
     window.syncEstimateDbLinkedRowsFromPj = syncEstimateDbLinkedRowsFromPj;
   }
 })();
+
+```
