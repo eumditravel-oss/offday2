@@ -1986,22 +1986,22 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   if (!target) return false;
   const td = target.closest?.("td") || target;
   estimatePeriodRememberActiveCell(td);
-  // 방향키 이동 시 내부 control로 focus를 넘기면 select/button 기본 키 이벤트가 먼저 개입해 포커스가 빠집니다.
-  // 따라서 이동 포커스는 항상 td에 고정하고, control은 마우스 클릭으로만 직접 조작되게 둡니다.
   if (!td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
-  td.focus?.({ preventScroll: true });
-  td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-  if (td.isContentEditable || td.getAttribute?.("contenteditable") === "true") {
-    const range = document.createRange();
-    range.selectNodeContents(td);
-    range.collapse(false);
-    const sel = window.getSelection?.();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
+
+  // 실제 편집 포커스는 td가 아니라 내부 input/select/button에 둡니다.
+  // contenteditable td는 브라우저 caret 이동과 충돌해 방향키 이벤트가 표 이동 로직까지 안정적으로 도달하지 않았습니다.
+  const control = td.querySelector?.("input.estimate-period-cell-input, select, button, textarea");
+  const focusTarget = control || td;
+  focusTarget.focus?.({ preventScroll: true });
+  if (/^(INPUT|TEXTAREA)$/i.test(focusTarget.tagName || "")) {
+    const len = String(focusTarget.value || "").length;
+    try { focusTarget.setSelectionRange(len, len); } catch (_) {}
   }
+  td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   window.setTimeout?.(() => {
-    if (!document.activeElement?.closest?.(".estimate-period-manage-table") && window.__estimatePeriodActiveCell === td) {
-      td.focus?.({ preventScroll: true });
+    const active = document.activeElement;
+    if (!active?.closest?.(".estimate-period-manage-table") && window.__estimatePeriodActiveCell === td) {
+      (control || td).focus?.({ preventScroll: true });
     }
     estimatePeriodRememberActiveCell(td);
   }, 0);
@@ -3118,7 +3118,9 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
     ESTIMATE_PERIOD_COLUMNS.forEach(col => {
       if (col.type === "detail") return;
       const el = tr.querySelector(`[data-period-key="${col.key}"]`);
-      const nextValue = col.type === "status" ? (el?.value || "") : estimatePeriodNormalizeText(el?.innerText || el?.textContent || "");
+      const nextValue = col.type === "status"
+        ? (el?.value || "")
+        : estimatePeriodNormalizeText((/^(INPUT|TEXTAREA|SELECT)$/i.test(el?.tagName || "") ? el.value : (el?.innerText || el?.textContent || "")));
       row[col.key] = nextValue;
       if (typeof ESTIMATE_PERIOD_MANUAL_KEYS !== "undefined" && ESTIMATE_PERIOD_MANUAL_KEYS.includes(col.key)) {
         const prevValue = estimatePeriodNormalizeText(previousRow[col.key] || "");
@@ -3234,22 +3236,22 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   if (!target) return false;
   const td = target.closest?.("td") || target;
   estimatePeriodRememberActiveCell(td);
-  // 방향키 이동 시 내부 control로 focus를 넘기면 select/button 기본 키 이벤트가 먼저 개입해 포커스가 빠집니다.
-  // 따라서 이동 포커스는 항상 td에 고정하고, control은 마우스 클릭으로만 직접 조작되게 둡니다.
   if (!td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
-  td.focus?.({ preventScroll: true });
-  td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-  if (td.isContentEditable || td.getAttribute?.("contenteditable") === "true") {
-    const range = document.createRange();
-    range.selectNodeContents(td);
-    range.collapse(false);
-    const sel = window.getSelection?.();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
+
+  // 실제 편집 포커스는 td가 아니라 내부 input/select/button에 둡니다.
+  // contenteditable td는 브라우저 caret 이동과 충돌해 방향키 이벤트가 표 이동 로직까지 안정적으로 도달하지 않았습니다.
+  const control = td.querySelector?.("input.estimate-period-cell-input, select, button, textarea");
+  const focusTarget = control || td;
+  focusTarget.focus?.({ preventScroll: true });
+  if (/^(INPUT|TEXTAREA)$/i.test(focusTarget.tagName || "")) {
+    const len = String(focusTarget.value || "").length;
+    try { focusTarget.setSelectionRange(len, len); } catch (_) {}
   }
+  td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   window.setTimeout?.(() => {
-    if (!document.activeElement?.closest?.(".estimate-period-manage-table") && window.__estimatePeriodActiveCell === td) {
-      td.focus?.({ preventScroll: true });
+    const active = document.activeElement;
+    if (!active?.closest?.(".estimate-period-manage-table") && window.__estimatePeriodActiveCell === td) {
+      (control || td).focus?.({ preventScroll: true });
     }
     estimatePeriodRememberActiveCell(td);
   }, 0);
@@ -3461,16 +3463,26 @@ function renderEstimatePeriodManage() {
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
       const originClass = (typeof estimatePeriodFieldOriginClass === "function") ? estimatePeriodFieldOriginClass(row, col.key) : "";
       const originBadge = (typeof estimatePeriodFieldOriginBadge === "function") ? estimatePeriodFieldOriginBadge(row, col.key) : "";
-      return `<td class="editable ${cls} ${originClass}" contenteditable="true" data-period-key="${col.key}">${estimateSheetHtml(value)}${originBadge}</td>`;
+      return `<td class="editable ${cls} ${originClass}" data-period-key="${col.key}"><input class="estimate-period-cell-input" data-period-key="${col.key}" value="${estimateSheetHtml(value)}" aria-label="${estimateSheetHtml(col.label)}">${originBadge}</td>`;
     }).join("");
     return `<tr${rowClass} data-period-row-id="${estimateSheetHtml(row.id)}" data-source="${estimateSheetHtml(row.source || "manual")}" data-sent-index="${sentIndex}" ondblclick="openEstimatePeriodRowDetail('${estimateSheetHtml(row.id || "")}')">${cells}</tr>`;
   }).join("") : `<tr><td colspan="${ESTIMATE_PERIOD_COLUMNS.length}" class="estimate-period-empty">조건에 맞는 견적서가 없습니다.</td></tr>`;
   host.innerHTML = `<div class="estimate-period-manage-wrap"><table class="estimate-period-manage-table">${colGroup}${head}<tbody>${body}</tbody></table></div><div class="estimate-period-save-hint">셀을 수정한 뒤 [수정 저장]을 누르면 기간별 견적서 관리 데이터가 저장됩니다. 발송 처리된 행의 [세부보기]는 견적서 종류별 관리의 발송 스냅샷과 연결됩니다.</div>`;
   estimatePeriodBindCellNavigation(host);
-  host.querySelectorAll(".editable").forEach(td => {
-    td.addEventListener("keydown", event => {
-      if (event.key === "Enter") { event.preventDefault(); td.blur(); estimatePeriodPersistRenderedRows(); }
-    });
+  host.querySelectorAll(".estimate-period-cell-input").forEach(input => {
+    input.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+        estimatePeriodHandleNavKey(event, input);
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        estimatePeriodPersistRenderedRows(false);
+        estimatePeriodFocusGridCell(input.closest(".estimate-period-manage-table"),
+          Array.from(input.closest("tbody").children).indexOf(input.closest("tr")) + (event.shiftKey ? -1 : 1),
+          Array.from(input.closest("tr").children).indexOf(input.closest("td")));
+      }
+    }, true);
   });
   host.querySelectorAll(".status-select").forEach(sel => {
     sel.addEventListener("change", () => {
