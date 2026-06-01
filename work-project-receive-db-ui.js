@@ -109,6 +109,44 @@ function ensureEstimateDbProgressAccountInfoColumnOnce() {
   insertEstimateDbColumn(sheet, targetIndex, "계좌정보", "", "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리");
 }
 
+function ensureEstimateDbProgressBillingEmailColumnOnce() {
+  const sheet = estimateDbSheets?.progress;
+  if (!sheet?.headerRows?.length) return;
+  const cols = getEstimateDbLeafColumns(sheet);
+  const existingIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "발행메일주소");
+  const clientIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "거래처기성담당자");
+  const managerIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "기성담당자");
+  const targetIndex = clientIndex >= 0 ? clientIndex + 1 : (managerIndex >= 0 ? managerIndex : cols.length);
+  const requestText = "세금계산서/기성 관련 발행 메일주소 입력란";
+  if (existingIndex >= 0) {
+    let finalIndex = existingIndex;
+    if (existingIndex !== targetIndex) {
+      const toIndex = targetIndex > existingIndex ? targetIndex - 1 : targetIndex;
+      (sheet.headerRows || []).forEach((row, headerRowIndex) => {
+        if (!Array.isArray(row)) return;
+        const [cell] = row.splice(existingIndex, 1);
+        row.splice(toIndex, 0, headerRowIndex === 0 ? "발행메일주소" : (cell || ""));
+      });
+      if (Array.isArray(sheet.requestRow)) {
+        const [cell] = sheet.requestRow.splice(existingIndex, 1);
+        sheet.requestRow.splice(toIndex, 0, cell || requestText);
+      }
+      (sheet.rows || []).forEach(row => {
+        if (!Array.isArray(row)) return;
+        const [cell] = row.splice(existingIndex, 1);
+        row.splice(toIndex, 0, cell || "");
+      });
+      finalIndex = toIndex;
+    }
+    (sheet.headerRows || []).forEach((row, headerRowIndex) => {
+      if (Array.isArray(row)) row[finalIndex] = headerRowIndex === 0 ? "발행메일주소" : "";
+    });
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow[finalIndex] = requestText;
+    return;
+  }
+  insertEstimateDbColumn(sheet, targetIndex, "발행메일주소", "", requestText);
+}
+
 function migrateEstimateDbCreatedDateHeaders() {
   ["pj", "progress", "mep"].forEach(tab => {
     const sheet = estimateDbSheets?.[tab];
@@ -256,6 +294,7 @@ function runEstimateDbStructureMaintenanceOnce(options = {}) {
   ensureEstimateDbPjDeliveryPlanColumnsOnce?.();
   ensureEstimateDbProgressActualDeliveryColumnsOnce?.();
   ensureEstimateDbProgressAccountInfoColumnOnce?.();
+  ensureEstimateDbProgressBillingEmailColumnOnce?.();
   estimateDbMaintenanceOnceDone = true;
 }
 function getEstimateDbSheet(tab = estimateDbActiveTab) {
@@ -510,6 +549,16 @@ function getEstimateDbRichDisplayValue(value) {
     if (parsed.summary) return parsed.summary;
     const accounts = Array.isArray(parsed.accounts) ? parsed.accounts : [];
     return accounts.map(item => [item.bank, item.account].filter(Boolean).join(" ")).filter(Boolean).join(" / ");
+  }
+  if (parsed.type === "progressBillingClientContact") {
+    if (parsed.summary) return parsed.summary;
+    const contacts = Array.isArray(parsed.contacts) ? parsed.contacts : [];
+    return contacts.map(item => [item.name, item.position, item.mobile].filter(Boolean).join(" / ")).filter(Boolean).join(" | ");
+  }
+  if (parsed.type === "progressBillingManager") {
+    if (parsed.summary) return parsed.summary;
+    const managers = Array.isArray(parsed.managers) ? parsed.managers : [];
+    return managers.map(item => item.label || [item.name, item.position].filter(Boolean).join("")).filter(Boolean).join(", ");
   }
   return value;
 }
@@ -790,6 +839,7 @@ function ensureEstimateDbProgressDoneColumn() {
 }
 
 function sanitizeEstimateDbSheetsBeforeRender() {
+  ensureEstimateDbProgressBillingEmailColumnOnce?.();
   ensureEstimateDbProgressDoneColumn();
   ensureEstimateDbProgressContractAmountColumns();
   pruneEstimateDbProgressInitialStageColumns();
@@ -2381,6 +2431,246 @@ function saveEstimateDbAccountModal() {
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
 }
 
+
+let estimateDbBillingClientModalState = null;
+let estimateDbBillingManagerModalState = null;
+
+function isEstimateDbProgressBillingClientColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "거래처기성담당자";
+}
+function isEstimateDbProgressBillingManagerColumn(tab = estimateDbActiveTab, colIndex = 0) {
+  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "기성담당자";
+}
+function parseEstimateDbBillingClientContactValue(value) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "progressBillingClientContact") {
+    return { summary: String(rich.summary || ""), contacts: Array.isArray(rich.contacts) ? rich.contacts.map(item => ({ name: String(item?.name || ""), position: String(item?.position || ""), mobile: String(item?.mobile || "") })) : [] };
+  }
+  const raw = normalizeEstimateDbText(value);
+  return { summary: raw, contacts: raw ? [{ name: raw, position: "", mobile: "" }] : [] };
+}
+function summarizeEstimateDbBillingClientContacts(contacts = []) {
+  const filled = (contacts || []).filter(item => normalizeEstimateDbText(item.name) || normalizeEstimateDbText(item.position) || normalizeEstimateDbText(item.mobile));
+  if (!filled.length) return "";
+  return filled.map(item => [item.name, item.position, item.mobile].filter(Boolean).join(" / ")).join(" | ");
+}
+function ensureEstimateDbBillingClientModal() {
+  let modal = document.getElementById("estimateDbBillingClientModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbBillingClientModal";
+  modal.className = "estimate-db-dropdown-modal hidden estimate-db-billing-client-modal";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-billing-client-box" role="dialog" aria-modal="true">
+      <div class="estimate-db-dropdown-title">거래처 기성담당자 입력</div>
+      <div class="estimate-db-contact-help">이름, 직위, 휴대전화를 입력합니다. 여러 담당자를 입력할 수 있으며, 표에는 3가지 정보가 한 줄 요약으로 표시됩니다.</div>
+      <div class="estimate-db-contact-grid-wrap">
+        <table class="estimate-db-contact-grid estimate-db-billing-client-grid">
+          <thead><tr><th>No</th><th>이름</th><th>직위</th><th>휴대전화</th></tr></thead>
+          <tbody id="estimateDbBillingClientRows"></tbody>
+        </table>
+      </div>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingClientModalRow()">+ 담당자 추가</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingClientModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingClientModal()">담당자 저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbBillingClientModal(); });
+  modal.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closeEstimateDbBillingClientModal(); } });
+  return modal;
+}
+function renderEstimateDbBillingClientModalRows(contacts = []) {
+  const modal = ensureEstimateDbBillingClientModal();
+  const body = modal.querySelector("#estimateDbBillingClientRows");
+  const rows = contacts.length ? contacts : Array.from({ length: 3 }, () => ({}));
+  body.innerHTML = rows.map((contact, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td><input data-billing-client-field="name" data-billing-client-index="${index}" value="${escapeEstimateDbHtml(contact.name || "")}" onkeydown="handleEstimateDbBillingClientModalKeydown(event)" /></td>
+      <td><input data-billing-client-field="position" data-billing-client-index="${index}" value="${escapeEstimateDbHtml(contact.position || "")}" onkeydown="handleEstimateDbBillingClientModalKeydown(event)" /></td>
+      <td><input data-billing-client-field="mobile" data-billing-client-index="${index}" value="${escapeEstimateDbHtml(contact.mobile || "")}" onkeydown="handleEstimateDbBillingClientModalKeydown(event)" /></td>
+    </tr>`).join("");
+}
+function collectEstimateDbBillingClientModalRows() {
+  const modal = ensureEstimateDbBillingClientModal();
+  const rows = [];
+  modal.querySelectorAll("#estimateDbBillingClientRows tr").forEach((tr, index) => {
+    const item = {};
+    tr.querySelectorAll("input[data-billing-client-field]").forEach(input => { item[input.dataset.billingClientField] = input.value || ""; });
+    if (Object.values(item).some(v => normalizeEstimateDbText(v))) rows[index] = item;
+  });
+  return rows.filter(Boolean);
+}
+function addEstimateDbBillingClientModalRow() {
+  const contacts = collectEstimateDbBillingClientModalRows();
+  contacts.push({ name: "", position: "", mobile: "" });
+  renderEstimateDbBillingClientModalRows(contacts);
+  setTimeout(() => ensureEstimateDbBillingClientModal().querySelector(`input[data-billing-client-index="${contacts.length - 1}"][data-billing-client-field="name"]`)?.focus(), 0);
+}
+function handleEstimateDbBillingClientModalKeydown(event) {
+  if (event.key === "Escape") { event.preventDefault(); closeEstimateDbBillingClientModal(); return; }
+  if (event.key === "Enter") { event.preventDefault(); saveEstimateDbBillingClientModal(); return; }
+  const map = { ArrowRight: [0, 1], ArrowLeft: [0, -1], ArrowDown: [1, 0], ArrowUp: [-1, 0] };
+  if (!map[event.key]) return;
+  event.preventDefault();
+  const fields = ["name", "position", "mobile"];
+  const input = event.currentTarget;
+  const rowIndex = Number(input.dataset.billingClientIndex || 0);
+  const fieldIndex = fields.indexOf(input.dataset.billingClientField);
+  const [dr, dc] = map[event.key];
+  const nextRow = Math.max(0, rowIndex + dr);
+  const nextField = Math.max(0, Math.min(fields.length - 1, fieldIndex + dc));
+  ensureEstimateDbBillingClientModal().querySelector(`input[data-billing-client-index="${nextRow}"][data-billing-client-field="${fields[nextField]}"]`)?.focus();
+}
+function openEstimateDbBillingClientModal(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
+  if (!isEstimateDbProgressBillingClientColumn(estimateDbActiveTab, colIndex)) return false;
+  commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+  const row = getEstimateDbRows()?.[rowIndex] || [];
+  const parsed = parseEstimateDbBillingClientContactValue(row[colIndex]);
+  estimateDbBillingClientModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
+  renderEstimateDbBillingClientModalRows(parsed.contacts || []);
+  const modal = ensureEstimateDbBillingClientModal();
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector('input[data-billing-client-field="name"]')?.focus(), 0);
+  return true;
+}
+function closeEstimateDbBillingClientModal() {
+  document.getElementById("estimateDbBillingClientModal")?.classList.add("hidden");
+  const state = estimateDbBillingClientModalState;
+  estimateDbBillingClientModalState = null;
+  if (state) requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+function saveEstimateDbBillingClientModal() {
+  const state = estimateDbBillingClientModalState;
+  if (!state) return;
+  const contacts = collectEstimateDbBillingClientModalRows();
+  const summary = summarizeEstimateDbBillingClientContacts(contacts);
+  updateEstimateDbCell(state.rowIndex, state.colIndex, stringifyEstimateDbRichCellValue({ type: "progressBillingClientContact", summary, contacts }), { commit: true, silentRender: true });
+  closeEstimateDbBillingClientModal();
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+function getEstimateDbDefaultBillingManagers() {
+  const fallback = [{ empNo: "CC-002", name: "강동균", position: "실장", label: "강동균실장" }, { empNo: "CC-004", name: "김태영", position: "선임", label: "김태영선임" }];
+  try {
+    if (typeof orgEmployeeSeed !== "undefined" && Array.isArray(orgEmployeeSeed)) {
+      const mapped = ["강동균", "김태영"].map(name => {
+        const emp = orgEmployeeSeed.find(item => String(item?.[1] || "").includes(name));
+        if (!emp) return null;
+        const position = String(emp?.[4] || emp?.[5] || "");
+        return { empNo: String(emp?.[0] || ""), name: String(emp?.[1] || name), position, label: `${String(emp?.[1] || name)}${position}` };
+      }).filter(Boolean);
+      if (mapped.length) return mapped;
+    }
+  } catch (_) {}
+  return fallback;
+}
+function parseEstimateDbBillingManagerValue(value) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "progressBillingManager") {
+    return { summary: String(rich.summary || ""), managers: Array.isArray(rich.managers) ? rich.managers.map(item => ({ empNo: String(item?.empNo || ""), name: String(item?.name || ""), position: String(item?.position || ""), label: String(item?.label || "") })) : [] };
+  }
+  const raw = normalizeEstimateDbText(value);
+  return { summary: raw, managers: raw ? [{ empNo: "", name: raw, position: "", label: raw }] : [] };
+}
+function summarizeEstimateDbBillingManagers(managers = []) {
+  const filled = (managers || []).filter(item => normalizeEstimateDbText(item.label) || normalizeEstimateDbText(item.name));
+  if (!filled.length) return "";
+  return filled.map(item => item.label || [item.name, item.position].filter(Boolean).join("")).filter(Boolean).join(", ");
+}
+function ensureEstimateDbBillingManagerModal() {
+  let modal = document.getElementById("estimateDbBillingManagerModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbBillingManagerModal";
+  modal.className = "estimate-db-dropdown-modal hidden estimate-db-billing-manager-modal";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-billing-manager-box" role="dialog" aria-modal="true">
+      <div class="estimate-db-dropdown-title">기성담당자 선택</div>
+      <div class="estimate-db-contact-help">조직도/인사카드 기준 담당자를 선택합니다. 연락예정일 기준 이메일 알림 연동을 위해 직원번호도 함께 보관합니다.</div>
+      <div id="estimateDbBillingManagerOptions" class="estimate-db-manager-option-list"></div>
+      <div class="estimate-db-contact-help">목록에 없는 담당자는 아래에서 추가할 수 있습니다. 인사카드에 등록된 이름은 직원번호가 자동 연결됩니다.</div>
+      <div class="estimate-db-manager-add-row"><input id="estimateDbBillingManagerName" placeholder="이름" /><input id="estimateDbBillingManagerPosition" placeholder="직위" /><button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingManagerCustom()">+ 추가</button></div>
+      <div class="estimate-db-dropdown-actions"><button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingManagerModal()">닫기</button><button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingManagerModal()">담당자 저장</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbBillingManagerModal(); });
+  modal.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbBillingManagerModal(); }
+    if (event.key === "Enter" && event.target?.matches?.("#estimateDbBillingManagerName,#estimateDbBillingManagerPosition")) { event.preventDefault(); addEstimateDbBillingManagerCustom(); }
+  });
+  return modal;
+}
+function renderEstimateDbBillingManagerOptions(selectedManagers = []) {
+  const modal = ensureEstimateDbBillingManagerModal();
+  const body = modal.querySelector("#estimateDbBillingManagerOptions");
+  const selectedLabels = new Set((selectedManagers || []).map(item => item.label || [item.name, item.position].filter(Boolean).join("")));
+  const merged = [...getEstimateDbDefaultBillingManagers()];
+  (selectedManagers || []).forEach(item => {
+    const label = item.label || [item.name, item.position].filter(Boolean).join("");
+    if (label && !merged.some(m => (m.label || [m.name, m.position].filter(Boolean).join("")) === label)) merged.push({ ...item, label });
+  });
+  body.innerHTML = merged.map((item, index) => {
+    const label = item.label || [item.name, item.position].filter(Boolean).join("");
+    const checked = selectedLabels.has(label) || (!selectedLabels.size && index === 0);
+    return `<label class="estimate-db-manager-option"><input type="checkbox" data-manager-option="1" value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(item.empNo || "")}" data-name="${escapeEstimateDbHtml(item.name || "")}" data-position="${escapeEstimateDbHtml(item.position || "")}" ${checked ? "checked" : ""} /><span>${escapeEstimateDbHtml(label)}</span>${item.empNo ? `<em>${escapeEstimateDbHtml(item.empNo)}</em>` : ""}</label>`;
+  }).join("");
+}
+function addEstimateDbBillingManagerCustom() {
+  const modal = ensureEstimateDbBillingManagerModal();
+  const nameInput = modal.querySelector("#estimateDbBillingManagerName");
+  const positionInput = modal.querySelector("#estimateDbBillingManagerPosition");
+  const name = normalizeEstimateDbText(nameInput?.value || "");
+  const position = normalizeEstimateDbText(positionInput?.value || "");
+  if (!name) return;
+  let empNo = "";
+  try {
+    if (typeof orgEmployeeSeed !== "undefined" && Array.isArray(orgEmployeeSeed)) {
+      const emp = orgEmployeeSeed.find(item => normalizeEstimateDbText(item?.[1]) === name || normalizeEstimateDbText(item?.[1]).includes(name));
+      if (emp) empNo = String(emp[0] || "");
+    }
+  } catch (_) {}
+  const label = `${name}${position}`;
+  const body = modal.querySelector("#estimateDbBillingManagerOptions");
+  if (!Array.from(body.querySelectorAll('input[data-manager-option]')).some(input => input.value === label)) {
+    body.insertAdjacentHTML("beforeend", `<label class="estimate-db-manager-option"><input type="checkbox" data-manager-option="1" value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" checked /><span>${escapeEstimateDbHtml(label)}</span>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</label>`);
+  }
+  nameInput.value = ""; positionInput.value = ""; nameInput.focus();
+}
+function collectEstimateDbBillingManagerModalRows() {
+  return Array.from(ensureEstimateDbBillingManagerModal().querySelectorAll('input[data-manager-option]:checked')).map(input => ({ empNo: input.dataset.empNo || "", name: input.dataset.name || "", position: input.dataset.position || "", label: input.value || "" })).filter(item => normalizeEstimateDbText(item.label));
+}
+function openEstimateDbBillingManagerModal(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
+  if (!isEstimateDbProgressBillingManagerColumn(estimateDbActiveTab, colIndex)) return false;
+  commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+  const row = getEstimateDbRows()?.[rowIndex] || [];
+  const parsed = parseEstimateDbBillingManagerValue(row[colIndex]);
+  estimateDbBillingManagerModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
+  renderEstimateDbBillingManagerOptions(parsed.managers || []);
+  const modal = ensureEstimateDbBillingManagerModal();
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector('input[data-manager-option]')?.focus(), 0);
+  return true;
+}
+function closeEstimateDbBillingManagerModal() {
+  document.getElementById("estimateDbBillingManagerModal")?.classList.add("hidden");
+  const state = estimateDbBillingManagerModalState;
+  estimateDbBillingManagerModalState = null;
+  if (state) requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+function saveEstimateDbBillingManagerModal() {
+  const state = estimateDbBillingManagerModalState;
+  if (!state) return;
+  const managers = collectEstimateDbBillingManagerModalRows();
+  const summary = summarizeEstimateDbBillingManagers(managers);
+  updateEstimateDbCell(state.rowIndex, state.colIndex, stringifyEstimateDbRichCellValue({ type: "progressBillingManager", summary, managers }), { commit: true, silentRender: true });
+  closeEstimateDbBillingManagerModal();
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+
 let estimateDbContactModalState = null;
 
 function ensureEstimateDbContactModal() {
@@ -2883,6 +3173,18 @@ function handleEstimateDbKeydown(event) {
     event.preventDefault();
     commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     openEstimateDbAccountModal(rowIndex, colIndex);
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbProgressBillingClientColumn(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbBillingClientModal(rowIndex, colIndex);
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbProgressBillingManagerColumn(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbBillingManagerModal(rowIndex, colIndex);
     return;
   }
   if ((event.altKey && event.key === "ArrowDown") || (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbDropdownCell(estimateDbActiveTab, colIndex))) {
