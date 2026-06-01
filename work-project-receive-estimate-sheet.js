@@ -1932,12 +1932,9 @@ function estimatePeriodElementFromEventTarget(target) {
 function estimatePeriodGetFocusableCells(host) {
   const table = host?.matches?.(".estimate-period-manage-table") ? host : host?.querySelector?.(".estimate-period-manage-table");
   if (!table) return [];
-  return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr =>
-    Array.from(tr.children).map(td => {
-      const directControl = td.querySelector("select, button:not([disabled]), input, textarea");
-      return directControl || td;
-    })
-  );
+  // 기간별 견적서 관리는 엑셀형 이동이 우선이므로 포커스 단위는 내부 버튼/셀렉트가 아니라 항상 td로 고정합니다.
+  // 이전 방식은 td 내부 control(select/button)을 focusTarget으로 잡아 방향키 입력 시 브라우저 기본 포커스 이동과 충돌했습니다.
+  return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr => Array.from(tr.children));
 }
 
 function estimatePeriodRememberActiveCell(td) {
@@ -1989,11 +1986,10 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   if (!target) return false;
   const td = target.closest?.("td") || target;
   estimatePeriodRememberActiveCell(td);
-  const focusTarget = /^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "") ? target : td;
-  if (!focusTarget.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(focusTarget.tagName || "")) {
-    focusTarget.setAttribute?.("tabindex", "0");
-  }
-  focusTarget.focus?.({ preventScroll: true });
+  // 방향키 이동 시 내부 control로 focus를 넘기면 select/button 기본 키 이벤트가 먼저 개입해 포커스가 빠집니다.
+  // 따라서 이동 포커스는 항상 td에 고정하고, control은 마우스 클릭으로만 직접 조작되게 둡니다.
+  if (!td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
+  td.focus?.({ preventScroll: true });
   td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   if (td.isContentEditable || td.getAttribute?.("contenteditable") === "true") {
     const range = document.createRange();
@@ -2043,8 +2039,14 @@ function estimatePeriodEnsureGlobalNavListener() {
     const active = estimatePeriodElementFromEventTarget(event.target) || document.activeElement;
     const activeInsideTable = !!active?.closest?.(".estimate-period-manage-table");
     const remembered = window.__estimatePeriodActiveCell;
-    const focusLostAfterCell = remembered?.isConnected && (!active || active === document.body || active === document.documentElement || active.classList?.contains?.("estimate-period-manage-wrap"));
-    if (activeInsideTable || focusLostAfterCell) {
+    const rememberedTable = remembered?.isConnected ? remembered.closest?.(".estimate-period-manage-table") : null;
+    const hasVisibleRememberedCell = !!(rememberedTable && remembered?.closest?.("tr[data-period-row-id]"));
+    const activeInPeriodFilters = !!active?.closest?.("#estimatePeriodFilterControls");
+    const activeInOtherInput = !activeInsideTable && /^(INPUT|TEXTAREA|SELECT)$/i.test(active?.tagName || "");
+    // 원인: contenteditable td 안에서는 방향키 기본 동작이 caret/페이지 포커스를 먼저 가져가며,
+    // activeElement가 body/html 외의 래퍼로 바뀌는 경우 기존 조건이 false가 되어 이동 로직이 실행되지 않았습니다.
+    // 마지막 선택 셀이 기간별 표 안에 있으면, 필터 입력 중이 아닌 한 전역 캡처 단계에서 무조건 표 이동으로 처리합니다.
+    if (activeInsideTable || (hasVisibleRememberedCell && !activeInPeriodFilters && !activeInOtherInput)) {
       estimatePeriodHandleNavKey(event, activeInsideTable ? active : remembered);
     }
   }, true);
@@ -2060,6 +2062,15 @@ function estimatePeriodBindCellNavigation(host) {
     td.addEventListener("focus", () => estimatePeriodRememberActiveCell(td), true);
     td.addEventListener("keydown", event => {
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) estimatePeriodHandleNavKey(event, td);
+    }, true);
+  });
+  table.querySelectorAll("tbody select, tbody button, tbody input, tbody textarea").forEach(control => {
+    control.addEventListener("mousedown", () => {
+      const td = control.closest?.("td");
+      if (td) estimatePeriodRememberActiveCell(td);
+    }, true);
+    control.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) estimatePeriodHandleNavKey(event, control);
     }, true);
   });
   table.querySelectorAll("tbody td.editable, tbody td[contenteditable='true'], tbody select, tbody button").forEach(el => {
@@ -3169,12 +3180,9 @@ function estimatePeriodElementFromEventTarget(target) {
 function estimatePeriodGetFocusableCells(host) {
   const table = host?.matches?.(".estimate-period-manage-table") ? host : host?.querySelector?.(".estimate-period-manage-table");
   if (!table) return [];
-  return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr =>
-    Array.from(tr.children).map(td => {
-      const directControl = td.querySelector("select, button:not([disabled]), input, textarea");
-      return directControl || td;
-    })
-  );
+  // 기간별 견적서 관리는 엑셀형 이동이 우선이므로 포커스 단위는 내부 버튼/셀렉트가 아니라 항상 td로 고정합니다.
+  // 이전 방식은 td 내부 control(select/button)을 focusTarget으로 잡아 방향키 입력 시 브라우저 기본 포커스 이동과 충돌했습니다.
+  return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr => Array.from(tr.children));
 }
 
 function estimatePeriodRememberActiveCell(td) {
@@ -3226,11 +3234,10 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   if (!target) return false;
   const td = target.closest?.("td") || target;
   estimatePeriodRememberActiveCell(td);
-  const focusTarget = /^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "") ? target : td;
-  if (!focusTarget.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(focusTarget.tagName || "")) {
-    focusTarget.setAttribute?.("tabindex", "0");
-  }
-  focusTarget.focus?.({ preventScroll: true });
+  // 방향키 이동 시 내부 control로 focus를 넘기면 select/button 기본 키 이벤트가 먼저 개입해 포커스가 빠집니다.
+  // 따라서 이동 포커스는 항상 td에 고정하고, control은 마우스 클릭으로만 직접 조작되게 둡니다.
+  if (!td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
+  td.focus?.({ preventScroll: true });
   td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   if (td.isContentEditable || td.getAttribute?.("contenteditable") === "true") {
     const range = document.createRange();
@@ -3280,8 +3287,14 @@ function estimatePeriodEnsureGlobalNavListener() {
     const active = estimatePeriodElementFromEventTarget(event.target) || document.activeElement;
     const activeInsideTable = !!active?.closest?.(".estimate-period-manage-table");
     const remembered = window.__estimatePeriodActiveCell;
-    const focusLostAfterCell = remembered?.isConnected && (!active || active === document.body || active === document.documentElement || active.classList?.contains?.("estimate-period-manage-wrap"));
-    if (activeInsideTable || focusLostAfterCell) {
+    const rememberedTable = remembered?.isConnected ? remembered.closest?.(".estimate-period-manage-table") : null;
+    const hasVisibleRememberedCell = !!(rememberedTable && remembered?.closest?.("tr[data-period-row-id]"));
+    const activeInPeriodFilters = !!active?.closest?.("#estimatePeriodFilterControls");
+    const activeInOtherInput = !activeInsideTable && /^(INPUT|TEXTAREA|SELECT)$/i.test(active?.tagName || "");
+    // 원인: contenteditable td 안에서는 방향키 기본 동작이 caret/페이지 포커스를 먼저 가져가며,
+    // activeElement가 body/html 외의 래퍼로 바뀌는 경우 기존 조건이 false가 되어 이동 로직이 실행되지 않았습니다.
+    // 마지막 선택 셀이 기간별 표 안에 있으면, 필터 입력 중이 아닌 한 전역 캡처 단계에서 무조건 표 이동으로 처리합니다.
+    if (activeInsideTable || (hasVisibleRememberedCell && !activeInPeriodFilters && !activeInOtherInput)) {
       estimatePeriodHandleNavKey(event, activeInsideTable ? active : remembered);
     }
   }, true);
@@ -3297,6 +3310,15 @@ function estimatePeriodBindCellNavigation(host) {
     td.addEventListener("focus", () => estimatePeriodRememberActiveCell(td), true);
     td.addEventListener("keydown", event => {
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) estimatePeriodHandleNavKey(event, td);
+    }, true);
+  });
+  table.querySelectorAll("tbody select, tbody button, tbody input, tbody textarea").forEach(control => {
+    control.addEventListener("mousedown", () => {
+      const td = control.closest?.("td");
+      if (td) estimatePeriodRememberActiveCell(td);
+    }, true);
+    control.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) estimatePeriodHandleNavKey(event, control);
     }, true);
   });
   table.querySelectorAll("tbody td.editable, tbody td[contenteditable='true'], tbody select, tbody button").forEach(el => {
