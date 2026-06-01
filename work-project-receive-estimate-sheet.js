@@ -1777,6 +1777,37 @@ function estimatePeriodSaveSentRows() {
   try { localStorage.setItem(ESTIMATE_PERIOD_STORAGE_KEY, JSON.stringify(estimatePeriodSentRows)); }
   catch (err) { console.warn("기간별 견적서 관리 저장 실패", err); }
 }
+function estimatePeriodRepairBlankSentRows() {
+  if (!Array.isArray(estimatePeriodSentRows)) return;
+  let changed = false;
+  estimatePeriodSentRows = estimatePeriodSentRows.map(item => {
+    if (!item || typeof item !== "object") return item;
+    const next = { ...item, values: { ...(item.values || {}) } };
+    const record = next.recordSnapshot || {};
+    const state = next.detailSnapshot || record.state || null;
+    const fill = (slot, value) => {
+      if (!estimatePeriodNormalizeText(next.values[slot] || "") && estimatePeriodNormalizeText(value || "")) {
+        next.values[slot] = value;
+        changed = true;
+      }
+    };
+    fill(3, record.recipient || record.company || (state ? estimateSheetDisplayValue?.(state, 5, 2) : ""));
+    fill(4, record.title || record.project || (state ? estimateSheetDisplayValue?.(state, 6, 2) : ""));
+    fill(11, record.type || next.type || "");
+    fill(12, record.bid || record.type || next.type || "");
+    if (state) {
+      try {
+        if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(state);
+        fill(5, estimatePeriodExtractSheetAreaPy?.(state) || "");
+        fill(6, estimatePeriodExtractSheetUnitPriceSum?.(state) || "");
+        fill(7, estimatePeriodExtractSheetTotalAmount?.(state) || "");
+      } catch (err) {}
+    }
+    return next;
+  });
+  if (changed) estimatePeriodSaveSentRows?.();
+}
+
 
 function estimatePeriodTodayCode() {
   const d = new Date();
@@ -2027,7 +2058,8 @@ function estimatePeriodHandleNavKey(event, el) {
   event.stopImmediatePropagation?.();
   event.stopPropagation();
   estimatePeriodRememberActiveCell(td);
-  estimatePeriodPersistRenderedRows(false);
+  // 방향키 이동 중 전체 행 저장을 실행하면 아직 포커스 이동 중인 input 값이 localStorage에 잘못 반영될 수 있습니다.
+  // 저장은 [수정 저장] 또는 Enter 이동 시에만 수행하고, 방향키는 포커스 이동만 담당합니다.
   return estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
 }
 
@@ -3117,10 +3149,14 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
     const manualMap = (row.manualPeriodFields && typeof row.manualPeriodFields === "object") ? { ...row.manualPeriodFields } : {};
     ESTIMATE_PERIOD_COLUMNS.forEach(col => {
       if (col.type === "detail") return;
-      const el = tr.querySelector(`[data-period-key="${col.key}"]`);
-      const nextValue = col.type === "status"
-        ? (el?.value || "")
-        : estimatePeriodNormalizeText((/^(INPUT|TEXTAREA|SELECT)$/i.test(el?.tagName || "") ? el.value : (el?.innerText || el?.textContent || "")));
+      // input 기반 셀로 변경된 뒤 td와 input이 같은 data-period-key를 가지게 되었습니다.
+      // td를 먼저 잡으면 innerText가 비어 있어 방향키 이동/임시저장 시 기존 데이터가 공란으로 덮이는 문제가 발생합니다.
+      // 반드시 실제 입력 컨트롤을 우선 읽고, 컨트롤이 없는 경우에만 td 텍스트를 fallback으로 사용합니다.
+      const control = tr.querySelector(`input[data-period-key="${col.key}"], textarea[data-period-key="${col.key}"], select[data-period-key="${col.key}"]`);
+      const cell = tr.querySelector(`td[data-period-key="${col.key}"]`);
+      const el = control || cell;
+      const rawValue = /^(INPUT|TEXTAREA|SELECT)$/i.test(el?.tagName || "") ? (el?.value || "") : (el?.innerText || el?.textContent || "");
+      const nextValue = col.type === "status" ? (rawValue || "") : estimatePeriodNormalizeText(rawValue);
       row[col.key] = nextValue;
       if (typeof ESTIMATE_PERIOD_MANUAL_KEYS !== "undefined" && ESTIMATE_PERIOD_MANUAL_KEYS.includes(col.key)) {
         const prevValue = estimatePeriodNormalizeText(previousRow[col.key] || "");
@@ -3435,6 +3471,7 @@ function renderEstimatePeriodManage() {
   if (!host) return;
   estimatePeriodLoadFilters();
   estimatePeriodLoadSentRows();
+  estimatePeriodRepairBlankSentRows?.();
   estimatePeriodLoadEdits();
   const allRows = estimatePeriodSortRowsDesc(estimatePeriodAllRowsForList());
   const filtered = estimatePeriodFilterRows(allRows);
