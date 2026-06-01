@@ -1940,12 +1940,34 @@ function estimatePeriodGetFocusableCells(host) {
   );
 }
 
+function estimatePeriodRememberActiveCell(td) {
+  const cell = td?.closest?.("td");
+  const table = cell?.closest?.(".estimate-period-manage-table");
+  const tr = cell?.closest?.("tr[data-period-row-id]");
+  if (!table || !tr || !cell) return null;
+  window.__estimatePeriodActiveCell = cell;
+  window.__estimatePeriodActiveTable = table;
+  table.querySelectorAll("td.period-cell-focused").forEach(item => {
+    if (item !== cell) item.classList.remove("period-cell-focused");
+  });
+  cell.classList.add("period-cell-focused");
+  if (!cell.hasAttribute("tabindex")) cell.setAttribute("tabindex", "0");
+  return cell;
+}
+
 function estimatePeriodResolveActiveCell(active) {
   const el = estimatePeriodElementFromEventTarget(active) || document.activeElement;
   const td = el?.closest?.("td");
   const table = td?.closest?.(".estimate-period-manage-table");
   const tr = td?.closest?.("tr[data-period-row-id]");
   if (table && tr && td) return { table, tr, td };
+
+  const remembered = window.__estimatePeriodActiveCell;
+  if (remembered?.isConnected) {
+    const rememberedTable = remembered.closest(".estimate-period-manage-table");
+    const rememberedTr = remembered.closest("tr[data-period-row-id]");
+    if (rememberedTable && rememberedTr) return { table: rememberedTable, tr: rememberedTr, td: remembered };
+  }
 
   const focused = document.querySelector?.(".estimate-period-manage-table td.period-cell-focused");
   if (focused) {
@@ -1966,28 +1988,37 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   const target = row[safeColIndex];
   if (!target) return false;
   const td = target.closest?.("td") || target;
-  table?.querySelectorAll?.("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
-  td.classList?.add("period-cell-focused");
-  if (!target.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "")) {
-    target.setAttribute?.("tabindex", "0");
+  estimatePeriodRememberActiveCell(td);
+  const focusTarget = /^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "") ? target : td;
+  if (!focusTarget.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(focusTarget.tagName || "")) {
+    focusTarget.setAttribute?.("tabindex", "0");
   }
-  if (td !== target && !td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
-  target.focus?.({ preventScroll: true });
-  target.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-  if (target.isContentEditable || target.getAttribute?.("contenteditable") === "true") {
+  focusTarget.focus?.({ preventScroll: true });
+  td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  if (td.isContentEditable || td.getAttribute?.("contenteditable") === "true") {
     const range = document.createRange();
-    range.selectNodeContents(target);
+    range.selectNodeContents(td);
     range.collapse(false);
     const sel = window.getSelection?.();
     sel?.removeAllRanges();
     sel?.addRange(range);
   }
+  window.setTimeout?.(() => {
+    if (!document.activeElement?.closest?.(".estimate-period-manage-table") && window.__estimatePeriodActiveCell === td) {
+      td.focus?.({ preventScroll: true });
+    }
+    estimatePeriodRememberActiveCell(td);
+  }, 0);
   return true;
 }
 
 function estimatePeriodHandleNavKey(event, el) {
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
   if (!keyMap[event.key]) return false;
+  const eventElement = estimatePeriodElementFromEventTarget(event.target);
+  if (eventElement && !eventElement.closest?.(".estimate-period-manage-table") && /^(INPUT|TEXTAREA|SELECT)$/i.test(eventElement.tagName || "")) {
+    return false;
+  }
   const resolved = estimatePeriodResolveActiveCell(el || event.target);
   if (!resolved) return false;
   const { table, tr, td } = resolved;
@@ -1999,9 +2030,9 @@ function estimatePeriodHandleNavKey(event, el) {
   event.preventDefault();
   event.stopImmediatePropagation?.();
   event.stopPropagation();
+  estimatePeriodRememberActiveCell(td);
   estimatePeriodPersistRenderedRows(false);
-  estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
-  return true;
+  return estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
 }
 
 function estimatePeriodEnsureGlobalNavListener() {
@@ -2010,8 +2041,11 @@ function estimatePeriodEnsureGlobalNavListener() {
   document.addEventListener("keydown", event => {
     if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
     const active = estimatePeriodElementFromEventTarget(event.target) || document.activeElement;
-    if (active?.closest?.(".estimate-period-manage-table") || document.querySelector?.(".estimate-period-manage-table td.period-cell-focused")) {
-      estimatePeriodHandleNavKey(event, active);
+    const activeInsideTable = !!active?.closest?.(".estimate-period-manage-table");
+    const remembered = window.__estimatePeriodActiveCell;
+    const focusLostAfterCell = remembered?.isConnected && (!active || active === document.body || active === document.documentElement || active.classList?.contains?.("estimate-period-manage-wrap"));
+    if (activeInsideTable || focusLostAfterCell) {
+      estimatePeriodHandleNavKey(event, activeInsideTable ? active : remembered);
     }
   }, true);
 }
@@ -2021,6 +2055,12 @@ function estimatePeriodBindCellNavigation(host) {
   if (!table) return;
   table.querySelectorAll("tbody td").forEach(td => {
     if (!td.hasAttribute("tabindex")) td.setAttribute("tabindex", "0");
+    td.addEventListener("mousedown", () => estimatePeriodRememberActiveCell(td), true);
+    td.addEventListener("click", () => estimatePeriodRememberActiveCell(td), true);
+    td.addEventListener("focus", () => estimatePeriodRememberActiveCell(td), true);
+    td.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) estimatePeriodHandleNavKey(event, td);
+    }, true);
   });
   table.querySelectorAll("tbody td.editable, tbody td[contenteditable='true'], tbody select, tbody button").forEach(el => {
     if (!/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(el.tagName || "")) el.setAttribute("tabindex", "0");
@@ -2028,9 +2068,8 @@ function estimatePeriodBindCellNavigation(host) {
   table.addEventListener("focusin", event => {
     const td = estimatePeriodElementFromEventTarget(event.target)?.closest?.("td");
     if (!td) return;
-    table.querySelectorAll("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
-    td.classList.add("period-cell-focused");
-  });
+    estimatePeriodRememberActiveCell(td);
+  }, true);
   if (table.dataset.navBound !== "1") {
     table.dataset.navBound = "1";
     table.addEventListener("keydown", event => {
@@ -2041,6 +2080,7 @@ function estimatePeriodBindCellNavigation(host) {
   }
   estimatePeriodEnsureGlobalNavListener();
 }
+
 
 function renderEstimatePeriodManage() {
   const host = document.getElementById("estimatePeriodSheetBody");
@@ -3137,12 +3177,34 @@ function estimatePeriodGetFocusableCells(host) {
   );
 }
 
+function estimatePeriodRememberActiveCell(td) {
+  const cell = td?.closest?.("td");
+  const table = cell?.closest?.(".estimate-period-manage-table");
+  const tr = cell?.closest?.("tr[data-period-row-id]");
+  if (!table || !tr || !cell) return null;
+  window.__estimatePeriodActiveCell = cell;
+  window.__estimatePeriodActiveTable = table;
+  table.querySelectorAll("td.period-cell-focused").forEach(item => {
+    if (item !== cell) item.classList.remove("period-cell-focused");
+  });
+  cell.classList.add("period-cell-focused");
+  if (!cell.hasAttribute("tabindex")) cell.setAttribute("tabindex", "0");
+  return cell;
+}
+
 function estimatePeriodResolveActiveCell(active) {
   const el = estimatePeriodElementFromEventTarget(active) || document.activeElement;
   const td = el?.closest?.("td");
   const table = td?.closest?.(".estimate-period-manage-table");
   const tr = td?.closest?.("tr[data-period-row-id]");
   if (table && tr && td) return { table, tr, td };
+
+  const remembered = window.__estimatePeriodActiveCell;
+  if (remembered?.isConnected) {
+    const rememberedTable = remembered.closest(".estimate-period-manage-table");
+    const rememberedTr = remembered.closest("tr[data-period-row-id]");
+    if (rememberedTable && rememberedTr) return { table: rememberedTable, tr: rememberedTr, td: remembered };
+  }
 
   const focused = document.querySelector?.(".estimate-period-manage-table td.period-cell-focused");
   if (focused) {
@@ -3163,28 +3225,37 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   const target = row[safeColIndex];
   if (!target) return false;
   const td = target.closest?.("td") || target;
-  table?.querySelectorAll?.("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
-  td.classList?.add("period-cell-focused");
-  if (!target.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "")) {
-    target.setAttribute?.("tabindex", "0");
+  estimatePeriodRememberActiveCell(td);
+  const focusTarget = /^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "") ? target : td;
+  if (!focusTarget.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(focusTarget.tagName || "")) {
+    focusTarget.setAttribute?.("tabindex", "0");
   }
-  if (td !== target && !td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
-  target.focus?.({ preventScroll: true });
-  target.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-  if (target.isContentEditable || target.getAttribute?.("contenteditable") === "true") {
+  focusTarget.focus?.({ preventScroll: true });
+  td.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  if (td.isContentEditable || td.getAttribute?.("contenteditable") === "true") {
     const range = document.createRange();
-    range.selectNodeContents(target);
+    range.selectNodeContents(td);
     range.collapse(false);
     const sel = window.getSelection?.();
     sel?.removeAllRanges();
     sel?.addRange(range);
   }
+  window.setTimeout?.(() => {
+    if (!document.activeElement?.closest?.(".estimate-period-manage-table") && window.__estimatePeriodActiveCell === td) {
+      td.focus?.({ preventScroll: true });
+    }
+    estimatePeriodRememberActiveCell(td);
+  }, 0);
   return true;
 }
 
 function estimatePeriodHandleNavKey(event, el) {
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
   if (!keyMap[event.key]) return false;
+  const eventElement = estimatePeriodElementFromEventTarget(event.target);
+  if (eventElement && !eventElement.closest?.(".estimate-period-manage-table") && /^(INPUT|TEXTAREA|SELECT)$/i.test(eventElement.tagName || "")) {
+    return false;
+  }
   const resolved = estimatePeriodResolveActiveCell(el || event.target);
   if (!resolved) return false;
   const { table, tr, td } = resolved;
@@ -3196,9 +3267,9 @@ function estimatePeriodHandleNavKey(event, el) {
   event.preventDefault();
   event.stopImmediatePropagation?.();
   event.stopPropagation();
+  estimatePeriodRememberActiveCell(td);
   estimatePeriodPersistRenderedRows(false);
-  estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
-  return true;
+  return estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
 }
 
 function estimatePeriodEnsureGlobalNavListener() {
@@ -3207,8 +3278,11 @@ function estimatePeriodEnsureGlobalNavListener() {
   document.addEventListener("keydown", event => {
     if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
     const active = estimatePeriodElementFromEventTarget(event.target) || document.activeElement;
-    if (active?.closest?.(".estimate-period-manage-table") || document.querySelector?.(".estimate-period-manage-table td.period-cell-focused")) {
-      estimatePeriodHandleNavKey(event, active);
+    const activeInsideTable = !!active?.closest?.(".estimate-period-manage-table");
+    const remembered = window.__estimatePeriodActiveCell;
+    const focusLostAfterCell = remembered?.isConnected && (!active || active === document.body || active === document.documentElement || active.classList?.contains?.("estimate-period-manage-wrap"));
+    if (activeInsideTable || focusLostAfterCell) {
+      estimatePeriodHandleNavKey(event, activeInsideTable ? active : remembered);
     }
   }, true);
 }
@@ -3218,6 +3292,12 @@ function estimatePeriodBindCellNavigation(host) {
   if (!table) return;
   table.querySelectorAll("tbody td").forEach(td => {
     if (!td.hasAttribute("tabindex")) td.setAttribute("tabindex", "0");
+    td.addEventListener("mousedown", () => estimatePeriodRememberActiveCell(td), true);
+    td.addEventListener("click", () => estimatePeriodRememberActiveCell(td), true);
+    td.addEventListener("focus", () => estimatePeriodRememberActiveCell(td), true);
+    td.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) estimatePeriodHandleNavKey(event, td);
+    }, true);
   });
   table.querySelectorAll("tbody td.editable, tbody td[contenteditable='true'], tbody select, tbody button").forEach(el => {
     if (!/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(el.tagName || "")) el.setAttribute("tabindex", "0");
@@ -3225,9 +3305,8 @@ function estimatePeriodBindCellNavigation(host) {
   table.addEventListener("focusin", event => {
     const td = estimatePeriodElementFromEventTarget(event.target)?.closest?.("td");
     if (!td) return;
-    table.querySelectorAll("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
-    td.classList.add("period-cell-focused");
-  });
+    estimatePeriodRememberActiveCell(td);
+  }, true);
   if (table.dataset.navBound !== "1") {
     table.dataset.navBound = "1";
     table.addEventListener("keydown", event => {
