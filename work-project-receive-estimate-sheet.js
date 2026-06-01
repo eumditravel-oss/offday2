@@ -2668,6 +2668,7 @@ const ESTIMATE_PERIOD_COLUMNS = [
   { key: "detail", label: "세부", width: 86, align: "center", type: "detail" }
 ];
 const ESTIMATE_PERIOD_STATUS_LIST = ["수주", "실주", "예가", "대기중", "작업취소"];
+const ESTIMATE_PERIOD_TENDER_LIST = ["견적서 최저가", "연간단가"];
 
 let estimatePeriodEditRows = [];
 let estimatePeriodFilters = { from: "", to: "", status: "전체", q: "" };
@@ -3495,6 +3496,10 @@ function renderEstimatePeriodManage() {
       }
       if (col.type === "status") {
         return `<td class="center"><select class="status-select" data-period-key="${col.key}">${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option value="${s}" ${String(row[col.key] || "").includes(s) ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+      }
+      if (col.key === "tender") {
+        const selectedTender = estimatePeriodNormalizeText(row[col.key] || "");
+        return `<td class="center"><select class="status-select tender-select" data-period-key="${col.key}"><option value=""></option>${ESTIMATE_PERIOD_TENDER_LIST.map(s => `<option value="${s}" ${selectedTender === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
       }
       let value = row[col.key] ?? "";
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
@@ -4860,7 +4865,7 @@ function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
     area: get("연면적(평)"),
     unitPrice: "",
     amount: get("계약금액"),
-    scope: "",
+    scope: estimateRequestSanitizeWorkScope?.(get("작업공종")) || get("작업공종") || "",
     usage: get("건물용도"),
     count: get("업무단계2"),
     unitWork: estimateRequestSanitizeUnitWork(get("단가작업여부")),
@@ -4986,7 +4991,7 @@ function estimateCentralSyncFromDbRow(tab, rowIndex, options = {}) {
     const idx = estimatePeriodEditRows.findIndex(item => item.id === row.id || item.centralKey === row.centralKey || (estimateCentralText(item.project) === estimateCentralText(row.project) && estimateCentralText(item.company) === estimateCentralText(row.company)));
     const prev = idx >= 0 ? (estimatePeriodEditRows[idx] || {}) : {};
     const manual = typeof estimatePeriodManualMap === "function" ? estimatePeriodManualMap(prev) : ((prev.manualPeriodFields && typeof prev.manualPeriodFields === "object") ? prev.manualPeriodFields : {});
-    const periodRow = { ...row, source: "db", linked: true, scope: manual.scope ? (prev.scope || "") : "", description: manual.description ? (prev.description || "") : "", memo: manual.memo ? (prev.memo || "") : "", result: manual.result ? (prev.result || "") : "", stage: manual.stage ? (prev.stage || "") : "", manualPeriodFields: manual };
+    const periodRow = { ...row, source: "db", linked: true, scope: row.scope || prev.scope || "", description: manual.description ? (prev.description || "") : "", memo: manual.memo ? (prev.memo || "") : "", result: manual.result ? (prev.result || "") : "", stage: manual.stage ? (prev.stage || "") : "", manualPeriodFields: manual };
     if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
     else estimatePeriodEditRows.unshift(periodRow);
     estimatePeriodSaveEdits?.();
@@ -5640,7 +5645,7 @@ function estimateLinkageSyncRequestRow(id, options = {}) {
       ...row,
       source: "request",
       linked: true,
-      scope: manual.scope ? (prev.scope || "") : "",
+      scope: row.scope || prev.scope || "",
       description: manual.description ? (prev.description || "") : "",
       memo: manual.memo ? (prev.memo || "") : "",
       result: manual.result ? (prev.result || "") : "",
@@ -5703,7 +5708,7 @@ function estimateLinkageSyncAllDbRows(options = {}) {
         const idx = estimatePeriodEditRows.findIndex(item => item.centralKey === row.centralKey || (estimateLinkageText(item.project) === estimateLinkageText(row.project) && estimateLinkageText(item.company) === estimateLinkageText(row.company)));
         const prev = idx >= 0 ? (estimatePeriodEditRows[idx] || {}) : {};
         const manual = typeof estimatePeriodManualMap === "function" ? estimatePeriodManualMap(prev) : ((prev.manualPeriodFields && typeof prev.manualPeriodFields === "object") ? prev.manualPeriodFields : {});
-        const periodRow = { ...row, source: "db", linked: true, scope: manual.scope ? (prev.scope || "") : "", description: manual.description ? (prev.description || "") : "", memo: manual.memo ? (prev.memo || "") : "", result: manual.result ? (prev.result || "") : "", stage: manual.stage ? (prev.stage || "") : "", manualPeriodFields: manual };
+        const periodRow = { ...row, source: "db", linked: true, scope: row.scope || prev.scope || "", description: manual.description ? (prev.description || "") : "", memo: manual.memo ? (prev.memo || "") : "", result: manual.result ? (prev.result || "") : "", stage: manual.stage ? (prev.stage || "") : "", manualPeriodFields: manual };
         if (idx >= 0) estimatePeriodEditRows[idx] = { ...estimatePeriodEditRows[idx], ...periodRow };
         else estimatePeriodEditRows.unshift(periodRow);
       }
@@ -6054,7 +6059,7 @@ function estimatePerformanceSyncDbRow(tab = estimateDbActiveTab, rowIndex = 0, o
         ...row,
         source: "db",
         linked: true,
-        scope: manual.scope ? (prev.scope || "") : "",
+        scope: row.scope || prev.scope || "",
         description: manual.description ? (prev.description || "") : "",
         memo: manual.memo ? (prev.memo || "") : "",
         result: manual.result ? (prev.result || "") : "",
