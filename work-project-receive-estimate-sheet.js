@@ -6459,3 +6459,153 @@ window.newEstimateSheetRecord = function newEstimateSheetRecordFromSheetManageBl
   if (typeof showToast === "function") showToast("견적서는 견적 의뢰관리에서만 신규 등록할 수 있습니다.");
   return null;
 };
+
+/* =========================================================
+   2026-06-01 기간별 견적서 관리 중복행 방지 패치
+   - 견적 의뢰관리 신규 등록/실행 과정에서 같은 의뢰가 기간별 관리에 2행으로 표시되는 문제 방지
+   - sent/edit/request/db 경로가 겹치더라도 업체명+프로젝트명+날짜+견적유형 기준으로 1행만 표시
+   - 기존 localStorage에 남은 중복 행도 화면 진입 시 정리
+   ========================================================= */
+(function estimatePeriodDuplicateRowGuardPatch(){
+  if (window.__estimatePeriodDuplicateRowGuardPatch) return;
+  window.__estimatePeriodDuplicateRowGuardPatch = true;
+
+  function text(value){
+    return String(value ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  function norm(value){
+    return text(value).toLowerCase().replace(/[\s\-_.,\/\\|()[\]{}]+/g, "");
+  }
+
+  function dateKey(row = {}){
+    if (typeof estimatePeriodFormatDateCode === "function") return estimatePeriodFormatDateCode(row.date || row.sentAt || "");
+    return String(row.date || row.sentAt || "").replace(/\D/g, "").slice(-6);
+  }
+
+  function typeKey(row = {}){
+    const values = row.values || {};
+    return norm(row.unitWork || row.bid || row.type || values[11] || values[12] || "");
+  }
+
+  function rowKey(row = {}){
+    const central = text(row.centralKey || "");
+    if (central) return `central:${norm(central)}`;
+    const company = norm(row.company || row.companyRaw || row.recipient || row.values?.[3] || "");
+    const project = norm(row.project || row.title || row.values?.[4] || "");
+    const d = dateKey(row);
+    const t = typeKey(row);
+    if (company || project) return `cp:${d}|${company}|${project}|${t}`;
+    return `id:${row.id || row.key || row.sourceEstimateId || Math.random()}`;
+  }
+
+  function manualMap(row = {}){
+    if (typeof estimatePeriodManualMap === "function") return estimatePeriodManualMap(row) || {};
+    return row.manualPeriodFields && typeof row.manualPeriodFields === "object" ? row.manualPeriodFields : {};
+  }
+
+  function filledScore(row = {}){
+    const fields = ["date", "company", "project", "area", "unitPrice", "amount", "scope", "usage", "count", "unitWork", "bid", "description", "tender", "status", "memo", "result", "stage"];
+    let score = 0;
+    fields.forEach(key => { if (text(row[key])) score += 1; });
+    if (text(row.amount) && text(row.amount) !== "0") score += 6;
+    if (text(row.area) && text(row.area) !== "0") score += 3;
+    if (row.source === "sent") score += 4;
+    if (row.linked) score += 2;
+    if (row.detailSnapshot || row.recordSnapshot) score += 3;
+    const manual = manualMap(row);
+    score += Object.keys(manual).filter(k => manual[k]).length;
+    return score;
+  }
+
+  function mergeRows(best = {}, extra = {}){
+    const next = { ...best };
+    const manual = { ...manualMap(best), ...manualMap(extra) };
+    ["scope", "description", "memo", "result", "stage"].forEach(key => {
+      if (manual[key] && text(extra[key])) next[key] = extra[key];
+      else if (!text(next[key]) && text(extra[key])) next[key] = extra[key];
+    });
+    ["date", "company", "companyRaw", "project", "area", "unitPrice", "amount", "usage", "count", "unitWork", "bid", "tender"].forEach(key => {
+      if (!text(next[key]) && text(extra[key])) next[key] = extra[key];
+    });
+    const bestStatus = text(best.status);
+    const extraStatus = text(extra.status);
+    if (/작업취소|취소/.test(bestStatus) || /작업취소|취소/.test(extraStatus)) next.status = "작업취소";
+    else if (!bestStatus && extraStatus) next.status = extra.status;
+    next.manualPeriodFields = manual;
+    next.linked = !!(best.linked || extra.linked);
+    next.source = best.source === "sent" || extra.source !== "sent" ? best.source : extra.source;
+    next.detailSnapshot = best.detailSnapshot || extra.detailSnapshot || null;
+    next.recordSnapshot = best.recordSnapshot || extra.recordSnapshot || null;
+    return next;
+  }
+
+  function uniqueRows(rows = []){
+    const map = new Map();
+    rows.filter(Boolean).forEach(row => {
+      const key = rowKey(row);
+      const prev = map.get(key);
+      if (!prev) {
+        map.set(key, row);
+        return;
+      }
+      const best = filledScore(row) > filledScore(prev) ? row : prev;
+      const extra = best === row ? prev : row;
+      map.set(key, mergeRows(best, extra));
+    });
+    return Array.from(map.values());
+  }
+
+  const originalAllRows = typeof estimatePeriodAllRowsForList === "function" ? estimatePeriodAllRowsForList : null;
+  if (originalAllRows) {
+    estimatePeriodAllRowsForList = function estimatePeriodAllRowsForListNoDuplicate(){
+      return uniqueRows(originalAllRows());
+    };
+    window.estimatePeriodAllRowsForList = estimatePeriodAllRowsForList;
+  }
+
+  function cleanupStoredPeriodRows(){
+    let changed = false;
+    try {
+      if (Array.isArray(estimatePeriodEditRows)) {
+        const nextEdits = uniqueRows(estimatePeriodEditRows).filter(row => String(row?.source || "") !== "manual");
+        if (nextEdits.length !== estimatePeriodEditRows.length) changed = true;
+        estimatePeriodEditRows = nextEdits;
+      }
+      if (Array.isArray(estimatePeriodSentRows)) {
+        const seen = new Set();
+        const nextSent = [];
+        estimatePeriodSentRows.forEach(item => {
+          const probe = { ...(item.values || {}), ...(item || {}) };
+          probe.company = probe.company || item.values?.[3];
+          probe.project = probe.project || item.values?.[4];
+          probe.date = probe.date || item.values?.[2];
+          probe.unitWork = probe.unitWork || item.values?.[11];
+          probe.bid = probe.bid || item.values?.[12];
+          const key = rowKey(probe);
+          if (seen.has(key)) { changed = true; return; }
+          seen.add(key);
+          nextSent.push(item);
+        });
+        estimatePeriodSentRows = nextSent;
+      }
+      if (changed) {
+        estimatePeriodSaveEdits?.();
+        estimatePeriodSaveSentRows?.();
+      }
+    } catch (err) {
+      console.warn("기간별 견적서 중복행 정리 실패", err);
+    }
+  }
+
+  const originalRender = typeof renderEstimatePeriodManage === "function" ? renderEstimatePeriodManage : null;
+  if (originalRender) {
+    renderEstimatePeriodManage = function renderEstimatePeriodManageNoDuplicate(){
+      cleanupStoredPeriodRows();
+      return originalRender();
+    };
+    window.renderEstimatePeriodManage = renderEstimatePeriodManage;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => setTimeout(cleanupStoredPeriodRows, 80));
+})();
