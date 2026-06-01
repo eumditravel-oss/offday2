@@ -4035,6 +4035,7 @@ function renderEstimateRequestManage() {
     </div>
   `;
   estimateRequestRefreshSelectLabels(board);
+  bindEstimateRequestKeyboardNavigation(board);
 }
 function estimateRequestRowHtml(row) {
   row = estimateRequestNormalizeRow(row);
@@ -7583,4 +7584,105 @@ function estimatePeriodBindCellNavigation(host) {
     }, true);
   }
   estimatePeriodEnsureGlobalNavListener();
+}
+
+
+/* 2026-06 scoped keyboard navigation fix
+   기간별 견적서 관리 전역 방향키 핸들러가 숨겨진 period 테이블의 마지막 셀을 계속 기억하면서
+   DB관리/견적 의뢰관리의 방향키 이벤트를 가로채는 문제가 있어, period 테이블이 실제 활성 화면일 때만 처리하도록 제한합니다. */
+function estimatePeriodIsTableVisible(table) {
+  if (!table || !table.isConnected) return false;
+  const panel = table.closest?.("#estimatePeriodManage");
+  if (panel && !panel.classList.contains("active")) return false;
+  const rect = table.getBoundingClientRect?.();
+  if (!rect || rect.width <= 0 || rect.height <= 0) return false;
+  return true;
+}
+
+function estimatePeriodFindCellFromEvent(eventOrElement) {
+  const directTarget = eventOrElement?.target || eventOrElement;
+  const path = typeof eventOrElement?.composedPath === "function" ? eventOrElement.composedPath() : [];
+  const candidates = [...path, directTarget, document.activeElement].filter(Boolean);
+  for (const node of candidates) {
+    if (!node || node === window || node === document) continue;
+    const td = node.closest?.(".estimate-period-manage-table tbody tr[data-period-row-id] td");
+    const table = td?.closest?.(".estimate-period-manage-table");
+    if (td && estimatePeriodIsTableVisible(table)) return td;
+  }
+  const active = estimatePeriodElementFromEventTarget?.(directTarget) || document.activeElement;
+  const activeIsNeutral = !active || active === document.body || active === document.documentElement;
+  const remembered = window.__estimatePeriodActiveCell;
+  const rememberedTable = remembered?.closest?.(".estimate-period-manage-table");
+  if (activeIsNeutral && remembered?.isConnected && estimatePeriodIsTableVisible(rememberedTable)) return remembered;
+  return null;
+}
+
+function estimatePeriodEnsureGlobalNavListener() {
+  if (window.__estimatePeriodGlobalNavBoundScoped === true) return;
+  window.__estimatePeriodGlobalNavBoundScoped = true;
+  document.addEventListener("keydown", event => {
+    if (!event || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const active = estimatePeriodElementFromEventTarget?.(event.target) || document.activeElement;
+    const activeTable = active?.closest?.(".estimate-period-manage-table");
+    if (activeTable && estimatePeriodIsTableVisible(activeTable)) {
+      estimatePeriodHandleNavKey(event, active);
+      return;
+    }
+    const activeIsNeutral = !active || active === document.body || active === document.documentElement;
+    const remembered = window.__estimatePeriodActiveCell;
+    const rememberedTable = remembered?.closest?.(".estimate-period-manage-table");
+    if (activeIsNeutral && remembered?.isConnected && estimatePeriodIsTableVisible(rememberedTable)) {
+      estimatePeriodHandleNavKey(event, remembered);
+    }
+  }, true);
+}
+
+function bindEstimateRequestKeyboardNavigation(root = document) {
+  const table = root?.querySelector?.(".estimate-workflow-table");
+  if (!table || table.dataset.requestNavBound === "1") return;
+  table.dataset.requestNavBound = "1";
+  const selector = '[data-request-field], select, button';
+  const focusItem = item => {
+    if (!item) return;
+    try { item.focus({ preventScroll: true }); } catch (_) { item.focus?.(); }
+    if (item.isContentEditable) {
+      const range = document.createRange();
+      range.selectNodeContents(item);
+      range.collapse(false);
+      const sel = window.getSelection?.();
+      sel?.removeAllRanges?.();
+      sel?.addRange?.(range);
+    } else if (/^(INPUT|TEXTAREA)$/i.test(item.tagName || "")) {
+      const len = String(item.value || "").length;
+      try { item.setSelectionRange(len, len); } catch (_) {}
+    }
+    item.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  };
+  const rows = () => Array.from(table.querySelectorAll("tbody tr[data-request-id]"));
+  const itemsOf = tr => Array.from(tr.querySelectorAll(selector)).filter(el => !el.disabled && el.offsetParent !== null);
+  table.addEventListener("keydown", event => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter"].includes(event.key)) return;
+    const target = event.target?.closest?.(selector);
+    const tr = target?.closest?.("tr[data-request-id]");
+    if (!target || !tr) return;
+    const allRows = rows();
+    const rowIndex = allRows.indexOf(tr);
+    const rowItems = itemsOf(tr);
+    const colIndex = rowItems.indexOf(target);
+    if (rowIndex < 0 || colIndex < 0) return;
+    let nextRow = rowIndex;
+    let nextCol = colIndex;
+    if (event.key === "ArrowLeft") nextCol -= 1;
+    if (event.key === "ArrowRight") nextCol += 1;
+    if (event.key === "ArrowUp") nextRow -= 1;
+    if (event.key === "ArrowDown" || event.key === "Enter") nextRow += 1;
+    nextRow = Math.max(0, Math.min(allRows.length - 1, nextRow));
+    const nextItems = itemsOf(allRows[nextRow]);
+    nextCol = Math.max(0, Math.min(nextItems.length - 1, nextCol));
+    const next = nextItems[nextCol];
+    if (!next || next === target) return;
+    event.preventDefault();
+    event.stopPropagation();
+    focusItem(next);
+  }, true);
 }
