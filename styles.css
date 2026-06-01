@@ -20415,3 +20415,29 @@ button.btn-orange{
   .central-toolbar select { min-width: 0; }
   .central-summary { text-align: left; }
 }
+
+
+/* === 2026-06-01 견적 의뢰관리 버튼 순서/저장 위치 조정 === */
+.estimate-workflow-table col.col-actions{width:280px !important;}
+.estimate-workflow-table th:nth-child(8),
+.estimate-workflow-table td:nth-child(8),
+.estimate-workflow-table td.estimate-actions-cell{
+  width:280px !important;
+  min-width:280px !important;
+  max-width:280px !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact{
+  grid-template-columns:112px 54px 82px !important;
+  column-gap:6px !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact .estimate-request-action-select{
+  width:112px !important;
+  min-width:112px !important;
+}
+.estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact .estimate-open-btn:disabled{
+  opacity:.42 !important;
+  cursor:not-allowed !important;
+  background:#f1f5f9 !important;
+  border-color:#dbe4ef !important;
+  color:#64748b !important;
+}
