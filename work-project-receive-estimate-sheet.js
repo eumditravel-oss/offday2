@@ -3731,6 +3731,12 @@ function estimateRequestSanitizeWorkScope(value = "") {
     .join(", ");
 }
 
+function estimateRequestSanitizeUnitWork(value = "") {
+  const allowed = new Set(["공내역서", "비교내역서", "설계예가", "단가작업", "기타"]);
+  const clean = String(value || "").replace(/\s+/g, " ").trim();
+  return allowed.has(clean) ? clean : "";
+}
+
 function estimateRequestNormalizeRow(row = {}) {
   const statusDates = row.statusDates && typeof row.statusDates === "object" ? row.statusDates : {};
   return {
@@ -4136,7 +4142,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     scope: ['마감','골조성','구조','토목','조경','기계','전기','인테리어','철거','전공정'],
     usage: ['창고','공장','제약공장','식품공장','반도체공장','물류센터','아파트형공장','공동주택','오피스텔','주상복합','업무시설','오피스','근린생활시설','지식산업센터','기숙사','연수원','학교','교육연구시설','연구소','역사'],
     count: ['1회','2회','3회','1회차','2회차','3회차','변경전','변경후','변경도서','기타'],
-    unitWork: ['개산견적','공내역서','설계예가','공사비검증','비교내역서','단가작업','기타'],
+    unitWork: ['공내역서','비교내역서','설계예가','단가작업','기타'],
     bid: ['실행','입찰','본사 실행','본사 입찰','현장 실행','대관','기타']
   };
   let dropdown = null;
@@ -4295,7 +4301,7 @@ function saveEstimateRequestMemoFromWindow(id, payload = {}) {
   row.count = String(payload.count || "").trim();
   row.unitWork = String(payload.unitWork || "").trim();
   row.bid = String(payload.bid || "").trim();
-  if (row.unitWork && (!row.estimateType || row.estimateType === "개산견적")) row.estimateType = row.unitWork;
+  row.unitWork = estimateRequestSanitizeUnitWork(row.unitWork || "");
   estimateRequestAddHistory(row, idx >= 0 ? "의뢰 메모 수정 저장" : "클라이언트 의뢰 메모 등록");
   if (idx >= 0) estimateRequestRows[idx] = row;
   else estimateRequestRows.unshift(row);
@@ -4574,7 +4580,7 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("작업공종", estimateRequestSanitizeWorkScope(row.scope || row.workType || ""));
       put("건물용도", row.usage || "");
       put("업무단계2", row.count || "");
-      put("단가작업여부", row.unitWork || row.estimateType || "");
+      put("단가작업여부", estimateRequestSanitizeUnitWork(row.unitWork || ""));
       put("작업구분", "");
       put("업무성격", row.bid || row.startMode || row.status);
       put("상담 / 이메일 / 특기사항", row.memo);
@@ -4785,7 +4791,7 @@ function estimateCentralRowToDbMap(row = {}) {
     "작업구분": row.tender || "",
     "업무성격": row.bid || type,
     "업무단계2": row.count || "",
-    "단가작업여부": row.unitWork || type,
+    "단가작업여부": estimateRequestSanitizeUnitWork(row.unitWork || ""),
     "건물용도": row.usage || "",
     "연면적(평)": row.area || "",
     "수주일자": row.status === "수주" || row.status === "실주" ? row.date : "",
@@ -4857,7 +4863,7 @@ function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
     scope: "",
     usage: get("건물용도"),
     count: get("업무단계2"),
-    unitWork: get("단가작업여부"),
+    unitWork: estimateRequestSanitizeUnitWork(get("단가작업여부")),
     bid: get("업무성격") || get("작업구분"),
     description: "",
     tender: get("작업구분"),
