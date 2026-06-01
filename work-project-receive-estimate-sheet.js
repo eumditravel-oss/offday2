@@ -3119,7 +3119,7 @@ function estimatePeriodSyncEditableFieldsToRequest(periodRow = {}) {
     });
     if (idx < 0) return;
     const row = estimateRequestNormalizeRow?.(estimateRequestRows[idx]) || { ...(estimateRequestRows[idx] || {}) };
-    row.scope = periodRow.scope || "";
+    row.scope = estimateRequestSanitizeWorkScope(periodRow.scope || "");
     row.usage = periodRow.usage || "";
     row.count = periodRow.count || "";
     row.unitWork = periodRow.unitWork || row.unitWork || row.estimateType || "";
@@ -3721,6 +3721,16 @@ function estimateRequestExtractCompany(text) {
   }
   return src.split(/[\n,;]/).map(x => x.trim()).filter(Boolean)[0] || "";
 }
+
+function estimateRequestSanitizeWorkScope(value = "") {
+  const allowed = new Set(["마감", "골조성", "구조", "토목", "조경", "기계", "전기", "인테리어", "철거", "전공정"]);
+  return String(value || "")
+    .split(/[,、，\/]+/)
+    .map(v => String(v || "").replace(/\s+/g, " ").trim())
+    .filter(v => v && allowed.has(v))
+    .join(", ");
+}
+
 function estimateRequestNormalizeRow(row = {}) {
   const statusDates = row.statusDates && typeof row.statusDates === "object" ? row.statusDates : {};
   return {
@@ -3730,7 +3740,7 @@ function estimateRequestNormalizeRow(row = {}) {
     project: row.project || "",
     client: row.client || "",
     contact: row.contact || "",
-    scope: row.scope || row.workScope || row.workType || "",
+    scope: estimateRequestSanitizeWorkScope(row.scope || row.workScope || row.workType || ""),
     usage: row.usage || row.buildingUsage || "",
     count: row.count || row.workCount || "",
     unitWork: row.unitWork || row.unitPriceWork || "",
@@ -4089,7 +4099,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   const project = estimateRequestHtml(row.project || "");
   const client = estimateRequestHtml(row.client || "");
   const contact = estimateRequestHtml(row.contact || "");
-  const scope = estimateRequestHtml(row.scope || "");
+  const scope = estimateRequestHtml(estimateRequestSanitizeWorkScope(row.scope || ""));
   const usage = estimateRequestHtml(row.usage || "");
   const count = estimateRequestHtml(row.count || "");
   const unitWork = estimateRequestHtml(row.unitWork || row.estimateType || "");
@@ -4280,7 +4290,7 @@ function saveEstimateRequestMemoFromWindow(id, payload = {}) {
   row.project = String(payload.project || "").trim() || row.project || "";
   row.client = String(payload.client || "").trim() || row.client || "";
   row.contact = String(payload.contact || "").trim() || row.contact || "";
-  row.scope = String(payload.scope || "").trim();
+  row.scope = estimateRequestSanitizeWorkScope(payload.scope || "");
   row.usage = String(payload.usage || "").trim();
   row.count = String(payload.count || "").trim();
   row.unitWork = String(payload.unitWork || "").trim();
@@ -4561,7 +4571,7 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("프로젝트명", row.project);
       put("거래처담당자", row.client);
       put("휴대폰", row.contact);
-      put("작업공종", row.scope || row.workType || "");
+      put("작업공종", estimateRequestSanitizeWorkScope(row.scope || row.workType || ""));
       put("건물용도", row.usage || "");
       put("업무단계2", row.count || "");
       put("단가작업여부", row.unitWork || row.estimateType || "");
@@ -4771,7 +4781,7 @@ function estimateCentralRowToDbMap(row = {}) {
     "프로젝트명": row.project || "",
     "PJ명": row.project || "",
     "거래처": "견적부",
-    "작업공종": row.scope || row.description || "",
+    "작업공종": estimateRequestSanitizeWorkScope(row.scope || row.workType || ""),
     "작업구분": row.tender || "",
     "업무성격": row.bid || type,
     "업무단계2": row.count || "",
@@ -4903,7 +4913,7 @@ function estimateCentralEnsureRequestRow(row = {}, options = {}) {
     project: row.project || "",
     contact: "",
     estimateType: estimatePeriodResolveEstimateType?.(row) || "개산견적",
-    scope: row.scope || "",
+    scope: estimateRequestSanitizeWorkScope(row.scope || ""),
     usage: row.usage || "",
     count: row.count || "",
     unitWork: row.unitWork || row.estimateType || "",
@@ -5354,7 +5364,7 @@ function estimateLinkageCanonicalRow(row = {}) {
     status: row.status || "대기중",
     memo: row.memo || "",
     description: row.description || row.scope || "",
-    scope: row.scope || row.description || ""
+    scope: estimateRequestSanitizeWorkScope(row.scope || row.workScope || row.workType || "")
   };
   next.centralKey = row.centralKey || estimateLinkageMakeKey(next);
   next.dbPjNo = row.dbPjNo || estimateLinkageDbPjNo(next);
@@ -5561,7 +5571,7 @@ function estimateLinkageRequestToCentralRow(request = {}) {
     company: req.company || req.client,
     client: req.client,
     project: req.project,
-    scope: req.scope || req.workType || "",
+    scope: estimateRequestSanitizeWorkScope(req.scope || req.workType || ""),
     usage: req.usage || "",
     count: req.count || "",
     description: req.description || "",
