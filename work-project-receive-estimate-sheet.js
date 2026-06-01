@@ -6176,3 +6176,167 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
     }, 120);
   });
 })();
+
+/* ========================================================================
+   2026-06-01 견적서 4종 합계/금액 수식 재연결 패치
+   - 개산견적 / 공내역서 / 설계예가 / 공사비검증 공통 적용
+   - 산출 행의 금액 셀을 수량×단가 수식으로 복구
+   - 총계 셀을 금액 열 SUM 수식으로 복구
+   - 상단 합계금액 문구를 총계 셀과 다시 연결
+   ======================================================================== */
+(function estimateSheetFormulaReconnectPatch(){
+  if (window.__estimateSheetFormulaReconnectPatch) return;
+  window.__estimateSheetFormulaReconnectPatch = true;
+
+  function norm(value){
+    return String(value ?? "").replace(/\s+/g, "").trim();
+  }
+
+  function colA1(colNo){
+    if (typeof estimateSheetColumnA1 === "function") return estimateSheetColumnA1(colNo);
+    let n = Number(colNo) || 1;
+    let out = "";
+    while (n > 0) {
+      const mod = (n - 1) % 26;
+      out = String.fromCharCode(65 + mod) + out;
+      n = Math.floor((n - 1) / 26);
+    }
+    return out;
+  }
+
+  function findEstimateHeader(state){
+    if (!state || typeof estimateSheetDisplayValue !== "function") return null;
+    const maxRow = Math.min(Number(state.maxRow || 80), 30);
+    const maxCol = Math.min(Number(state.maxCol || 30), 15);
+    for (let r = 1; r <= maxRow; r += 1) {
+      let qtyCol = 0;
+      let unitPriceCol = 0;
+      let amountCol = 0;
+      for (let c = 1; c <= maxCol; c += 1) {
+        const text = norm(estimateSheetDisplayValue(state, r, c));
+        if (text === "수량") qtyCol = c;
+        if (text === "단가") unitPriceCol = c;
+        if (text === "금액") amountCol = c;
+      }
+      if (qtyCol && unitPriceCol && amountCol) return { row: r, qtyCol, unitPriceCol, amountCol };
+    }
+    return null;
+  }
+
+  function findTotalRow(state, headerRow){
+    if (!state || typeof estimateSheetDisplayValue !== "function") return 0;
+    const maxRow = Number(state.maxRow || 80);
+    const maxCol = Math.min(Number(state.maxCol || 30), 12);
+    for (let r = Math.max(Number(headerRow || 1) + 1, 1); r <= maxRow; r += 1) {
+      for (let c = 1; c <= maxCol; c += 1) {
+        const text = norm(estimateSheetDisplayValue(state, r, c));
+        if (text === "총계" || text === "합계") return r;
+      }
+    }
+    return 0;
+  }
+
+  function findTopTotalTextCell(state){
+    if (!state || typeof estimateSheetDisplayValue !== "function") return null;
+    const maxRow = Math.min(Number(state.maxRow || 80), 15);
+    const maxCol = Math.min(Number(state.maxCol || 30), 10);
+    for (let r = 1; r <= maxRow; r += 1) {
+      for (let c = 1; c <= maxCol; c += 1) {
+        if (norm(estimateSheetDisplayValue(state, r, c)).includes("합계금액")) return { r, c: c + 1 };
+      }
+    }
+    return null;
+  }
+
+  function hasItemOrEditableCells(state, r, header){
+    const label = norm(estimateSheetDisplayValue(state, r, 1));
+    const qty = norm(estimateSheetDisplayValue(state, r, header.qtyCol));
+    const unit = norm(estimateSheetDisplayValue(state, r, header.unitPriceCol));
+    const amount = norm(estimateSheetDisplayValue(state, r, header.amountCol));
+    if (/견적조건|비고|VAT|합계금액|총계/.test(label)) return false;
+    return !!(label || qty || unit || amount);
+  }
+
+  const previousEnsureTotalFormula = typeof estimateSheetEnsureTotalAmountFormula === "function" ? estimateSheetEnsureTotalAmountFormula : null;
+
+  estimateSheetEnsureTotalAmountFormula = function(state){
+    if (!state || typeof estimateSheetGetCellObj !== "function") return previousEnsureTotalFormula ? previousEnsureTotalFormula(state) : null;
+
+    const header = findEstimateHeader(state);
+    if (!header) return previousEnsureTotalFormula ? previousEnsureTotalFormula(state) : null;
+
+    const totalRow = findTotalRow(state, header.row);
+    if (!totalRow || totalRow <= header.row) return previousEnsureTotalFormula ? previousEnsureTotalFormula(state) : null;
+
+    const startRow = header.row + 2;
+    const endRow = totalRow - 1;
+    const qtyColA1 = colA1(header.qtyCol);
+    const unitPriceColA1 = colA1(header.unitPriceCol);
+    const amountColA1 = colA1(header.amountCol);
+
+    for (let r = startRow; r <= endRow; r += 1) {
+      if (!hasItemOrEditableCells(state, r, header)) continue;
+      const amountObj = estimateSheetGetCellObj(state, r, header.amountCol);
+      amountObj.formula = `${qtyColA1}${r}*${unitPriceColA1}${r}`;
+      amountObj.value = "";
+      amountObj.userFormula = true;
+    }
+
+    const totalObj = estimateSheetGetCellObj(state, totalRow, header.amountCol);
+    totalObj.formula = `SUM(${amountColA1}${startRow}:${amountColA1}${endRow})`;
+    totalObj.value = "";
+    totalObj.userFormula = true;
+
+    const topCell = findTopTotalTextCell(state);
+    if (topCell) {
+      const topObj = estimateSheetGetCellObj(state, topCell.r, topCell.c);
+      topObj.formula = `"일금"&NUMBERSTRING(${amountColA1}${totalRow},1)&"원정 ("&DOLLAR(${amountColA1}${totalRow})&")"`;
+      topObj.value = "";
+      topObj.userFormula = true;
+    }
+
+    let sum = 0;
+    for (let r = startRow; r <= endRow; r += 1) {
+      const value = typeof estimateSheetEvaluateFormula === "function"
+        ? estimateSheetEvaluateFormula(state, estimateSheetGetCellObj(state, r, header.amountCol).formula, r, header.amountCol)
+        : 0;
+      sum += typeof estimateSheetParseNumber === "function" ? estimateSheetParseNumber(value) : Number(value || 0);
+    }
+
+    return {
+      amountCol: header.amountCol,
+      headerRow: header.row,
+      startRow,
+      endRow,
+      totalRow,
+      formula: `SUM(${amountColA1}${startRow}:${amountColA1}${endRow})`,
+      sum
+    };
+  };
+  window.estimateSheetEnsureTotalAmountFormula = estimateSheetEnsureTotalAmountFormula;
+
+  estimateSheetRecalculateLinkedFormula = function(state){
+    return estimateSheetEnsureTotalAmountFormula(state);
+  };
+  window.estimateSheetRecalculateLinkedFormula = estimateSheetRecalculateLinkedFormula;
+
+  const previousCreateState = typeof estimateSheetCreateState === "function" ? estimateSheetCreateState : null;
+  if (previousCreateState) {
+    estimateSheetCreateState = function(type){
+      const state = previousCreateState(type);
+      estimateSheetEnsureTotalAmountFormula(state);
+      return state;
+    };
+    window.estimateSheetCreateState = estimateSheetCreateState;
+  }
+
+  const previousCloneState = typeof estimateSheetCloneState === "function" ? estimateSheetCloneState : null;
+  if (previousCloneState) {
+    estimateSheetCloneState = function(state){
+      const cloned = previousCloneState(state);
+      estimateSheetEnsureTotalAmountFormula(cloned);
+      return cloned;
+    };
+    window.estimateSheetCloneState = estimateSheetCloneState;
+  }
+})();
