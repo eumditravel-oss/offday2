@@ -20458,3 +20458,24 @@ button.btn-orange{
 .estimate-period-manage-table td:focus{
   outline:none !important;
 }
+
+
+/* 기간별 견적서 관리: 셀 내부 입력 고정형 방향키 이동 */
+.estimate-period-manage-table td.editable{
+  padding:0 !important;
+}
+.estimate-period-manage-table .estimate-period-cell-input{
+  width:100%;
+  height:100%;
+  min-height:32px;
+  box-sizing:border-box;
+  border:0;
+  outline:none;
+  background:transparent;
+  padding:8px 10px;
+  font:inherit;
+  color:inherit;
+}
+.estimate-period-manage-table td.period-cell-focused .estimate-period-cell-input{
+  background:#fff !important;
+}
