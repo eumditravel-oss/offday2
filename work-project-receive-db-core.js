@@ -52,7 +52,7 @@ function isEstimateDbDateInputColumn(tab = estimateDbActiveTab, colIndex = 0) {
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   const group = normalizeEstimateDbText(getEstimateDbColumnGroupName(tab, colIndex));
   if (["견적서일자", "수주일자", "계약일자"].includes(header)) return true;
-  return group.includes("납품예정일") && /^\d+차납품$/.test(header);
+  return (group.includes("납품예정일") || group.includes("실제납품일")) && /^\d+차납품$/.test(header);
 }
 
 function isEstimateDbCreatedDateColumn(tab = estimateDbActiveTab, colIndex = 0) {
