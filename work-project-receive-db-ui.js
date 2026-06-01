@@ -2555,6 +2555,13 @@ function saveEstimateDbBillingClientModal() {
 function getEstimateDbDefaultBillingManagers() {
   const fallback = [{ empNo: "CC-002", name: "강동균", position: "실장", label: "강동균실장" }, { empNo: "CC-004", name: "김태영", position: "선임", label: "김태영선임" }];
   try {
+    const fromEmployees = ["강동균", "김태영"].map(name => {
+      const emp = (typeof employees !== "undefined" && Array.isArray(employees)) ? employees.find(item => String(item?.name || item?.koreanName || "").includes(name)) : null;
+      if (!emp) return null;
+      const position = String(emp?.grade || emp?.position || "");
+      return { empNo: String(emp?.empNo || emp?.id || ""), name: String(emp?.name || emp?.koreanName || name), position, label: `${String(emp?.name || emp?.koreanName || name)}${position}` };
+    }).filter(Boolean);
+    if (fromEmployees.length) return fromEmployees;
     if (typeof orgEmployeeSeed !== "undefined" && Array.isArray(orgEmployeeSeed)) {
       const mapped = ["강동균", "김태영"].map(name => {
         const emp = orgEmployeeSeed.find(item => String(item?.[1] || "").includes(name));
@@ -2591,15 +2598,19 @@ function ensureEstimateDbBillingManagerModal() {
       <div class="estimate-db-dropdown-title">기성담당자 선택</div>
       <div class="estimate-db-contact-help">조직도/인사카드 기준 담당자를 선택합니다. 연락예정일 기준 이메일 알림 연동을 위해 직원번호도 함께 보관합니다.</div>
       <div id="estimateDbBillingManagerOptions" class="estimate-db-manager-option-list"></div>
-      <div class="estimate-db-contact-help">목록에 없는 담당자는 아래에서 추가할 수 있습니다. 인사카드에 등록된 이름은 직원번호가 자동 연결됩니다.</div>
-      <div class="estimate-db-manager-add-row"><input id="estimateDbBillingManagerName" placeholder="이름" /><input id="estimateDbBillingManagerPosition" placeholder="직위" /><button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingManagerCustom()">+ 추가</button></div>
+      <div class="estimate-db-contact-help">담당자 추가는 이름만 검색한 뒤 검색된 인사카드를 선택해서 추가합니다. 선택한 인사카드의 직원번호/직위/이메일 정보가 함께 연결됩니다.</div>
+      <div class="estimate-db-manager-search-row"><input id="estimateDbBillingManagerSearch" placeholder="이름 검색" autocomplete="off" oninput="renderEstimateDbBillingManagerSearchResults(this.value)" /><button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingManagerSearchActive()">+ 추가</button></div>
+      <div id="estimateDbBillingManagerSearchResults" class="estimate-db-manager-search-results" aria-label="인사카드 검색 결과"></div>
       <div class="estimate-db-dropdown-actions"><button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingManagerModal()">닫기</button><button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingManagerModal()">담당자 저장</button></div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbBillingManagerModal(); });
   modal.addEventListener("keydown", event => {
     if (event.key === "Escape") { event.preventDefault(); closeEstimateDbBillingManagerModal(); return; }
-    if (event.key === "Enter" && event.target?.matches?.("#estimateDbBillingManagerName,#estimateDbBillingManagerPosition")) { event.preventDefault(); addEstimateDbBillingManagerCustom(); return; }
+    if (event.target?.matches?.("#estimateDbBillingManagerSearch")) {
+      handleEstimateDbBillingManagerSearchKeydown(event);
+      return;
+    }
     handleEstimateDbBillingManagerModalKeydown(event);
   });
   return modal;
@@ -2678,28 +2689,102 @@ function handleEstimateDbBillingManagerModalKeydown(event) {
   else if (event.key === " ") selectEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex, true);
   else if (event.key === "Enter") confirmEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex);
 }
-function addEstimateDbBillingManagerCustom() {
-  const modal = ensureEstimateDbBillingManagerModal();
-  const nameInput = modal.querySelector("#estimateDbBillingManagerName");
-  const positionInput = modal.querySelector("#estimateDbBillingManagerPosition");
-  const name = normalizeEstimateDbText(nameInput?.value || "");
-  const position = normalizeEstimateDbText(positionInput?.value || "");
-  if (!name) return;
-  let empNo = "";
+let estimateDbBillingManagerSearchActiveIndex = 0;
+function getEstimateDbHrEmployeeCards() {
   try {
-    if (typeof orgEmployeeSeed !== "undefined" && Array.isArray(orgEmployeeSeed)) {
-      const emp = orgEmployeeSeed.find(item => normalizeEstimateDbText(item?.[1]) === name || normalizeEstimateDbText(item?.[1]).includes(name));
-      if (emp) empNo = String(emp[0] || "");
+    if (typeof employees !== "undefined" && Array.isArray(employees)) {
+      return employees.map(emp => ({
+        empNo: String(emp?.empNo || emp?.id || ""),
+        name: String(emp?.name || emp?.koreanName || emp?.localName || ""),
+        position: String(emp?.grade || emp?.position || ""),
+        dept: String(emp?.dept || emp?.orgPath || ""),
+        email: String(emp?.email || ""),
+        phone: String(emp?.phone || "")
+      })).filter(emp => normalizeEstimateDbText(emp.name));
     }
   } catch (_) {}
-  const label = `${name}${position}`;
-  const body = modal.querySelector("#estimateDbBillingManagerOptions");
-  if (!Array.from(body.querySelectorAll('[data-manager-option="1"]')).some(option => option.dataset.value === label)) {
-    const index = body.querySelectorAll('[data-manager-option="1"]').length;
-    body.insertAdjacentHTML("beforeend", `<button type="button" class="estimate-db-manager-option is-selected" data-manager-option="1" data-manager-index="${index}" data-selected="1" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" onclick="selectEstimateDbBillingManagerOption(${index}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${index})"><span class="estimate-db-manager-check">선택</span><strong>${escapeEstimateDbHtml(label)}</strong>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</button>`);
-    focusEstimateDbBillingManagerOption(index);
+  return [];
+}
+function findEstimateDbHrEmployeeByName(name = "") {
+  const keyword = normalizeEstimateDbText(name);
+  if (!keyword) return null;
+  return getEstimateDbHrEmployeeCards().find(emp => normalizeEstimateDbText(emp.name) === keyword)
+    || getEstimateDbHrEmployeeCards().find(emp => normalizeEstimateDbText(emp.name).includes(keyword));
+}
+function getEstimateDbBillingManagerSearchMatches(query = "") {
+  const keyword = normalizeEstimateDbText(query);
+  if (!keyword) return [];
+  return getEstimateDbHrEmployeeCards()
+    .filter(emp => normalizeEstimateDbText(emp.name).includes(keyword))
+    .slice(0, 12);
+}
+function renderEstimateDbBillingManagerSearchResults(query = "") {
+  const modal = ensureEstimateDbBillingManagerModal();
+  const box = modal.querySelector("#estimateDbBillingManagerSearchResults");
+  if (!box) return;
+  const matches = getEstimateDbBillingManagerSearchMatches(query);
+  estimateDbBillingManagerSearchActiveIndex = Math.max(0, Math.min(estimateDbBillingManagerSearchActiveIndex, Math.max(matches.length - 1, 0)));
+  if (!normalizeEstimateDbText(query)) {
+    box.innerHTML = `<div class="estimate-db-manager-search-empty">이름을 입력하면 조직도/인사카드 검색 결과가 표시됩니다.</div>`;
+    return;
   }
-  nameInput.value = ""; positionInput.value = ""; nameInput.focus();
+  if (!matches.length) {
+    box.innerHTML = `<div class="estimate-db-manager-search-empty">검색된 인사카드가 없습니다.</div>`;
+    return;
+  }
+  box.innerHTML = matches.map((emp, index) => {
+    const label = `${emp.name}${emp.position || ""}`;
+    return `<button type="button" class="estimate-db-manager-search-item${index === estimateDbBillingManagerSearchActiveIndex ? " is-active" : ""}" data-manager-search-index="${index}" data-emp-no="${escapeEstimateDbHtml(emp.empNo)}" data-name="${escapeEstimateDbHtml(emp.name)}" data-position="${escapeEstimateDbHtml(emp.position)}" data-email="${escapeEstimateDbHtml(emp.email)}" data-label="${escapeEstimateDbHtml(label)}" onclick="addEstimateDbBillingManagerFromSearch(${index})"><strong>${escapeEstimateDbHtml(emp.name)}</strong><span>${escapeEstimateDbHtml(emp.position || "직위 없음")}</span><em>${escapeEstimateDbHtml(emp.dept || emp.email || emp.empNo || "인사카드")}</em></button>`;
+  }).join("");
+}
+function focusEstimateDbBillingManagerSearchResult(index = 0) {
+  const modal = ensureEstimateDbBillingManagerModal();
+  const items = Array.from(modal.querySelectorAll("#estimateDbBillingManagerSearchResults [data-manager-search-index]"));
+  if (!items.length) return;
+  estimateDbBillingManagerSearchActiveIndex = Math.max(0, Math.min(index, items.length - 1));
+  items.forEach((item, itemIndex) => item.classList.toggle("is-active", itemIndex === estimateDbBillingManagerSearchActiveIndex));
+  items[estimateDbBillingManagerSearchActiveIndex]?.scrollIntoView({ block: "nearest" });
+}
+function addEstimateDbBillingManagerSearchActive() {
+  addEstimateDbBillingManagerFromSearch(estimateDbBillingManagerSearchActiveIndex);
+}
+function addEstimateDbBillingManagerFromSearch(index = 0) {
+  const modal = ensureEstimateDbBillingManagerModal();
+  const items = Array.from(modal.querySelectorAll("#estimateDbBillingManagerSearchResults [data-manager-search-index]"));
+  if (!items.length) return;
+  const item = items[Math.max(0, Math.min(index, items.length - 1))];
+  if (!item) return;
+  const name = item.dataset.name || "";
+  const position = item.dataset.position || "";
+  const label = item.dataset.label || `${name}${position}`;
+  const empNo = item.dataset.empNo || "";
+  const body = modal.querySelector("#estimateDbBillingManagerOptions");
+  const existing = Array.from(body.querySelectorAll('[data-manager-option="1"]')).find(option => (empNo && option.dataset.empNo === empNo) || option.dataset.value === label);
+  if (existing) {
+    existing.dataset.selected = "1";
+    existing.classList.add("is-selected");
+    existing.querySelector(".estimate-db-manager-check").textContent = "선택";
+    focusEstimateDbBillingManagerOption(Array.from(body.querySelectorAll('[data-manager-option="1"]')).indexOf(existing));
+  } else {
+    const optionIndex = body.querySelectorAll('[data-manager-option="1"]').length;
+    body.insertAdjacentHTML("beforeend", `<button type="button" class="estimate-db-manager-option is-selected" data-manager-option="1" data-manager-index="${optionIndex}" data-selected="1" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" onclick="selectEstimateDbBillingManagerOption(${optionIndex}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${optionIndex})"><span class="estimate-db-manager-check">선택</span><strong>${escapeEstimateDbHtml(label)}</strong>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</button>`);
+    focusEstimateDbBillingManagerOption(optionIndex);
+  }
+  const searchInput = modal.querySelector("#estimateDbBillingManagerSearch");
+  if (searchInput) searchInput.value = "";
+  renderEstimateDbBillingManagerSearchResults("");
+  setTimeout(() => searchInput?.focus(), 0);
+}
+function handleEstimateDbBillingManagerSearchKeydown(event) {
+  const modal = ensureEstimateDbBillingManagerModal();
+  const items = Array.from(modal.querySelectorAll("#estimateDbBillingManagerSearchResults [data-manager-search-index]"));
+  if (["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (event.key === "ArrowDown") focusEstimateDbBillingManagerSearchResult(estimateDbBillingManagerSearchActiveIndex + 1);
+  else if (event.key === "ArrowUp") focusEstimateDbBillingManagerSearchResult(estimateDbBillingManagerSearchActiveIndex - 1);
+  else if (event.key === "Enter") addEstimateDbBillingManagerFromSearch(items.length ? estimateDbBillingManagerSearchActiveIndex : 0);
 }
 function collectEstimateDbBillingManagerModalRows() {
   return Array.from(ensureEstimateDbBillingManagerModal().querySelectorAll('[data-manager-option="1"][data-selected="1"]')).map(option => ({ empNo: option.dataset.empNo || "", name: option.dataset.name || "", position: option.dataset.position || "", label: option.dataset.value || "" })).filter(item => normalizeEstimateDbText(item.label));
@@ -2712,7 +2797,10 @@ function openEstimateDbBillingManagerModal(rowIndex = estimateDbSelectedCell.row
   estimateDbBillingManagerModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
   estimateDbBillingManagerActiveIndex = 0;
   renderEstimateDbBillingManagerOptions(parsed.managers || []);
+  renderEstimateDbBillingManagerSearchResults("");
   const modal = ensureEstimateDbBillingManagerModal();
+  const searchInput = modal.querySelector("#estimateDbBillingManagerSearch");
+  if (searchInput) searchInput.value = "";
   modal.classList.remove("hidden");
   setTimeout(() => focusEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex), 0);
   return true;
