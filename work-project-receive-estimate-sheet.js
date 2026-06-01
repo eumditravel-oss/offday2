@@ -3877,27 +3877,33 @@ function deleteEstimateRequestRow(id) {
   estimateRequestRows.splice(idx, 1);
   estimateRequestSaveRows();
 
-  if (linkedEstimateId && Array.isArray(estimateSheetRecords)) {
-    estimateSheetRecords = estimateSheetRecords.filter(record => record.id !== linkedEstimateId && record.requestId !== id);
-    if (estimateSheetEditingIndex !== null && !estimateSheetRecords[estimateSheetEditingIndex]) {
-      estimateSheetEditingIndex = null;
-      estimateSheetEditorState = null;
+  if (typeof estimateRequestCascadeDeleteLinkedData === "function") {
+    estimateRequestCascadeDeleteLinkedData(row, { linkedEstimateId });
+  } else {
+    if (linkedEstimateId && Array.isArray(estimateSheetRecords)) {
+      estimateSheetRecords = estimateSheetRecords.filter(record => record.id !== linkedEstimateId && record.requestId !== id);
+      if (estimateSheetEditingIndex !== null && !estimateSheetRecords[estimateSheetEditingIndex]) {
+        estimateSheetEditingIndex = null;
+        estimateSheetEditorState = null;
+      }
     }
-  }
 
-  if (typeof estimatePeriodSentRows !== "undefined" && Array.isArray(estimatePeriodSentRows)) {
-    estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.requestId !== id && item.sourceEstimateId !== linkedEstimateId);
-    if (typeof estimatePeriodSaveRows === "function") estimatePeriodSaveRows();
-  }
+    if (typeof estimatePeriodSentRows !== "undefined" && Array.isArray(estimatePeriodSentRows)) {
+      estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.requestId !== id && item.sourceEstimateId !== linkedEstimateId);
+      if (typeof estimatePeriodSaveRows === "function") estimatePeriodSaveRows();
+    }
 
-  if (typeof estimatePeriodEditRows !== "undefined" && Array.isArray(estimatePeriodEditRows)) {
-    estimatePeriodEditRows = estimatePeriodEditRows.filter(item => item.requestId !== id && item.sourceEstimateId !== linkedEstimateId);
-    if (typeof estimatePeriodSaveEditRows === "function") estimatePeriodSaveEditRows();
+    if (typeof estimatePeriodEditRows !== "undefined" && Array.isArray(estimatePeriodEditRows)) {
+      estimatePeriodEditRows = estimatePeriodEditRows.filter(item => item.requestId !== id && item.sourceEstimateId !== linkedEstimateId);
+      if (typeof estimatePeriodSaveEditRows === "function") estimatePeriodSaveEditRows();
+    }
   }
 
   renderEstimateRequestManage();
   if (typeof renderEstimateSheetManage === "function") renderEstimateSheetManage();
-  showToast?.("견적 의뢰 행을 삭제했습니다.");
+  if (typeof renderEstimatePeriodManage === "function") renderEstimatePeriodManage();
+  if (typeof renderEstimateDbManage === "function") renderEstimateDbManage();
+  showToast?.("견적 의뢰 행을 삭제했습니다. 연결된 견적서 종류별 관리·기간별 견적서 관리·DB관리 자료도 함께 정리했습니다.");
   return true;
 }
 
@@ -6706,4 +6712,229 @@ window.newEstimateSheetRecord = function newEstimateSheetRecordFromSheetManageBl
   }
 
   document.addEventListener("DOMContentLoaded", () => setTimeout(cleanupStoredPeriodRows, 80));
+})();
+
+
+/* =========================================================
+   2026-06-01 견적 의뢰관리 삭제 연동 보강 패치
+   - 견적 의뢰관리에서 삭제한 프로젝트를 견적서 종류별 관리 / 기간별 견적서 관리 / DB관리에서도 즉시 제거
+   - 브라우저 저장값에 남아 있던 고아 연계 데이터도 각 화면 진입 시 정리
+   - 견적 의뢰관리만 신규 생성 원본으로 사용한다는 기준을 유지
+   ========================================================= */
+(function estimateRequestDeleteCascadePatch(){
+  if (window.__estimateRequestDeleteCascadePatch) return;
+  window.__estimateRequestDeleteCascadePatch = true;
+
+  function txt(value){
+    return String(value ?? "").replace(/\s+/g, " ").trim();
+  }
+  function norm(value){
+    return txt(value).toLowerCase().replace(/[\s\-_.,\/\\|()[\]{}]+/g, "");
+  }
+  function cell(row, idx){
+    return Array.isArray(row) && idx >= 0 ? row[idx] : "";
+  }
+  function getDbCol(tab, names){
+    const list = Array.isArray(names) ? names : [names];
+    for (const name of list) {
+      const idx = typeof getEstimateDbColumnIndexByHeader === "function" ? getEstimateDbColumnIndexByHeader(tab, name) : -1;
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  }
+  function requestProbe(row = {}, extra = {}){
+    const normalized = typeof estimateRequestNormalizeRow === "function" ? estimateRequestNormalizeRow(row) : row;
+    const centralKey = normalized.centralKey || (typeof estimateCentralMakeKey === "function" ? estimateCentralMakeKey({ date: normalized.date, company: normalized.company || normalized.client, project: normalized.project }) : "");
+    return {
+      id: txt(normalized.id),
+      requestId: txt(normalized.id),
+      estimateId: txt(extra.linkedEstimateId || normalized.estimateId),
+      periodKey: txt(normalized.periodKey),
+      centralKey: txt(centralKey),
+      dbPjNo: txt(normalized.dbPjNo || normalized.pjNo || normalized.projectNo),
+      company: norm(normalized.company || normalized.client),
+      project: norm(normalized.project),
+      date: txt(normalized.date)
+    };
+  }
+  function probeHasIdentity(probe){
+    return !!(probe.id || probe.estimateId || probe.periodKey || probe.centralKey || probe.dbPjNo || probe.company || probe.project);
+  }
+  function matchEntity(item = {}, probe = {}){
+    if (!probeHasIdentity(probe)) return false;
+    const ids = [item.id, item.requestId, item.sourceEstimateId, item.estimateId, item.key, item.periodKey, item.centralKey, item.dbPjNo, item.pjNo, item.projectNo].map(txt).filter(Boolean);
+    const targetIds = [probe.id, probe.estimateId, probe.periodKey, probe.centralKey, probe.dbPjNo].filter(Boolean);
+    if (targetIds.length && ids.some(id => targetIds.includes(id))) return true;
+
+    const values = item.values || {};
+    const company = norm(item.company || item.companyRaw || item.client || item.recipient || values[3]);
+    const project = norm(item.project || item.projectName || item.title || values[4]);
+    const companyOk = probe.company && company && company === probe.company;
+    const projectOk = probe.project && project && (project === probe.project || project.includes(probe.project) || probe.project.includes(project));
+    return !!(projectOk && (companyOk || !probe.company || !company));
+  }
+  function matchDbRow(tab, row, probe = {}){
+    if (!Array.isArray(row) || !probeHasIdentity(probe)) return false;
+    const pjNoIdx = getDbCol(tab, ["PJ NO", "PJNO", "프로젝트번호"]);
+    const projectIdx = getDbCol(tab, tab === "pj" ? ["프로젝트명", "PJ명"] : ["PJ명", "프로젝트명"]);
+    const companyIdx = getDbCol(tab, tab === "pj" ? ["거래처명", "업체명", "계약업체"] : ["업체명", "거래처명", "계약업체"]);
+    const dbPjNo = txt(cell(row, pjNoIdx));
+    if (probe.dbPjNo && dbPjNo && dbPjNo === probe.dbPjNo) return true;
+    const project = norm(cell(row, projectIdx));
+    const company = norm(cell(row, companyIdx));
+    const projectOk = probe.project && project && (project === probe.project || project.includes(probe.project) || probe.project.includes(project));
+    const companyOk = probe.company && company && company === probe.company;
+    return !!(projectOk && (companyOk || !probe.company || !company));
+  }
+  function savePeriodRows(){
+    if (typeof estimatePeriodSaveRows === "function") estimatePeriodSaveRows();
+    if (typeof estimatePeriodSaveSentRows === "function") estimatePeriodSaveSentRows();
+    if (typeof estimatePeriodSaveEditRows === "function") estimatePeriodSaveEditRows();
+    if (typeof estimatePeriodSaveEdits === "function") estimatePeriodSaveEdits();
+  }
+  function resetEditorSelectionIfNeeded(){
+    if (typeof estimateSheetEditingIndex !== "undefined" && estimateSheetEditingIndex !== null && (!Array.isArray(estimateSheetRecords) || !estimateSheetRecords[estimateSheetEditingIndex])) {
+      estimateSheetEditingIndex = null;
+      if (typeof estimateSheetEditorState !== "undefined") estimateSheetEditorState = null;
+    }
+  }
+
+  window.estimateRequestCascadeDeleteLinkedData = function estimateRequestCascadeDeleteLinkedData(row = {}, options = {}){
+    const probe = requestProbe(row, options);
+    let removed = { sheets: 0, periodSent: 0, periodEdit: 0, db: 0 };
+
+    if (Array.isArray(estimateSheetRecords)) {
+      const before = estimateSheetRecords.length;
+      estimateSheetRecords = estimateSheetRecords.filter(record => !matchEntity(record, probe));
+      removed.sheets = before - estimateSheetRecords.length;
+      resetEditorSelectionIfNeeded();
+    }
+
+    if (typeof estimatePeriodSentRows !== "undefined" && Array.isArray(estimatePeriodSentRows)) {
+      const before = estimatePeriodSentRows.length;
+      estimatePeriodSentRows = estimatePeriodSentRows.filter(item => !matchEntity(item, probe));
+      removed.periodSent = before - estimatePeriodSentRows.length;
+    }
+
+    if (typeof estimatePeriodEditRows !== "undefined" && Array.isArray(estimatePeriodEditRows)) {
+      const before = estimatePeriodEditRows.length;
+      estimatePeriodEditRows = estimatePeriodEditRows.filter(item => !matchEntity(item, probe));
+      removed.periodEdit = before - estimatePeriodEditRows.length;
+    }
+
+    if (typeof estimateDbSheets !== "undefined") {
+      ["pj", "progress", "mep"].forEach(tab => {
+        const sheet = estimateDbSheets?.[tab];
+        if (!sheet || !Array.isArray(sheet.rows)) return;
+        const before = sheet.rows.length;
+        sheet.rows = sheet.rows.filter(dbRow => !matchDbRow(tab, dbRow, probe));
+        removed.db += before - sheet.rows.length;
+      });
+      if (typeof recalcAllEstimateDbRows === "function") recalcAllEstimateDbRows();
+    }
+
+    savePeriodRows();
+    return removed;
+  };
+
+  function activeRequestProbes(){
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    return (Array.isArray(estimateRequestRows) ? estimateRequestRows : []).map(row => requestProbe(row)).filter(probeHasIdentity);
+  }
+  function matchesAnyActive(item, probes){
+    return probes.some(probe => matchEntity(item, probe));
+  }
+  function matchesAnyActiveDb(tab, row, probes){
+    return probes.some(probe => matchDbRow(tab, row, probe));
+  }
+  function isLinkedSheetRecord(record = {}){
+    const source = txt(record.source || record.dataMode || "");
+    return !!(record.requestId || record.centralKey || record.dbPjNo || /request|central|period|db|linked/i.test(source));
+  }
+  function isLinkedPeriodRow(row = {}){
+    const source = txt(row.source || row.dataMode || "");
+    return !!(row.requestId || row.sourceEstimateId || row.centralKey || row.dbPjNo || row.linked || /request|central|sent|db|linked/i.test(source));
+  }
+  function dbRowHasData(row){
+    return Array.isArray(row) && row.some(value => txt(value));
+  }
+
+  window.estimateRequestPurgeOrphanLinkedData = function estimateRequestPurgeOrphanLinkedData(options = {}){
+    const probes = activeRequestProbes();
+    let changed = false;
+
+    if (Array.isArray(estimateSheetRecords)) {
+      const before = estimateSheetRecords.length;
+      estimateSheetRecords = estimateSheetRecords.filter(record => {
+        if (!isLinkedSheetRecord(record)) return true;
+        return probes.length ? matchesAnyActive(record, probes) : false;
+      });
+      if (before !== estimateSheetRecords.length) changed = true;
+      resetEditorSelectionIfNeeded();
+    }
+
+    if (typeof estimatePeriodSentRows !== "undefined" && Array.isArray(estimatePeriodSentRows)) {
+      const before = estimatePeriodSentRows.length;
+      estimatePeriodSentRows = estimatePeriodSentRows.filter(row => {
+        if (!isLinkedPeriodRow(row)) return true;
+        return probes.length ? matchesAnyActive(row, probes) : false;
+      });
+      if (before !== estimatePeriodSentRows.length) changed = true;
+    }
+
+    if (typeof estimatePeriodEditRows !== "undefined" && Array.isArray(estimatePeriodEditRows)) {
+      const before = estimatePeriodEditRows.length;
+      estimatePeriodEditRows = estimatePeriodEditRows.filter(row => {
+        if (!isLinkedPeriodRow(row)) return true;
+        return probes.length ? matchesAnyActive(row, probes) : false;
+      });
+      if (before !== estimatePeriodEditRows.length) changed = true;
+    }
+
+    if (typeof estimateDbSheets !== "undefined") {
+      ["pj", "progress", "mep"].forEach(tab => {
+        const sheet = estimateDbSheets?.[tab];
+        if (!sheet || !Array.isArray(sheet.rows)) return;
+        const before = sheet.rows.length;
+        sheet.rows = sheet.rows.filter(row => {
+          if (!dbRowHasData(row)) return false;
+          return probes.length ? matchesAnyActiveDb(tab, row, probes) : false;
+        });
+        if (before !== sheet.rows.length) changed = true;
+      });
+      if (changed && typeof recalcAllEstimateDbRows === "function") recalcAllEstimateDbRows();
+    }
+
+    if (changed) savePeriodRows();
+    return changed;
+  };
+
+  const renderSheetOriginal = typeof renderEstimateSheetManage === "function" ? renderEstimateSheetManage : null;
+  if (renderSheetOriginal) {
+    renderEstimateSheetManage = function renderEstimateSheetManageSourceOfTruth(){
+      estimateRequestPurgeOrphanLinkedData({ silent: true });
+      return renderSheetOriginal.apply(this, arguments);
+    };
+    window.renderEstimateSheetManage = renderEstimateSheetManage;
+  }
+
+  const renderPeriodOriginal = typeof renderEstimatePeriodManage === "function" ? renderEstimatePeriodManage : null;
+  if (renderPeriodOriginal) {
+    renderEstimatePeriodManage = function renderEstimatePeriodManageSourceOfTruth(){
+      estimateRequestPurgeOrphanLinkedData({ silent: true });
+      return renderPeriodOriginal.apply(this, arguments);
+    };
+    window.renderEstimatePeriodManage = renderEstimatePeriodManage;
+  }
+
+  const renderDbOriginal = typeof renderEstimateDbManage === "function" ? renderEstimateDbManage : null;
+  if (renderDbOriginal) {
+    renderEstimateDbManage = function renderEstimateDbManageSourceOfTruth(){
+      estimateRequestPurgeOrphanLinkedData({ silent: true });
+      return renderDbOriginal.apply(this, arguments);
+    };
+    window.renderEstimateDbManage = renderEstimateDbManage;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => setTimeout(() => estimateRequestPurgeOrphanLinkedData({ silent: true }), 120));
 })();
