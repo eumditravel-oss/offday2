@@ -3548,7 +3548,6 @@ function renderEstimateRequestManage() {
       <label class="grow">검색 <input id="estimateRequestSearch" value="${estimateRequestHtml(estimateRequestFilters.q || "")}" placeholder="업체명, 프로젝트명, 메모, 담당자 검색"></label>
       <button class="btn btn-line" type="button" id="estimateRequestApplyFilter">조회</button>
       <button class="btn btn-line" type="button" id="estimateRequestResetFilter">전체보기</button>
-      <button class="btn btn-primary" type="button" onclick="saveEstimateRequestVisibleRowsFromDom()">저장</button>
     </div>
     <div class="estimate-workflow-summary">${estimateRequestStatusSummary().map(item => `<span><b>${estimateRequestHtml(item.status)}</b>${item.count.toLocaleString("ko-KR")}건</span>`).join("")}</div>
   `;
