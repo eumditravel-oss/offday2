@@ -1036,7 +1036,7 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
         ${leafColumns.map((col, colIndex) => {
           const raw = row?.[colIndex] || "";
           const value = formatEstimateDbMoneyDisplay(getEstimateDbCellDisplayValue("mep", sourceIndex, colIndex, raw), "mep", colIndex, sheet);
-          return `<td><input value="${escapeEstimateDbHtml(value)}" data-row-index="${sourceIndex}" data-col-index="${colIndex}" oninput="markDirty(this)" onchange="saveCell(this)" /></td>`;
+          return `<td><input value="${escapeEstimateDbHtml(value)}" data-row-index="${sourceIndex}" data-col-index="${colIndex}" oninput="markDirty(this)" onchange="saveCell(this)" onkeydown="moveCell(event,this)" /></td>`;
         }).join("")}
         <td class="manage"><button type="button" onclick="deleteRow(${sourceIndex})">삭제</button></td>
       </tr>`).join("") : `<tr><td class="empty" colspan="${leafColumns.length + 1}">선택한 업체와 연결된 계약/지급 내역이 없습니다.</td></tr>`;
@@ -1072,20 +1072,41 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
   function addRow(){
     if(window.opener && window.opener.addEstimateDbMepRowForVendorIndex){
       window.opener.addEstimateDbMepRowForVendorIndex(VENDOR_INDEX);
-      setTimeout(refreshWindow, 120);
+      setTimeout(refreshWindow, 80);
     }
   }
   function deleteRow(sourceIndex){
     if(!confirm('해당 계약/지급 내역 행을 삭제할까요?')) return;
     if(window.opener && window.opener.removeEstimateDbMepDetailRowFromPopup){
       window.opener.removeEstimateDbMepDetailRowFromPopup(sourceIndex);
-      setTimeout(refreshWindow, 120);
+      setTimeout(refreshWindow, 80);
+    }
+  }
+  function moveCell(event,input){
+    const keys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'];
+    if(!keys.includes(event.key)) return;
+    saveCell(input);
+    const row = Number(input.dataset.rowIndex);
+    const col = Number(input.dataset.colIndex);
+    let nextRow = row;
+    let nextCol = col;
+    if(event.key === 'ArrowUp') nextRow = row - 1;
+    if(event.key === 'ArrowDown' || event.key === 'Enter') nextRow = row + 1;
+    if(event.key === 'ArrowLeft') nextCol = col - 1;
+    if(event.key === 'ArrowRight') nextCol = col + 1;
+    const next = document.querySelector('input[data-row-index="' + nextRow + '"][data-col-index="' + nextCol + '"]');
+    if(next){
+      event.preventDefault();
+      next.focus();
+      next.select && next.select();
     }
   }
   function refreshWindow(){
-    if(window.opener && window.opener.openEstimateDbMepVendorDetailWindow){
-      window.opener.openEstimateDbMepVendorDetailWindow(VENDOR_INDEX);
-      window.close();
+    if(window.opener && window.opener.buildEstimateDbMepVendorDetailWindowHtml){
+      const html = window.opener.buildEstimateDbMepVendorDetailWindowHtml(VENDOR_INDEX);
+      document.open();
+      document.write(html);
+      document.close();
     } else {
       location.reload();
     }
@@ -1111,6 +1132,7 @@ function openEstimateDbMepVendorDetailWindow(vendorIndex) {
   renderEstimateDbManage({ renderReportsNow: false });
 }
 
+window.buildEstimateDbMepVendorDetailWindowHtml = buildEstimateDbMepVendorDetailWindowHtml;
 window.openEstimateDbMepVendorDetailWindow = openEstimateDbMepVendorDetailWindow;
 window.focusEstimateDbMepVendor = focusEstimateDbMepVendor;
 window.updateEstimateDbMepDetailCellFromPopup = updateEstimateDbMepDetailCellFromPopup;
@@ -1139,7 +1161,7 @@ function renderEstimateDbMepManage(options = {}) {
               <strong>업체 리스트</strong>
               <span>상단은 업체 기본정보 입력 영역입니다. 업체 행을 더블클릭하면 계약/지급내역을 큰 새 창으로 확인·수정할 수 있습니다.</span>
             </div>
-            <button type="button" class="btn btn-line btn-xs" onclick="addEstimateDbMepVendorRow()">+ 업체 추가</button>
+
           </div>
           <div class="quote-db-mep-vendor-wrap">
             <table class="quote-db-mep-vendor-table">
@@ -1159,12 +1181,13 @@ function renderEstimateDbMepManage(options = {}) {
               <strong>${selectedVendorName ? escapeEstimateDbHtml(selectedVendorName) : "업체를 선택하세요"}</strong>
               <span>${selectedVendorName ? "선택된 업체입니다. 계약/지급내역은 업체 행을 더블클릭하면 새 창으로 열립니다." : "업체 행을 클릭해 선택하고, 더블클릭하면 계약/지급내역을 큰 화면으로 볼 수 있습니다."}</span>
             </div>
-            <button type="button" class="btn btn-primary btn-xs" onclick="openEstimateDbMepVendorDetailWindow(${Number(estimateDbMepSelectedVendorIndex) || 0})" ${selectedVendorName ? "" : "disabled"}>계약/지급내역 열기</button>
+
           </div>
         </div>
       </td>
     </tr>
   `;
+  updateEstimateDbMepQuickActions();
   applyEstimateDbCommaFormatToRenderedInputs();
   if (options.renderReportsNow) renderEstimateDbReports();
   else scheduleEstimateDbReportsRender(220);
@@ -1614,6 +1637,18 @@ function scheduleEstimateDbReportsRender(delay = 180) {
   }
 }
 
+function updateEstimateDbMepQuickActions() {
+  const wrap = document.getElementById("estimateDbMepQuickActions");
+  const openBtn = document.getElementById("estimateDbMepQuickOpenBtn");
+  if (!wrap) return;
+  const isMep = estimateDbActiveTab === "mep";
+  wrap.style.display = isMep ? "inline-flex" : "none";
+  if (openBtn) {
+    const selectedVendorName = getEstimateDbMepVendorName(getEstimateDbMepSelectedVendor());
+    openBtn.disabled = !isMep || !selectedVendorName;
+  }
+}
+
 function recalcEstimateDbVisibleRows(tab, entries = []) {
   if (tab !== "progress" && tab !== "mep") return;
   entries.forEach(entry => {
@@ -1641,6 +1676,7 @@ function renderEstimateDbManage(options = {}) {
   }
   if (options.forceRecalc) recalcEstimateDbRowsByTab(estimateDbActiveTab, { force: true });
   renderEstimateDbSearchBox();
+  updateEstimateDbMepQuickActions();
   updateEstimateDbSaveButtonState();
   const resizeBtn = document.getElementById("estimateDbColumnResizeBtn");
   if (resizeBtn) {
