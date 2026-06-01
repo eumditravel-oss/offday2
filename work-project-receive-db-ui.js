@@ -1,4 +1,3 @@
-```javascript
 let estimateDbActiveTab = "pj";
 let estimateDbReportActiveTab = "summary";
 let estimateDbSelectedCell = { tab: "pj", sectionIndex: null, rowIndex: 0, colIndex: 0 };
@@ -4418,5 +4417,3 @@ document.addEventListener("click", event => {
     window.syncEstimateDbLinkedRowsFromPj = syncEstimateDbLinkedRowsFromPj;
   }
 })();
-
-```
