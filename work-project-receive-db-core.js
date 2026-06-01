@@ -167,6 +167,8 @@ function isEstimateDbEnterCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
     || isEstimateDbOutsourceAmountCell(tab, colIndex)
     || isEstimateDbContactColumn(tab, colIndex)
     || isEstimateDbAccountInfoCell(tab, colIndex)
+    || (typeof isEstimateDbProgressBillingClientColumn === "function" && isEstimateDbProgressBillingClientColumn(tab, colIndex))
+    || (typeof isEstimateDbProgressBillingManagerColumn === "function" && isEstimateDbProgressBillingManagerColumn(tab, colIndex))
     || isEstimateDbContractAmountCommandCell(tab, colIndex)
     || isEstimateDbDropdownCell(tab, colIndex);
 }
@@ -212,6 +214,16 @@ function openEstimateDbCommandCellFromButton(event, rowIndex, colIndex) {
   if (isEstimateDbAccountInfoCell(estimateDbActiveTab, colIndex)) {
     commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     openEstimateDbAccountModal(rowIndex, colIndex);
+    return;
+  }
+  if (typeof isEstimateDbProgressBillingClientColumn === "function" && isEstimateDbProgressBillingClientColumn(estimateDbActiveTab, colIndex)) {
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbBillingClientModal(rowIndex, colIndex);
+    return;
+  }
+  if (typeof isEstimateDbProgressBillingManagerColumn === "function" && isEstimateDbProgressBillingManagerColumn(estimateDbActiveTab, colIndex)) {
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbBillingManagerModal(rowIndex, colIndex);
     return;
   }
   if (isEstimateDbDropdownCell(estimateDbActiveTab, colIndex)) {
