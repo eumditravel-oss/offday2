@@ -3140,12 +3140,20 @@ function getEstimateDbUniqueColumnValues(tab, colIndex) {
   });
   return [...values];
 }
+const estimateDbUnitWorkOptions = ["공내역서", "비교내역서", "설계예가", "단가작업", "기타"];
+function isEstimateDbUnitWorkOnlyValue(value = "") {
+  return estimateDbUnitWorkOptions.includes(normalizeEstimateDbText(value));
+}
+function sanitizeEstimateDbUnitWorkValue(value = "") {
+  const clean = normalizeEstimateDbText(value);
+  return isEstimateDbUnitWorkOnlyValue(clean) ? clean : "";
+}
 const estimateDbDefaultOptions = {
   "국내/해외": ["국내", "해외"],
   "작업공종": ["마감", "골조성", "구조", "토목", "조경", "기계", "전기", "인테리어", "철거"],
   "작업구분": ["실행", "입찰"],
   "업무성격": ["개산견적", "정미견적", "공사비검증", "클레임", "설계가", "설계변경", "본사 입찰", "본사 실행", "현장 실행", "기타"],
-  "단가작업여부": ["공내역서", "비교내역서", "설계예가", "단가작업", "기타"],
+  "단가작업여부": estimateDbUnitWorkOptions,
   "건물용도": ["창고", "공장", "제약공장", "식품공장", "반도체공장", "물류센터", "아파트형공장", "공동주택", "오피스텔", "주상복합", "업무시설", "오피스", "근린생활시설", "지식산업센터", "기숙사", "연수원", "학교", "교육연구시설", "연구소", "역사"]
 };
 const estimateDbCustomOptions = {};
@@ -3198,8 +3206,13 @@ function getEstimateDbDropdownOptions(tab, rowIndex, colIndex) {
   } else if (estimateDbDefaultOptions[header]) {
     options = [...estimateDbDefaultOptions[header]];
   }
-  const uniqueValues = header === "작업공종" ? [] : getEstimateDbUniqueColumnValues(tab, colIndex);
-  options = [...options, ...uniqueValues, ...custom];
+  let uniqueValues = header === "작업공종" ? [] : getEstimateDbUniqueColumnValues(tab, colIndex);
+  let customValues = custom;
+  if (header === "단가작업여부") {
+    uniqueValues = uniqueValues.filter(isEstimateDbUnitWorkOnlyValue);
+    customValues = customValues.filter(isEstimateDbUnitWorkOnlyValue);
+  }
+  options = [...options, ...uniqueValues, ...customValues];
   return [...new Set(options.map(normalizeEstimateDbText).filter(Boolean))];
 }
 function ensureEstimateDbDropdownModal() {
@@ -3231,7 +3244,9 @@ function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0,
   const modal = ensureEstimateDbDropdownModal();
   const header = getEstimateDbColumnName(estimateDbActiveTab, colIndex);
   const currentRawValue = normalizeEstimateDbText(getEstimateDbRows()[rowIndex]?.[colIndex] || "");
-  const currentDisplayValue = header === "작업공종" ? sanitizeEstimateDbWorkScopeValue(currentRawValue) : currentRawValue;
+  const currentDisplayValue = header === "작업공종"
+    ? sanitizeEstimateDbWorkScopeValue(currentRawValue)
+    : (header === "단가작업여부" ? sanitizeEstimateDbUnitWorkValue(currentRawValue) : currentRawValue);
   const existingValues = currentDisplayValue
     .split(/[,、，]+/)
     .map(v => normalizeEstimateDbText(v))
@@ -3325,6 +3340,10 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
       return;
     }
   }
+  if (header === "단가작업여부" && !isEstimateDbUnitWorkOnlyValue(value)) {
+    alert("단가작업여부에는 공내역서/비교내역서/설계예가/단가작업/기타만 선택할 수 있습니다. 개산견적은 견적서 방식 항목이므로 표시하지 않습니다.");
+    return;
+  }
   const row = state.rowIndex;
   const nextCol = state.colIndex + 1;
   if (state.tab === "pj" && header === ESTIMATE_DB_PROJECT_LINK_HEADER) {
@@ -3345,8 +3364,13 @@ function addEstimateDbDropdownOptionFromInput() {
   const search = document.getElementById("estimateDbDropdownSearch");
   const value = normalizeEstimateDbText(search?.value || "");
   if (!value || !estimateDbDropdownState) return;
-  if (getEstimateDbColumnName(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex) === "작업공종" && !isEstimateDbWorkScopeOnlyValue(value)) {
+  const header = getEstimateDbColumnName(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex);
+  if (header === "작업공종" && !isEstimateDbWorkScopeOnlyValue(value)) {
     alert("작업공종에는 단가작업 항목을 추가할 수 없습니다. 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정 중에서 선택하세요.");
+    return;
+  }
+  if (header === "단가작업여부" && !isEstimateDbUnitWorkOnlyValue(value)) {
+    alert("단가작업여부에는 공내역서/비교내역서/설계예가/단가작업/기타만 추가할 수 있습니다. 개산견적은 견적서 방식 항목이므로 추가하지 않습니다.");
     return;
   }
   addEstimateDbCustomOption(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex, value);
