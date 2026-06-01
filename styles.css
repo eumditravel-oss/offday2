@@ -20479,3 +20479,34 @@ button.btn-orange{
 .estimate-period-manage-table td.period-cell-focused .estimate-period-cell-input{
   background:#fff !important;
 }
+
+
+/* === DB관리 계좌정보 입력 모달 폭 확장 보정 === */
+.estimate-db-account-box{
+  width:min(1280px,calc(100vw - 72px))!important;
+  max-width:min(1280px,calc(100vw - 72px))!important;
+  max-height:min(760px,calc(100vh - 72px))!important;
+}
+.estimate-db-account-box .estimate-db-contact-grid-wrap{
+  overflow-x:auto!important;
+  overflow-y:auto!important;
+  max-height:min(560px,62vh)!important;
+}
+.estimate-db-account-grid{
+  width:100%!important;
+  min-width:1120px!important;
+  table-layout:fixed!important;
+}
+.estimate-db-account-grid th:nth-child(1),
+.estimate-db-account-grid td:nth-child(1){width:56px!important;}
+.estimate-db-account-grid th:nth-child(2),
+.estimate-db-account-grid td:nth-child(2){width:220px!important;}
+.estimate-db-account-grid th:nth-child(3),
+.estimate-db-account-grid td:nth-child(3){width:360px!important;}
+.estimate-db-account-grid th:nth-child(4),
+.estimate-db-account-grid td:nth-child(4){width:220px!important;}
+.estimate-db-account-grid th:nth-child(5),
+.estimate-db-account-grid td:nth-child(5){width:264px!important;}
+.estimate-db-account-grid input{
+  min-width:0!important;
+}
