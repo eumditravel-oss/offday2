@@ -3809,7 +3809,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     .bar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #dbe4ef;box-shadow:0 4px 14px rgba(15,23,42,.06)}
     .brand{display:flex;align-items:center;gap:10px;font-weight:900}.brand b{display:inline-flex;padding:7px 12px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}.brand span{font-size:18px}
     .actions{display:flex;gap:8px}.btn{height:36px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;padding:0 14px;font-weight:900;cursor:pointer}.primary{background:#ff6b00;color:#fff;border-color:#ff6b00}
-    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(420px,2fr) minmax(220px,1fr) minmax(220px,1fr);gap:10px;align-items:start}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569;min-width:0}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff;width:100%;min-width:0}.field.wide{grid-column:auto}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}
+    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(420px,2fr) minmax(220px,1fr) minmax(220px,1fr);gap:10px;align-items:start}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569;min-width:0}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff;width:100%;min-width:0}.field.wide{grid-column:auto}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}.linked-command{position:relative}.linked-command:after{content:'';position:absolute;right:7px;bottom:8px;width:5px;height:26px;border-radius:999px;background:#ff6b00;box-shadow:0 0 0 1px rgba(255,107,0,.12)}.linked-command input{padding-right:20px}.linked-command input.command-active{border-color:#ff6b00;box-shadow:0 0 0 3px rgba(255,107,0,.16)}.memo-dropdown{position:fixed;z-index:50;min-width:220px;max-height:260px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 14px 30px rgba(15,23,42,.16);padding:6px}.memo-dropdown button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 10px;border-radius:8px;font-weight:800;color:#111827;cursor:pointer}.memo-dropdown button:hover,.memo-dropdown button.active{background:#fff7ed;color:#ea580c}.memo-dropdown .empty{padding:10px;color:#64748b;font-size:12px;font-weight:800}
     textarea{width:100%;min-height:430px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}
   </style></head><body><div class="bar"><div class="brand"><b>CON-COST</b><span>견적 의뢰 메모</span></div><div class="actions"><button class="btn" onclick="window.close()">닫기</button><button class="btn primary" onclick="saveMemo()">저장</button></div></div><main>
   <div class="grid">
@@ -3818,12 +3818,12 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     <label class="field"><span>의뢰자</span><input id="client" value="${client}" placeholder="담당자명"></label>
     <label class="field"><span>연락처</span><input id="contact" value="${contact}" placeholder="전화/이메일"></label>
   </div>
-  <div class="subgrid" aria-label="기간별 견적서 관리 연동 입력값">
-    <label class="field"><span>작업범위</span><input id="scope" value="${scope}" placeholder="예: 구조, 마감"></label>
-    <label class="field"><span>건물용도</span><input id="usage" value="${usage}" placeholder="예: 공장, 근생"></label>
-    <label class="field"><span>작업횟수</span><input id="count" value="${count}" placeholder="예: 1회"></label>
-    <label class="field"><span>단가작업</span><select id="unitWork"><option value="">선택 안함</option>${ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${estimateRequestHtml(t)}" ${String(row.unitWork || row.estimateType || "") === t ? "selected" : ""}>${estimateRequestHtml(t)}</option>`).join("")}</select></label>
-    <label class="field"><span>실행/입찰</span><input id="bid" value="${bid}" placeholder="예: 실행, 입찰"></label>
+  <div class="subgrid" aria-label="기간별 견적서 관리 및 DB관리 연동 입력값">
+    <label class="field linked-command"><span>작업범위 <small>↔ DB 작업공종</small></span><input id="scope" data-command-field="scope" value="${scope}" placeholder="예: 구조, 마감"></label>
+    <label class="field linked-command"><span>건물용도 <small>↔ DB 건물용도</small></span><input id="usage" data-command-field="usage" value="${usage}" placeholder="예: 공장, 근생"></label>
+    <label class="field linked-command"><span>작업횟수 <small>↔ DB 업무단계2</small></span><input id="count" data-command-field="count" value="${count}" placeholder="예: 1회"></label>
+    <label class="field linked-command"><span>단가작업 <small>↔ DB 단가작업여부</small></span><input id="unitWork" data-command-field="unitWork" value="${unitWork}" placeholder="예: 공내역서"></label>
+    <label class="field linked-command"><span>실행/입찰 <small>↔ DB 업무성격</small></span><input id="bid" data-command-field="bid" value="${bid}" placeholder="예: 실행, 입찰"></label>
   </div>
   <textarea id="memo" placeholder="클라이언트 의뢰 내용을 메모장처럼 자유롭게 길게 작성하세요.\n예: (주)xx건설 / xx프로젝트 / 견적 요청 가능성 / 통화 내용 / 전달사항"></textarea>
   <div class="hint">저장하면 의뢰관리 리스트의 메모는 [열기] 버튼으로 확인됩니다.</div>
@@ -3831,6 +3831,47 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   const REQUEST_ID = ${JSON.stringify(id)};
   const IS_NEW = ${JSON.stringify(!!isNew)};
   document.getElementById('memo').value = ${JSON.stringify(row.memo || row.rawMemo || "")};
+  const commandOptions = {
+    scope: ['마감','골조성','구조','토목','조경','기계','전기','인테리어','철거','전공정'],
+    usage: ['창고','공장','제약공장','식품공장','반도체공장','물류센터','아파트형공장','공동주택','오피스텔','주상복합','업무시설','오피스','근린생활시설','지식산업센터','기숙사','연수원','학교','교육연구시설','연구소','역사'],
+    count: ['1회','2회','3회','1회차','2회차','3회차','변경전','변경후','변경도서','기타'],
+    unitWork: ['개산견적','공내역서','설계예가','공사비검증','비교내역서','단가작업','기타'],
+    bid: ['실행','입찰','본사 실행','본사 입찰','현장 실행','대관','기타']
+  };
+  let dropdown = null;
+  function closeCommandDropdown(){
+    if(dropdown){ dropdown.remove(); dropdown = null; }
+    document.querySelectorAll('[data-command-field]').forEach(el => el.classList.remove('command-active'));
+  }
+  function openCommandDropdown(input){
+    closeCommandDropdown();
+    const key = input.dataset.commandField;
+    const current = String(input.value || '').trim();
+    const options = [...new Set([...(commandOptions[key] || []), current].filter(Boolean))];
+    dropdown = document.createElement('div');
+    dropdown.className = 'memo-dropdown';
+    dropdown.innerHTML = options.length
+      ? options.map((value, index) => '<button type="button" class="' + (index === 0 ? 'active' : '') + '" data-value="' + value.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;') + '">' + value.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</button>').join('')
+      : '<div class="empty">입력 후 Enter를 누르면 해당 값으로 저장됩니다.</div>';
+    document.body.appendChild(dropdown);
+    const rect = input.getBoundingClientRect();
+    dropdown.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+    dropdown.style.top = Math.min(rect.bottom + 6, window.innerHeight - 280) + 'px';
+    input.classList.add('command-active');
+    dropdown.querySelectorAll('button[data-value]').forEach(btn => btn.addEventListener('click', () => { input.value = btn.dataset.value || ''; closeCommandDropdown(); input.focus(); }));
+  }
+  document.querySelectorAll('[data-command-field]').forEach(input => {
+    input.addEventListener('keydown', event => {
+      if(event.key === 'Enter' && !event.ctrlKey && !event.altKey && !event.shiftKey){
+        event.preventDefault();
+        openCommandDropdown(input);
+      }
+      if(event.key === 'Escape') closeCommandDropdown();
+    });
+  });
+  document.addEventListener('click', event => {
+    if(dropdown && !dropdown.contains(event.target) && !event.target.closest('[data-command-field]')) closeCommandDropdown();
+  });
   function saveMemo(){
     if(!window.opener || !window.opener.saveEstimateRequestMemoFromWindow){ alert('원본 화면을 찾을 수 없습니다.'); return; }
     window.opener.saveEstimateRequestMemoFromWindow(REQUEST_ID, {
@@ -4146,8 +4187,8 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("건물용도", row.usage || "");
       put("업무단계2", row.count || "");
       put("단가작업여부", row.unitWork || row.estimateType || "");
-      put("작업구분", row.bid || "");
-      put("업무성격", row.startMode || row.status);
+      put("작업구분", "");
+      put("업무성격", row.bid || row.startMode || row.status);
       put("상담 / 이메일 / 특기사항", row.memo);
       put("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
       put("작업착수일자", row.contractDate && row.contractDate !== "대기중" ? estimateRequestDbDateLabel(row.contractDate) : "");
@@ -4353,8 +4394,8 @@ function estimateCentralRowToDbMap(row = {}) {
     "PJ명": row.project || "",
     "거래처": "견적부",
     "작업공종": row.scope || row.description || "",
-    "작업구분": row.bid || row.tender || "",
-    "업무성격": type,
+    "작업구분": row.tender || "",
+    "업무성격": row.bid || type,
     "업무단계2": row.count || "",
     "단가작업여부": row.unitWork || type,
     "건물용도": row.usage || "",
@@ -4429,7 +4470,7 @@ function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
     usage: get("건물용도"),
     count: get("업무단계2"),
     unitWork: get("단가작업여부"),
-    bid: get("작업구분"),
+    bid: get("업무성격") || get("작업구분"),
     description: "",
     tender: get("작업구분"),
     status: estimateCentralNormalizeStatusForPeriod(get("수주일자") ? "수주" : "대기중"),
@@ -4484,6 +4525,11 @@ function estimateCentralEnsureRequestRow(row = {}, options = {}) {
     project: row.project || "",
     contact: "",
     estimateType: estimatePeriodResolveEstimateType?.(row) || "개산견적",
+    scope: row.scope || "",
+    usage: row.usage || "",
+    count: row.count || "",
+    unitWork: row.unitWork || row.estimateType || "",
+    bid: row.bid || "",
     memo: [row.scope, row.description, row.memo].filter(Boolean).join(" / "),
     status: estimateCentralNormalizeStatusForRequest(row.status),
     estimateId: estimateCentralEstimateId(row),
