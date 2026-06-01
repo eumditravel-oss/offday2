@@ -1376,12 +1376,8 @@ function openEstimateSheetExcelWindow(index = null, option = {}) {
 
 
 function newEstimateSheetRecord(type = estimateSheetActiveType) {
-  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
-  estimateSheetEditingIndex = null;
-  estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  estimateSheetExcelActiveCell = { r: 1, c: 1 };
-  renderEstimateSheetManage();
-  return openEstimateSheetExcelWindow(null, { newBlank: true });
+  if (typeof showToast === "function") showToast("견적서는 견적 의뢰관리에서만 신규 등록할 수 있습니다.");
+  return null;
 }
 
 function estimateSheetUploadExcelClick() {
@@ -2283,12 +2279,8 @@ function openEstimateSheetExcelWindow(index = null, option = {}) {
 }
 
 function newEstimateSheetRecord(type = estimateSheetActiveType) {
-  estimateSheetActiveType = ESTIMATE_SHEET_TYPE_ORDER.includes(type) ? type : estimateSheetActiveType;
-  estimateSheetEditingIndex = null;
-  estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
-  estimateSheetExcelActiveCell = { r: 1, c: 1 };
-  renderEstimateSheetManage();
-  return openEstimateSheetExcelWindow(null, { newBlank: true });
+  if (typeof showToast === "function") showToast("견적서는 견적 의뢰관리에서만 신규 등록할 수 있습니다.");
+  return null;
 }
 
 function estimateSheetApplyUploadedWorkbook(sheet, type, fileName) {
@@ -6340,3 +6332,11 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
     window.estimateSheetCloneState = estimateSheetCloneState;
   }
 })();
+
+
+/* 견적서 종류별 관리에서는 신규 견적서 생성을 차단합니다.
+   신규 견적서는 반드시 견적 의뢰관리의 의뢰등록/실행 흐름에서만 생성됩니다. */
+window.newEstimateSheetRecord = function newEstimateSheetRecordFromSheetManageBlocked(type) {
+  if (typeof showToast === "function") showToast("견적서는 견적 의뢰관리에서만 신규 등록할 수 있습니다.");
+  return null;
+};
