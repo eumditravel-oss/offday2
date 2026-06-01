@@ -2855,6 +2855,9 @@ function estimatePeriodMergeDuplicateRows(rows = []) {
     const secondary = primary === row ? prev : row;
     const manual = { ...(estimatePeriodManualMap?.(secondary) || {}), ...(estimatePeriodManualMap?.(primary) || {}) };
     const next = { ...secondary, ...primary, manualPeriodFields: manual };
+    ["scope", "usage", "count", "unitWork", "bid", "description", "tender", "status", "area", "unitPrice", "amount"].forEach(keyName => {
+      if (!estimatePeriodNormalizeText(next[keyName] || "") && estimatePeriodNormalizeText(secondary[keyName] || "")) next[keyName] = secondary[keyName];
+    });
     ESTIMATE_PERIOD_MANUAL_KEYS.forEach(keyName => {
       if (manual[keyName]) next[keyName] = primary[keyName] || secondary[keyName] || "";
     });
@@ -2946,6 +2949,39 @@ function renderEstimatePeriodFilters() {
   });
 }
 
+function estimatePeriodSyncEditableFieldsToRequest(periodRow = {}) {
+  try {
+    if (typeof estimateRequestLoadRows !== "function" || typeof estimateRequestRows === "undefined") return;
+    estimateRequestLoadRows();
+    const norm = value => String(value ?? "").replace(/\s+/g, " ").trim();
+    const centralKey = norm(periodRow.centralKey || "");
+    const dbPjNo = norm(periodRow.dbPjNo || periodRow.pjNo || "");
+    const company = norm(periodRow.company || periodRow.companyRaw || "");
+    const project = norm(periodRow.project || "");
+    const idx = estimateRequestRows.findIndex(item => {
+      const row = estimateRequestNormalizeRow?.(item) || item;
+      if (centralKey && norm(row.centralKey || "") === centralKey) return true;
+      if (dbPjNo && norm(row.dbPjNo || row.pjNo || row.projectNo || "") === dbPjNo) return true;
+      return project && norm(row.project || "") === project && (!company || norm(row.company || "") === company);
+    });
+    if (idx < 0) return;
+    const row = estimateRequestNormalizeRow?.(estimateRequestRows[idx]) || { ...(estimateRequestRows[idx] || {}) };
+    row.scope = periodRow.scope || "";
+    row.usage = periodRow.usage || "";
+    row.count = periodRow.count || "";
+    row.unitWork = periodRow.unitWork || row.unitWork || row.estimateType || "";
+    row.bid = periodRow.bid || "";
+    row.description = periodRow.description || "";
+    if (row.unitWork) row.estimateType = row.unitWork;
+    row.updatedAt = estimateRequestNowLabel?.() || new Date().toLocaleString();
+    estimateRequestRows[idx] = row;
+    estimateRequestSaveRows?.();
+    syncEstimateRequestToDb?.(row.id, { silent: true });
+  } catch (err) {
+    console.warn("기간별 견적서 입력값 의뢰관리 역연동 실패", err);
+  }
+}
+
 function estimatePeriodPersistRenderedRows(rerender = true) {
   const rows = Array.from(document.querySelectorAll("#estimatePeriodSheetBody tr[data-period-row-id]"));
   estimatePeriodLoadEdits();
@@ -3004,6 +3040,11 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
     }
   });
   estimatePeriodEditRows = Array.from(editMap.values()).filter(row => row.source !== "template" || row.id.startsWith("manual") || row.modified);
+  rows.forEach(tr => {
+    const id = tr.getAttribute("data-period-row-id");
+    const row = id ? (editMap.get(id) || estimatePeriodEditRows.find(item => item.id === id)) : null;
+    if (row) estimatePeriodSyncEditableFieldsToRequest?.(row);
+  });
   estimatePeriodSaveEdits();
   if (sentChanged) estimatePeriodSaveSentRows();
   if (rerender) renderEstimatePeriodManage();
@@ -3399,9 +3440,15 @@ function estimateRequestNormalizeRow(row = {}) {
     project: row.project || "",
     client: row.client || "",
     contact: row.contact || "",
+    scope: row.scope || row.workScope || row.workType || "",
+    usage: row.usage || row.buildingUsage || "",
+    count: row.count || row.workCount || "",
+    unitWork: row.unitWork || row.unitPriceWork || "",
+    bid: row.bid || row.bidType || "",
+    description: row.description || row.workDescription || "",
     memo: row.memo || row.rawMemo || "",
     status: estimateRequestNormalizeStatus(row.status),
-    estimateType: row.estimateType || "개산견적",
+    estimateType: row.estimateType || row.unitWork || "개산견적",
     estimateId: row.estimateId || "",
     periodKey: row.periodKey || "",
     dbPjNo: row.dbPjNo || row.pjNo || row.projectNo || "",
@@ -3746,20 +3793,32 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   const project = estimateRequestHtml(row.project || "");
   const client = estimateRequestHtml(row.client || "");
   const contact = estimateRequestHtml(row.contact || "");
+  const scope = estimateRequestHtml(row.scope || "");
+  const usage = estimateRequestHtml(row.usage || "");
+  const count = estimateRequestHtml(row.count || "");
+  const unitWork = estimateRequestHtml(row.unitWork || row.estimateType || "");
+  const bid = estimateRequestHtml(row.bid || "");
   w.document.open();
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>견적 의뢰 메모</title><style>
     *{box-sizing:border-box} body{margin:0;background:#f4f7fb;color:#0f172a;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif}
     .bar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #dbe4ef;box-shadow:0 4px 14px rgba(15,23,42,.06)}
     .brand{display:flex;align-items:center;gap:10px;font-weight:900}.brand b{display:inline-flex;padding:7px 12px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}.brand span{font-size:18px}
     .actions{display:flex;gap:8px}.btn{height:36px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;padding:0 14px;font-weight:900;cursor:pointer}.primary{background:#ff6b00;color:#fff;border-color:#ff6b00}
-    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569}.field input{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff}.field.wide{grid-column:span 2}
-    textarea{width:100%;min-height:480px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}
+    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff}.field.wide{grid-column:span 2}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}
+    textarea{width:100%;min-height:430px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}
   </style></head><body><div class="bar"><div class="brand"><b>CON-COST</b><span>견적 의뢰 메모</span></div><div class="actions"><button class="btn" onclick="window.close()">닫기</button><button class="btn primary" onclick="saveMemo()">저장</button></div></div><main>
   <div class="grid">
     <label class="field"><span>업체명</span><input id="company" value="${company}" placeholder="예: (주)xx건설"></label>
     <label class="field wide"><span>프로젝트명</span><input id="project" value="${project}" placeholder="대략적인 프로젝트명"></label>
     <label class="field"><span>의뢰자</span><input id="client" value="${client}" placeholder="담당자명"></label>
     <label class="field"><span>연락처</span><input id="contact" value="${contact}" placeholder="전화/이메일"></label>
+  </div>
+  <div class="subgrid" aria-label="기간별 견적서 관리 연동 입력값">
+    <label class="field"><span>작업범위</span><input id="scope" value="${scope}" placeholder="예: 구조, 마감"></label>
+    <label class="field"><span>건물용도</span><input id="usage" value="${usage}" placeholder="예: 공장, 근생"></label>
+    <label class="field"><span>작업횟수</span><input id="count" value="${count}" placeholder="예: 1회"></label>
+    <label class="field"><span>단가작업</span><select id="unitWork"><option value="">선택 안함</option>${ESTIMATE_SHEET_TYPE_ORDER.map(t => `<option value="${estimateRequestHtml(t)}" ${String(row.unitWork || row.estimateType || "") === t ? "selected" : ""}>${estimateRequestHtml(t)}</option>`).join("")}</select></label>
+    <label class="field"><span>실행/입찰</span><input id="bid" value="${bid}" placeholder="예: 실행, 입찰"></label>
   </div>
   <textarea id="memo" placeholder="클라이언트 의뢰 내용을 메모장처럼 자유롭게 길게 작성하세요.\n예: (주)xx건설 / xx프로젝트 / 견적 요청 가능성 / 통화 내용 / 전달사항"></textarea>
   <div class="hint">저장하면 의뢰관리 리스트의 메모는 [열기] 버튼으로 확인됩니다.</div>
@@ -3774,6 +3833,11 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
       project: document.getElementById('project').value,
       client: document.getElementById('client').value,
       contact: document.getElementById('contact').value,
+      scope: document.getElementById('scope')?.value || '',
+      usage: document.getElementById('usage')?.value || '',
+      count: document.getElementById('count')?.value || '',
+      unitWork: document.getElementById('unitWork')?.value || '',
+      bid: document.getElementById('bid')?.value || '',
       memo: document.getElementById('memo').value,
       isNew: IS_NEW
     });
@@ -3792,6 +3856,12 @@ function saveEstimateRequestMemoFromWindow(id, payload = {}) {
   row.project = String(payload.project || "").trim() || row.project || "";
   row.client = String(payload.client || "").trim() || row.client || "";
   row.contact = String(payload.contact || "").trim() || row.contact || "";
+  row.scope = String(payload.scope || "").trim();
+  row.usage = String(payload.usage || "").trim();
+  row.count = String(payload.count || "").trim();
+  row.unitWork = String(payload.unitWork || "").trim();
+  row.bid = String(payload.bid || "").trim();
+  if (row.unitWork && (!row.estimateType || row.estimateType === "개산견적")) row.estimateType = row.unitWork;
   estimateRequestAddHistory(row, idx >= 0 ? "의뢰 메모 수정 저장" : "클라이언트 의뢰 메모 등록");
   if (idx >= 0) estimateRequestRows[idx] = row;
   else estimateRequestRows.unshift(row);
@@ -4067,7 +4137,11 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("프로젝트명", row.project);
       put("거래처담당자", row.client);
       put("휴대폰", row.contact);
-      put("작업공종", row.workType || "");
+      put("작업공종", row.scope || row.workType || "");
+      put("건물용도", row.usage || "");
+      put("업무단계2", row.count || "");
+      put("단가작업여부", row.unitWork || row.estimateType || "");
+      put("작업구분", row.bid || "");
       put("업무성격", row.startMode || row.status);
       put("상담 / 이메일 / 특기사항", row.memo);
       put("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
@@ -5058,12 +5132,15 @@ function estimateLinkageRequestToCentralRow(request = {}) {
     company: req.company || req.client,
     client: req.client,
     project: req.project,
-    scope: "",
-    description: "",
+    scope: req.scope || req.workType || "",
+    usage: req.usage || "",
+    count: req.count || "",
+    description: req.description || "",
     memo: req.memo || req.rawMemo,
     status: req.status,
-    unitWork: req.estimateType,
-    estimateType: req.estimateType,
+    unitWork: req.unitWork || req.estimateType,
+    bid: req.bid || "",
+    estimateType: req.unitWork || req.estimateType,
     dbPjNo: req.dbPjNo || "",
     centralKey: req.centralKey || ""
   });
