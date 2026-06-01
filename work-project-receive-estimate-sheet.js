@@ -3548,7 +3548,7 @@ function renderEstimateRequestManage() {
       <label class="grow">검색 <input id="estimateRequestSearch" value="${estimateRequestHtml(estimateRequestFilters.q || "")}" placeholder="업체명, 프로젝트명, 메모, 담당자 검색"></label>
       <button class="btn btn-line" type="button" id="estimateRequestApplyFilter">조회</button>
       <button class="btn btn-line" type="button" id="estimateRequestResetFilter">전체보기</button>
-      <button class="btn btn-primary" type="button" onclick="addEstimateRequestMemo()">의뢰 등록</button>
+      <button class="btn btn-primary" type="button" onclick="saveEstimateRequestVisibleRowsFromDom()">저장</button>
     </div>
     <div class="estimate-workflow-summary">${estimateRequestStatusSummary().map(item => `<span><b>${estimateRequestHtml(item.status)}</b>${item.count.toLocaleString("ko-KR")}건</span>`).join("")}</div>
   `;
@@ -3564,11 +3564,11 @@ function renderEstimateRequestManage() {
       <table class="estimate-workflow-table">
         <colgroup><col class="col-date"><col class="col-status"><col class="col-company"><col class="col-project"><col class="col-client"><col class="col-memo"><col class="col-estimate"><col class="col-actions"></colgroup>
         <thead><tr><th>의뢰일</th><th>상태</th><th>업체명</th><th>프로젝트명</th><th>의뢰자/연락처</th><th>메모</th><th>견적서</th><th class="estimate-actions-header">관리</th></tr></thead>
-        <tbody>${rows.map(row => estimateRequestRowHtml(row)).join("") || `<tr><td colspan="8" class="empty-cell">등록된 견적 의뢰가 없습니다. [의뢰 등록]으로 메모장처럼 먼저 기록하세요.</td></tr>`}</tbody>
+        <tbody>${rows.map(row => estimateRequestRowHtml(row)).join("") || `<tr><td colspan="8" class="empty-cell">등록된 견적 의뢰가 없습니다.</td></tr>`}</tbody>
       </table>
     </div>
     <div class="estimate-workflow-help">
-      흐름: 의뢰 등록 → 견적서 작성요청 → 견적서 종류별 관리에서 작성/발송 → 기간별 견적서 관리 자동 누적 → 선착수 또는 작업시작 처리 → DB관리(PJ관리) 후보 행 자동 연결.
+      흐름: 저장 → 상태 선택 → 실행 → 견적열기 활성화 → 견적서 종류별 관리에서 작성/발송 → 기간별 견적서 관리 자동 누적 → 선착수 또는 작업시작 처리 → DB관리(PJ관리) 후보 행 자동 연결.
     </div>
   `;
   estimateRequestRefreshSelectLabels(board);
@@ -3577,8 +3577,9 @@ function estimateRequestRowHtml(row) {
   row = estimateRequestNormalizeRow(row);
   const linkedEstimate = row.estimateId ? estimateSheetRecords.find(r => r.id === row.estimateId) : null;
   const safeId = estimateRequestHtml(row.id);
-  const estimateActionLabel = linkedEstimate ? "견적열기" : "견적서 작성";
-  const estimateAction = linkedEstimate ? `openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')` : `createEstimateSheetFromRequest('${safeId}')`;
+  const estimateOpenDisabled = linkedEstimate ? "" : "disabled";
+  const estimateOpenTitle = linkedEstimate ? "연결된 견적서를 엽니다." : "실행 버튼을 먼저 눌러 견적서를 생성하면 활성화됩니다.";
+  const estimateOpenAction = linkedEstimate ? `openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')` : "";
   const currentStatus = ESTIMATE_REQUEST_STATUS.includes(row.status) ? row.status : "의뢰메모";
   const currentEstimateType = ESTIMATE_SHEET_TYPE_ORDER.includes(row.estimateType) ? row.estimateType : "개산견적";
   const statusOptions = ESTIMATE_REQUEST_STATUS.map(s => `<option value="${estimateRequestHtml(s)}" ${currentStatus === s ? "selected" : ""}>${estimateRequestHtml(s)}</option>`).join("");
@@ -3593,12 +3594,11 @@ function estimateRequestRowHtml(row) {
     <td><span class="estimate-select-wrap"><select class="estimate-request-select" data-request-field="estimateType" title="${estimateRequestHtml(currentEstimateType)}" onchange="this.setAttribute('title', this.value); this.dataset.selectedText=this.value; const v=this.parentElement.querySelector('.estimate-select-value'); if(v) v.textContent=this.value;">${estimateTypeOptions}</select><span class="estimate-select-value">${estimateRequestHtml(currentEstimateType)}</span></span><small>${linkedEstimate ? estimateRequestHtml(linkedEstimate.title || "연결됨") : "미작성"}</small></td>
     <td class="estimate-actions-cell">
       <div class="estimate-workflow-row-actions compact">
-        <button class="btn btn-line btn-xs" type="button" onclick="saveEstimateRequestRowFromDom('${safeId}')">저장</button>
-        <button class="btn btn-primary btn-xs" type="button" onclick="${estimateAction}">${estimateActionLabel}</button>
         <select class="estimate-request-action-select" data-request-action title="상태 변경" onchange="this.setAttribute('title', this.options[this.selectedIndex]?.text || this.value);">
           ${statusOptions}
         </select>
         <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestAction('${safeId}')">실행</button>
+        <button class="btn btn-primary btn-xs estimate-open-btn" type="button" ${estimateOpenDisabled} title="${estimateRequestHtml(estimateOpenTitle)}" onclick="${estimateOpenAction}">견적열기</button>
       </div>
     </td>
   </tr>`;
@@ -3677,7 +3677,7 @@ function runEstimateRequestAction(id) {
   const tr = document.querySelector(`tr[data-request-id="${CSS.escape(id)}"]`);
   const status = tr?.querySelector("[data-request-action]")?.value || "";
   if (!status) { alert("변경할 상태를 선택하세요."); return; }
-  saveEstimateRequestRowFromDom(id);
+  saveEstimateRequestRowFromDom(id, { silent: true, noRender: true });
   if (status === "선착수") startEstimateRequest(id, "선착수");
   else if (status === "작업시작") startEstimateRequest(id, "작업시작");
   else if (status === "작업취소") cancelEstimateRequest(id);
@@ -3692,17 +3692,22 @@ function runEstimateRequestAction(id) {
       estimateRequestRows[idx] = row;
       estimateRequestSaveRows();
       syncEstimateRequestToDb(id, { silent: true });
+      if (!row.estimateId) {
+        createEstimateSheetFromRequest(id, { open: false, silent: true });
+        showToast?.(`${status} 실행 완료. 견적열기 버튼이 활성화되었습니다.`);
+        return;
+      }
       renderEstimateRequestManage();
       showToast?.(`${status} 상태로 변경되었습니다.`);
     }
   }
 }
 
-function saveEstimateRequestRowFromDom(id) {
+function saveEstimateRequestRowFromDom(id, options = {}) {
   estimateRequestLoadRows();
   const tr = document.querySelector(`tr[data-request-id="${CSS.escape(id)}"]`);
   const idx = estimateRequestRows.findIndex(r => r.id === id);
-  if (!tr || idx < 0) return;
+  if (!tr || idx < 0) return false;
   const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
   tr.querySelectorAll("[data-request-field]").forEach(el => {
     const key = el.getAttribute("data-request-field");
@@ -3713,8 +3718,21 @@ function saveEstimateRequestRowFromDom(id) {
   estimateRequestRows[idx] = row;
   estimateRequestSaveRows();
   syncEstimateRequestToDb(id, { silent: true });
+  if (!options.noRender) renderEstimateRequestManage();
+  if (!options.silent) showToast?.(`견적 의뢰관리 행을 저장했습니다. 현재 상태: ${row.status || "-"}`);
+  return true;
+}
+
+function saveEstimateRequestVisibleRowsFromDom() {
+  estimateRequestLoadRows();
+  const rows = Array.from(document.querySelectorAll("#estimateWorkflowBoard tr[data-request-id]"));
+  let changed = 0;
+  rows.forEach(tr => {
+    const id = tr.getAttribute("data-request-id");
+    if (id && saveEstimateRequestRowFromDom(id, { silent: true, noRender: true })) changed += 1;
+  });
   renderEstimateRequestManage();
-  showToast?.(`견적 의뢰관리 행을 저장했습니다. 현재 상태: ${row.status || "-"}`);
+  showToast?.(changed ? `견적 의뢰관리 표시 행 ${changed}건을 저장했습니다.` : "저장할 견적 의뢰관리 행이 없습니다.");
 }
 
 function estimateRequestSetCell(state, r, c, v) {
@@ -3723,7 +3741,7 @@ function estimateRequestSetCell(state, r, c, v) {
   obj.formula = "";
   obj.userFormula = false;
 }
-function createEstimateSheetFromRequest(id) {
+function createEstimateSheetFromRequest(id, options = {}) {
   estimateRequestLoadRows();
   const idx = estimateRequestRows.findIndex(r => r.id === id);
   if (idx < 0) return;
@@ -3757,8 +3775,8 @@ function createEstimateSheetFromRequest(id) {
   estimateSheetActiveType = type;
   if (typeof renderEstimateSheetManage === "function") renderEstimateSheetManage();
   renderEstimateRequestManage();
-  showToast?.("견적서 종류별 관리로 대기중 견적서를 연결 등록했습니다.");
-  openEstimateSheetById(row.estimateId);
+  if (!options.silent) showToast?.("견적서 종류별 관리로 대기중 견적서를 연결 등록했습니다.");
+  if (options.open !== false) openEstimateSheetById(row.estimateId);
 }
 function openEstimateSheetById(estimateId) {
   const index = estimateSheetRecords.findIndex(r => r.id === estimateId);
@@ -4296,8 +4314,8 @@ if (estimateCentralOriginalPersistPeriodRows) {
 }
 const estimateCentralOriginalCreateEstimateSheetFromRequest = typeof createEstimateSheetFromRequest === "function" ? createEstimateSheetFromRequest : null;
 if (estimateCentralOriginalCreateEstimateSheetFromRequest) {
-  window.createEstimateSheetFromRequest = function estimateCentralCreateEstimateSheetFromRequest(id) {
-    const result = estimateCentralOriginalCreateEstimateSheetFromRequest(id);
+  window.createEstimateSheetFromRequest = function estimateCentralCreateEstimateSheetFromRequest(id, options = {}) {
+    const result = estimateCentralOriginalCreateEstimateSheetFromRequest(id, options);
     const req = estimateRequestRows.find(row => row.id === id);
     if (req) {
       const row = {
