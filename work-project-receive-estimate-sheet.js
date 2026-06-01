@@ -3876,7 +3876,20 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   function selectCommandActive(input){
     const active = dropdown?.querySelector('button[data-value].active') || dropdown?.querySelector('button[data-value]');
     if(!active) return false;
-    input.value = active.dataset.value || '';
+
+    // 작업범위는 Ctrl+B로 복수 지정한 항목을 Enter에서 그대로 확정해야 합니다.
+    // 기존처럼 active 1개로 덮어쓰면 복수 선택값이 사라지므로, 선택값이 있으면 현재 입력값을 유지합니다.
+    if(input?.dataset?.commandField === 'scope' && input?.dataset?.multiCommand === 'true'){
+      const selectedValues = splitCommandValues(input.value);
+      if(selectedValues.length){
+        input.value = joinCommandValues(selectedValues);
+      }else{
+        input.value = active.dataset.value || '';
+      }
+    }else{
+      input.value = active.dataset.value || '';
+    }
+
     closeCommandDropdown();
     input.focus();
     input.dispatchEvent(new Event('input', { bubbles: true }));
