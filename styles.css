@@ -20448,3 +20448,13 @@ button.btn-orange{
   border-color:#dbe4ef !important;
   color:#0f172a !important;
 }
+
+/* 기간별 견적서 관리: 방향키 이동 포커스 고정 보강 */
+.estimate-period-manage-table td.period-cell-focused{
+  box-shadow:inset 0 0 0 2px #22c55e !important;
+  background:#fff !important;
+  outline:none !important;
+}
+.estimate-period-manage-table td:focus{
+  outline:none !important;
+}
