@@ -3598,6 +3598,7 @@ function estimateRequestRowHtml(row) {
         </select>
         <button class="btn btn-line btn-xs" type="button" onclick="runEstimateRequestAction('${safeId}')">실행</button>
         <button class="btn btn-primary btn-xs estimate-open-btn" type="button" ${estimateOpenDisabled} title="${estimateRequestHtml(estimateOpenTitle)}" onclick="${estimateOpenAction}">견적열기</button>
+        <button class="btn btn-line btn-xs estimate-delete-btn" type="button" title="견적 의뢰 행을 삭제합니다." onclick="deleteEstimateRequestRow('${safeId}')">삭제</button>
       </div>
     </td>
   </tr>`;
@@ -3732,6 +3733,45 @@ function saveEstimateRequestVisibleRowsFromDom() {
   });
   renderEstimateRequestManage();
   showToast?.(changed ? `견적 의뢰관리 표시 행 ${changed}건을 저장했습니다.` : "저장할 견적 의뢰관리 행이 없습니다.");
+}
+
+function deleteEstimateRequestRow(id) {
+  estimateRequestLoadRows();
+  const idx = estimateRequestRows.findIndex(r => r.id === id);
+  if (idx < 0) {
+    showToast?.("삭제할 견적 의뢰 행을 찾을 수 없습니다.");
+    return false;
+  }
+  const row = estimateRequestNormalizeRow(estimateRequestRows[idx]);
+  const label = [row.company, row.project].filter(Boolean).join(" / ") || row.date || "선택한 견적 의뢰";
+  if (!confirm(`${label} 행을 삭제하시겠습니까?`)) return false;
+
+  const linkedEstimateId = row.estimateId || "";
+  estimateRequestRows.splice(idx, 1);
+  estimateRequestSaveRows();
+
+  if (linkedEstimateId && Array.isArray(estimateSheetRecords)) {
+    estimateSheetRecords = estimateSheetRecords.filter(record => record.id !== linkedEstimateId && record.requestId !== id);
+    if (estimateSheetEditingIndex !== null && !estimateSheetRecords[estimateSheetEditingIndex]) {
+      estimateSheetEditingIndex = null;
+      estimateSheetEditorState = null;
+    }
+  }
+
+  if (typeof estimatePeriodSentRows !== "undefined" && Array.isArray(estimatePeriodSentRows)) {
+    estimatePeriodSentRows = estimatePeriodSentRows.filter(item => item.requestId !== id && item.sourceEstimateId !== linkedEstimateId);
+    if (typeof estimatePeriodSaveRows === "function") estimatePeriodSaveRows();
+  }
+
+  if (typeof estimatePeriodEditRows !== "undefined" && Array.isArray(estimatePeriodEditRows)) {
+    estimatePeriodEditRows = estimatePeriodEditRows.filter(item => item.requestId !== id && item.sourceEstimateId !== linkedEstimateId);
+    if (typeof estimatePeriodSaveEditRows === "function") estimatePeriodSaveEditRows();
+  }
+
+  renderEstimateRequestManage();
+  if (typeof renderEstimateSheetManage === "function") renderEstimateSheetManage();
+  showToast?.("견적 의뢰 행을 삭제했습니다.");
+  return true;
 }
 
 function estimateRequestSetCell(state, r, c, v) {
