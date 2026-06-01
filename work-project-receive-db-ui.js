@@ -2598,11 +2598,13 @@ function ensureEstimateDbBillingManagerModal() {
   document.body.appendChild(modal);
   modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbBillingManagerModal(); });
   modal.addEventListener("keydown", event => {
-    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbBillingManagerModal(); }
-    if (event.key === "Enter" && event.target?.matches?.("#estimateDbBillingManagerName,#estimateDbBillingManagerPosition")) { event.preventDefault(); addEstimateDbBillingManagerCustom(); }
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbBillingManagerModal(); return; }
+    if (event.key === "Enter" && event.target?.matches?.("#estimateDbBillingManagerName,#estimateDbBillingManagerPosition")) { event.preventDefault(); addEstimateDbBillingManagerCustom(); return; }
+    handleEstimateDbBillingManagerModalKeydown(event);
   });
   return modal;
 }
+let estimateDbBillingManagerActiveIndex = 0;
 function renderEstimateDbBillingManagerOptions(selectedManagers = []) {
   const modal = ensureEstimateDbBillingManagerModal();
   const body = modal.querySelector("#estimateDbBillingManagerOptions");
@@ -2614,9 +2616,67 @@ function renderEstimateDbBillingManagerOptions(selectedManagers = []) {
   });
   body.innerHTML = merged.map((item, index) => {
     const label = item.label || [item.name, item.position].filter(Boolean).join("");
-    const checked = selectedLabels.has(label) || (!selectedLabels.size && index === 0);
-    return `<label class="estimate-db-manager-option"><input type="checkbox" data-manager-option="1" value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(item.empNo || "")}" data-name="${escapeEstimateDbHtml(item.name || "")}" data-position="${escapeEstimateDbHtml(item.position || "")}" ${checked ? "checked" : ""} /><span>${escapeEstimateDbHtml(label)}</span>${item.empNo ? `<em>${escapeEstimateDbHtml(item.empNo)}</em>` : ""}</label>`;
+    const selected = selectedLabels.has(label) || (!selectedLabels.size && index === 0);
+    const active = index === estimateDbBillingManagerActiveIndex;
+    return `<button type="button" class="estimate-db-manager-option${selected ? " is-selected" : ""}${active ? " is-active" : ""}" data-manager-option="1" data-manager-index="${index}" data-selected="${selected ? "1" : "0"}" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(item.empNo || "")}" data-name="${escapeEstimateDbHtml(item.name || "")}" data-position="${escapeEstimateDbHtml(item.position || "")}" onclick="selectEstimateDbBillingManagerOption(${index}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${index})"><span class="estimate-db-manager-check">${selected ? "선택" : ""}</span><strong>${escapeEstimateDbHtml(label)}</strong>${item.empNo ? `<em>${escapeEstimateDbHtml(item.empNo)}</em>` : ""}</button>`;
   }).join("");
+  const options = Array.from(body.querySelectorAll('[data-manager-option="1"]'));
+  if (options.length) {
+    estimateDbBillingManagerActiveIndex = Math.max(0, Math.min(estimateDbBillingManagerActiveIndex, options.length - 1));
+    options[estimateDbBillingManagerActiveIndex]?.classList.add("is-active");
+  }
+}
+function getEstimateDbBillingManagerOptionButtons() {
+  return Array.from(ensureEstimateDbBillingManagerModal().querySelectorAll('#estimateDbBillingManagerOptions [data-manager-option="1"]'));
+}
+function focusEstimateDbBillingManagerOption(index = 0) {
+  const options = getEstimateDbBillingManagerOptionButtons();
+  if (!options.length) return;
+  estimateDbBillingManagerActiveIndex = Math.max(0, Math.min(index, options.length - 1));
+  options.forEach((option, optionIndex) => option.classList.toggle("is-active", optionIndex === estimateDbBillingManagerActiveIndex));
+  options[estimateDbBillingManagerActiveIndex]?.focus({ preventScroll: true });
+  options[estimateDbBillingManagerActiveIndex]?.scrollIntoView({ block: "nearest" });
+}
+function selectEstimateDbBillingManagerOption(index = 0, toggle = false) {
+  const options = getEstimateDbBillingManagerOptionButtons();
+  if (!options.length) return;
+  focusEstimateDbBillingManagerOption(index);
+  const option = options[estimateDbBillingManagerActiveIndex];
+  if (!option) return;
+  if (toggle) {
+    const nextSelected = option.dataset.selected !== "1";
+    option.dataset.selected = nextSelected ? "1" : "0";
+    option.classList.toggle("is-selected", nextSelected);
+    option.querySelector(".estimate-db-manager-check").textContent = nextSelected ? "선택" : "";
+  }
+}
+function confirmEstimateDbBillingManagerOption(index = estimateDbBillingManagerActiveIndex) {
+  const options = getEstimateDbBillingManagerOptionButtons();
+  if (!options.length) return;
+  focusEstimateDbBillingManagerOption(index);
+  options.forEach((option, optionIndex) => {
+    const selected = optionIndex === estimateDbBillingManagerActiveIndex;
+    option.dataset.selected = selected ? "1" : "0";
+    option.classList.toggle("is-selected", selected);
+    option.querySelector(".estimate-db-manager-check").textContent = selected ? "선택" : "";
+  });
+  saveEstimateDbBillingManagerModal();
+}
+function handleEstimateDbBillingManagerModalKeydown(event) {
+  const isListKey = ["ArrowDown", "ArrowUp", "Home", "End", "Enter", " "].includes(event.key);
+  const targetIsAddInput = event.target?.matches?.("#estimateDbBillingManagerName,#estimateDbBillingManagerPosition");
+  if (targetIsAddInput) return;
+  if (!isListKey) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const options = getEstimateDbBillingManagerOptionButtons();
+  if (!options.length) return;
+  if (event.key === "ArrowDown") focusEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex + 1);
+  else if (event.key === "ArrowUp") focusEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex - 1);
+  else if (event.key === "Home") focusEstimateDbBillingManagerOption(0);
+  else if (event.key === "End") focusEstimateDbBillingManagerOption(options.length - 1);
+  else if (event.key === " ") selectEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex, true);
+  else if (event.key === "Enter") confirmEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex);
 }
 function addEstimateDbBillingManagerCustom() {
   const modal = ensureEstimateDbBillingManagerModal();
@@ -2634,13 +2694,15 @@ function addEstimateDbBillingManagerCustom() {
   } catch (_) {}
   const label = `${name}${position}`;
   const body = modal.querySelector("#estimateDbBillingManagerOptions");
-  if (!Array.from(body.querySelectorAll('input[data-manager-option]')).some(input => input.value === label)) {
-    body.insertAdjacentHTML("beforeend", `<label class="estimate-db-manager-option"><input type="checkbox" data-manager-option="1" value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" checked /><span>${escapeEstimateDbHtml(label)}</span>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</label>`);
+  if (!Array.from(body.querySelectorAll('[data-manager-option="1"]')).some(option => option.dataset.value === label)) {
+    const index = body.querySelectorAll('[data-manager-option="1"]').length;
+    body.insertAdjacentHTML("beforeend", `<button type="button" class="estimate-db-manager-option is-selected" data-manager-option="1" data-manager-index="${index}" data-selected="1" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" onclick="selectEstimateDbBillingManagerOption(${index}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${index})"><span class="estimate-db-manager-check">선택</span><strong>${escapeEstimateDbHtml(label)}</strong>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</button>`);
+    focusEstimateDbBillingManagerOption(index);
   }
   nameInput.value = ""; positionInput.value = ""; nameInput.focus();
 }
 function collectEstimateDbBillingManagerModalRows() {
-  return Array.from(ensureEstimateDbBillingManagerModal().querySelectorAll('input[data-manager-option]:checked')).map(input => ({ empNo: input.dataset.empNo || "", name: input.dataset.name || "", position: input.dataset.position || "", label: input.value || "" })).filter(item => normalizeEstimateDbText(item.label));
+  return Array.from(ensureEstimateDbBillingManagerModal().querySelectorAll('[data-manager-option="1"][data-selected="1"]')).map(option => ({ empNo: option.dataset.empNo || "", name: option.dataset.name || "", position: option.dataset.position || "", label: option.dataset.value || "" })).filter(item => normalizeEstimateDbText(item.label));
 }
 function openEstimateDbBillingManagerModal(rowIndex = estimateDbSelectedCell.rowIndex || 0, colIndex = estimateDbSelectedCell.colIndex || 0) {
   if (!isEstimateDbProgressBillingManagerColumn(estimateDbActiveTab, colIndex)) return false;
@@ -2648,10 +2710,11 @@ function openEstimateDbBillingManagerModal(rowIndex = estimateDbSelectedCell.row
   const row = getEstimateDbRows()?.[rowIndex] || [];
   const parsed = parseEstimateDbBillingManagerValue(row[colIndex]);
   estimateDbBillingManagerModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
+  estimateDbBillingManagerActiveIndex = 0;
   renderEstimateDbBillingManagerOptions(parsed.managers || []);
   const modal = ensureEstimateDbBillingManagerModal();
   modal.classList.remove("hidden");
-  setTimeout(() => modal.querySelector('input[data-manager-option]')?.focus(), 0);
+  setTimeout(() => focusEstimateDbBillingManagerOption(estimateDbBillingManagerActiveIndex), 0);
   return true;
 }
 function closeEstimateDbBillingManagerModal() {
