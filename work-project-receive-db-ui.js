@@ -29,6 +29,52 @@ function ensureEstimateDbPjDeliveryPlanColumnsOnce() {
   }
 }
 
+
+function ensureEstimateDbProgressActualDeliveryColumnsOnce() {
+  const sheet = estimateDbSheets?.progress;
+  if (!sheet?.headerRows?.length) return;
+  const topRow = sheet.headerRows[0] || [];
+  const leafCols = getEstimateDbLeafColumns(sheet);
+  const desiredLeaves = ["1차납품", "2차납품", "3차납품"];
+  const requestText = "실제 납품일 입력란: 260601 입력 시 26년6월1일 형식으로 저장";
+
+  const groupAt = (index) => {
+    let current = "";
+    for (let i = 0; i <= index; i += 1) {
+      const text = normalizeEstimateDbText(topRow[i]);
+      if (text) current = text;
+    }
+    return current;
+  };
+  const hasActualLeaf = (leaf) => leafCols.some((col, index) => normalizeEstimateDbText(col) === leaf && normalizeEstimateDbText(groupAt(index)).includes("실제납품일"));
+  if (desiredLeaves.every(hasActualLeaf)) return;
+
+  let targetIndex = -1;
+  for (let i = 0; i < leafCols.length; i += 1) {
+    if (normalizeEstimateDbText(groupAt(i)).includes("납품예정일") && normalizeEstimateDbText(leafCols[i]) === "3차납품") {
+      targetIndex = i + 1;
+      break;
+    }
+  }
+  if (targetIndex < 0) {
+    targetIndex = leafCols.findIndex(col => normalizeEstimateDbText(col).includes("세금계산서"));
+    if (targetIndex < 0) targetIndex = leafCols.length;
+  }
+
+  const toInsert = desiredLeaves.filter(leaf => !hasActualLeaf(leaf));
+  toInsert.forEach((leaf, offset) => {
+    const insertAt = targetIndex + offset;
+    (sheet.headerRows || []).forEach((row, headerRowIndex) => {
+      if (!Array.isArray(row)) return;
+      row.splice(insertAt, 0, headerRowIndex === 0 ? (offset === 0 ? "실제납품일" : "") : leaf);
+    });
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(insertAt, 0, requestText);
+    (sheet.rows || []).forEach(row => {
+      if (Array.isArray(row)) row.splice(insertAt, 0, "");
+    });
+  });
+}
+
 function ensureEstimateDbProgressAccountInfoColumnOnce() {
   const sheet = estimateDbSheets?.progress;
   if (!sheet?.headerRows?.length) return;
@@ -208,6 +254,7 @@ function runEstimateDbStructureMaintenanceOnce(options = {}) {
   ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: options.assignMissing !== false });
   ensureEstimateDbPjProjectLinkColumnOnce?.();
   ensureEstimateDbPjDeliveryPlanColumnsOnce?.();
+  ensureEstimateDbProgressActualDeliveryColumnsOnce?.();
   ensureEstimateDbProgressAccountInfoColumnOnce?.();
   estimateDbMaintenanceOnceDone = true;
 }
