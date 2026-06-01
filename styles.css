@@ -20510,3 +20510,16 @@ button.btn-orange{
 .estimate-db-account-grid input{
   min-width:0!important;
 }
+
+/* === 2026-06-01 기성관리 담당자 Enter 팝업 === */
+.estimate-db-billing-client-box{width:min(980px,calc(100vw - 48px));max-height:min(720px,calc(100vh - 48px));}
+.estimate-db-billing-client-grid{min-width:760px;}
+.estimate-db-billing-manager-box{width:min(760px,calc(100vw - 48px));max-height:min(680px,calc(100vh - 48px));}
+.estimate-db-manager-option-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:10px 0;}
+.estimate-db-manager-option{display:flex;align-items:center;gap:8px;border:1px solid #dbe5f0;border-radius:12px;background:#fff;padding:10px 12px;font-weight:900;cursor:pointer;}
+.estimate-db-manager-option input{width:16px;height:16px;}
+.estimate-db-manager-option span{flex:1;white-space:nowrap;}
+.estimate-db-manager-option em{font-style:normal;font-size:11px;color:#64748b;}
+.estimate-db-manager-add-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-top:10px;}
+.estimate-db-manager-add-row input{height:36px;border:1px solid #cfdbe8;border-radius:10px;padding:0 10px;font-weight:800;outline:none;}
+.estimate-db-manager-add-row input:focus{border-color:#ff9f2e;box-shadow:0 0 0 3px rgba(255,159,46,.14);}
