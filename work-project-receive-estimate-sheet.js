@@ -1924,28 +1924,57 @@ function estimatePeriodMergeInfo() {
 }
 
 
+function estimatePeriodElementFromEventTarget(target) {
+  if (!target) return null;
+  return target.nodeType === 1 ? target : (target.parentElement || null);
+}
+
 function estimatePeriodGetFocusableCells(host) {
   const table = host?.matches?.(".estimate-period-manage-table") ? host : host?.querySelector?.(".estimate-period-manage-table");
   if (!table) return [];
   return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr =>
-    Array.from(tr.children).map(td => td.querySelector("[contenteditable='true'], select, button:not([disabled]), input, textarea") || td)
+    Array.from(tr.children).map(td => {
+      const directControl = td.querySelector("select, button:not([disabled]), input, textarea");
+      return directControl || td;
+    })
   );
 }
 
+function estimatePeriodResolveActiveCell(active) {
+  const el = estimatePeriodElementFromEventTarget(active) || document.activeElement;
+  const td = el?.closest?.("td");
+  const table = td?.closest?.(".estimate-period-manage-table");
+  const tr = td?.closest?.("tr[data-period-row-id]");
+  if (table && tr && td) return { table, tr, td };
+
+  const focused = document.querySelector?.(".estimate-period-manage-table td.period-cell-focused");
+  if (focused) {
+    const focusedTable = focused.closest(".estimate-period-manage-table");
+    const focusedTr = focused.closest("tr[data-period-row-id]");
+    if (focusedTable && focusedTr) return { table: focusedTable, tr: focusedTr, td: focused };
+  }
+  return null;
+}
+
 function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
-  const grid = estimatePeriodGetFocusableCells(host);
+  const table = host?.matches?.(".estimate-period-manage-table") ? host : host?.querySelector?.(".estimate-period-manage-table");
+  const grid = estimatePeriodGetFocusableCells(table || host);
   const safeRowIndex = Math.max(0, Math.min(rowIndex, grid.length - 1));
   const row = grid[safeRowIndex];
   if (!row) return false;
   const safeColIndex = Math.max(0, Math.min(colIndex, row.length - 1));
   const target = row[safeColIndex];
   if (!target) return false;
+  const td = target.closest?.("td") || target;
+  table?.querySelectorAll?.("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
+  td.classList?.add("period-cell-focused");
   if (!target.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "")) {
     target.setAttribute?.("tabindex", "0");
   }
+  if (td !== target && !td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
   target.focus?.({ preventScroll: true });
   target.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-  if (target.isContentEditable) {
+  if (target.isContentEditable || target.getAttribute?.("contenteditable") === "true") {
     const range = document.createRange();
     range.selectNodeContents(target);
     range.collapse(false);
@@ -1958,35 +1987,59 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
 
 function estimatePeriodHandleNavKey(event, el) {
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
-  if (!keyMap[event.key]) return;
-  const active = el || event.target;
-  const table = active?.closest?.(".estimate-period-manage-table");
-  const tr = active?.closest?.("tr[data-period-row-id]");
-  const td = active?.closest?.("td");
-  if (!table || !tr || !td) return;
+  if (!keyMap[event.key]) return false;
+  const resolved = estimatePeriodResolveActiveCell(el || event.target);
+  if (!resolved) return false;
+  const { table, tr, td } = resolved;
   const rows = Array.from(table.querySelectorAll("tbody tr[data-period-row-id]"));
   const rowIndex = rows.indexOf(tr);
   const colIndex = Array.from(tr.children).indexOf(td);
-  if (rowIndex < 0 || colIndex < 0) return;
+  if (rowIndex < 0 || colIndex < 0) return false;
   const [dr, dc] = keyMap[event.key];
   event.preventDefault();
+  event.stopImmediatePropagation?.();
   event.stopPropagation();
   estimatePeriodPersistRenderedRows(false);
   estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
+  return true;
+}
+
+function estimatePeriodEnsureGlobalNavListener() {
+  if (window.__estimatePeriodGlobalNavBound === true) return;
+  window.__estimatePeriodGlobalNavBound = true;
+  document.addEventListener("keydown", event => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const active = estimatePeriodElementFromEventTarget(event.target) || document.activeElement;
+    if (active?.closest?.(".estimate-period-manage-table") || document.querySelector?.(".estimate-period-manage-table td.period-cell-focused")) {
+      estimatePeriodHandleNavKey(event, active);
+    }
+  }, true);
 }
 
 function estimatePeriodBindCellNavigation(host) {
   const table = host?.querySelector?.(".estimate-period-manage-table");
-  if (!table || table.dataset.navBound === "1") return;
-  table.dataset.navBound = "1";
+  if (!table) return;
+  table.querySelectorAll("tbody td").forEach(td => {
+    if (!td.hasAttribute("tabindex")) td.setAttribute("tabindex", "0");
+  });
   table.querySelectorAll("tbody td.editable, tbody td[contenteditable='true'], tbody select, tbody button").forEach(el => {
     if (!/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(el.tagName || "")) el.setAttribute("tabindex", "0");
   });
-  table.addEventListener("keydown", event => {
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-      estimatePeriodHandleNavKey(event, event.target);
-    }
-  }, true);
+  table.addEventListener("focusin", event => {
+    const td = estimatePeriodElementFromEventTarget(event.target)?.closest?.("td");
+    if (!td) return;
+    table.querySelectorAll("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
+    td.classList.add("period-cell-focused");
+  });
+  if (table.dataset.navBound !== "1") {
+    table.dataset.navBound = "1";
+    table.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+        estimatePeriodHandleNavKey(event, event.target);
+      }
+    }, true);
+  }
+  estimatePeriodEnsureGlobalNavListener();
 }
 
 function renderEstimatePeriodManage() {
@@ -3068,28 +3121,57 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
 }
 
 
+function estimatePeriodElementFromEventTarget(target) {
+  if (!target) return null;
+  return target.nodeType === 1 ? target : (target.parentElement || null);
+}
+
 function estimatePeriodGetFocusableCells(host) {
   const table = host?.matches?.(".estimate-period-manage-table") ? host : host?.querySelector?.(".estimate-period-manage-table");
   if (!table) return [];
   return Array.from(table.querySelectorAll("tbody tr[data-period-row-id]")).map(tr =>
-    Array.from(tr.children).map(td => td.querySelector("[contenteditable='true'], select, button:not([disabled]), input, textarea") || td)
+    Array.from(tr.children).map(td => {
+      const directControl = td.querySelector("select, button:not([disabled]), input, textarea");
+      return directControl || td;
+    })
   );
 }
 
+function estimatePeriodResolveActiveCell(active) {
+  const el = estimatePeriodElementFromEventTarget(active) || document.activeElement;
+  const td = el?.closest?.("td");
+  const table = td?.closest?.(".estimate-period-manage-table");
+  const tr = td?.closest?.("tr[data-period-row-id]");
+  if (table && tr && td) return { table, tr, td };
+
+  const focused = document.querySelector?.(".estimate-period-manage-table td.period-cell-focused");
+  if (focused) {
+    const focusedTable = focused.closest(".estimate-period-manage-table");
+    const focusedTr = focused.closest("tr[data-period-row-id]");
+    if (focusedTable && focusedTr) return { table: focusedTable, tr: focusedTr, td: focused };
+  }
+  return null;
+}
+
 function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
-  const grid = estimatePeriodGetFocusableCells(host);
+  const table = host?.matches?.(".estimate-period-manage-table") ? host : host?.querySelector?.(".estimate-period-manage-table");
+  const grid = estimatePeriodGetFocusableCells(table || host);
   const safeRowIndex = Math.max(0, Math.min(rowIndex, grid.length - 1));
   const row = grid[safeRowIndex];
   if (!row) return false;
   const safeColIndex = Math.max(0, Math.min(colIndex, row.length - 1));
   const target = row[safeColIndex];
   if (!target) return false;
+  const td = target.closest?.("td") || target;
+  table?.querySelectorAll?.("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
+  td.classList?.add("period-cell-focused");
   if (!target.hasAttribute?.("tabindex") && !/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(target.tagName || "")) {
     target.setAttribute?.("tabindex", "0");
   }
+  if (td !== target && !td.hasAttribute?.("tabindex")) td.setAttribute?.("tabindex", "0");
   target.focus?.({ preventScroll: true });
   target.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-  if (target.isContentEditable) {
+  if (target.isContentEditable || target.getAttribute?.("contenteditable") === "true") {
     const range = document.createRange();
     range.selectNodeContents(target);
     range.collapse(false);
@@ -3102,35 +3184,59 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
 
 function estimatePeriodHandleNavKey(event, el) {
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
-  if (!keyMap[event.key]) return;
-  const active = el || event.target;
-  const table = active?.closest?.(".estimate-period-manage-table");
-  const tr = active?.closest?.("tr[data-period-row-id]");
-  const td = active?.closest?.("td");
-  if (!table || !tr || !td) return;
+  if (!keyMap[event.key]) return false;
+  const resolved = estimatePeriodResolveActiveCell(el || event.target);
+  if (!resolved) return false;
+  const { table, tr, td } = resolved;
   const rows = Array.from(table.querySelectorAll("tbody tr[data-period-row-id]"));
   const rowIndex = rows.indexOf(tr);
   const colIndex = Array.from(tr.children).indexOf(td);
-  if (rowIndex < 0 || colIndex < 0) return;
+  if (rowIndex < 0 || colIndex < 0) return false;
   const [dr, dc] = keyMap[event.key];
   event.preventDefault();
+  event.stopImmediatePropagation?.();
   event.stopPropagation();
   estimatePeriodPersistRenderedRows(false);
   estimatePeriodFocusGridCell(table, rowIndex + dr, colIndex + dc);
+  return true;
+}
+
+function estimatePeriodEnsureGlobalNavListener() {
+  if (window.__estimatePeriodGlobalNavBound === true) return;
+  window.__estimatePeriodGlobalNavBound = true;
+  document.addEventListener("keydown", event => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const active = estimatePeriodElementFromEventTarget(event.target) || document.activeElement;
+    if (active?.closest?.(".estimate-period-manage-table") || document.querySelector?.(".estimate-period-manage-table td.period-cell-focused")) {
+      estimatePeriodHandleNavKey(event, active);
+    }
+  }, true);
 }
 
 function estimatePeriodBindCellNavigation(host) {
   const table = host?.querySelector?.(".estimate-period-manage-table");
-  if (!table || table.dataset.navBound === "1") return;
-  table.dataset.navBound = "1";
+  if (!table) return;
+  table.querySelectorAll("tbody td").forEach(td => {
+    if (!td.hasAttribute("tabindex")) td.setAttribute("tabindex", "0");
+  });
   table.querySelectorAll("tbody td.editable, tbody td[contenteditable='true'], tbody select, tbody button").forEach(el => {
     if (!/^(SELECT|BUTTON|INPUT|TEXTAREA)$/i.test(el.tagName || "")) el.setAttribute("tabindex", "0");
   });
-  table.addEventListener("keydown", event => {
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-      estimatePeriodHandleNavKey(event, event.target);
-    }
-  }, true);
+  table.addEventListener("focusin", event => {
+    const td = estimatePeriodElementFromEventTarget(event.target)?.closest?.("td");
+    if (!td) return;
+    table.querySelectorAll("td.period-cell-focused").forEach(cell => cell.classList.remove("period-cell-focused"));
+    td.classList.add("period-cell-focused");
+  });
+  if (table.dataset.navBound !== "1") {
+    table.dataset.navBound = "1";
+    table.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+        estimatePeriodHandleNavKey(event, event.target);
+      }
+    }, true);
+  }
+  estimatePeriodEnsureGlobalNavListener();
 }
 
 
