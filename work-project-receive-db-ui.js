@@ -29,6 +29,40 @@ function ensureEstimateDbPjDeliveryPlanColumnsOnce() {
   }
 }
 
+function ensureEstimateDbProgressAccountInfoColumnOnce() {
+  const sheet = estimateDbSheets?.progress;
+  if (!sheet?.headerRows?.length) return;
+  const cols = getEstimateDbLeafColumns(sheet);
+  const currentIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "계좌정보");
+  const conditionIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "기성조건");
+  const estimateDateIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "견적서일자");
+  const targetIndex = conditionIndex >= 0 ? conditionIndex + 1 : (estimateDateIndex >= 0 ? estimateDateIndex : cols.length);
+
+  if (currentIndex >= 0) {
+    if (currentIndex !== targetIndex) {
+      (sheet.headerRows || []).forEach(row => {
+        const [cell] = row.splice(currentIndex, 1);
+        row.splice(targetIndex, 0, cell || "계좌정보");
+      });
+      if (Array.isArray(sheet.requestRow)) {
+        const [cell] = sheet.requestRow.splice(currentIndex, 1);
+        sheet.requestRow.splice(targetIndex, 0, cell || "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리");
+      }
+      (sheet.rows || []).forEach(row => {
+        const [cell] = row.splice(currentIndex, 1);
+        row.splice(targetIndex, 0, cell || "");
+      });
+    }
+    (sheet.headerRows || []).forEach((row, headerRowIndex) => {
+      if (Array.isArray(row)) row[targetIndex] = headerRowIndex === 0 ? "계좌정보" : "";
+    });
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow[targetIndex] = "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리";
+    return;
+  }
+
+  insertEstimateDbColumn(sheet, targetIndex, "계좌정보", "", "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리");
+}
+
 function migrateEstimateDbCreatedDateHeaders() {
   ["pj", "progress", "mep"].forEach(tab => {
     const sheet = estimateDbSheets?.[tab];
@@ -174,6 +208,7 @@ function runEstimateDbStructureMaintenanceOnce(options = {}) {
   ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: options.assignMissing !== false });
   ensureEstimateDbPjProjectLinkColumnOnce?.();
   ensureEstimateDbPjDeliveryPlanColumnsOnce?.();
+  ensureEstimateDbProgressAccountInfoColumnOnce?.();
   estimateDbMaintenanceOnceDone = true;
 }
 function getEstimateDbSheet(tab = estimateDbActiveTab) {
@@ -424,6 +459,11 @@ function getEstimateDbRichDisplayValue(value) {
     return [amount, date].filter(Boolean).join("\n");
   }
   if (parsed.type === "progressStory") return parsed.summary || parsed.full || "";
+  if (parsed.type === "accountInfo") {
+    if (parsed.summary) return parsed.summary;
+    const accounts = Array.isArray(parsed.accounts) ? parsed.accounts : [];
+    return accounts.map(item => [item.bank, item.account].filter(Boolean).join(" ")).filter(Boolean).join(" / ");
+  }
   return value;
 }
 function getEstimateDbStoryColumnIndex() {
@@ -2148,6 +2188,152 @@ function setEstimateDbRowContacts(row, contacts) {
   });
 }
 
+
+let estimateDbAccountModalState = null;
+
+function parseEstimateDbAccountCellValue(value) {
+  const rich = parseEstimateDbRichCellValue(value);
+  if (rich?.type === "accountInfo") {
+    return {
+      summary: String(rich.summary || ""),
+      accounts: Array.isArray(rich.accounts) ? rich.accounts.map(item => ({
+        bank: String(item?.bank || ""),
+        account: String(item?.account || ""),
+        holder: String(item?.holder || ""),
+        memo: String(item?.memo || "")
+      })) : []
+    };
+  }
+  const raw = normalizeEstimateDbText(value);
+  return { summary: raw, accounts: raw ? [{ bank: "", account: raw, holder: "", memo: "" }] : [] };
+}
+
+function summarizeEstimateDbAccountInfo(accounts = []) {
+  const filled = (accounts || []).filter(item => normalizeEstimateDbText(item.bank) || normalizeEstimateDbText(item.account) || normalizeEstimateDbText(item.holder) || normalizeEstimateDbText(item.memo));
+  if (!filled.length) return "";
+  return filled.map(item => [item.bank, item.account].filter(Boolean).join(" ")).filter(Boolean).join(" / ") || `${filled.length}개 계좌`;
+}
+
+function ensureEstimateDbAccountModal() {
+  let modal = document.getElementById("estimateDbAccountModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "estimateDbAccountModal";
+  modal.className = "estimate-db-dropdown-modal hidden estimate-db-account-modal";
+  modal.innerHTML = `
+    <div class="estimate-db-dropdown-box estimate-db-account-box" role="dialog" aria-modal="true" style="max-width:860px;">
+      <div class="estimate-db-dropdown-title">계좌정보 입력</div>
+      <div class="estimate-db-contact-help">기성관리의 계좌정보 셀에서 Enter를 누르면 열립니다. 여러 계좌를 입력할 수 있으며, 표에는 은행명과 계좌번호 요약이 표시됩니다.</div>
+      <div class="estimate-db-contact-grid-wrap">
+        <table class="estimate-db-contact-grid estimate-db-account-grid">
+          <thead>
+            <tr><th>No</th><th>은행명</th><th>계좌번호</th><th>예금주</th><th>비고</th></tr>
+          </thead>
+          <tbody id="estimateDbAccountRows"></tbody>
+        </table>
+      </div>
+      <div class="estimate-db-dropdown-actions">
+        <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbAccountModalRow()">+ 계좌 추가</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAccountModal()">닫기</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbAccountModal()">계좌정보 저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbAccountModal(); });
+  modal.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); closeEstimateDbAccountModal(); }
+  });
+  return modal;
+}
+
+function renderEstimateDbAccountModalRows(accounts = []) {
+  const modal = ensureEstimateDbAccountModal();
+  const body = modal.querySelector("#estimateDbAccountRows");
+  const rows = accounts.length ? accounts : Array.from({ length: 3 }, () => ({}));
+  body.innerHTML = rows.map((account, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td><input data-account-field="bank" data-account-index="${index}" value="${escapeEstimateDbHtml(account.bank || "")}" onkeydown="handleEstimateDbAccountModalKeydown(event)" /></td>
+      <td><input data-account-field="account" data-account-index="${index}" value="${escapeEstimateDbHtml(account.account || "")}" onkeydown="handleEstimateDbAccountModalKeydown(event)" /></td>
+      <td><input data-account-field="holder" data-account-index="${index}" value="${escapeEstimateDbHtml(account.holder || "")}" onkeydown="handleEstimateDbAccountModalKeydown(event)" /></td>
+      <td><input data-account-field="memo" data-account-index="${index}" value="${escapeEstimateDbHtml(account.memo || "")}" onkeydown="handleEstimateDbAccountModalKeydown(event)" /></td>
+    </tr>
+  `).join("");
+}
+
+function collectEstimateDbAccountModalRows() {
+  const modal = ensureEstimateDbAccountModal();
+  const rows = [];
+  modal.querySelectorAll("#estimateDbAccountRows tr").forEach((tr, index) => {
+    const item = {};
+    tr.querySelectorAll("input[data-account-field]").forEach(input => {
+      item[input.dataset.accountField] = input.value || "";
+    });
+    if (Object.values(item).some(v => normalizeEstimateDbText(v))) rows[index] = item;
+  });
+  return rows.filter(Boolean);
+}
+
+function addEstimateDbAccountModalRow() {
+  const accounts = collectEstimateDbAccountModalRows();
+  accounts.push({});
+  renderEstimateDbAccountModalRows(accounts);
+  setTimeout(() => document.querySelector(`#estimateDbAccountRows tr:nth-child(${accounts.length}) input`)?.focus(), 0);
+}
+
+function handleEstimateDbAccountModalKeydown(event) {
+  const input = event.currentTarget;
+  const row = input.closest("tr");
+  const inputs = Array.from(document.querySelectorAll("#estimateDbAccountRows input[data-account-field]"));
+  const index = inputs.indexOf(input);
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const next = inputs[index + 1];
+    if (next) next.focus();
+    else addEstimateDbAccountModalRow();
+    return;
+  }
+  const cols = row ? row.querySelectorAll("input[data-account-field]").length : 4;
+  const map = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -cols, ArrowDown: cols };
+  if (map[event.key]) {
+    event.preventDefault();
+    const next = inputs[index + map[event.key]];
+    if (next) next.focus();
+  }
+}
+
+function openEstimateDbAccountModal(rowIndex, colIndex) {
+  if (!isEstimateDbAccountInfoCell(estimateDbActiveTab, colIndex)) return false;
+  commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+  const row = getEstimateDbRows()?.[rowIndex];
+  const parsed = parseEstimateDbAccountCellValue(row?.[colIndex] || "");
+  estimateDbAccountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
+  const modal = ensureEstimateDbAccountModal();
+  renderEstimateDbAccountModalRows(parsed.accounts || []);
+  modal.classList.remove("hidden");
+  setTimeout(() => modal.querySelector("#estimateDbAccountRows input")?.focus(), 0);
+  return true;
+}
+
+function closeEstimateDbAccountModal() {
+  document.getElementById("estimateDbAccountModal")?.classList.add("hidden");
+  const state = estimateDbAccountModalState;
+  estimateDbAccountModalState = null;
+  if (state) requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+
+function saveEstimateDbAccountModal() {
+  const state = estimateDbAccountModalState;
+  if (!state) return;
+  const accounts = collectEstimateDbAccountModalRows();
+  const summary = summarizeEstimateDbAccountInfo(accounts);
+  const value = stringifyEstimateDbRichCellValue({ type: "accountInfo", summary, accounts });
+  updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
+  closeEstimateDbAccountModal();
+  renderEstimateDbManage();
+  requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
+}
+
 let estimateDbContactModalState = null;
 
 function ensureEstimateDbContactModal() {
@@ -2644,6 +2830,12 @@ function handleEstimateDbKeydown(event) {
     event.preventDefault();
     commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     openEstimateDbContactModal(rowIndex, colIndex);
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbAccountInfoCell(estimateDbActiveTab, colIndex)) {
+    event.preventDefault();
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbAccountModal(rowIndex, colIndex);
     return;
   }
   if ((event.altKey && event.key === "ArrowDown") || (!event.ctrlKey && !event.altKey && event.key === "Enter" && isEstimateDbDropdownCell(estimateDbActiveTab, colIndex))) {
