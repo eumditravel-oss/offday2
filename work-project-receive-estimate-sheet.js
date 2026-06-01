@@ -3809,8 +3809,8 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     .bar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #dbe4ef;box-shadow:0 4px 14px rgba(15,23,42,.06)}
     .brand{display:flex;align-items:center;gap:10px;font-weight:900}.brand b{display:inline-flex;padding:7px 12px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}.brand span{font-size:18px}
     .actions{display:flex;gap:8px}.btn{height:36px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;padding:0 14px;font-weight:900;cursor:pointer}.primary{background:#ff6b00;color:#fff;border-color:#ff6b00}
-    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(420px,2fr) minmax(220px,1fr) minmax(220px,1fr);gap:10px;align-items:start}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569;min-width:0}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff;width:100%;min-width:0}.field.wide{grid-column:auto}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}.linked-command{position:relative}.linked-command:after{content:'';position:absolute;right:7px;bottom:8px;width:5px;height:26px;border-radius:999px;background:#ff6b00;box-shadow:0 0 0 1px rgba(255,107,0,.12)}.linked-command input{padding-right:20px}.linked-command input.command-active{border-color:#ff6b00;box-shadow:0 0 0 3px rgba(255,107,0,.16)}.memo-dropdown{position:fixed;z-index:50;min-width:220px;max-height:260px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 14px 30px rgba(15,23,42,.16);padding:6px}.memo-dropdown button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 10px;border-radius:8px;font-weight:800;color:#111827;cursor:pointer}.memo-dropdown button:hover,.memo-dropdown button.active{background:#fff7ed;color:#ea580c}.memo-dropdown .empty{padding:10px;color:#64748b;font-size:12px;font-weight:800}
-    textarea{width:100%;min-height:430px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}
+    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(420px,2fr) minmax(220px,1fr) minmax(220px,1fr);gap:10px;align-items:start}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569;min-width:0}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff;width:100%;min-width:0}.field.wide{grid-column:auto}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}.linked-command{position:relative}.linked-command:after{content:'';position:absolute;right:7px;bottom:8px;width:5px;height:26px;border-radius:999px;background:#ff6b00;box-shadow:0 0 0 1px rgba(255,107,0,.12)}.linked-command input{padding-right:20px}.linked-command input.command-active{border-color:#ff6b00;box-shadow:0 0 0 3px rgba(255,107,0,.16)}.memo-dropdown{position:fixed;z-index:50;min-width:220px;max-height:260px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 14px 30px rgba(15,23,42,.16);padding:6px}.memo-dropdown button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 10px;border-radius:8px;font-weight:800;color:#111827;cursor:pointer}.memo-dropdown button:hover,.memo-dropdown button.active{background:#fff7ed;color:#ea580c}.memo-dropdown button.selected{background:#ffedd5;color:#c2410c}.memo-dropdown button.selected:after{content:' ✓';float:right}.memo-dropdown .empty{padding:10px;color:#64748b;font-size:12px;font-weight:800}
+    textarea{width:100%;min-height:430px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}.field-guide{display:block;margin-top:2px;font-size:11px;color:#ea580c;font-weight:900;line-height:1.3}
   </style></head><body><div class="bar"><div class="brand"><b>CON-COST</b><span>견적 의뢰 메모</span></div><div class="actions"><button class="btn" onclick="window.close()">닫기</button><button class="btn primary" onclick="saveMemo()">저장</button></div></div><main>
   <div class="grid">
     <label class="field"><span>업체명</span><input id="company" value="${company}" placeholder="예: (주)xx건설"></label>
@@ -3819,7 +3819,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     <label class="field"><span>연락처</span><input id="contact" value="${contact}" placeholder="전화/이메일"></label>
   </div>
   <div class="subgrid" aria-label="기간별 견적서 관리 및 DB관리 연동 입력값">
-    <label class="field linked-command"><span>작업범위 <small>↔ DB 작업공종</small></span><input id="scope" data-command-field="scope" value="${scope}" placeholder="예: 구조, 마감"></label>
+    <label class="field linked-command"><span>작업범위 <small>↔ DB 작업공종</small></span><input id="scope" data-command-field="scope" data-multi-command="true" value="${scope}" placeholder="예: 구조, 마감"><em class="field-guide">Ctrl+B: 선택 항목 복수 지정 / Enter: 선택 확정</em></label>
     <label class="field linked-command"><span>건물용도 <small>↔ DB 건물용도</small></span><input id="usage" data-command-field="usage" value="${usage}" placeholder="예: 공장, 근생"></label>
     <label class="field linked-command"><span>작업횟수 <small>↔ DB 업무단계2</small></span><input id="count" data-command-field="count" value="${count}" placeholder="예: 1회"></label>
     <label class="field linked-command"><span>단가작업 <small>↔ DB 단가작업여부</small></span><input id="unitWork" data-command-field="unitWork" value="${unitWork}" placeholder="예: 공내역서"></label>
@@ -3842,6 +3842,29 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   let dropdownOwner = null;
   function getCommandButtons(){
     return dropdown ? Array.from(dropdown.querySelectorAll('button[data-value]')) : [];
+  }
+  function splitCommandValues(value){
+    return String(value || '').split(/[,，\/]+/).map(v => v.trim()).filter(Boolean);
+  }
+  function joinCommandValues(values){
+    return [...new Set((values || []).map(v => String(v || '').trim()).filter(Boolean))].join(', ');
+  }
+  function syncMultiCommandSelection(input){
+    if(!dropdown || !input || input.dataset.commandField !== 'scope') return;
+    const selected = new Set(splitCommandValues(input.value));
+    getCommandButtons().forEach(btn => btn.classList.toggle('selected', selected.has(btn.dataset.value || '')));
+  }
+  function toggleCommandValue(input, value){
+    if(!input || !value) return false;
+    const values = splitCommandValues(input.value);
+    const index = values.indexOf(value);
+    if(index >= 0){ values.splice(index, 1); }
+    else{ values.push(value); }
+    input.value = joinCommandValues(values);
+    syncMultiCommandSelection(input);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
   }
   function setCommandActive(index){
     const buttons = getCommandButtons();
@@ -3868,8 +3891,9 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   function openCommandDropdown(input){
     closeCommandDropdown();
     const key = input.dataset.commandField;
-    const current = String(input.value || '').trim();
-    const options = [...new Set([...(commandOptions[key] || []), current].filter(Boolean))];
+    const currentValues = splitCommandValues(input.value);
+    const current = currentValues.join(', ');
+    const options = [...new Set([...(commandOptions[key] || []), ...currentValues].filter(Boolean))];
     dropdown = document.createElement('div');
     dropdownOwner = input;
     dropdown.className = 'memo-dropdown';
@@ -3881,6 +3905,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     dropdown.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
     dropdown.style.top = Math.min(rect.bottom + 6, window.innerHeight - 280) + 'px';
     input.classList.add('command-active');
+    syncMultiCommandSelection(input);
     dropdown.querySelectorAll('button[data-value]').forEach((btn, index) => {
       btn.addEventListener('mouseenter', () => setCommandActive(index));
       btn.addEventListener('click', () => { input.value = btn.dataset.value || ''; closeCommandDropdown(); input.focus(); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); });
@@ -3888,6 +3913,17 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   }
   document.querySelectorAll('[data-command-field]').forEach(input => {
     input.addEventListener('keydown', event => {
+      if((event.ctrlKey || event.metaKey) && String(event.key || '').toLowerCase() === 'b' && input.dataset.commandField === 'scope'){
+        event.preventDefault();
+        if(!(dropdown && dropdownOwner === input)) openCommandDropdown(input);
+        const active = dropdown?.querySelector('button[data-value].active') || dropdown?.querySelector('button[data-value]');
+        if(active){
+          toggleCommandValue(input, active.dataset.value || '');
+          setCommandActive(Math.max(0, getCommandButtons().findIndex(btn => btn === active)));
+        }
+        input.focus();
+        return;
+      }
       if(event.key === 'Enter' && !event.ctrlKey && !event.altKey && !event.shiftKey){
         event.preventDefault();
         if(dropdown && dropdownOwner === input){
