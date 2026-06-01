@@ -945,6 +945,10 @@
                     <button id="estimateDbAddStageBtn" class="btn btn-line btn-sm" type="button" onclick="addEstimateDbProgressStageColumns()">+차수 추가(Alt+Insert)</button>
                   </div>
                   <div class="quote-db-search-row">
+                    <div id="estimateDbMepQuickActions" class="quote-db-mep-quick-actions" style="display:none;">
+                      <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbMepVendorRow()">+ 업체 추가</button>
+                      <button id="estimateDbMepQuickOpenBtn" type="button" class="btn btn-primary btn-sm" onclick="openEstimateDbMepVendorDetailWindow(Number(estimateDbMepSelectedVendorIndex) || 0)" disabled>계약/지급내역 열기</button>
+                    </div>
                     <input id="estimateDbSearchBox" class="quote-db-search-input" type="search" placeholder="DB 검색" oninput="setEstimateDbSearchKeyword(this.value)" />
                   </div>
                   <div class="quote-db-grid-wrap">
