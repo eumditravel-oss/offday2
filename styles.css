@@ -16769,7 +16769,8 @@ th.quote-db-manage-col {
 }
 
 /* DB관리 검색/정렬 보강 */
-.quote-db-search-row{display:flex;justify-content:flex-end;gap:8px;margin:10px 0 12px;}
+.quote-db-search-row{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:10px 0 12px;flex-wrap:wrap;}
+.quote-db-mep-quick-actions{align-items:center;gap:8px;margin-right:auto;}
 .quote-db-search-input{width:min(420px,100%);height:42px;border:1px solid #d8e2ef;border-radius:14px;padding:0 14px;font-weight:700;background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
 .quote-db-search-input:focus{outline:none;border-color:#ff8a1c;box-shadow:0 0 0 3px rgba(255,122,24,.12);}
 .quote-db-sortable-head{cursor:pointer;user-select:none;white-space:pre-line;}
@@ -20446,31 +20447,4 @@ button.btn-orange{
   background:#fff !important;
   border-color:#dbe4ef !important;
   color:#0f172a !important;
-}
-
-
-/* 기간별 견적서 관리: 작업취소 행은 회색으로 명확히 표시 */
-.estimate-period-manage-table tr.is-cancelled td,
-.estimate-period-manage-table tr.is-cancelled:hover td{
-  background:#e5e7eb !important;
-  color:#64748b !important;
-}
-.estimate-period-manage-table tr.is-cancelled td:first-child{
-  box-shadow:inset 4px 0 0 #9ca3af;
-}
-.estimate-period-manage-table tr.is-cancelled td:nth-child(14)::after{
-  content:"취소";
-  display:inline-block;
-  margin-left:6px;
-  padding:2px 7px;
-  border-radius:999px;
-  background:#9ca3af;
-  color:#fff;
-  font-size:11px;
-  font-weight:900;
-}
-.estimate-period-manage-table tr.is-cancelled .status-select{
-  background:#f3f4f6 !important;
-  color:#64748b !important;
-  border-color:#9ca3af !important;
 }
