@@ -3138,6 +3138,19 @@ function addEstimateDbCustomOption(tab, colIndex, value) {
   if (!estimateDbCustomOptions[key].includes(clean)) estimateDbCustomOptions[key].push(clean);
 }
 
+
+function isEstimateDbWorkScopeOnlyValue(value = "") {
+  const clean = normalizeEstimateDbText(value);
+  return ["마감", "골조성", "구조", "토목", "조경", "기계", "전기", "인테리어", "철거", "전공정"].includes(clean);
+}
+function sanitizeEstimateDbWorkScopeValue(value = "") {
+  return String(value || "")
+    .split(/[,、，\/]+/)
+    .map(v => normalizeEstimateDbText(v))
+    .filter(v => v && isEstimateDbWorkScopeOnlyValue(v))
+    .join(", ");
+}
+
 const estimateDbLinkedStageOptions = {
   "개산견적": ["1회차", "2회차", "3회차", "기타"],
   "정미견적": ["선실행", "본실행", "기타"],
@@ -3197,7 +3210,9 @@ function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0,
   if (!isEstimateDbDropdownCell(estimateDbActiveTab, colIndex)) return false;
   const modal = ensureEstimateDbDropdownModal();
   const header = getEstimateDbColumnName(estimateDbActiveTab, colIndex);
-  const existingValues = normalizeEstimateDbText(getEstimateDbRows()[rowIndex]?.[colIndex] || "")
+  const currentRawValue = normalizeEstimateDbText(getEstimateDbRows()[rowIndex]?.[colIndex] || "");
+  const currentDisplayValue = header === "작업공종" ? sanitizeEstimateDbWorkScopeValue(currentRawValue) : currentRawValue;
+  const existingValues = currentDisplayValue
     .split(/[,、，]+/)
     .map(v => normalizeEstimateDbText(v))
     .filter(Boolean);
@@ -3216,7 +3231,7 @@ function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0,
   modal.querySelector("#estimateDbDropdownMultiHelp")?.classList.toggle("hidden", header !== "작업공종");
   const search = modal.querySelector("#estimateDbDropdownSearch");
   search.value = "";
-  search.placeholder = getEstimateDbRows()[rowIndex]?.[colIndex] || "검색 또는 새 항목 입력";
+  search.placeholder = currentDisplayValue || "검색 또는 새 항목 입력";
   search.dataset.fresh = "1";
   renderEstimateDbDropdownList();
   setTimeout(() => { search.focus(); }, 0);
@@ -3255,6 +3270,10 @@ function toggleEstimateDbDropdownMultiSelection(index = estimateDbDropdownState?
   const typed = normalizeEstimateDbText(search?.value || "");
   const value = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
   if (!value) return;
+  if (getEstimateDbColumnName(state.tab, state.colIndex) === "작업공종" && !isEstimateDbWorkScopeOnlyValue(value)) {
+    alert("작업공종에는 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정만 선택할 수 있습니다.");
+    return;
+  }
   if (state.noMatch || !(state.options || []).includes(value)) {
     addEstimateDbCustomOption(state.tab, state.colIndex, value);
     if (!state.options.includes(value)) state.options.push(value);
@@ -3279,6 +3298,13 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
   const value = state.multi && (state.selectedValues || []).length ? state.selectedValues.join(",") : pickedValue;
   if (!value) return;
   const header = getEstimateDbColumnName(state.tab, state.colIndex);
+  if (header === "작업공종") {
+    const nextScope = sanitizeEstimateDbWorkScopeValue(value);
+    if (!nextScope) {
+      alert("작업공종에는 단가작업 항목을 입력할 수 없습니다. 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정 중에서 선택하세요.");
+      return;
+    }
+  }
   const row = state.rowIndex;
   const nextCol = state.colIndex + 1;
   if (state.tab === "pj" && header === ESTIMATE_DB_PROJECT_LINK_HEADER) {
@@ -3299,6 +3325,10 @@ function addEstimateDbDropdownOptionFromInput() {
   const search = document.getElementById("estimateDbDropdownSearch");
   const value = normalizeEstimateDbText(search?.value || "");
   if (!value || !estimateDbDropdownState) return;
+  if (getEstimateDbColumnName(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex) === "작업공종" && !isEstimateDbWorkScopeOnlyValue(value)) {
+    alert("작업공종에는 단가작업 항목을 추가할 수 없습니다. 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정 중에서 선택하세요.");
+    return;
+  }
   addEstimateDbCustomOption(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex, value);
   if (!estimateDbDropdownState.options.includes(value)) estimateDbDropdownState.options.push(value);
   estimateDbDropdownState.noMatch = true;
