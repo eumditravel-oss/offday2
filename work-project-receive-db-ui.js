@@ -2221,7 +2221,7 @@ function ensureEstimateDbAccountModal() {
   modal.id = "estimateDbAccountModal";
   modal.className = "estimate-db-dropdown-modal hidden estimate-db-account-modal";
   modal.innerHTML = `
-    <div class="estimate-db-dropdown-box estimate-db-account-box" role="dialog" aria-modal="true" style="max-width:860px;">
+    <div class="estimate-db-dropdown-box estimate-db-account-box" role="dialog" aria-modal="true">
       <div class="estimate-db-dropdown-title">계좌정보 입력</div>
       <div class="estimate-db-contact-help">기성관리의 계좌정보 셀에서 Enter를 누르면 열립니다. 여러 계좌를 입력할 수 있으며, 표에는 은행명과 계좌번호 요약이 표시됩니다.</div>
       <div class="estimate-db-contact-grid-wrap">
