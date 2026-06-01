@@ -144,7 +144,7 @@ function isEstimateDbTotalExcludedColumn(tab = estimateDbActiveTab, colIndex = 0
   if (isEstimateDbDateInputColumn(tab, colIndex)) return true;
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   const group = normalizeEstimateDbText(getEstimateDbColumnGroupName(tab, colIndex));
-  return /일자|날짜|예정일|연락|전화|담당자|스토리|특이사항|조건|PM/.test(`${group} ${header}`);
+  return /일자|날짜|예정일|계좌|은행|연락|전화|담당자|스토리|특이사항|조건|PM/.test(`${group} ${header}`);
 }
 
 function isEstimateDbContractAmountCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
@@ -154,11 +154,19 @@ function isEstimateDbContractAmountCommandCell(tab = estimateDbActiveTab, colInd
   return /^A-\d+$/.test(header);
 }
 
+function isEstimateDbAccountInfoCell(tab = estimateDbActiveTab, colIndex = 0) {
+  if (tab !== "progress") return false;
+  const header = normalizeEstimateDbText(typeof getEstimateDbColumnName === "function" ? getEstimateDbColumnName(tab, colIndex) : "");
+  const group = normalizeEstimateDbText(typeof getEstimateDbColumnGroupName === "function" ? getEstimateDbColumnGroupName(tab, colIndex) : "");
+  return header === "계좌정보" || group === "계좌정보";
+}
+
 function isEstimateDbEnterCommandCell(tab = estimateDbActiveTab, colIndex = 0) {
   return isEstimateDbStoryCell(tab, colIndex)
     || isEstimateDbStageEntryCell(tab, colIndex)
     || isEstimateDbOutsourceAmountCell(tab, colIndex)
     || isEstimateDbContactColumn(tab, colIndex)
+    || isEstimateDbAccountInfoCell(tab, colIndex)
     || isEstimateDbContractAmountCommandCell(tab, colIndex)
     || isEstimateDbDropdownCell(tab, colIndex);
 }
@@ -199,6 +207,11 @@ function openEstimateDbCommandCellFromButton(event, rowIndex, colIndex) {
   if (isEstimateDbContactColumn(estimateDbActiveTab, colIndex)) {
     commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
     openEstimateDbContactModal(rowIndex, colIndex);
+    return;
+  }
+  if (isEstimateDbAccountInfoCell(estimateDbActiveTab, colIndex)) {
+    commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex, { skipRecalc: true });
+    openEstimateDbAccountModal(rowIndex, colIndex);
     return;
   }
   if (isEstimateDbDropdownCell(estimateDbActiveTab, colIndex)) {
@@ -398,7 +411,7 @@ function isEstimateDbMoneyLikeColumn(tab = estimateDbActiveTab, colIndex = 0, sh
   const topHeader = normalizeEstimateDbText(sheet?.headerRows?.[0]?.[colIndex] || "");
   const label = `${topHeader} ${header}`;
   if (!header && !topHeader) return false;
-  if (/년도|PJ\s*NO|프로젝트 연결|접수번호|일자|날짜|예정일|연락|전화|휴대폰|직통|EMAIL|ID|PW|층수|동수|타입수|세대수|연면적|비율|퍼센트|구분|비고|담당자|직급|부서명|프로젝트명|거래처명|업체명|국내\/해외/.test(label)) return false;
+  if (/년도|PJ\s*NO|프로젝트 연결|접수번호|일자|날짜|예정일|계좌|은행|연락|전화|휴대폰|직통|EMAIL|ID|PW|층수|동수|타입수|세대수|연면적|비율|퍼센트|구분|비고|담당자|직급|부서명|프로젝트명|거래처명|업체명|국내\/해외/.test(label)) return false;
   return /금액|목표|달성|차액|잔액|합계|기성|입금|매출|수주|계약금|수령액|발행완료|납품완료|작업진행중|작업대기중|작업취소|기계|전기|외주|송무|기타|\bA\b|\bB\b|\bC\b|\bC1\b|\bC2\b|\bC3\b|\bC4\b|\bC5\b/.test(label);
 }
 
