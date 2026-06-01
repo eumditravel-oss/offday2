@@ -3787,8 +3787,13 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   let row = estimateRequestRows.find(r => r.id === id);
   if (!row) row = estimateRequestNormalizeRow({ id, status: "의뢰메모" });
   row = estimateRequestNormalizeRow(row);
-  const w = window.open("", `estimate_request_memo_${String(id).replace(/[^a-zA-Z0-9_-]/g,"_")}`, "width=980,height=720,scrollbars=yes,resizable=yes");
+  const memoWinWidth = Math.min(1380, Math.max(1240, Math.floor((window.screen?.availWidth || 1440) * 0.82)));
+  const memoWinHeight = Math.min(820, Math.max(720, Math.floor((window.screen?.availHeight || 900) * 0.82)));
+  const memoWinLeft = Math.max(0, Math.floor(((window.screen?.availWidth || memoWinWidth) - memoWinWidth) / 2));
+  const memoWinTop = Math.max(0, Math.floor(((window.screen?.availHeight || memoWinHeight) - memoWinHeight) / 2));
+  const w = window.open("", `estimate_request_memo_${String(id).replace(/[^a-zA-Z0-9_-]/g,"_")}`, `width=${memoWinWidth},height=${memoWinHeight},left=${memoWinLeft},top=${memoWinTop},scrollbars=yes,resizable=yes`);
   if (!w) { alert("팝업 차단을 해제해주세요."); return; }
+  try { w.moveTo(memoWinLeft, memoWinTop); w.resizeTo(memoWinWidth, memoWinHeight); } catch (_) {}
   const company = estimateRequestHtml(row.company || "");
   const project = estimateRequestHtml(row.project || "");
   const client = estimateRequestHtml(row.client || "");
@@ -3804,7 +3809,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     .bar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #dbe4ef;box-shadow:0 4px 14px rgba(15,23,42,.06)}
     .brand{display:flex;align-items:center;gap:10px;font-weight:900}.brand b{display:inline-flex;padding:7px 12px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}.brand span{font-size:18px}
     .actions{display:flex;gap:8px}.btn{height:36px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;padding:0 14px;font-weight:900;cursor:pointer}.primary{background:#ff6b00;color:#fff;border-color:#ff6b00}
-    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff}.field.wide{grid-column:span 2}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}
+    main{padding:18px;display:grid;gap:12px}.grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(420px,2fr) minmax(220px,1fr) minmax(220px,1fr);gap:10px;align-items:start}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:#475569;min-width:0}.field input,.field select{height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:14px;color:#111827;background:#fff;width:100%;min-width:0}.field.wide{grid-column:auto}.field.full{grid-column:1/-1}.subgrid{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr 1fr;gap:10px;padding:12px;border:1px solid #dbe4ef;border-radius:14px;background:#f8fafc}
     textarea{width:100%;min-height:430px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}
   </style></head><body><div class="bar"><div class="brand"><b>CON-COST</b><span>견적 의뢰 메모</span></div><div class="actions"><button class="btn" onclick="window.close()">닫기</button><button class="btn primary" onclick="saveMemo()">저장</button></div></div><main>
   <div class="grid">
