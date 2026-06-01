@@ -2468,6 +2468,16 @@ let estimatePeriodFilters = { from: "", to: "", status: "전체", q: "" };
 function estimatePeriodLoadEdits() {
   try { estimatePeriodEditRows = JSON.parse(localStorage.getItem(ESTIMATE_PERIOD_EDIT_KEY) || "[]"); }
   catch (err) { estimatePeriodEditRows = []; }
+  // 기간별 견적서 관리는 견적 의뢰관리에서 발송/연계된 데이터만 관리합니다.
+  // 과거 [행 추가] 버튼으로 생성된 수기 행은 더 이상 표시하지 않습니다.
+  if (Array.isArray(estimatePeriodEditRows)) {
+    const filteredRows = estimatePeriodEditRows.filter(row => String(row?.source || "").toLowerCase() !== "manual");
+    if (filteredRows.length !== estimatePeriodEditRows.length) {
+      estimatePeriodEditRows = filteredRows;
+      try { localStorage.setItem(ESTIMATE_PERIOD_EDIT_KEY, JSON.stringify(estimatePeriodEditRows)); }
+      catch (err) { console.warn("기간별 견적서 수기 행 정리 실패", err); }
+    }
+  }
 }
 
 function estimatePeriodSaveEdits() {
@@ -2785,7 +2795,6 @@ function renderEstimatePeriodFilters() {
     <button class="btn btn-line" type="button" id="estimatePeriodFilterApply">기간 조회</button>
     <button class="btn btn-line" type="button" id="estimatePeriodFilterReset">전체보기</button>
     <button class="btn btn-line" type="button" id="estimatePeriodAuditBtn">연계 검증</button>
-    <button class="btn btn-primary" type="button" id="estimatePeriodAddManualRow">행 추가</button>
     <button class="btn btn-line" type="button" id="estimatePeriodSaveRows">수정 저장</button>
   `;
   host.querySelector("#estimatePeriodFilterApply")?.addEventListener("click", () => {
@@ -2803,12 +2812,6 @@ function renderEstimatePeriodFilters() {
   });
   host.querySelector("#estimatePeriodAuditBtn")?.addEventListener("click", () => {
     runEstimateLinkageAudit?.();
-  });
-  host.querySelector("#estimatePeriodAddManualRow")?.addEventListener("click", () => {
-    estimatePeriodLoadEdits();
-    estimatePeriodEditRows.unshift(estimatePeriodRowFromValues({ 2: estimatePeriodTodayCode(), 15: "대기중", 18: "수기" }, estimateSheetMakeId("period"), "manual"));
-    estimatePeriodSaveEdits();
-    renderEstimatePeriodManage();
   });
   host.querySelector("#estimatePeriodSaveRows")?.addEventListener("click", () => {
     estimatePeriodPersistRenderedRows();
