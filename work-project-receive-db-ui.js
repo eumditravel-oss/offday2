@@ -968,6 +968,90 @@ function getEstimateDbProgressOutsourceTotalIndex() {
   }
   return -1;
 }
+function getEstimateDbMepVendorTradeMap() {
+  const rows = ensureEstimateDbMepVendorRows?.() || estimateDbSheets?.mep?.vendorRows || [];
+  return rows.reduce((map, row) => {
+    const vendorName = normalizeEstimateDbText(row?.[1]);
+    const trade = normalizeEstimateDbText(row?.[2]);
+    if (vendorName) map[vendorName] = trade;
+    return map;
+  }, {});
+}
+function getEstimateDbMepTradeForVendor(vendorName) {
+  const target = normalizeEstimateDbText(vendorName);
+  if (!target) return "";
+  const tradeMap = getEstimateDbMepVendorTradeMap();
+  if (tradeMap[target]) return tradeMap[target];
+  const compactTarget = target.replace(/\s+/g, "");
+  const key = Object.keys(tradeMap).find(name => name.replace(/\s+/g, "") === compactTarget);
+  return key ? tradeMap[key] : "";
+}
+function getEstimateDbProgressPjNoIndex() {
+  return getEstimateDbColumnIndexByHeader("progress", "PJ NO");
+}
+function buildEstimateDbMepOutsourceSummaryByPjNo() {
+  const sheet = estimateDbSheets?.mep;
+  const rows = Array.isArray(sheet?.rows) ? sheet.rows : [];
+  const pjNoIndex = getEstimateDbColumnIndexByHeader("mep", "PJ NO");
+  const companyIndex = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+  const amountIndex = getEstimateDbColumnIndexByHeader("mep", "계약금액");
+  const altAmountIndex = getEstimateDbColumnIndexByHeader("mep", "컨코스트계약금");
+  const validTrades = ["기계", "전기", "외주", "송무", "기타"];
+  const summary = {};
+  if (pjNoIndex < 0 || companyIndex < 0) return summary;
+  rows.forEach(row => {
+    const pjNo = normalizeEstimateDbText(row?.[pjNoIndex]);
+    const company = normalizeEstimateDbText(row?.[companyIndex]);
+    if (!pjNo || !company) return;
+    const trade = getEstimateDbMepTradeForVendor(company);
+    if (!validTrades.includes(trade)) return;
+    const amountRaw = amountIndex >= 0 ? row?.[amountIndex] : (altAmountIndex >= 0 ? row?.[altAmountIndex] : "");
+    const amount = toEstimateDbNumber(amountRaw);
+    if (!summary[pjNo]) summary[pjNo] = {};
+    if (!summary[pjNo][trade]) summary[pjNo][trade] = { total: 0, companies: [] };
+    summary[pjNo][trade].total += amount;
+    if (!summary[pjNo][trade].companies.includes(company)) summary[pjNo][trade].companies.push(company);
+  });
+  return summary;
+}
+function stringifyEstimateDbMepOutsourceSummaryCell(summaryCell) {
+  if (!summaryCell) return "";
+  const total = Number(summaryCell.total) || 0;
+  const companies = Array.isArray(summaryCell.companies) ? summaryCell.companies.filter(Boolean) : [];
+  if (!companies.length && !total) return "";
+  const companyLabel = companies.length > 1 ? `${companies[0]} 외 ${companies.length - 1}` : (companies[0] || "");
+  if (companyLabel && total) return `${companyLabel}
+${total}`;
+  if (companyLabel) return companyLabel;
+  return total ? String(total) : "";
+}
+function syncEstimateDbProgressOutsourceCellsFromMepByPjNo(options = {}) {
+  const progressSheet = estimateDbSheets?.progress;
+  if (!progressSheet?.rows?.length) return 0;
+  const pjNoIndex = getEstimateDbProgressPjNoIndex();
+  const outsourceIndexes = getEstimateDbProgressOutsourceIndexes();
+  const leaf = getEstimateDbLeafColumns(progressSheet);
+  if (pjNoIndex < 0 || !outsourceIndexes.length) return 0;
+  const summaryByPjNo = buildEstimateDbMepOutsourceSummaryByPjNo();
+  let changed = 0;
+  progressSheet.rows.forEach(row => {
+    const pjNo = normalizeEstimateDbText(row?.[pjNoIndex]);
+    outsourceIndexes.forEach(colIndex => {
+      const trade = normalizeEstimateDbText(leaf[colIndex]);
+      const nextValue = stringifyEstimateDbMepOutsourceSummaryCell(summaryByPjNo[pjNo]?.[trade]);
+      if ((row[colIndex] || "") !== nextValue) {
+        row[colIndex] = nextValue;
+        changed += 1;
+      }
+    });
+    recalcEstimateDbProgressOutsourceTotal(row);
+  });
+  if (changed && options.markDirty) {
+    estimateDbHasUnsavedChanges = true;
+    updateEstimateDbSaveButtonState?.();
+  }
+  return changed;
+}
 function recalcEstimateDbProgressOutsourceTotal(row) {
   if (!row) return;
   const totalIndex = getEstimateDbProgressOutsourceTotalIndex();
@@ -1036,6 +1120,7 @@ function recalcEstimateDbRow(tab, row) {
   }
 }
 function recalcAllEstimateDbRows() {
+  syncEstimateDbProgressOutsourceCellsFromMepByPjNo?.();
   Object.keys(estimateDbSheets).forEach(tab => (estimateDbSheets[tab].rows || []).forEach(row => recalcEstimateDbRow(tab, row)));
 }
 
@@ -1168,6 +1253,8 @@ function addEstimateDbMepRowForSelectedVendor() {
   if (createdIdx >= 0) next[createdIdx] = formatEstimateDbKoreanDate?.() || "";
   if (companyIdx >= 0) next[companyIdx] = vendorName;
   sheet.rows.push(next);
+  estimateDbHasUnsavedChanges = true;
+  updateEstimateDbSaveButtonState?.();
   estimateDbMepSelectedVendorIndex = estimateDbMepSelectedVendorIndex ?? 0;
   renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
 }
@@ -1183,17 +1270,20 @@ function updateEstimateDbMepDetailCellFromPopup(sourceIndex, colIndex, value) {
   if (!sheet || !row) return;
   row[Number(colIndex)] = value;
   recalcEstimateDbRow("mep", row);
+  syncEstimateDbProgressOutsourceCellsFromMepByPjNo?.({ markDirty: true });
   estimateDbHasUnsavedChanges = true;
   updateEstimateDbSaveButtonState?.();
+  if (estimateDbActiveTab === "progress") renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
 }
 
 function removeEstimateDbMepDetailRowFromPopup(sourceIndex) {
   const sheet = estimateDbSheets?.mep;
   if (!sheet?.rows?.[Number(sourceIndex)]) return;
   sheet.rows.splice(Number(sourceIndex), 1);
+  syncEstimateDbProgressOutsourceCellsFromMepByPjNo?.({ markDirty: true });
   estimateDbHasUnsavedChanges = true;
   updateEstimateDbSaveButtonState?.();
-  if (estimateDbActiveTab === "mep") renderEstimateDbManage({ renderReportsNow: false });
+  if (estimateDbActiveTab === "mep" || estimateDbActiveTab === "progress") renderEstimateDbManage({ renderReportsNow: false });
 }
 
 function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
@@ -1243,9 +1333,15 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
     input.classList.remove('dirty');
   }
   function addRow(){
-    if(window.opener && window.opener.addEstimateDbMepRowForVendorIndex){
-      window.opener.addEstimateDbMepRowForVendorIndex(VENDOR_INDEX);
-      setTimeout(refreshWindow, 80);
+    try {
+      if(window.opener && typeof window.opener.addEstimateDbMepRowForVendorIndex === 'function'){
+        window.opener.addEstimateDbMepRowForVendorIndex(VENDOR_INDEX);
+        setTimeout(refreshWindow, 80);
+        return;
+      }
+      alert('원본 DB관리 화면과 연결이 끊겼습니다. 이 창을 닫고 업체 리스트에서 다시 열어 주세요.');
+    } catch (error) {
+      alert('계약행 추가 중 오류가 발생했습니다: ' + (error && error.message ? error.message : error));
     }
   }
   function deleteRow(sourceIndex){
@@ -1303,6 +1399,12 @@ function openEstimateDbMepVendorDetailWindow(vendorIndex) {
   win.document.close();
   win.focus?.();
   renderEstimateDbManage({ renderReportsNow: false });
+}
+if (typeof window !== "undefined") {
+  window.buildEstimateDbMepVendorDetailWindowHtml = buildEstimateDbMepVendorDetailWindowHtml;
+  window.addEstimateDbMepRowForVendorIndex = addEstimateDbMepRowForVendorIndex;
+  window.updateEstimateDbMepDetailCellFromPopup = updateEstimateDbMepDetailCellFromPopup;
+  window.removeEstimateDbMepDetailRowFromPopup = removeEstimateDbMepDetailRowFromPopup;
 }
 
 window.buildEstimateDbMepVendorDetailWindowHtml = buildEstimateDbMepVendorDetailWindowHtml;
