@@ -20447,3 +20447,30 @@ button.btn-orange{
   border-color:#dbe4ef !important;
   color:#0f172a !important;
 }
+
+
+/* 기간별 견적서 관리: 작업취소 행은 회색으로 명확히 표시 */
+.estimate-period-manage-table tr.is-cancelled td,
+.estimate-period-manage-table tr.is-cancelled:hover td{
+  background:#e5e7eb !important;
+  color:#64748b !important;
+}
+.estimate-period-manage-table tr.is-cancelled td:first-child{
+  box-shadow:inset 4px 0 0 #9ca3af;
+}
+.estimate-period-manage-table tr.is-cancelled td:nth-child(14)::after{
+  content:"취소";
+  display:inline-block;
+  margin-left:6px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#9ca3af;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+}
+.estimate-period-manage-table tr.is-cancelled .status-select{
+  background:#f3f4f6 !important;
+  color:#64748b !important;
+  border-color:#9ca3af !important;
+}
