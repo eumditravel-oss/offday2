@@ -1325,7 +1325,7 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
     </table></div></div>
   </div>
 <script>
-  const VENDOR_INDEX = ${Number(vendorIndex) || 0};
+  window.__CONCOST_MEP_VENDOR_INDEX__ = ${Number(vendorIndex) || 0};
   function markDirty(input){ input.classList.add('dirty'); }
   function saveCell(input){
     if(!window.opener || !window.opener.updateEstimateDbMepDetailCellFromPopup) return;
@@ -1335,7 +1335,7 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
   function addRow(){
     try {
       if(window.opener && typeof window.opener.addEstimateDbMepRowForVendorIndex === 'function'){
-        window.opener.addEstimateDbMepRowForVendorIndex(VENDOR_INDEX);
+        window.opener.addEstimateDbMepRowForVendorIndex(window.__CONCOST_MEP_VENDOR_INDEX__);
         setTimeout(refreshWindow, 80);
         return;
       }
@@ -1372,7 +1372,7 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
   }
   function refreshWindow(){
     if(window.opener && window.opener.buildEstimateDbMepVendorDetailWindowHtml){
-      const html = window.opener.buildEstimateDbMepVendorDetailWindowHtml(VENDOR_INDEX);
+      var html = window.opener.buildEstimateDbMepVendorDetailWindowHtml(window.__CONCOST_MEP_VENDOR_INDEX__);
       document.open();
       document.write(html);
       document.close();
@@ -3322,6 +3322,86 @@ function parseEstimateDbAmountCellValue(value) {
   if (parts.length >= 2) return { company: parts[0], amount: parts.slice(1).join(" / ") };
   return /^[-+]?\d[\d,]*$/.test(parts[0] || "") ? { company: "", amount: parts[0] } : { company: parts[0] || "", amount: "" };
 }
+
+function getEstimateDbAmountModalTradeFromColumn(colIndex) {
+  const trade = normalizeEstimateDbText(getEstimateDbColumnName("progress", colIndex));
+  return ["기계", "전기", "외주", "송무", "기타"].includes(trade) ? trade : "";
+}
+function getEstimateDbMepVendorNameOptions() {
+  return ensureEstimateDbMepVendorRows()
+    .map(row => normalizeEstimateDbText(row?.[1]))
+    .filter((name, index, list) => name && list.indexOf(name) === index);
+}
+function updateEstimateDbAmountCompanyDatalist() {
+  const list = document.getElementById("estimateDbAmountCompanyList");
+  if (!list) return;
+  list.innerHTML = getEstimateDbMepVendorNameOptions()
+    .map(name => `<option value="${escapeEstimateDbHtml(name)}"></option>`)
+    .join("");
+}
+function ensureEstimateDbMepVendorByName(company, trade = "") {
+  const name = normalizeEstimateDbText(company);
+  if (!name) return null;
+  const sheet = estimateDbSheets?.mep;
+  if (!sheet) return null;
+  const headers = getEstimateDbMepVendorHeaders();
+  const rows = ensureEstimateDbMepVendorRows();
+  const compactName = name.replace(/\s+/g, "");
+  let row = rows.find(item => normalizeEstimateDbText(item?.[1]).replace(/\s+/g, "") === compactName);
+  const normalizedTrade = normalizeEstimateDbText(trade);
+  if (!row) {
+    row = Array(headers.length).fill("");
+    row[0] = String(rows.length + 1);
+    row[1] = name;
+    if (normalizedTrade) row[2] = normalizedTrade;
+    rows.push(row);
+    estimateDbHasUnsavedChanges = true;
+  } else if (normalizedTrade && !normalizeEstimateDbText(row[2])) {
+    row[2] = normalizedTrade;
+    estimateDbHasUnsavedChanges = true;
+  }
+  return row;
+}
+function upsertEstimateDbMepContractFromProgressAmount(rowIndex, colIndex, company, amount) {
+  const companyName = normalizeEstimateDbText(company);
+  if (!companyName) return 0;
+  const sheet = estimateDbSheets?.mep;
+  const progressRow = estimateDbSheets?.progress?.rows?.[Number(rowIndex)];
+  if (!sheet || !progressRow) return 0;
+  const trade = getEstimateDbAmountModalTradeFromColumn(colIndex);
+  ensureEstimateDbMepVendorByName(companyName, trade);
+  const idx = name => getEstimateDbColumnIndexByHeader("mep", name);
+  const pidx = name => getEstimateDbColumnIndexByHeader("progress", name);
+  const pjNo = normalizeEstimateDbText(progressRow[pidx("PJ NO")]);
+  const pjName = normalizeEstimateDbText(progressRow[pidx("PJ명")]) || normalizeEstimateDbText(progressRow[pidx("프로젝트명")]);
+  const rows = Array.isArray(sheet.rows) ? sheet.rows : (sheet.rows = []);
+  const pjNoIdx = idx("PJ NO");
+  const companyIdx = idx("계약업체");
+  if (pjNoIdx < 0 || companyIdx < 0) return 0;
+  const compactCompany = companyName.replace(/\s+/g, "");
+  let target = rows.find(row => normalizeEstimateDbText(row?.[pjNoIdx]) === pjNo && normalizeEstimateDbText(row?.[companyIdx]).replace(/\s+/g, "") === compactCompany);
+  if (!target) {
+    target = Array(getEstimateDbLeafColumns(sheet).length).fill("");
+    rows.push(target);
+  }
+  const set = (name, value) => {
+    const i = idx(name);
+    if (i >= 0 && target[i] !== value) target[i] = value;
+  };
+  set("최초생성날짜", target[idx("최초생성날짜")] || formatEstimateDbKoreanDate?.() || "");
+  set("PJ NO", pjNo);
+  set("PJ명", pjName);
+  set("계약업체", companyName);
+  const normalizedAmount = normalizeEstimateDbText(amount).replace(/,/g, "");
+  set("계약금액", normalizedAmount);
+  set("컨코스트계약금", normalizedAmount);
+  recalcEstimateDbRow("mep", target);
+  estimateDbHasUnsavedChanges = true;
+  updateEstimateDbSaveButtonState?.();
+  syncEstimateDbProgressOutsourceCellsFromMepByPjNo?.({ markDirty: true });
+  return 1;
+}
+
 function ensureEstimateDbAmountModal() {
   let modal = document.getElementById("estimateDbAmountModal");
   if (modal) return modal;
@@ -3331,7 +3411,7 @@ function ensureEstimateDbAmountModal() {
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-amount-box" role="dialog" aria-modal="true">
       <div class="estimate-db-dropdown-title" id="estimateDbAmountTitle">외주 금액 입력</div>
-      <label class="estimate-db-amount-label">업체명<input id="estimateDbAmountCompany" class="estimate-db-dropdown-search" placeholder="예: (주)대신엔지니어링" /></label>
+      <label class="estimate-db-amount-label">업체명<input id="estimateDbAmountCompany" class="estimate-db-dropdown-search" list="estimateDbAmountCompanyList" placeholder="기전업체 리스트에서 선택하거나 새 업체명을 입력" /></label><datalist id="estimateDbAmountCompanyList"></datalist>
       <label class="estimate-db-amount-label">금액<input id="estimateDbAmountValue" class="estimate-db-dropdown-search" placeholder="예: 200000" /></label>
       <div class="estimate-db-dropdown-actions">
         <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAmountModal()">닫기</button>
@@ -3353,6 +3433,7 @@ function openEstimateDbAmountModal(rowIndex = estimateDbSelectedCell.rowIndex ||
   const parsed = parseEstimateDbAmountCellValue(row[colIndex]);
   estimateDbAmountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
   modal.classList.remove("hidden");
+  updateEstimateDbAmountCompanyDatalist();
   modal.querySelector("#estimateDbAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 금액 입력`;
   modal.querySelector("#estimateDbAmountCompany").value = parsed.company || "";
   modal.querySelector("#estimateDbAmountValue").value = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
@@ -3372,8 +3453,11 @@ function saveEstimateDbAmountModal() {
   const amount = normalizeEstimateDbText(document.getElementById("estimateDbAmountValue")?.value || "");
   const value = company && amount ? `${company}\n${amount}` : [company, amount].filter(Boolean).join("\n");
   updateEstimateDbCell(state.rowIndex, state.colIndex, value, { silentRender: true });
+  if (state.tab === "progress") {
+    upsertEstimateDbMepContractFromProgressAmount(state.rowIndex, state.colIndex, company, amount);
+  }
   closeEstimateDbAmountModal();
-  renderEstimateDbManage();
+  renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
 }
 function handleEstimateDbKeydown(event) {
   const input = event.currentTarget;
