@@ -3839,8 +3839,30 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     bid: ['실행','입찰','본사 실행','본사 입찰','현장 실행','대관','기타']
   };
   let dropdown = null;
+  let dropdownOwner = null;
+  function getCommandButtons(){
+    return dropdown ? Array.from(dropdown.querySelectorAll('button[data-value]')) : [];
+  }
+  function setCommandActive(index){
+    const buttons = getCommandButtons();
+    if(!buttons.length) return;
+    const nextIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+    buttons.forEach((btn, i) => btn.classList.toggle('active', i === nextIndex));
+    buttons[nextIndex].scrollIntoView({ block: 'nearest' });
+  }
+  function selectCommandActive(input){
+    const active = dropdown?.querySelector('button[data-value].active') || dropdown?.querySelector('button[data-value]');
+    if(!active) return false;
+    input.value = active.dataset.value || '';
+    closeCommandDropdown();
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
   function closeCommandDropdown(){
     if(dropdown){ dropdown.remove(); dropdown = null; }
+    dropdownOwner = null;
     document.querySelectorAll('[data-command-field]').forEach(el => el.classList.remove('command-active'));
   }
   function openCommandDropdown(input){
@@ -3849,6 +3871,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     const current = String(input.value || '').trim();
     const options = [...new Set([...(commandOptions[key] || []), current].filter(Boolean))];
     dropdown = document.createElement('div');
+    dropdownOwner = input;
     dropdown.className = 'memo-dropdown';
     dropdown.innerHTML = options.length
       ? options.map((value, index) => '<button type="button" class="' + (index === 0 ? 'active' : '') + '" data-value="' + value.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;') + '">' + value.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</button>').join('')
@@ -3858,13 +3881,28 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     dropdown.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
     dropdown.style.top = Math.min(rect.bottom + 6, window.innerHeight - 280) + 'px';
     input.classList.add('command-active');
-    dropdown.querySelectorAll('button[data-value]').forEach(btn => btn.addEventListener('click', () => { input.value = btn.dataset.value || ''; closeCommandDropdown(); input.focus(); }));
+    dropdown.querySelectorAll('button[data-value]').forEach((btn, index) => {
+      btn.addEventListener('mouseenter', () => setCommandActive(index));
+      btn.addEventListener('click', () => { input.value = btn.dataset.value || ''; closeCommandDropdown(); input.focus(); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); });
+    });
   }
   document.querySelectorAll('[data-command-field]').forEach(input => {
     input.addEventListener('keydown', event => {
       if(event.key === 'Enter' && !event.ctrlKey && !event.altKey && !event.shiftKey){
         event.preventDefault();
-        openCommandDropdown(input);
+        if(dropdown && dropdownOwner === input){
+          selectCommandActive(input);
+        }else{
+          openCommandDropdown(input);
+        }
+        return;
+      }
+      if((event.key === 'ArrowDown' || event.key === 'ArrowUp') && dropdown && dropdownOwner === input){
+        event.preventDefault();
+        const buttons = getCommandButtons();
+        const currentIndex = Math.max(0, buttons.findIndex(btn => btn.classList.contains('active')));
+        setCommandActive(currentIndex + (event.key === 'ArrowDown' ? 1 : -1));
+        return;
       }
       if(event.key === 'Escape') closeCommandDropdown();
     });
