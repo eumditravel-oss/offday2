@@ -11100,15 +11100,27 @@ function getChecklistOrgBranchKey(node, index) {
 
 function getChecklistDefaultOrgBranchKey(company) {
   const branches = getChecklistOrgBranchNodes(company);
-  return branches.length ? getChecklistOrgBranchKey(branches[0], 0) : "";
+  if (!branches.length) return "";
+
+  // CON-COST 대상 선택 모달의 하위 조직 기본값은 항상 기술본부로 고정한다.
+  // 조직도 구조가 변경되어도 라벨/제목/표시명 중 하나에 기술본부가 있으면 우선 선택한다.
+  const techIndex = branches.findIndex(node => {
+    const label = String(getChecklistOrgNodeLabel(node) || node?.title || node?.displayName || "").trim();
+    return label.includes("기술본부");
+  });
+  if (company === "CON-COST" && techIndex >= 0) return getChecklistOrgBranchKey(branches[techIndex], techIndex);
+
+  return getChecklistOrgBranchKey(branches[0], 0);
 }
 
 function renderChecklistOrgBranchOptions(company) {
   const branches = getChecklistOrgBranchNodes(company);
   if (!branches.length) return `<option value="">선택 가능한 하위 조직 없음</option>`;
+  const defaultBranchKey = getChecklistDefaultOrgBranchKey(company);
   return branches.map((node, idx) => {
+    const key = getChecklistOrgBranchKey(node, idx);
     const label = getChecklistOrgNodeLabel(node) || node?.title || `하위 조직 ${idx + 1}`;
-    return `<option value="${escapeHtml(getChecklistOrgBranchKey(node, idx))}">${escapeHtml(label)}</option>`;
+    return `<option value="${escapeHtml(key)}" ${key === defaultBranchKey ? "selected" : ""}>${escapeHtml(label)}</option>`;
   }).join("");
 }
 
