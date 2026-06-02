@@ -21291,3 +21291,14 @@ button.btn-orange{
   border-color:#fca5a5;
   box-shadow:0 0 0 2px rgba(239,68,68,.08);
 }
+
+/* 2026-06-02 기간별 견적서 관리: Enter 전용 드롭다운 선택 후에도 셀 선택 표시 유지
+   선택 기준을 select:focus가 아니라 td.period-cell-focused로 통일합니다. */
+.estimate-period-manage-table td.period-cell-focused .status-select{
+  outline:none !important;
+  box-shadow:inset 0 0 0 2px #22c55e !important;
+  background:#fff !important;
+}
+.estimate-period-manage-table td.period-cell-focused:focus{
+  outline:none !important;
+}
