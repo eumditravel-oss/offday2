@@ -20615,3 +20615,25 @@ button.btn-orange{
 #qcReview .qc-current-project-list.horizontal .qc-project-route-row small{color:#64748b;font-weight:800;text-align:right;}
 #qcReview .qc-route-grid{display:block!important;}
 #qcReview .qc-route-section:not(.qc-route-current-only){display:none!important;}
+
+
+/* QC 프로젝트 선택 UX 정리: 선택 전 리스트 숨김 / 선택 후 프로젝트 선택 영역 접기 */
+#qcReview .checklist-project-toggle-btn::after{content:"";}
+#qcReview.qc-project-picked .checklist-toolbar,
+#qcReview.qc-project-picked #checklistProjectAccessRoutes,
+#qcReview.qc-project-picked #checklistLinkedProjectContext{
+  display:none!important;
+}
+#qcReview:not(.qc-project-picked) .checklist-category-filter,
+#qcReview:not(.qc-project-picked) #checklistLinkedProjectContext,
+#qcReview:not(.qc-project-picked) .excel-grid-wrap{
+  display:none!important;
+}
+#qcReview:not(.qc-project-picked) .checklist-card .card-body{
+  padding-bottom:18px;
+}
+#qcReview .checklist-project-toggle-btn{
+  background:#f97316!important;
+  color:#fff!important;
+  border-color:#f97316!important;
+}
