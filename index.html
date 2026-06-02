@@ -1389,13 +1389,16 @@
               <article class="card checklist-card">
                 <div class="card-head">
                   <div><h2>수량산출 체크리스트</h2><p class="subcopy"></p></div>
-                  <div class="actions"><button class="btn btn-line term-dictionary-open-btn" onclick="openChecklistTermDictionaryModal()">전문용어 사전</button><button class="btn btn-line qc-template-edit-btn" onclick="openQcTeamTemplateModal()">QC팀 전달사항 편집하기</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-line" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button><button class="btn btn-line" onclick="downloadChecklistJson()">더미데이터 JSON 다운로드</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">전체 엑셀 내보내기</button></div>
+                  <div class="actions"><button class="btn btn-primary checklist-project-toggle-btn" onclick="openChecklistProjectSelector()">프로젝트 선택</button><button class="btn btn-line term-dictionary-open-btn" onclick="openChecklistTermDictionaryModal()">전문용어 사전</button><button class="btn btn-line qc-template-edit-btn" onclick="openQcTeamTemplateModal()">QC팀 전달사항 편집하기</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-line" onclick="downloadFirstCategoryCsv()">발주처 송부용 엑셀 다운로드</button><button class="btn btn-line" onclick="downloadChecklistJson()">더미데이터 JSON 다운로드</button><button class="btn btn-primary" onclick="downloadChecklistCsv()">전체 엑셀 내보내기</button></div>
                 </div>
                 <div class="card-body">
                   <div class="checklist-toolbar">
-                    <div class="field project-search-field">
-                      <label>프로젝트</label>
-                      <input id="checklistProject" list="checklistProjectList" value="ㅇㅇ시설 신축공사" oninput="scheduleChecklistGridRender()" onchange="scheduleChecklistGridRender(0)" placeholder="프로젝트명 검색 또는 선택">
+                    <div class="field project-search-field checklist-project-search-route">
+                      <label>프로젝트 검색</label>
+                      <div class="checklist-project-search-line">
+                        <input id="checklistProject" list="checklistProjectList" value="ㅇㅇ시설 신축공사" oninput="scheduleChecklistGridRender(); refreshChecklistProjectRoutes && refreshChecklistProjectRoutes();" onchange="scheduleChecklistGridRender(0); refreshChecklistProjectRoutes && refreshChecklistProjectRoutes();" placeholder="PJ NO, received, 프로젝트명, 업체명 검색 또는 선택">
+                        <button type="button" class="btn btn-primary checklist-project-open-btn" onclick="selectChecklistProjectAndCollapse()">프로젝트 선택</button>
+                      </div>
                       <datalist id="checklistProjectList">
                         <option value="ㅇㅇ시설 신축공사"></option>
                         <option value="샘플 프로젝트 A"></option>
@@ -1408,6 +1411,8 @@
                     <div class="field"><label>체크 필터</label><select id="checklistDoneFilter" onchange="scheduleChecklistGridRender(0)"><option value="전체">전체</option><option value="미확인">미확인</option><option value="부분완료">부분완료</option><option value="확인완료">확인완료</option></select></div>
                     <div class="field"><label>검색</label><input id="checklistSearch" oninput="scheduleChecklistGridRender()" placeholder="공종, 검토항목, 방법 검색"></div>
                   </div>
+
+                  <div id="checklistProjectAccessRoutes" class="checklist-project-access-routes"></div>
                   <div class="checklist-category-filter" id="checklistCategoryFilter"></div>
                   <div class="excel-grid-wrap"><table class="excel-grid"><colgroup>
                     <col class="qc-col-select">
