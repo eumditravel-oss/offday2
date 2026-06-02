@@ -20716,3 +20716,192 @@ button.btn-orange{
   border-color:#f97316;
   box-shadow:0 0 0 3px rgba(249,115,22,.10);
 }
+
+/* =========================================================
+   QC checklist compact density patch
+   - 행간/셀 패딩/버튼 높이를 줄여 한 화면에 더 많은 리스트 표시
+   - 기능 구조는 유지하고 시각 밀도만 조정
+   ========================================================= */
+#qcReview .excel-grid thead th,
+#qcReview .excel-grid tbody td{
+  font-size:12px !important;
+  line-height:1.25 !important;
+  padding-top:4px !important;
+  padding-bottom:4px !important;
+}
+
+#qcReview .excel-grid thead th{
+  height:28px !important;
+  min-height:28px !important;
+  padding-top:5px !important;
+  padding-bottom:5px !important;
+}
+
+#qcReview .excel-grid tbody tr.checklist-detail-row td{
+  padding:4px 6px !important;
+  vertical-align:middle !important;
+}
+
+#qcReview .excel-editable-cell,
+#qcReview .excel-grid .cell{
+  min-height:22px !important;
+  padding:4px 6px !important;
+  line-height:1.25 !important;
+  font-size:12px !important;
+  border-radius:6px !important;
+}
+
+#qcReview .group-separator-row td,
+#qcReview .middle-separator-row td,
+#qcReview .sub-separator-row td{
+  padding:0 !important;
+}
+
+#qcReview .group-band-inner{
+  min-height:34px !important;
+  padding:6px 10px !important;
+  gap:8px !important;
+}
+
+#qcReview .middle-band-inner,
+#qcReview .sub-band-inner{
+  min-height:32px !important;
+  padding:6px 12px !important;
+  gap:7px !important;
+}
+
+#qcReview .sub-band-inner{
+  padding-left:30px !important;
+}
+
+#qcReview .group-band-title,
+#qcReview .group-band-actions{
+  gap:6px !important;
+}
+
+#qcReview .group-band-inner span,
+#qcReview .middle-band-inner span,
+#qcReview .sub-band-inner span{
+  height:20px !important;
+  padding:0 7px !important;
+  font-size:11px !important;
+}
+
+#qcReview .group-band-inner strong,
+#qcReview .middle-band-inner strong,
+#qcReview .sub-band-inner strong{
+  font-size:12px !important;
+}
+
+#qcReview .group-band-inner em,
+#qcReview .middle-band-inner em,
+#qcReview .sub-band-inner em,
+#qcReview .group-band-inner small,
+#qcReview .middle-band-inner small,
+#qcReview .sub-band-inner small{
+  font-size:11px !important;
+}
+
+#qcReview .group-toggle-btn,
+#qcReview .middle-toggle-btn,
+#qcReview .sub-toggle-btn{
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  font-size:11px !important;
+}
+
+#qcReview .target-cell-wrap,
+#qcReview .target-chip-list,
+#qcReview .done-check-stack,
+#qcReview .attachment-cell,
+#qcReview .inline-attachment-cell,
+#qcReview .history-cell,
+#qcReview .manage-cell,
+#qcReview .row-actions,
+#qcReview .row-actions-center{
+  gap:3px !important;
+  min-height:0 !important;
+}
+
+#qcReview .target-chip,
+#qcReview .target-select-btn,
+#qcReview .classification-pill,
+#qcReview .done-check-wrap,
+#qcReview .na-check-btn,
+#qcReview .attach-count,
+#qcReview .attach-inline-add,
+#qcReview .history-view-btn,
+#qcReview .btn-objection,
+#qcReview .group-mini-btn,
+#qcReview .row-actions .btn,
+#qcReview .row-actions-center .btn{
+  min-height:22px !important;
+  height:22px !important;
+  padding:0 6px !important;
+  font-size:11px !important;
+  line-height:20px !important;
+  border-radius:8px !important;
+}
+
+#qcReview .target-chip,
+#qcReview .classification-pill{
+  height:auto !important;
+  min-height:20px !important;
+  line-height:1.2 !important;
+  padding:2px 6px !important;
+}
+
+#qcReview .history-view-btn span,
+#qcReview .checklist-middle-filter-chip em{
+  min-width:16px !important;
+  height:16px !important;
+  padding:0 4px !important;
+  font-size:10px !important;
+}
+
+#qcReview .objection-area{
+  gap:3px !important;
+  margin-top:3px !important;
+}
+
+#qcReview .done-check-wrap span{
+  font-size:11px !important;
+  line-height:1.1 !important;
+}
+
+#qcReview .checklist-middle-filter-bar{
+  padding:0 10px 8px !important;
+  gap:6px !important;
+}
+
+#qcReview .checklist-middle-filter-chip,
+#qcReview .checklist-middle-filter-reset{
+  min-height:24px !important;
+  padding:0 8px !important;
+  font-size:11px !important;
+}
+
+#qcReview .checklist-filter-summary{
+  padding-top:8px !important;
+  padding-bottom:8px !important;
+}
+
+#qcReview .checklist-category-tabs{
+  gap:6px !important;
+}
+
+#qcReview .checklist-category-tabs .btn,
+#qcReview .checklist-category-tab{
+  min-height:28px !important;
+  padding:0 10px !important;
+  font-size:12px !important;
+}
+
+#qcReview .checklist-detail-row{
+  animation:none !important;
+}
+
+#qcReview .translation-panel-row td{
+  padding:4px 8px !important;
+}
