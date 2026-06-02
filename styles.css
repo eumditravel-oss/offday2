@@ -21326,3 +21326,30 @@ button.btn-orange{
   box-shadow:none !important;
   background:#fff !important;
 }
+
+/* 2026-06-02 기간별 견적서 관리: native select 제거 후 td 기반 Enter 셀렉트 표시 */
+.estimate-period-manage-table td.period-select-cell{
+  cursor:default !important;
+}
+.estimate-period-manage-table .period-select-display{
+  width:100%;
+  min-height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  padding:0 10px;
+  border:1px solid #dbe3ef;
+  border-radius:8px;
+  background:#fff;
+  color:#0f172a;
+  font:inherit;
+  font-weight:800;
+  box-sizing:border-box;
+  pointer-events:none;
+  user-select:none;
+}
+.estimate-period-manage-table td.period-cell-focused .period-select-display{
+  border-color:#22c55e !important;
+  box-shadow:inset 0 0 0 2px #22c55e !important;
+  background:#fff !important;
+}
