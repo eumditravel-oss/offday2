@@ -7590,37 +7590,6 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   return true;
 }
 
-/* 2026-06-02 기간별 견적서 관리 select Enter 포커스 보강
-   드롭다운 셀에서 Enter로 값을 확정한 직후 브라우저가 focus를 body/외부 버튼으로 이동시키는 경우에도
-   현재 td 선택 표시와 select 포커스를 유지해, 곧바로 방향키로 다음 영역 이동이 가능하게 합니다. */
-function estimatePeriodKeepDropdownCellSelected(control, event) {
-  const select = control?.closest?.("select.status-select");
-  if (!select) return false;
-  const td = select.closest?.("td");
-  const table = td?.closest?.(".estimate-period-manage-table");
-  if (!td || !table || !estimatePeriodIsTableVisible(table)) return false;
-
-  // native select의 Enter 확정 동작은 막지 않고, 외부 Enter 핸들러만 차단합니다.
-  event?.stopPropagation?.();
-  event?.stopImmediatePropagation?.();
-  select.__periodKeepFocusUntil = Date.now() + 1200;
-  estimatePeriodRememberActiveCell(td);
-
-  const restore = () => {
-    if (!td.isConnected || !estimatePeriodIsTableVisible(table)) return;
-    estimatePeriodRememberActiveCell(td);
-    try { select.focus({ preventScroll: true }); } catch (_) { select.focus?.(); }
-  };
-
-  window.setTimeout?.(() => {
-    try { estimatePeriodPersistRenderedRows?.(false); } catch (_) {}
-    restore();
-  }, 0);
-  window.setTimeout?.(restore, 40);
-  window.setTimeout?.(restore, 160);
-  return true;
-}
-
 function estimatePeriodHandleNavKey(event, el) {
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
   if (!event || !keyMap[event.key]) return false;
@@ -7682,27 +7651,6 @@ function estimatePeriodBindCellNavigation(host) {
     control.addEventListener("pointerdown", () => {
       const td = control.closest?.("td");
       if (td) estimatePeriodRememberActiveCell(td);
-    }, true);
-    control.addEventListener("keydown", event => {
-      if (event.key === "Enter" && control.matches?.("select.status-select")) {
-        estimatePeriodKeepDropdownCellSelected(control, event);
-      }
-    }, true);
-    control.addEventListener("keyup", event => {
-      if (event.key === "Enter" && control.matches?.("select.status-select")) {
-        estimatePeriodKeepDropdownCellSelected(control, event);
-      }
-    }, true);
-    control.addEventListener("blur", () => {
-      if (!control.matches?.("select.status-select")) return;
-      const td = control.closest?.("td");
-      const table = td?.closest?.(".estimate-period-manage-table");
-      if (!td || window.__estimatePeriodActiveCell !== td || Date.now() > Number(control.__periodKeepFocusUntil || 0)) return;
-      window.setTimeout?.(() => {
-        if (!td.isConnected || !estimatePeriodIsTableVisible(table)) return;
-        estimatePeriodRememberActiveCell(td);
-        try { control.focus({ preventScroll: true }); } catch (_) { control.focus?.(); }
-      }, 0);
     }, true);
   });
   if (table.dataset.navBoundV5 !== "1") {
@@ -7816,3 +7764,119 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
     focusItem(next);
   }, true);
 }
+
+/* 2026-06-02 period estimate select Enter focus retention hard fix
+   기간별 견적서 관리의 select(실행/입찰, 투찰, 수주/실주 등)에서 Enter로 드롭다운 값을 확정한 뒤
+   브라우저가 포커스를 body/바깥 영역으로 넘겨도 선택 셀 표시와 방향키 이동 기준을 강제로 유지합니다. */
+(function estimatePeriodSelectEnterFocusRetentionPatch(){
+  if (window.__estimatePeriodSelectEnterFocusRetentionPatch === true) return;
+  window.__estimatePeriodSelectEnterFocusRetentionPatch = true;
+
+  const PERIOD_TABLE_SELECTOR = ".estimate-period-manage-table";
+  const PERIOD_ROW_CELL_SELECTOR = `${PERIOD_TABLE_SELECTOR} tbody tr[data-period-row-id] td`;
+  const PERIOD_SELECT_SELECTOR = `${PERIOD_TABLE_SELECTOR} tbody select.status-select`;
+
+  function getElement(target) {
+    return target && target.nodeType === 1 ? target : (target?.parentElement || null);
+  }
+
+  function isVisiblePeriodTable(table) {
+    if (typeof estimatePeriodIsTableVisible === "function") return estimatePeriodIsTableVisible(table);
+    if (!table || !table.isConnected) return false;
+    const panel = table.closest?.("#estimatePeriodManage");
+    if (panel && !panel.classList.contains("active")) return false;
+    const rect = table.getBoundingClientRect?.();
+    return !!rect && rect.width > 0 && rect.height > 0;
+  }
+
+  function rememberCell(td) {
+    const cell = td?.closest?.(PERIOD_ROW_CELL_SELECTOR);
+    const table = cell?.closest?.(PERIOD_TABLE_SELECTOR);
+    if (!cell || !table || !isVisiblePeriodTable(table)) return null;
+
+    if (typeof estimatePeriodRememberActiveCell === "function") {
+      estimatePeriodRememberActiveCell(cell);
+    } else {
+      window.__estimatePeriodActiveCell = cell;
+      window.__estimatePeriodActiveTable = table;
+      table.querySelectorAll("td.period-cell-focused").forEach(item => {
+        if (item !== cell) item.classList.remove("period-cell-focused");
+      });
+      cell.classList.add("period-cell-focused");
+      cell.setAttribute("tabindex", "0");
+    }
+    cell.classList.add("period-cell-focused");
+    cell.setAttribute("tabindex", "0");
+    window.__estimatePeriodActiveCell = cell;
+    window.__estimatePeriodActiveTable = table;
+    window.__estimatePeriodSelectEnterLockUntil = Date.now() + 900;
+    return cell;
+  }
+
+  function refocusCellControl(td, preferSelect) {
+    const cell = rememberCell(td);
+    if (!cell) return;
+    const control = preferSelect?.isConnected ? preferSelect : (cell.querySelector?.("select.status-select, input.estimate-period-cell-input, button.estimate-period-detail-btn, textarea") || cell);
+    const active = document.activeElement;
+    const table = cell.closest?.(PERIOD_TABLE_SELECTOR);
+    const activeInsideSameTable = !!(active && table && active.closest?.(PERIOD_TABLE_SELECTOR) === table);
+
+    // 이미 같은 표 안에 포커스가 있으면 셀 표시만 유지하고, 바깥으로 빠졌을 때만 다시 포커스합니다.
+    if (!activeInsideSameTable || active === document.body || active === document.documentElement) {
+      try { control?.focus?.({ preventScroll: true }); } catch (_) { control?.focus?.(); }
+    }
+    rememberCell(cell);
+  }
+
+  function reinforceSelectCell(selectEl) {
+    const select = getElement(selectEl)?.closest?.(PERIOD_SELECT_SELECTOR);
+    const td = select?.closest?.(PERIOD_ROW_CELL_SELECTOR);
+    if (!td) return;
+    rememberCell(td);
+    [0, 25, 80, 180, 360, 700].forEach(delay => {
+      window.setTimeout?.(() => refocusCellControl(td, select), delay);
+    });
+    window.requestAnimationFrame?.(() => refocusCellControl(td, select));
+  }
+
+  document.addEventListener("keydown", event => {
+    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
+    if (!select) return;
+    const td = select.closest?.(PERIOD_ROW_CELL_SELECTOR);
+    if (!td) return;
+
+    rememberCell(td);
+
+    if (event.key === "Enter") {
+      // preventDefault를 걸면 native select의 항목 확정 동작이 막힐 수 있으므로, 선택은 브라우저에 맡기고 포커스만 복구합니다.
+      reinforceSelectCell(select);
+    }
+  }, true);
+
+  document.addEventListener("keyup", event => {
+    if (event.key !== "Enter") return;
+    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
+    if (select) reinforceSelectCell(select);
+  }, true);
+
+  document.addEventListener("change", event => {
+    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
+    if (select) reinforceSelectCell(select);
+  }, true);
+
+  document.addEventListener("focusout", event => {
+    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
+    if (!select) return;
+    const td = select.closest?.(PERIOD_ROW_CELL_SELECTOR);
+    if (!td) return;
+    const stillLocked = Date.now() <= Number(window.__estimatePeriodSelectEnterLockUntil || 0);
+    if (!stillLocked) return;
+    window.setTimeout?.(() => {
+      const active = document.activeElement;
+      const table = td.closest?.(PERIOD_TABLE_SELECTOR);
+      if (table && isVisiblePeriodTable(table) && (!active || !active.closest?.(PERIOD_TABLE_SELECTOR))) {
+        refocusCellControl(td, select);
+      }
+    }, 0);
+  }, true);
+})();
