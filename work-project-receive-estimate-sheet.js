@@ -2183,7 +2183,19 @@ function openEstimatePeriodDetail(sentIndex) {
 }
 
 function openEstimateSheetReadonlyWindow(state, item = {}) {
-  const readonlyState = estimateSheetCloneState(state);
+  let readonlyState = estimateSheetCloneState(state);
+  // 기간별 세부보기는 견적 의뢰관리의 “견적서 엑셀 작성”과 같은 템플릿 폭 기준을 사용합니다.
+  // 과거 스냅샷/업로드 데이터에 남아 있는 임의 colWidths가 있으면 세부보기와 작성창의 열 너비가 달라질 수 있으므로,
+  // 화면에 뿌리기 직전에 현재 견적서 템플릿 기준으로 값/수식만 재주입하여 표준화합니다.
+  try {
+    if (typeof estimateSheetExtractQuoteDataFromState === "function" && typeof estimateSheetApplyQuoteDataToTemplate === "function") {
+      const normalizedQuoteData = estimateSheetExtractQuoteDataFromState(readonlyState);
+      normalizedQuoteData.type = readonlyState.type || normalizedQuoteData.type || item.type || estimateSheetActiveType || "개산견적";
+      readonlyState = estimateSheetApplyQuoteDataToTemplate(normalizedQuoteData, { readonlySnapshot: true });
+    }
+  } catch (err) {
+    console.warn("기간별 세부보기 템플릿 폭 표준화 실패", err);
+  }
   const features = "popup=yes,width=1500,height=940,left=60,top=30,resizable=yes,scrollbars=yes";
   const win = window.open("", "CONCOST_ESTIMATE_PERIOD_DETAIL", features);
   if (!win) {
@@ -3532,12 +3544,52 @@ function renderEstimatePeriodManage() {
     }, true);
   });
   host.querySelectorAll(".status-select").forEach(sel => {
+    const keepFocus = () => {
+      sel.__periodKeepFocusUntil = Date.now() + 350;
+      const td = sel.closest?.("td");
+      if (!td) return;
+      estimatePeriodRememberActiveCell(td);
+      window.setTimeout?.(() => {
+        estimatePeriodRememberActiveCell(td);
+        try { sel.focus({ preventScroll: true }); } catch (_) { sel.focus?.(); }
+      }, 0);
+    };
     sel.addEventListener("change", () => {
+      keepFocus();
       estimatePeriodPersistRenderedRows(false);
       const refreshedRows = estimatePeriodSortRowsDesc(estimatePeriodAllRowsForList());
       renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodFilterRows(refreshedRows)));
+      keepFocus();
     });
-    sel.addEventListener("keydown", event => estimatePeriodHandleNavKey(event, sel));
+    sel.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+        estimatePeriodHandleNavKey(event, sel);
+        return;
+      }
+      if (event.key === "Enter") {
+        // 드롭다운에서 Enter로 항목을 확정하면 브라우저가 포커스를 body/바깥 버튼으로 넘기는 경우가 있어
+        // 선택값 반영 후에도 같은 셀을 다시 활성 셀로 유지합니다.
+        window.setTimeout?.(() => {
+          keepFocus();
+          estimatePeriodPersistRenderedRows(false);
+        }, 0);
+      }
+    }, true);
+    sel.addEventListener("keyup", event => {
+      if (event.key === "Enter") keepFocus();
+    }, true);
+    sel.addEventListener("blur", () => {
+      const td = sel.closest?.("td");
+      if (!td || window.__estimatePeriodActiveCell !== td || Date.now() > Number(sel.__periodKeepFocusUntil || 0)) return;
+      window.setTimeout?.(() => {
+        const active = document.activeElement;
+        const table = td.closest?.(".estimate-period-manage-table");
+        if (table && !active?.closest?.(".estimate-period-manage-table") && document.body.contains(td)) {
+          estimatePeriodRememberActiveCell(td);
+          try { sel.focus({ preventScroll: true }); } catch (_) { sel.focus?.(); }
+        }
+      }, 0);
+    }, true);
   });
   const count = document.getElementById("estimatePeriodSentCount");
   if (count) count.textContent = `${estimatePeriodSentRows.length.toLocaleString("ko-KR")}건`;
