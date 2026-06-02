@@ -7926,7 +7926,11 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
   function focusSelectCell(select) {
     const td = rememberSelectCell(select);
     if (!td) return;
-    try { select.focus({ preventScroll: true }); } catch (_) { select.focus?.(); }
+    // 핵심 보정: 기간별 견적서 관리의 Enter 커맨드 드롭다운이 열린 뒤에는
+    // native select가 다시 Enter 기본 동작을 가져가지 않도록 포커스를 select가 아닌 td에 둡니다.
+    // 이렇게 해야 첫 Enter=전용 리스트 열기, 두 번째 Enter=전용 리스트 항목 확정 후에도
+    // 셀 선택 표시와 방향키 이동 기준이 해제되지 않습니다.
+    try { td.focus({ preventScroll: true }); } catch (_) { td.focus?.(); }
     rememberSelectCell(select);
   }
 
