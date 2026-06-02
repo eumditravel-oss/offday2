@@ -21204,3 +21204,90 @@ button.btn-orange{
   background:#fff!important;
   color:#334155!important;
 }
+
+/* 중분류별 전문용어 사전 */
+.checklist-term-scope-tabs{
+  display:flex;
+  gap:8px;
+  padding:12px 24px;
+  border-bottom:1px solid #e5eefb;
+  background:#fff;
+}
+.checklist-term-scope-tab{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  height:34px;
+  padding:0 15px;
+  border:1px solid #dbe7f8;
+  border-radius:999px;
+  background:#fff;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.checklist-term-scope-tab span{
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:#eef2f7;
+  color:#64748b;
+  font-size:11px;
+}
+.checklist-term-scope-tab.active{
+  border-color:#f97316;
+  background:#fff7ed;
+  color:#ea580c;
+  box-shadow:0 0 0 2px rgba(249,115,22,.1);
+}
+.checklist-term-scope-tab.active span{
+  background:#f97316;
+  color:#fff;
+}
+.checklist-term-scope-select{
+  width:92px;
+  height:34px;
+  padding:0 9px;
+  border:1px solid #cfe0f5;
+  border-radius:10px;
+  background:#fff;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+}
+.checklist-term-scope-badge,
+.checklist-term-duplicate-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:48px;
+  height:24px;
+  padding:0 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+}
+.checklist-term-scope-badge{
+  background:#eef6ff;
+  color:#1d4ed8;
+  border:1px solid #bfdbfe;
+}
+.checklist-term-duplicate-badge{
+  background:#fee2e2;
+  color:#b91c1c;
+  border:1px solid #fecaca;
+}
+.checklist-term-dictionary-body tr.is-duplicate td{
+  background:#fff7f7;
+}
+.checklist-term-dictionary-body tr.is-duplicate input[type="text"],
+.checklist-term-dictionary-body tr.is-duplicate .checklist-term-scope-select{
+  border-color:#fca5a5;
+  box-shadow:0 0 0 2px rgba(239,68,68,.08);
+}
