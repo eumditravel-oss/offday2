@@ -401,14 +401,7 @@ const orgStructures = {
                                 {
                                   "title": "파트장",
                                   "memberColumns": 1,
-                                  "children": [
-                                    {
-                                      "title": "파트 담당",
-                                      "memberColumns": 1,
-                                      "children": [],
-                                      "employeeId": "EMP-2018-001"
-                                    }
-                                  ],
+                                  "children": [],
                                   "employeeId": "CC-029"
                                 }
                               ],
