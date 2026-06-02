@@ -10008,13 +10008,12 @@ function renderChecklistCategoryButtons() {
     return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')"><span class="category-name">${escapeHtml(getChecklistCategoryLabel(category))}</span><span class="category-count">${count}</span></button>`;
   }).join("");
 
-  const allVisibleCollapsed = areAllVisibleChecklistGroupsCollapsed();
-  const detailButtonLabel = allVisibleCollapsed ? "펼치기" : "접기";
-  const detailButtonTitle = allVisibleCollapsed ? "현재 조회된 구분의 세부 항목을 모두 펼칩니다." : "현재 조회된 구분의 세부 항목을 모두 숨기고 구분명만 표시합니다.";
+  // 구분 필터는 접기/펼치기 토글 없이 항상 전체 선택지를 표시합니다.
+  checklistCategoryPanelOpen = true;
 
   wrap.innerHTML = `
-    <div class="checklist-filter-shell ${checklistCategoryPanelOpen ? "open" : ""}">
-      <div class="checklist-filter-summary" onclick="toggleChecklistCategoryPanel()" title="클릭하면 구분 선택 목록을 열고 닫습니다.">
+    <div class="checklist-filter-shell open checklist-filter-shell-static">
+      <div class="checklist-filter-summary static" title="구분 필터는 항상 표시됩니다.">
         <div class="filter-summary-main">
           <span class="filter-summary-label">구분 필터</span>
           <strong>${escapeHtml(activeLabel)}</strong>
@@ -10022,11 +10021,9 @@ function renderChecklistCategoryButtons() {
         </div>
         <div class="filter-summary-actions">
           <button type="button" class="category-filter-reset ${selectedChecklistCategoryFilter === "전체" ? "disabled" : ""}" onclick="event.stopPropagation(); setChecklistCategoryFilter('전체')">전체보기</button>
-          <button type="button" class="category-filter-toggle ${checklistCategoryPanelOpen ? "active" : ""}" onclick="event.stopPropagation(); toggleChecklistCategoryPanel()">구분 선택 <span>${checklistCategoryPanelOpen ? "닫기" : "열기"}</span></button>
-          <button type="button" class="category-detail-toggle ${allVisibleCollapsed ? "expand" : "collapse"}" title="${detailButtonTitle}" onclick="event.stopPropagation(); toggleChecklistDetailVisibility()">${detailButtonLabel}</button>
         </div>
       </div>
-      <div class="category-filter-panel ${checklistCategoryPanelOpen ? "open" : ""}">
+      <div class="category-filter-panel open static">
         <div class="category-filter-grid">${optionButtons}</div>
       </div>
     </div>`;
@@ -14059,16 +14056,38 @@ setTimeout(() => {
   function buildPopupCategoryHtml(project, activeCategory){
     return withPopupProjectFilter(project, '전체', () => {
       try { buildChecklistRenderMetaCache(); } catch(_) {}
-      const cats = (window.checklistCategoryOptions || checklistCategoryOptions || []).filter(cat => {
+      const categories = ['전체', ...(window.checklistCategoryOptions || checklistCategoryOptions || []).filter(cat => {
         try { return getChecklistCategoryCount(cat) > 0; } catch(_) { return true; }
-      });
-      return cats.map(cat => {
+      })];
+      return categories.map(cat => {
         let count = 0;
-        try { count = getChecklistCategoryCount(cat); } catch(_) {}
-        const active = cat === activeCategory ? 'active' : '';
-        return `<button type="button" class="qc-popup-stage-btn ${active}" onclick="setChecklistPopupCategory('${escapeJs(cat)}')"><strong>${escapeHtml(getChecklistCategoryLabel(cat))}</strong><span>${count}건</span></button>`;
+        try { count = cat === '전체' ? getChecklistFilteredRows().length : getChecklistCategoryCount(cat); } catch(_) {}
+        const active = cat === activeCategory || (cat === '전체' && activeCategory === '전체') ? 'active' : '';
+        return `<button type="button" class="qc-popup-category-btn ${active}" onclick="setChecklistPopupCategory('${escapeJs(cat)}')"><span class="category-name">${escapeHtml(getChecklistCategoryLabel(cat))}</span><span class="category-count">${count}</span></button>`;
       }).join('');
     });
+  }
+
+  function buildPopupCategoryFilterHtml(project, activeCategory){
+    const active = activeCategory || '전체';
+    let activeCount = 0;
+    try { activeCount = withPopupProjectFilter(project, active, () => getChecklistFilteredRows().length); } catch(_) {}
+    return `
+      <div class="checklist-filter-shell open popup-filter-static">
+        <div class="checklist-filter-summary static">
+          <div class="filter-summary-main">
+            <span class="filter-summary-label">구분 필터</span>
+            <strong>${escapeHtml(getChecklistCategoryLabel(active))}</strong>
+            <em>${activeCount}건</em>
+          </div>
+          <div class="filter-summary-actions">
+            <button type="button" class="category-filter-reset ${active === '전체' ? 'disabled' : ''}" onclick="setChecklistPopupCategory('전체')">전체보기</button>
+          </div>
+        </div>
+        <div class="category-filter-panel open static">
+          <div class="category-filter-grid">${buildPopupCategoryHtml(project, active)}</div>
+        </div>
+      </div>`;
   }
 
   function buildPopupRowsHtml(project, category){
@@ -14126,7 +14145,7 @@ setTimeout(() => {
 
   function popupBaseCss(){
     return `
-      *{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#111827;font-family:Pretendard,'Noto Sans KR',Arial,sans-serif}.qc-popup{padding:22px 24px 34px}.qc-popup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.qc-popup-title{display:flex;align-items:center;gap:12px}.qc-popup-title h1{margin:0;font-size:24px;letter-spacing:-.7px}.qc-popup-project{padding:7px 14px;border:1px solid #cfe0ff;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:900;font-size:18px}.qc-popup-sub{margin:0 0 16px;color:#64748b;font-weight:700}.qc-popup-stage-card{background:#fff;border:1px solid #dbe3ef;border-radius:18px;box-shadow:0 12px 34px rgba(15,23,42,.07);padding:14px 16px;margin-bottom:12px}.qc-popup-stage-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.qc-popup-stage-top strong{font-size:17px}.qc-popup-stage-top span{color:#64748b;font-weight:700;font-size:13px}.qc-popup-stage-grid{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:8px}.qc-popup-stage-btn{height:50px;border:1px solid #dbe3ef;background:#fff;border-radius:12px;font-weight:900;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.qc-popup-stage-btn span{font-size:12px;color:#2563eb}.qc-popup-stage-btn.active{border-color:#2563eb;background:#eff6ff;box-shadow:inset 0 0 0 1px #2563eb}.qc-popup-actions{display:flex;align-items:center;gap:8px;margin:12px 0}.btn{border:1px solid #dbe3ef;border-radius:10px;background:#fff;padding:9px 14px;font-weight:900;cursor:pointer}.btn-primary{background:#f97316;color:#fff;border-color:#f97316}.btn-danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca}.btn-line{background:#fff}.btn-dark{background:#111827;color:#fff;border-color:#111827}.qc-current-title{font-weight:900;margin-left:6px}.excel-grid-wrap{background:#fff;border:1px solid #dbe3ef;border-radius:16px;overflow:auto;max-height:calc(100vh - 310px)}.excel-grid{width:100%;min-width:1650px;border-collapse:collapse;table-layout:fixed}.excel-grid th{background:#f1f5f9;border:1px solid #dbe3ef;padding:10px;font-size:13px}.excel-grid td{border:1px solid #dbe3ef;padding:10px;vertical-align:middle;background:#fff}.checklist-detail-row td{height:84px}.cell{min-height:32px;white-space:pre-wrap;outline:none}.excel-editable-cell:focus{box-shadow:inset 0 0 0 2px #f97316;border-radius:8px;background:#fff7ed}.group-separator-row td,.middle-separator-row td,.sub-separator-row td{background:#eaf3ff!important;font-weight:900}.middle-band-inner,.group-band-inner,.sub-band-inner{display:flex;align-items:center;gap:8px}.middle-toggle-btn,.group-toggle-btn,.sub-toggle-btn{border:1px solid #bfdbfe;background:#eff6ff;border-radius:999px}.history-view-btn,.translate-mini-btn,.btn-mini{border:1px solid #bfdbfe;background:#fff;border-radius:9px;color:#2563eb;font-weight:900;padding:6px 10px}.row-actions{display:flex;gap:6px}.row-actions-center{justify-content:center}.qc-col-select{width:42px}.qc-col-trade{width:96px}.qc-col-no{width:82px}.qc-col-item{width:300px}.qc-col-method{width:300px}.qc-col-target{width:170px}.qc-col-check{width:110px}.qc-col-comment{width:240px}.qc-col-attach{width:110px}.qc-col-history{width:150px}.qc-col-manage{width:118px}
+      *{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#111827;font-family:Pretendard,'Noto Sans KR',Arial,sans-serif}.qc-popup{padding:22px 24px 34px}.qc-popup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.qc-popup-title{display:flex;align-items:center;gap:12px}.qc-popup-title h1{margin:0;font-size:24px;letter-spacing:-.7px}.qc-popup-project{padding:7px 14px;border:1px solid #cfe0ff;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:900;font-size:18px}.qc-popup-sub{margin:0 0 16px;color:#64748b;font-weight:700}.qc-popup-stage-card{background:#fff;border:1px solid #dbe3ef;border-radius:18px;box-shadow:0 12px 34px rgba(15,23,42,.07);padding:14px 16px;margin-bottom:12px}.qc-popup-stage-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.qc-popup-stage-top strong{font-size:17px}.qc-popup-stage-top span{color:#64748b;font-weight:700;font-size:13px}.qc-popup-stage-grid{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:8px}.qc-popup-stage-btn{height:50px;border:1px solid #dbe3ef;background:#fff;border-radius:12px;font-weight:900;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.qc-popup-stage-btn span{font-size:12px;color:#2563eb}.qc-popup-stage-btn.active{border-color:#2563eb;background:#eff6ff;box-shadow:inset 0 0 0 1px #2563eb}.qc-popup-actions{display:flex;align-items:center;gap:8px;margin:12px 0}.btn{border:1px solid #dbe3ef;border-radius:10px;background:#fff;padding:9px 14px;font-weight:900;cursor:pointer}.btn-primary{background:#f97316;color:#fff;border-color:#f97316}.btn-danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca}.btn-line{background:#fff}.btn-dark{background:#111827;color:#fff;border-color:#111827}.qc-current-title{font-weight:900;margin-left:6px}.excel-grid-wrap{background:#fff;border:1px solid #dbe3ef;border-radius:16px;overflow:auto;max-height:calc(100vh - 310px)}.excel-grid{width:100%;min-width:1650px;border-collapse:collapse;table-layout:fixed}.excel-grid th{background:#f1f5f9;border:1px solid #dbe3ef;padding:10px;font-size:13px}.excel-grid td{border:1px solid #dbe3ef;padding:10px;vertical-align:middle;background:#fff}.checklist-detail-row td{height:84px}.cell{min-height:32px;white-space:pre-wrap;outline:none}.excel-editable-cell:focus{box-shadow:inset 0 0 0 2px #f97316;border-radius:8px;background:#fff7ed}.group-separator-row td,.middle-separator-row td,.sub-separator-row td{background:#eaf3ff!important;font-weight:900}.middle-band-inner,.group-band-inner,.sub-band-inner{display:flex;align-items:center;gap:8px}.middle-toggle-btn,.group-toggle-btn,.sub-toggle-btn{border:1px solid #bfdbfe;background:#eff6ff;border-radius:999px}.history-view-btn,.translate-mini-btn,.btn-mini{border:1px solid #bfdbfe;background:#fff;border-radius:9px;color:#2563eb;font-weight:900;padding:6px 10px}.row-actions{display:flex;gap:6px}.row-actions-center{justify-content:center}.qc-col-select{width:42px}.qc-col-trade{width:96px}.qc-col-no{width:82px}.qc-col-item{width:300px}.qc-col-method{width:300px}.qc-col-target{width:170px}.qc-col-check{width:110px}.qc-col-comment{width:240px}.qc-col-attach{width:110px}.qc-col-history{width:150px}.qc-col-manage{width:118px}.checklist-filter-shell{background:#fff;border:1px solid #dbe3ef;border-radius:18px;box-shadow:0 12px 34px rgba(15,23,42,.07);padding:13px 14px;margin-bottom:12px}.checklist-filter-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.filter-summary-main{display:flex;align-items:center;gap:10px;font-weight:900}.filter-summary-label{display:inline-flex;align-items:center;border-radius:999px;background:#eff6ff;color:#2563eb;padding:6px 10px;font-size:13px}.filter-summary-main strong{font-size:15px}.filter-summary-main em{font-style:normal;color:#64748b}.filter-summary-actions{display:flex;gap:8px}.category-filter-reset{border:1px solid #dbe3ef;border-radius:999px;background:#fff;padding:7px 12px;font-weight:900;cursor:pointer}.category-filter-reset.disabled{opacity:.45}.category-filter-panel{display:block}.category-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px}.qc-popup-category-btn{height:46px;border:1px solid #dbe3ef;background:#fff;border-radius:12px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.qc-popup-category-btn .category-count{color:#2563eb;font-size:12px}.qc-popup-category-btn.active{border-color:#2563eb;background:#eff6ff;box-shadow:inset 0 0 0 1px #2563eb}.qc-popup-head-actions{display:flex;gap:8px}.excel-grid-wrap{max-height:calc(100vh - 210px)}
     `;
   }
 
@@ -14171,10 +14190,10 @@ setTimeout(() => {
     const active = category || popup.__checklistPopupCategory || firstCategoryName;
     popup.__checklistPopupCategory = active;
     const doc = popup.document;
-    const categoryWrap = doc.getElementById('qcPopupStageGrid');
+    const categoryWrap = doc.getElementById('qcPopupFilterArea');
     const body = doc.getElementById('checklistGridBody');
     const title = doc.getElementById('qcPopupCurrentTitle');
-    if (categoryWrap) categoryWrap.innerHTML = buildPopupCategoryHtml(project, active);
+    if (categoryWrap) categoryWrap.innerHTML = buildPopupCategoryFilterHtml(project, active);
     if (body) body.innerHTML = buildPopupRowsHtml(project, active);
     if (title) {
       let count = 0; try { count = withPopupProjectFilter(project, active, () => getChecklistFilteredRows().length); } catch(_) {}
@@ -14189,9 +14208,9 @@ setTimeout(() => {
     const popup = window.open('', '_blank', `width=${width},height=${height},left=20,top=20,resizable=yes,scrollbars=yes`);
     if (!popup) { showToast('팝업 차단을 해제해주세요.'); return; }
     const projectLabel = qcProjectLabel(project);
-    const initialCategory = firstCategoryName || '프로젝트 초기';
+    const initialCategory = '전체';
     popup.document.open();
-    popup.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${escapeHtml(projectLabel)} · 프로젝트 질의응답</title><style>${popupBaseCss()}</style></head><body><div class="qc-popup"><div class="qc-popup-head"><div class="qc-popup-title"><span class="qc-popup-project">${escapeHtml(projectLabel)}</span></div></div><p class="qc-popup-sub">기존 프로젝트 질의응답 관리의 리스트·커맨드 구조를 새 창에서 사용합니다.</p><section class="qc-popup-stage-card"><div class="qc-popup-stage-top"><strong>구분 선택</strong><span>버튼을 누르면 아래 리스트가 해당 구분으로 변경됩니다.</span></div><div class="qc-popup-stage-grid" id="qcPopupStageGrid"></div></section><div class="qc-popup-actions"><button class="btn btn-primary" onclick="insertChecklistRowInGroup(__checklistPopupCategory || '${escapeJs(initialCategory)}')">+ 행 추가</button><button class="btn btn-line" onclick="renderChecklistGrid()">새로고침</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-dark" onclick="print()">인쇄/PDF</button><button class="btn btn-line" onclick="close()">닫기</button><strong id="qcPopupCurrentTitle" class="qc-current-title"></strong></div><div class="excel-grid-wrap"><table class="excel-grid"><colgroup><col class="qc-col-select"><col class="qc-col-trade"><col class="qc-col-no"><col class="qc-col-item"><col class="qc-col-method"><col class="qc-col-target"><col class="qc-col-check"><col class="qc-col-comment"><col class="qc-col-attach"><col class="qc-col-history"><col class="qc-col-manage"></colgroup><thead><tr><th class="col-check"><input type="checkbox" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th class="comment-col">코멘트</th><th class="attach-col">첨부</th><th class="history-col">처리 이력</th><th class="manage-col">관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div></div></body></html>`);
+    popup.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${escapeHtml(projectLabel)} · 프로젝트 질의응답</title><style>${popupBaseCss()}</style></head><body><div class="qc-popup"><div class="qc-popup-head"><div class="qc-popup-title"><span class="qc-popup-project">${escapeHtml(projectLabel)}</span></div><div class="qc-popup-head-actions"><button class="btn btn-line" onclick="close()">닫기</button></div></div><div id="qcPopupFilterArea"></div><div class="qc-popup-actions"><button class="btn btn-primary" onclick="insertChecklistRowInGroup(__checklistPopupCategory === '전체' ? '${escapeJs(firstCategoryName || '프로젝트 초기')}' : (__checklistPopupCategory || '${escapeJs(firstCategoryName || '프로젝트 초기')}'))">+ 행 추가</button><button class="btn btn-line" onclick="renderChecklistGrid()">새로고침</button><button class="btn btn-line" onclick="duplicateCheckedRows()">선택 복제</button><button class="btn btn-danger" onclick="deleteCheckedRows()">선택 삭제</button><button class="btn btn-dark" onclick="print()">인쇄/PDF</button><strong id="qcPopupCurrentTitle" class="qc-current-title"></strong></div><div class="excel-grid-wrap"><table class="excel-grid"><colgroup><col class="qc-col-select"><col class="qc-col-trade"><col class="qc-col-no"><col class="qc-col-item"><col class="qc-col-method"><col class="qc-col-target"><col class="qc-col-check"><col class="qc-col-comment"><col class="qc-col-attach"><col class="qc-col-history"><col class="qc-col-manage"></colgroup><thead><tr><th class="col-check"><input type="checkbox" onchange="toggleAllChecklistRows(this)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th class="comment-col">코멘트</th><th class="attach-col">첨부</th><th class="history-col">처리 이력</th><th class="manage-col">관리</th></tr></thead><tbody id="checklistGridBody"></tbody></table></div></div></body></html>`);
     popup.document.close();
     installPopupWrappers(popup, project);
     renderPopupWindow(popup, project, initialCategory);
