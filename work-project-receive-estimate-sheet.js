@@ -3166,10 +3166,10 @@ function estimatePeriodPersistRenderedRows(rerender = true) {
       // input 기반 셀로 변경된 뒤 td와 input이 같은 data-period-key를 가지게 되었습니다.
       // td를 먼저 잡으면 innerText가 비어 있어 방향키 이동/임시저장 시 기존 데이터가 공란으로 덮이는 문제가 발생합니다.
       // 반드시 실제 입력 컨트롤을 우선 읽고, 컨트롤이 없는 경우에만 td 텍스트를 fallback으로 사용합니다.
-      const control = tr.querySelector(`input[data-period-key="${col.key}"], textarea[data-period-key="${col.key}"], select[data-period-key="${col.key}"]`);
+      const control = tr.querySelector(`input[data-period-key="${col.key}"], textarea[data-period-key="${col.key}"], select[data-period-key="${col.key}"], .period-select-display[data-period-key="${col.key}"]`);
       const cell = tr.querySelector(`td[data-period-key="${col.key}"]`);
       const el = control || cell;
-      const rawValue = /^(INPUT|TEXTAREA|SELECT)$/i.test(el?.tagName || "") ? (el?.value || "") : (el?.innerText || el?.textContent || "");
+      const rawValue = el?.classList?.contains("period-select-display") ? (el.dataset.value || el.textContent || "") : (/^(INPUT|TEXTAREA|SELECT)$/i.test(el?.tagName || "") ? (el?.value || "") : (el?.innerText || el?.textContent || ""));
       const nextValue = col.type === "status" ? (rawValue || "") : estimatePeriodNormalizeText(rawValue);
       row[col.key] = nextValue;
       if (typeof ESTIMATE_PERIOD_MANUAL_KEYS !== "undefined" && ESTIMATE_PERIOD_MANUAL_KEYS.includes(col.key)) {
@@ -3508,15 +3508,16 @@ function renderEstimatePeriodManage() {
         return `<td class="center">${btn}</td>`;
       }
       if (col.type === "status") {
-        return `<td class="center period-select-cell" data-period-key="${col.key}"><select class="status-select" tabindex="-1" data-period-select="1" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}">${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option value="${s}" ${String(row[col.key] || "").includes(s) ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        const selectedStatus = ESTIMATE_PERIOD_STATUS_LIST.find(s => String(row[col.key] || "").includes(s)) || estimatePeriodNormalizeText(row[col.key] || "");
+        return `<td class="center period-select-cell" tabindex="0" data-period-key="${col.key}"><div class="period-select-display" data-period-display="1" data-period-key="${col.key}" data-value="${estimateSheetHtml(selectedStatus)}" aria-label="${estimateSheetHtml(col.label)}">${estimateSheetHtml(selectedStatus)}</div></td>`;
       }
       if (col.key === "bid") {
         const selectedBid = estimatePeriodNormalizeText(row[col.key] || "");
-        return `<td class="center period-select-cell" data-period-key="${col.key}"><select class="status-select bid-select" tabindex="-1" data-period-select="1" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_BID_LIST.map(s => `<option value="${s}" ${selectedBid === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        return `<td class="center period-select-cell" tabindex="0" data-period-key="${col.key}"><div class="period-select-display bid-select-display" data-period-display="1" data-period-key="${col.key}" data-value="${estimateSheetHtml(selectedBid)}" aria-label="${estimateSheetHtml(col.label)}">${estimateSheetHtml(selectedBid)}</div></td>`;
       }
       if (col.key === "tender") {
         const selectedTender = estimatePeriodNormalizeText(row[col.key] || "");
-        return `<td class="center period-select-cell" data-period-key="${col.key}"><select class="status-select tender-select" tabindex="-1" data-period-select="1" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_TENDER_LIST.map(s => `<option value="${s}" ${selectedTender === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        return `<td class="center period-select-cell" tabindex="0" data-period-key="${col.key}"><div class="period-select-display tender-select-display" data-period-display="1" data-period-key="${col.key}" data-value="${estimateSheetHtml(selectedTender)}" aria-label="${estimateSheetHtml(col.label)}">${estimateSheetHtml(selectedTender)}</div></td>`;
       }
       let value = row[col.key] ?? "";
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
@@ -7984,5 +7985,246 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
   }, true);
   window.addEventListener("resize", () => {
     if (menu && activeSelect?.isConnected) openMenu(activeSelect);
+  });
+})();
+
+
+/* 2026-06-02 기간별 견적서 관리 Enter 셀렉트 최종 구조 수정
+   native select 요소를 키보드 조작 대상에서 완전히 제외하고, td + period-select-display 기준으로만
+   Enter 열기/Enter 선택/방향키 이동을 처리합니다. 선택 확정 후 포커스는 항상 td 셀에 남습니다. */
+(function estimatePeriodDisplayDropdownFinalPatch(){
+  if (window.__estimatePeriodDisplayDropdownFinalPatch === true) return;
+  window.__estimatePeriodDisplayDropdownFinalPatch = true;
+
+  const TABLE_SELECTOR = ".estimate-period-manage-table";
+  const CELL_SELECTOR = `${TABLE_SELECTOR} tbody tr[data-period-row-id] td.period-select-cell`;
+  const DISPLAY_SELECTOR = ".period-select-display[data-period-display='1']";
+  const MENU_CLASS = "period-display-select-menu";
+  const ITEM_CLASS = "period-display-select-item";
+  let menu = null;
+  let activeCell = null;
+  let activeIndex = 0;
+
+  function asElement(target) {
+    return target && target.nodeType === 1 ? target : (target?.parentElement || null);
+  }
+
+  function isPeriodVisibleByCell(td) {
+    const table = td?.closest?.(TABLE_SELECTOR);
+    if (!table) return false;
+    if (typeof estimatePeriodIsTableVisible === "function") return estimatePeriodIsTableVisible(table);
+    const panel = table.closest?.("#estimatePeriodManage");
+    if (panel && !panel.classList.contains("active")) return false;
+    const rect = table.getBoundingClientRect?.();
+    return !!rect && rect.width > 0 && rect.height > 0;
+  }
+
+  function displayOf(td) {
+    return td?.querySelector?.(DISPLAY_SELECTOR) || null;
+  }
+
+  function keyOf(td) {
+    return displayOf(td)?.dataset.periodKey || td?.dataset.periodKey || "";
+  }
+
+  function optionsOf(td) {
+    const key = keyOf(td);
+    if (key === "bid") return ["", ...(Array.isArray(ESTIMATE_PERIOD_BID_LIST) ? ESTIMATE_PERIOD_BID_LIST : [])];
+    if (key === "tender") return ["", ...(Array.isArray(ESTIMATE_PERIOD_TENDER_LIST) ? ESTIMATE_PERIOD_TENDER_LIST : [])];
+    if (key === "status") return Array.isArray(ESTIMATE_PERIOD_STATUS_LIST) ? ESTIMATE_PERIOD_STATUS_LIST : [];
+    return [];
+  }
+
+  function currentValue(td) {
+    const display = displayOf(td);
+    return display ? (display.dataset.value || display.textContent || "") : "";
+  }
+
+  function rememberCell(td) {
+    if (!td || !isPeriodVisibleByCell(td)) return null;
+    if (typeof estimatePeriodRememberActiveCell === "function") estimatePeriodRememberActiveCell(td);
+    const table = td.closest(TABLE_SELECTOR);
+    table?.querySelectorAll?.("td.period-cell-focused").forEach(item => {
+      if (item !== td) item.classList.remove("period-cell-focused");
+    });
+    td.classList.add("period-cell-focused");
+    td.setAttribute("tabindex", "0");
+    window.__estimatePeriodActiveCell = td;
+    window.__estimatePeriodActiveTable = table;
+    return td;
+  }
+
+  function focusCell(td) {
+    const cell = rememberCell(td);
+    if (!cell) return;
+    try { cell.focus({ preventScroll: true }); } catch (_) { cell.focus?.(); }
+    rememberCell(cell);
+  }
+
+  function ensureStyle() {
+    if (document.getElementById("periodDisplaySelectMenuStyle")) return;
+    const style = document.createElement("style");
+    style.id = "periodDisplaySelectMenuStyle";
+    style.textContent = `
+      .${MENU_CLASS}{position:fixed;z-index:1000000;background:#fff;border:1px solid #94a3b8;border-radius:10px;box-shadow:0 14px 32px rgba(15,23,42,.18);padding:4px;max-height:240px;overflow:auto;font-size:12px;font-weight:800;color:#0f172a;box-sizing:border-box;}
+      .${ITEM_CLASS}{display:block;width:100%;border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:7px;white-space:nowrap;cursor:pointer;font:inherit;color:inherit;}
+      .${ITEM_CLASS}.is-active{background:#e0f2fe;outline:2px solid #38bdf8;outline-offset:-2px;}
+      .${ITEM_CLASS}.is-selected{box-shadow:inset 3px 0 0 #22c55e;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function removeMenu({ keepFocus = true } = {}) {
+    const td = activeCell;
+    if (menu?.parentNode) menu.parentNode.removeChild(menu);
+    menu = null;
+    activeCell = null;
+    activeIndex = 0;
+    if (keepFocus && td?.isConnected) focusCell(td);
+  }
+
+  function paintActive() {
+    if (!menu) return;
+    menu.querySelectorAll(`.${ITEM_CLASS}`).forEach((btn, index) => {
+      btn.classList.toggle("is-active", index === activeIndex);
+      if (index === activeIndex) btn.scrollIntoView?.({ block: "nearest" });
+    });
+  }
+
+  function persistWithoutLosingFocus(td) {
+    if (typeof estimatePeriodPersistRenderedRows === "function") estimatePeriodPersistRenderedRows(false);
+    if (typeof renderEstimatePeriodSummaryCards === "function" && typeof estimatePeriodSummary === "function" && typeof estimatePeriodFilterRows === "function" && typeof estimatePeriodAllRowsForList === "function" && typeof estimatePeriodSortRowsDesc === "function") {
+      const refreshedRows = estimatePeriodSortRowsDesc(estimatePeriodAllRowsForList());
+      renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodFilterRows(refreshedRows)));
+    }
+    [0, 20, 80].forEach(delay => window.setTimeout?.(() => focusCell(td), delay));
+    window.requestAnimationFrame?.(() => focusCell(td));
+  }
+
+  function applyValue(td, index) {
+    const options = optionsOf(td);
+    const value = options[index] ?? "";
+    const display = displayOf(td);
+    if (!display) return;
+    display.dataset.value = value;
+    display.textContent = value;
+    rememberCell(td);
+    persistWithoutLosingFocus(td);
+  }
+
+  function openMenu(td) {
+    if (!td || !isPeriodVisibleByCell(td)) return false;
+    ensureStyle();
+    if (menu && activeCell === td) {
+      paintActive();
+      focusCell(td);
+      return true;
+    }
+    removeMenu({ keepFocus: false });
+    activeCell = td;
+    rememberCell(td);
+    const options = optionsOf(td);
+    const current = currentValue(td);
+    activeIndex = Math.max(0, options.findIndex(item => item === current));
+    if (activeIndex < 0) activeIndex = 0;
+
+    menu = document.createElement("div");
+    menu.className = MENU_CLASS;
+    menu.setAttribute("role", "listbox");
+    menu.innerHTML = options.map((label, index) => {
+      const safe = typeof estimateSheetHtml === "function" ? estimateSheetHtml(label || "") : String(label || "").replace(/[&<>\"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\\\"":"&quot;"}[ch] || ch));
+      return `<button class="${ITEM_CLASS}${index === activeIndex ? " is-active" : ""}${label === current ? " is-selected" : ""}" type="button" role="option" data-index="${index}" tabindex="-1" aria-selected="${label === current ? "true" : "false"}">${safe || "&nbsp;"}</button>`;
+    }).join("");
+    document.body.appendChild(menu);
+
+    const rect = td.getBoundingClientRect();
+    const menuWidth = Math.max(rect.width, 140);
+    const left = Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - menuWidth - 8));
+    const belowTop = rect.bottom + 4;
+    const menuHeight = Math.min(240, Math.max(40, menu.getBoundingClientRect().height || 180));
+    const top = belowTop + menuHeight > window.innerHeight - 8 ? Math.max(8, rect.top - menuHeight - 4) : belowTop;
+    menu.style.minWidth = `${menuWidth}px`;
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+
+    menu.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+    }, true);
+    menu.addEventListener("click", event => {
+      const btn = asElement(event.target)?.closest?.(`.${ITEM_CLASS}`);
+      if (!btn || !activeCell) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      activeIndex = Number(btn.dataset.index || 0);
+      const tdNow = activeCell;
+      applyValue(tdNow, activeIndex);
+      removeMenu({ keepFocus: true });
+    }, true);
+    paintActive();
+    focusCell(td);
+    return true;
+  }
+
+  function findCell(event) {
+    const target = asElement(event?.target);
+    const direct = target?.closest?.(CELL_SELECTOR);
+    if (direct && isPeriodVisibleByCell(direct)) return direct;
+    const remembered = window.__estimatePeriodActiveCell;
+    if (remembered?.isConnected && remembered.matches?.(CELL_SELECTOR) && isPeriodVisibleByCell(remembered)) return remembered;
+    return null;
+  }
+
+  document.addEventListener("keydown", event => {
+    const isMenuOpen = !!(menu && activeCell?.isConnected);
+    if (isMenuOpen && ["ArrowDown", "ArrowUp", "Home", "End", "Enter", "Escape", "Tab"].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      const options = optionsOf(activeCell);
+      if (!options.length) return;
+      if (event.key === "ArrowDown") activeIndex = Math.min(options.length - 1, activeIndex + 1);
+      if (event.key === "ArrowUp") activeIndex = Math.max(0, activeIndex - 1);
+      if (event.key === "Home") activeIndex = 0;
+      if (event.key === "End") activeIndex = options.length - 1;
+      if (event.key === "Escape") { removeMenu({ keepFocus: true }); return; }
+      if (event.key === "Tab") { removeMenu({ keepFocus: true }); return; }
+      if (event.key === "Enter") {
+        const tdNow = activeCell;
+        applyValue(tdNow, activeIndex);
+        removeMenu({ keepFocus: true });
+        return;
+      }
+      paintActive();
+      focusCell(activeCell);
+      return;
+    }
+
+    if (event.key !== "Enter") return;
+    const td = findCell(event);
+    if (!td) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    openMenu(td);
+  }, true);
+
+  document.addEventListener("pointerdown", event => {
+    const td = asElement(event.target)?.closest?.(CELL_SELECTOR);
+    if (td && isPeriodVisibleByCell(td)) rememberCell(td);
+    if (!menu) return;
+    const target = asElement(event.target);
+    if (target?.closest?.(`.${MENU_CLASS}`)) return;
+    if (td === activeCell) return;
+    removeMenu({ keepFocus: false });
+  }, true);
+
+  window.addEventListener("scroll", () => {
+    if (menu && activeCell?.isConnected) openMenu(activeCell);
+  }, true);
+  window.addEventListener("resize", () => {
+    if (menu && activeCell?.isConnected) openMenu(activeCell);
   });
 })();
