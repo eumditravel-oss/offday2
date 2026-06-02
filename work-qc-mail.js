@@ -14352,7 +14352,15 @@ setTimeout(() => {
     doc.open();
     doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${qcEscape(projectLabel)} · 구분 별 리스트</title>
       <style>
-        body{margin:0;background:#f3f6fa;color:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
+        body{margin:0;background:#f5f7fb;color:#0f172a;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
+        body::before{content:"";position:fixed;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#f97316,#fb923c);z-index:10}
+        .stage-menu,.guide,.stage-table-wrap{border-color:#dbe3ef;box-shadow:0 10px 28px rgba(15,23,42,.07)}
+        .btn-primary{background:#f97316!important;border-color:#f97316!important;color:#fff!important}.btn-dark{background:#111827!important;color:#fff!important}.btn-danger{background:#fee2e2!important;color:#991b1b!important;border-color:#fecaca!important}
+        .target-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9999;display:flex;align-items:center;justify-content:center;padding:28px}
+        .target-modal-card{width:min(980px,calc(100vw - 56px));max-height:calc(100vh - 56px);overflow:auto;background:#fff;border:1px solid #dbe3ef;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.22)}
+        .target-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:18px 20px;border-bottom:1px solid #e5edf6}.target-modal-head strong{font-size:20px}.target-modal-head span{display:block;margin-top:4px;color:#64748b}.target-modal-head .close{border:0;background:#f1f5f9;border-radius:10px;width:34px;height:34px;font-size:20px;cursor:pointer}
+        .target-modal-body{padding:18px 20px;display:grid;gap:14px}.target-modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #e5edf6}.field{display:grid;gap:6px}.field label{font-weight:900;color:#334155}.field select,.field input{height:42px;border:1px solid #dbe3ef;border-radius:12px;padding:0 12px;font-weight:800}.target-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:420px;overflow:auto;border:1px solid #e5edf6;border-radius:14px;padding:10px;background:#f8fafc}.target-option{display:flex;gap:8px;align-items:center;border:1px solid #dbe3ef;background:#fff;border-radius:12px;padding:10px;font-weight:800}.target-option small{display:block;color:#64748b;font-weight:700}.target-selected-list{display:flex;flex-wrap:wrap;gap:6px}.target-selected-chip,.target-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800}.target-empty-guide{display:inline-flex;color:#94a3b8;font-size:12px}.checklist-translate-cell{display:grid;gap:6px}.google-style-translate-panel{border:1px solid #dbe3ef;border-radius:14px;background:#fff;padding:12px}.google-style-translate-topbar,.google-style-translate-langbar{display:flex;justify-content:space-between;gap:8px;align-items:center}.google-style-translate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.google-style-translate-box{border:1px solid #e5edf6;border-radius:12px;padding:10px;background:#f8fafc}.google-style-translate-action{border:1px solid #dbe3ef;background:#fff;border-radius:8px;padding:5px 8px;font-weight:800;cursor:pointer}
+        @media(max-width:900px){.target-list{grid-template-columns:1fr}.google-style-translate-grid{grid-template-columns:1fr}}
         .project-badge{display:inline-flex;gap:8px;align-items:center;background:#eef6ff;border:1px solid #bfdbfe;border-radius:999px;padding:5px 10px;color:#1d4ed8;font-weight:800;margin-left:10px;font-size:18px;}
         .stage-menu{margin:18px 22px 0;background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:12px 14px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
         .stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.stage-title{display:flex;align-items:center;gap:8px}.stage-title strong{font-size:18px}.stage-head span{color:#64748b}
@@ -14536,26 +14544,144 @@ setTimeout(() => {
       };
     };
     [
-      "openChecklistModal", "deleteChecklistRow", "openChecklistClassifyModal", "openChecklistTargetModal",
+      "openChecklistModal", "deleteChecklistRow",
       "openChecklistCheckWindow", "openChecklistHistoryWindow", "openChecklistAttachmentGallery", "openChecklistAttachmentImage",
       "openAttachmentGallery", "openAttachmentImage", "openImagePreview", "openAttachmentImageWindow",
       "insertChecklistRowInGroup", "downloadFirstCategoryCsv", "downloadQuestionCategoryCsv", "markQuestionCategorySent"
     ].forEach(name => bridgeParentFunction(name));
+    const popupModalEscape = popupEscape;
+    const closePopupModal = id => doc.getElementById(id)?.remove();
+    win.closeChecklistClassifyModal = function(){ closePopupModal("checklistClassifyModal"); };
+    win.openChecklistClassifyModal = function(index){
+      const row = checklistRows?.[Number(index)];
+      if (!row) return;
+      if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row);
+      const locked = typeof isChecklistCategoryLocked === "function" ? isChecklistCategoryLocked(row.group) : false;
+      if (locked) { win.alert("송부 완료된 질의차수는 중분류를 수정할 수 없습니다."); return; }
+      closePopupModal("checklistClassifyModal");
+      closePopupModal("checklistTargetModal");
+      const mids = typeof getChecklistMiddleOptions === "function" ? getChecklistMiddleOptions(row.group) : [];
+      const currentMid = row.middleCategory || mids[0] || "";
+      const subs = typeof getChecklistSubOptions === "function" ? getChecklistSubOptions(row.group, currentMid) : [];
+      const currentSub = row.subCategory || subs[0] || "";
+      const layer = doc.createElement("div");
+      layer.id = "checklistClassifyModal";
+      layer.className = "target-modal-backdrop active";
+      layer.innerHTML = `<div class="target-modal-card classify-modal-card" onclick="event.stopPropagation();">
+        <div class="target-modal-head"><div><strong>중분류 지정</strong><span>${popupModalEscape(row.no || "-")} · ${popupModalEscape(row.group || "")}</span></div><button type="button" class="close" id="popupClassifyClose">×</button></div>
+        <div class="target-modal-body">
+          <div class="field"><label>중분류</label><select id="inlineChecklistMiddle">${mids.length ? mids.map(v => `<option value="${popupModalEscape(v)}" ${v === currentMid ? "selected" : ""}>${popupModalEscape(v)}</option>`).join("") : `<option value="">중분류 없음</option>`}</select></div>
+          <div class="field"><label>소분류</label><select id="inlineChecklistSub">${subs.length ? subs.map(v => `<option value="${popupModalEscape(v)}" ${v === currentSub ? "selected" : ""}>${popupModalEscape(v)}</option>`).join("") : `<option value="">소분류 없음</option>`}</select></div>
+        </div>
+        <div class="target-modal-foot"><button type="button" class="btn" id="popupClassifyCancel">닫기</button><button type="button" class="btn btn-primary" id="popupClassifyApply">적용</button></div>
+      </div>`;
+      layer.addEventListener("click", () => win.closeChecklistClassifyModal());
+      doc.body.appendChild(layer);
+      const refreshSubs = () => {
+        const mid = doc.getElementById("inlineChecklistMiddle")?.value || "";
+        const nextSubs = typeof getChecklistSubOptions === "function" ? getChecklistSubOptions(row.group, mid) : [];
+        const subEl = doc.getElementById("inlineChecklistSub");
+        if (subEl) subEl.innerHTML = nextSubs.length ? nextSubs.map(v => `<option value="${popupModalEscape(v)}">${popupModalEscape(v)}</option>`).join("") : `<option value="">소분류 없음</option>`;
+      };
+      doc.getElementById("inlineChecklistMiddle")?.addEventListener("change", refreshSubs);
+      doc.getElementById("popupClassifyClose")?.addEventListener("click", win.closeChecklistClassifyModal);
+      doc.getElementById("popupClassifyCancel")?.addEventListener("click", win.closeChecklistClassifyModal);
+      doc.getElementById("popupClassifyApply")?.addEventListener("click", () => {
+        row.middleCategory = doc.getElementById("inlineChecklistMiddle")?.value || "";
+        const subValue = doc.getElementById("inlineChecklistSub")?.value || "";
+        row.subCategory = subValue && subValue !== "소분류 없음" ? subValue : "";
+        row.manualTargets = false;
+        row.targets = [];
+        row.checks = [];
+        if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row);
+        row.history = Array.isArray(row.history) ? row.history : [];
+        row.history.push({ action: "중분류 지정", target: typeof getChecklistRouteLabel === "function" ? getChecklistRouteLabel(row) : row.middleCategory, worker: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() });
+        if (typeof saveChecklistRows === "function") saveChecklistRows();
+        win.closeChecklistClassifyModal();
+        renderAll();
+      });
+    };
+    win.closeChecklistTargetModal = function(){ closePopupModal("checklistTargetModal"); };
+    win.openChecklistTargetModal = function(index){
+      const row = checklistRows?.[Number(index)];
+      if (!row) return;
+      if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row);
+      const locked = typeof isChecklistCategoryLocked === "function" ? isChecklistCategoryLocked(row.group) : false;
+      if (locked) { win.alert("송부 완료된 질의차수는 요청 대상을 수정할 수 없습니다."); return; }
+      closePopupModal("checklistClassifyModal");
+      closePopupModal("checklistTargetModal");
+      const activeEmployees = typeof getChecklistActiveEmployees === "function" ? getChecklistActiveEmployees() : (Array.isArray(employees) ? employees : []);
+      const depts = typeof getChecklistDepartmentOptions === "function" ? getChecklistDepartmentOptions() : Array.from(new Set(activeEmployees.map(emp => emp.dept).filter(Boolean)));
+      const currentTargets = new Set(Array.isArray(row.targets) ? row.targets : []);
+      const deptOptions = depts.map(dept => {
+        const target = typeof makeChecklistDepartmentTarget === "function" ? makeChecklistDepartmentTarget(dept) : `부서:${dept}`;
+        return `<label class="target-option" data-search="${popupModalEscape(dept)}"><input type="checkbox" data-target="${popupModalEscape(target)}" ${currentTargets.has(target) ? "checked" : ""}><span><b>부서 · ${popupModalEscape(dept)}</b><small>부서 단위 확인 대상</small></span></label>`;
+      }).join("");
+      const peopleOptions = activeEmployees.map(emp => {
+        const target = typeof makeChecklistEmployeeTarget === "function" ? makeChecklistEmployeeTarget(emp) : `개인:${emp.empNo || emp.name}`;
+        const name = typeof displayName === "function" ? displayName(emp) : (emp.name || emp.empNo || "이름 없음");
+        const meta = [emp.dept, emp.position, emp.email].filter(Boolean).join(" · ");
+        return `<label class="target-option" data-search="${popupModalEscape(`${name} ${meta}`.toLowerCase())}"><input type="checkbox" data-target="${popupModalEscape(target)}" ${currentTargets.has(target) ? "checked" : ""}><span><b>개인 · ${popupModalEscape(name)}</b><small>${popupModalEscape(meta || "인사카드")}</small></span></label>`;
+      }).join("");
+      const layer = doc.createElement("div");
+      layer.id = "checklistTargetModal";
+      layer.className = "target-modal-backdrop active";
+      layer.innerHTML = `<div class="target-modal-card people-target-modal-card" onclick="event.stopPropagation();">
+        <div class="target-modal-head"><div><strong>요청 대상 선택</strong><span>${popupModalEscape(row.no || "-")} · ${popupModalEscape(row.group || "")} · ${popupModalEscape(row.middleCategory || "중분류 미지정")}</span></div><button type="button" class="close" id="popupTargetClose">×</button></div>
+        <div class="target-modal-body">
+          <div class="field"><label>인사카드 검색</label><input id="popupTargetSearch" placeholder="부서명, 이름, 직위, 이메일 검색"></div>
+          <div class="field"><label>부서 선택</label><div class="target-list">${deptOptions || `<div class="target-empty-guide">등록된 부서가 없습니다.</div>`}</div></div>
+          <div class="field"><label>개인 선택</label><div class="target-list" id="popupPeopleTargetList">${peopleOptions || `<div class="target-empty-guide">등록된 인사카드가 없습니다.</div>`}</div></div>
+        </div>
+        <div class="target-modal-foot"><button type="button" class="btn" id="popupTargetClear">선택 초기화</button><button type="button" class="btn" id="popupTargetCancel">닫기</button><button type="button" class="btn btn-primary" id="popupTargetApply">적용</button></div>
+      </div>`;
+      layer.addEventListener("click", () => win.closeChecklistTargetModal());
+      doc.body.appendChild(layer);
+      doc.getElementById("popupTargetClose")?.addEventListener("click", win.closeChecklistTargetModal);
+      doc.getElementById("popupTargetCancel")?.addEventListener("click", win.closeChecklistTargetModal);
+      doc.getElementById("popupTargetClear")?.addEventListener("click", () => { doc.querySelectorAll("#checklistTargetModal [data-target]").forEach(input => input.checked = false); });
+      doc.getElementById("popupTargetSearch")?.addEventListener("input", event => {
+        const term = String(event.target.value || "").trim().toLowerCase();
+        doc.querySelectorAll("#checklistTargetModal .target-option").forEach(option => {
+          option.style.display = !term || String(option.dataset.search || option.textContent || "").toLowerCase().includes(term) ? "flex" : "none";
+        });
+      });
+      doc.getElementById("popupTargetApply")?.addEventListener("click", () => {
+        const targets = Array.from(doc.querySelectorAll("#checklistTargetModal [data-target]:checked")).map(input => input.getAttribute("data-target")).filter(Boolean);
+        row.manualTargets = targets.length > 0;
+        row.targets = targets.length ? targets : [typeof getChecklistRouteLabel === "function" ? getChecklistRouteLabel(row) || "PM" : "PM"];
+        row.owner = row.targets.join(", ");
+        row.checks = row.targets.map(target => ({ target: typeof getChecklistCheckTargetForAssignee === "function" ? getChecklistCheckTargetForAssignee(target) : target, done: false, na: false, checkedBy: "", checkedAt: "" }));
+        row.history = Array.isArray(row.history) ? row.history : [];
+        row.history.push({ action: "요청대상 변경", target: row.targets.map(target => typeof formatChecklistAssigneeLabel === "function" ? formatChecklistAssigneeLabel(target) : target).join(", "), worker: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() });
+        if (typeof saveChecklistRows === "function") saveChecklistRows();
+        win.closeChecklistTargetModal();
+        renderAll();
+      });
+    };
     win.addChecklistAttachments = function(index, files){
       const fn = window.addChecklistAttachments;
       const result = typeof fn === "function" ? fn.call(window, index, files) : undefined;
       refreshPopupSoon(500);
       return result;
     };
+    Object.defineProperty(win, "openedChecklistTranslationPanel", {
+      configurable: true,
+      get(){ return openedChecklistTranslationPanel; },
+      set(value){ openedChecklistTranslationPanel = value; }
+    });
+    win.renderChecklistGrid = function(){ renderAll(); };
     win.toggleChecklistTranslationPanel = function(event, index, field){
       event?.preventDefault?.();
       event?.stopPropagation?.();
       const row = checklistRows?.[Number(index)];
       if (!row) return;
       const key = `${index}::${field}`;
-      if (!checklistTranslationPanels || typeof checklistTranslationPanels !== "object") window.checklistTranslationPanels = checklistTranslationPanels || {};
-      checklistTranslationPanels[key] = checklistTranslationPanels[key] && checklistTranslationPanels[key].open ? { ...checklistTranslationPanels[key], open: false } : { open: true, field, loading: false, error: "", translatedText: checklistTranslationPanels[key]?.translatedText || "" };
+      openedChecklistTranslationPanel = openedChecklistTranslationPanel === key ? null : key;
       renderAll();
+      if (openedChecklistTranslationPanel === key && typeof window.runChecklistTranslation === "function") {
+        window.runChecklistTranslation(index, field).then(() => refreshPopupSoon(50)).catch(() => refreshPopupSoon(50));
+      }
     };
     win.runChecklistTranslation = async function(index, field){
       if (typeof window.runChecklistTranslation === "function") await window.runChecklistTranslation(index, field);
