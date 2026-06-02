@@ -9854,7 +9854,8 @@ function getChecklistCategoryLabel(category) {
 
 function setChecklistCategoryFilter(category) {
   selectedChecklistCategoryFilter = category || "전체";
-  checklistCategoryPanelOpen = false;
+  // 구분 필터는 사용자가 '구분 선택 닫기'를 누르기 전까지 접히지 않도록 유지합니다.
+  checklistCategoryPanelOpen = true;
   renderChecklistGrid();
 }
 
@@ -9918,6 +9919,17 @@ function expandAllChecklistGroups() {
 function collapseAllChecklistGroups() {
   getChecklistFilteredRows().forEach(({ row }) => collapsedChecklistGroups.add(normalizeChecklistGroupName(row.group)));
   renderChecklistGrid();
+}
+
+function collapseChecklistVisibleGroupsOnly() {
+  getChecklistFilteredRows().forEach(({ row }) => {
+    collapsedChecklistGroups.add(normalizeChecklistGroupName(row.group));
+  });
+}
+
+function applyChecklistDefaultCollapsedView() {
+  checklistCategoryPanelOpen = true;
+  collapseChecklistVisibleGroupsOnly();
 }
 
 
@@ -10014,7 +10026,7 @@ function renderChecklistCategoryButtons() {
 
   wrap.innerHTML = `
     <div class="checklist-filter-shell ${checklistCategoryPanelOpen ? "open" : ""}">
-      <div class="checklist-filter-summary" onclick="toggleChecklistCategoryPanel()" title="클릭하면 구분 선택 목록을 열고 닫습니다.">
+      <div class="checklist-filter-summary" title="구분 필터는 구분 선택 닫기 버튼으로만 접을 수 있습니다.">
         <div class="filter-summary-main">
           <span class="filter-summary-label">구분 필터</span>
           <strong>${escapeHtml(activeLabel)}</strong>
@@ -13719,7 +13731,8 @@ function importSelectedQcTeamTemplateRows() {
     checklistRows.push(newRow);
   });
   selectedChecklistCategoryFilter = "QC팀 전달사항";
-  collapsedChecklistGroups.delete("QC팀 전달사항");
+  checklistCategoryPanelOpen = true;
+  collapseChecklistVisibleGroupsOnly();
   closeQcTeamTemplateModal();
   renderChecklistCategoryButtons();
   renderChecklistGrid();
@@ -14065,7 +14078,9 @@ setTimeout(() => {
     setChecklistProjectSelection(project);
     setChecklistProjectPicked(true);
     setChecklistRouteCollapsed(true);
+    checklistCategoryPanelOpen = true;
     try { updateChecklistLinkedProjectContext?.(); } catch(_) {}
+    try { applyChecklistDefaultCollapsedView(); } catch(_) {}
     try { scheduleChecklistGridRender(0); } catch(_) { try { renderChecklistGrid(); } catch(__){} }
     try { showToast('프로젝트가 선택되었습니다.'); } catch(_) {}
   };
