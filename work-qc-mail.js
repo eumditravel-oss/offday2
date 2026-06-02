@@ -13730,13 +13730,15 @@ function importSelectedQcTeamTemplateRows() {
     });
     checklistRows.push(newRow);
   });
-  selectedChecklistCategoryFilter = "QC팀 전달사항";
+  // QC팀 전달사항을 불러온 뒤에도 목록 기본 필터는 항상 전체보기로 유지합니다.
+  // 특정 구분만 보고 싶은 경우 사용자가 구분 필터에서 직접 선택합니다.
+  selectedChecklistCategoryFilter = "전체";
   checklistCategoryPanelOpen = true;
   collapseChecklistVisibleGroupsOnly();
   closeQcTeamTemplateModal();
   renderChecklistCategoryButtons();
   renderChecklistGrid();
-  showToast(`${selectedRows.length}건을 현재 프로젝트에 불러왔습니다.`);
+  showToast(`${selectedRows.length}건을 현재 프로젝트에 불러왔습니다. 전체보기 기준으로 표시합니다.`);
 }
 
 
