@@ -13944,6 +13944,7 @@ setTimeout(() => {
   const STAGE_CATEGORIES = [
     "프로젝트 초기",
     "PM 전달사항",
+    "QC팀 전달사항",
     "제출자료 검토사항",
     "최종자료 검토사항",
     "Z1. 질의사항(1차)",
@@ -13956,14 +13957,15 @@ setTimeout(() => {
   ];
   const SAMPLE_PROJECTS = [
     { projectNo: "2026001", receiveId: "RCV-2026001", projectName: "ㅇㅇ시설 신축공사", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "2026002", receiveId: "RCV-2026002", projectName: "공동주택 신축공사", client: "대한건설", status: "진행중" },
-    { projectNo: "2026003", receiveId: "RCV-2026003", projectName: "업무시설 증축공사", client: "한빛엔지니어링", status: "진행중" },
-    { projectNo: "2026004", receiveId: "RCV-2026004", projectName: "물류센터 구조검토", client: "수성개발", status: "진행중" },
-    { projectNo: "2026005", receiveId: "RCV-2026005", projectName: "근린생활시설 리모델링", client: "도원건축", status: "진행중" },
-    { projectNo: "2026006", receiveId: "RCV-2026006", projectName: "오피스텔 증축공사", client: "세움건설", status: "진행중" }
+    { projectNo: "2026002", receiveId: "RCV-2026002", projectName: "공동주택 신축공사", client: "ㅇㅇ건설", status: "진행중" },
+    { projectNo: "2026003", receiveId: "RCV-2026003", projectName: "업무시설 증축공사", client: "ㅇㅇ건설", status: "진행중" },
+    { projectNo: "2026004", receiveId: "RCV-2026004", projectName: "물류센터 구조검토", client: "ㅇㅇ건설", status: "진행중" },
+    { projectNo: "2026005", receiveId: "RCV-2026005", projectName: "근린생활시설 리모델링", client: "ㅇㅇ건설", status: "진행중" },
+    { projectNo: "2026006", receiveId: "RCV-2026006", projectName: "오피스텔 증축공사", client: "ㅇㅇ건설", status: "진행중" }
   ];
   let selectedQcProjectKey = "";
   let selectedQcProjectData = null;
+  let pendingQcProjectKey = "";
 
   function qcTxt(value){ return String(value ?? "").replace(/\s+/g, " ").trim(); }
   function qcNorm(value){ return qcTxt(value).toLowerCase(); }
@@ -14125,36 +14127,43 @@ setTimeout(() => {
           </div>
           <div class="qc-ongoing-project-list">
             ${projects.map(project => {
-              const active = qcProjectKey(project) === selectedQcProjectKey ? "active" : "";
-              return `<button type="button" class="qc-ongoing-project-item ${active}" onclick="selectQcReviewProjectByKey('${qcEscapeJs(qcProjectKey(project))}')">
+              const key = qcProjectKey(project);
+              const active = key === (pendingQcProjectKey || selectedQcProjectKey) ? "active" : "";
+              return `<button type="button" class="qc-ongoing-project-item ${active}" onclick="pickQcReviewOngoingProject('${qcEscapeJs(key)}')">
                 <b>${qcEscape(qcDisplayProjectNo(project))}</b>
                 <span>${qcEscape(project.projectName || project.name || "프로젝트명 없음")}</span>
-                <em>${qcEscape(project.client || project.clientName || qcProjectStatus(project))}</em>
+                <em>ㅇㅇ건설</em>
                 <i>${qcEscape(qcProjectStatus(project))}</i>
               </button>`;
             }).join("")}
           </div>
+          <div class="qc-ongoing-select-row">
+            <button type="button" class="btn btn-primary" onclick="selectQcReviewOngoingProjectAndOpen()">프로젝트 선택</button>
+          </div>
         </section>
-      </div>
-      <div class="qc-project-stage-panel">
-        <div class="qc-project-stage-head">
-          <strong>구분 별 리스트 새 창 열기</strong>
-          <span>프로젝트 초기부터 견적조건(최종)까지 버튼을 눌러 구분별 리스트를 새 창에서 확인·추가·수정합니다.</span>
-        </div>
-        <div class="qc-project-stage-grid">${qcStageButtonsHtml()}</div>
       </div>`;
   }
   function qcFindProjectByKey(key){
     const target = qcTxt(key);
     return qcProjectPool().find(project => qcProjectKey(project) === target) || null;
   }
+  window.pickQcReviewOngoingProject = function pickQcReviewOngoingProject(key){
+    pendingQcProjectKey = qcTxt(key);
+    renderQcProjectAccessPanel();
+  };
   window.selectQcReviewProjectByKey = function selectQcReviewProjectByKey(key){
     const project = qcFindProjectByKey(key);
-    qcSelectProjectByValue(project || key);
+    return qcSelectProjectByValue(project || key);
   };
   window.selectQcReviewProjectFromSearch = function selectQcReviewProjectFromSearch(){
     const value = document.getElementById("qcProjectSearchInput")?.value || document.getElementById("checklistProject")?.value || "";
-    qcSelectProjectByValue(value);
+    const project = qcSelectProjectByValue(value);
+    if (project) openQcProjectStageMenuWindow();
+  };
+  window.selectQcReviewOngoingProjectAndOpen = function selectQcReviewOngoingProjectAndOpen(){
+    const key = pendingQcProjectKey || selectedQcProjectKey;
+    const project = key ? selectQcReviewProjectByKey(key) : qcEnsureSelectedProject();
+    if (project) openQcProjectStageMenuWindow();
   };
 
   function qcApplyProjectToRow(row, project = selectedQcProjectData){
@@ -14248,14 +14257,37 @@ setTimeout(() => {
   };
   window.getQcProjectStageRows = function getQcProjectStageRows(category, projectKey = selectedQcProjectKey){
     const key = qcTxt(projectKey);
-    return (checklistRows || []).map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => {
+    const categoryRows = (checklistRows || []).map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => {
       const group = typeof normalizeChecklistGroupName === "function" ? normalizeChecklistGroupName(row.group) : row.group;
-      if (group !== category) return false;
-      if (!key) return true;
+      return group === category;
+    });
+    if (!key) return categoryRows;
+    const linkedRows = categoryRows.filter(({ row }) => {
       const rKey = qcRowKey(row);
       return !rKey || rKey === key;
     });
+    return linkedRows.length ? linkedRows : categoryRows;
   };
+
+  window.openQcProjectStageMenuWindow = function openQcProjectStageMenuWindow(){
+    const project = qcEnsureSelectedProject();
+    if (!project) { qcToast("먼저 프로젝트를 선택해 주세요."); return; }
+    const projectLabel = qcProjectLabel(project);
+    const win = window.open("", `qc_stage_menu_${selectedQcProjectKey}`.replace(/[^a-zA-Z0-9_]/g, "_"), "width=1380,height=760,scrollbars=yes,resizable=yes");
+    if (!win) { qcToast("팝업 차단을 해제해 주세요."); return; }
+    const buttons = STAGE_CATEGORIES.map(category => `
+      <button type="button" class="stage-btn" onclick="window.opener.openQcProjectStageWindow('${qcEscapeJs(category)}')">
+        <strong>${qcEscape(category)}</strong><span>${qcStageCount(category)}건</span>
+      </button>`).join("");
+    win.document.open();
+    win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${qcEscape(projectLabel)} · 구분 별 리스트</title>
+      <style>body{margin:0;background:#f3f6fa;color:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}header{background:#fff;border-bottom:1px solid #dbe3ef;padding:22px 28px;position:sticky;top:0;z-index:3;box-shadow:0 8px 24px rgba(15,23,42,.06)}h1{margin:0;font-size:24px}p{margin:8px 0 0;color:#64748b}.badge{display:inline-flex;margin-left:8px;padding:6px 12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;font-weight:900}.stage-menu{margin:22px 28px;background:#fff;border:1px solid #dbe3ef;border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.stage-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}.stage-head strong{font-size:18px}.stage-head span{color:#64748b}.stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.stage-btn{border:1px solid #dbe3ef;background:#fff;border-radius:14px;padding:15px 12px;cursor:pointer;font-weight:900;text-align:center}.stage-btn:hover{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.10)}.stage-btn span{display:block;margin-top:7px;color:#2563eb;font-size:12px}@media(max-width:980px){.stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body>
+      <header><h1>구분 별 리스트 새 창 열기 <span class="badge">${qcEscape(projectLabel)}</span></h1><p>프로젝트 초기부터 견적조건(최종)까지 버튼을 눌러 구분별 리스트를 새 창에서 확인·추가·수정합니다.</p></header>
+      <section class="stage-menu"><div class="stage-head"><strong>구분 선택</strong><span>버튼을 누르면 해당 구분 리스트가 별도 새 창으로 열립니다.</span></div><div class="stage-grid">${buttons}</div></section>
+    </body></html>`);
+    win.document.close();
+  };
+
   window.openQcProjectStageWindow = function openQcProjectStageWindow(category){
     const project = qcEnsureSelectedProject();
     if (!project) { qcToast("먼저 프로젝트를 선택해 주세요."); return; }
@@ -14364,8 +14396,21 @@ setTimeout(() => {
   if (baseImportQcTemplate && !baseImportQcTemplate.__qcProjectSearchWrapped) {
     importSelectedQcTeamTemplateRows = function importSelectedQcTeamTemplateRowsWithProject(){
       const value = document.getElementById("qcTemplateProjectSearch")?.value || "";
-      if (value) qcSelectProjectByValue(value, true);
-      return baseImportQcTemplate.apply(this, arguments);
+      const project = value ? qcSelectProjectByValue(value, true) : qcEnsureSelectedProject();
+      const before = Array.isArray(checklistRows) ? checklistRows.length : 0;
+      const result = baseImportQcTemplate.apply(this, arguments);
+      const targetProject = project || selectedQcProjectData || qcEnsureSelectedProject();
+      if (Array.isArray(checklistRows) && targetProject) {
+        checklistRows.slice(before).forEach(row => {
+          row.group = "QC팀 전달사항";
+          qcApplyProjectToRow(row, targetProject);
+        });
+        if (typeof saveChecklistRows === "function") saveChecklistRows();
+        if (typeof renderChecklistCategoryButtons === "function") renderChecklistCategoryButtons();
+        if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+        renderQcProjectAccessPanel();
+      }
+      return result;
     };
     importSelectedQcTeamTemplateRows.__qcProjectSearchWrapped = true;
     window.importSelectedQcTeamTemplateRows = importSelectedQcTeamTemplateRows;
