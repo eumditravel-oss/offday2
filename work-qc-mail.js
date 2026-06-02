@@ -14044,6 +14044,12 @@ setTimeout(() => {
     if (!wrap) return;
     wrap.classList.toggle('is-collapsed', !!collapsed);
   }
+  function setChecklistProjectPicked(picked){
+    const panel = document.getElementById('qcReview');
+    if (!panel) return;
+    panel.classList.toggle('qc-project-picked', !!picked);
+    panel.classList.toggle('qc-project-unpicked', !picked);
+  }
 
   window.refreshChecklistProjectRoutes = function refreshChecklistProjectRoutes(){
     renderChecklistRouteProjects();
@@ -14057,11 +14063,14 @@ setTimeout(() => {
   window.selectChecklistProjectAndCollapse = function selectChecklistProjectAndCollapse(){
     const project = qcFindProjectByText(document.getElementById('checklistProject')?.value || '') || qcCollectProjectItems()[0];
     setChecklistProjectSelection(project);
+    setChecklistProjectPicked(true);
     setChecklistRouteCollapsed(true);
+    try { updateChecklistLinkedProjectContext?.(); } catch(_) {}
     try { scheduleChecklistGridRender(0); } catch(_) { try { renderChecklistGrid(); } catch(__){} }
     try { showToast('프로젝트가 선택되었습니다.'); } catch(_) {}
   };
   window.openChecklistProjectSelector = function openChecklistProjectSelector(){
+    setChecklistProjectPicked(false);
     setChecklistRouteCollapsed(false);
     renderChecklistRouteProjects();
     const wrap = document.getElementById('checklistProjectAccessRoutes');
@@ -14081,6 +14090,8 @@ setTimeout(() => {
   }
 
   setTimeout(() => {
+    setChecklistProjectPicked(false);
+    setChecklistRouteCollapsed(false);
     syncChecklistProjectDatalist();
     renderChecklistRouteProjects();
     const input = document.getElementById('checklistProject');
