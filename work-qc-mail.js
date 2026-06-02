@@ -13955,11 +13955,12 @@ setTimeout(() => {
     "Z7. 견적조건(최종)"
   ];
   const SAMPLE_PROJECTS = [
-    { projectNo: "PJ-26001", receiveId: "RCV-26001", projectName: "ㅇㅇ시설 신축공사", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "PJ-26002", receiveId: "RCV-26002", projectName: "공동주택 신축공사", client: "대한건설", status: "진행중" },
-    { projectNo: "PJ-26003", receiveId: "RCV-26003", projectName: "업무시설 증축공사", client: "한빛엔지니어링", status: "진행중" },
-    { projectNo: "PJ-26004", receiveId: "RCV-26004", projectName: "물류센터 구조검토", client: "수성개발", status: "진행중" },
-    { projectNo: "PJ-26005", receiveId: "RCV-26005", projectName: "근린생활시설 리모델링", client: "도원건축", status: "진행중" }
+    { projectNo: "2026001", receiveId: "RCV-2026001", projectName: "ㅇㅇ시설 신축공사", client: "ㅇㅇ건설", status: "진행중" },
+    { projectNo: "2026002", receiveId: "RCV-2026002", projectName: "공동주택 신축공사", client: "대한건설", status: "진행중" },
+    { projectNo: "2026003", receiveId: "RCV-2026003", projectName: "업무시설 증축공사", client: "한빛엔지니어링", status: "진행중" },
+    { projectNo: "2026004", receiveId: "RCV-2026004", projectName: "물류센터 구조검토", client: "수성개발", status: "진행중" },
+    { projectNo: "2026005", receiveId: "RCV-2026005", projectName: "근린생활시설 리모델링", client: "도원건축", status: "진행중" },
+    { projectNo: "2026006", receiveId: "RCV-2026006", projectName: "오피스텔 증축공사", client: "세움건설", status: "진행중" }
   ];
   let selectedQcProjectKey = "";
   let selectedQcProjectData = null;
@@ -13978,11 +13979,20 @@ setTimeout(() => {
     const name = qcTxt(data.projectName || data.name);
     return name ? `NAME:${name}` : "";
   }
+  function qcDisplayProjectNo(data = {}){
+    const raw = qcTxt(data.projectNo || data.pjNo || data.no || data.receiveId || "");
+    const digits = raw.replace(/\D/g, "");
+    if (/^2026\d{3}$/.test(digits)) return digits;
+    const match26 = raw.match(/(?:PJ|RCV)?[-_\s]*26[-_\s]*(\d{3})/i);
+    if (match26) return `2026${match26[1]}`;
+    if (/^26\d{3}$/.test(digits)) return `20${digits}`;
+    return raw || "NO 없음";
+  }
   function qcRowKey(row = {}){
     return qcTxt(row.projectLinkKey || row.linkedReceiveId || row.receiveId || row.linkedProjectNo || row.pjNo || row.projectNo);
   }
   function qcProjectLabel(data = {}){
-    return [data.projectNo || data.pjNo, data.projectName || data.name, data.client || data.clientName].filter(Boolean).join(" · ");
+    return [qcDisplayProjectNo(data), data.projectName || data.name, data.client || data.clientName].filter(Boolean).join(" · ");
   }
   function qcProjectStatus(data = {}){
     return qcTxt(data.status || data.state || data.progressStatus || data.projectStatus || "진행중");
@@ -14076,6 +14086,7 @@ setTimeout(() => {
     const body = document.querySelector("#qcReview .card-body");
     const toolbar = document.querySelector("#qcReview .checklist-toolbar");
     if (!body || !toolbar) return;
+    document.getElementById("qcReview")?.classList.add("qc-project-access-installed");
     let panel = document.getElementById("qcProjectAccessPanel");
     if (!panel) {
       panel = document.createElement("div");
@@ -14096,24 +14107,30 @@ setTimeout(() => {
         </div>
         <div class="qc-project-selected-badge">선택 프로젝트: <strong>${qcEscape(selectedLabel || "미선택")}</strong></div>
       </div>
-      <div class="qc-project-access-grid">
-        <section class="qc-project-route-card">
-          <strong>1. 프로젝트 검색</strong>
+      <div class="qc-project-route-layout">
+        <section class="qc-project-route-card qc-search-route-card">
+          <div class="qc-route-title-row">
+            <strong>1. 프로젝트 검색</strong>
+            <small>PJ NO, receiveId, 프로젝트명, 업체명으로 직접 검색해서 선택합니다.</small>
+          </div>
           <div class="qc-project-search-row">
-            <input id="qcProjectSearchInput" list="qcProjectSearchList" value="${qcEscape(selectedLabel)}" placeholder="PJ NO, receiveId, 프로젝트명, 업체명 검색">
+            <input id="qcProjectSearchInput" list="qcProjectSearchList" value="${qcEscape(selectedLabel)}" placeholder="예: 2026001, ㅇㅇ시설 신축공사, ㅇㅇ건설">
             <button type="button" class="btn btn-primary" onclick="selectQcReviewProjectFromSearch()">프로젝트 선택</button>
           </div>
-          <small>선택 시 기존 프로젝트 검색란에도 반영되고, receiveId/PJ NO 기준으로 하단 리스트가 분리됩니다.</small>
         </section>
         <section class="qc-project-route-card qc-ongoing-route-card">
-          <strong>2. 현재 진행중인 프로젝트</strong>
+          <div class="qc-route-title-row">
+            <strong>2. 현재 진행중인 프로젝트</strong>
+            <small>진행중인 프로젝트를 리스트형으로 확인하고 바로 선택합니다.</small>
+          </div>
           <div class="qc-ongoing-project-list">
             ${projects.map(project => {
               const active = qcProjectKey(project) === selectedQcProjectKey ? "active" : "";
               return `<button type="button" class="qc-ongoing-project-item ${active}" onclick="selectQcReviewProjectByKey('${qcEscapeJs(qcProjectKey(project))}')">
-                <b>${qcEscape(project.projectNo || project.pjNo || "NO 없음")}</b>
+                <b>${qcEscape(qcDisplayProjectNo(project))}</b>
                 <span>${qcEscape(project.projectName || project.name || "프로젝트명 없음")}</span>
                 <em>${qcEscape(project.client || project.clientName || qcProjectStatus(project))}</em>
+                <i>${qcEscape(qcProjectStatus(project))}</i>
               </button>`;
             }).join("")}
           </div>
@@ -14144,7 +14161,7 @@ setTimeout(() => {
     if (!row || !project) return row;
     const key = qcProjectKey(project);
     row.project = project.projectName || project.name || row.project || "";
-    row.projectNo = project.projectNo || project.pjNo || row.projectNo || "";
+    row.projectNo = qcDisplayProjectNo(project) || row.projectNo || "";
     row.pjNo = row.projectNo;
     row.receiveId = project.receiveId || project.internalReceiveId || row.receiveId || "";
     row.linkedReceiveId = key;
