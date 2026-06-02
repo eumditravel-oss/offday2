@@ -14360,12 +14360,13 @@ setTimeout(() => {
         .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 22px 0}.btn{border:1px solid #dbe3ef;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;cursor:pointer}.btn-primary{background:#f97316;color:#fff;border-color:#f97316}.btn-danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}.btn-dark{background:#111827;color:#fff;border-color:#111827}
         .guide{margin:8px 22px 0;padding:10px 14px;background:#fff;border:1px solid #dbe3ef;border-radius:14px;color:#475569;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.guide b{color:#111827}.stage-table-wrap{margin:12px 22px 24px;background:#fff;border:1px solid #dbe3ef;border-radius:16px;overflow:auto;box-shadow:0 8px 24px rgba(15,23,42,.06)}
         table{width:100%;border-collapse:collapse;min-width:1480px}th,td{border:1px solid #dbe3ef;padding:8px;vertical-align:middle}th{background:#f1f5f9;font-size:13px}.cell{min-height:34px;border:1px solid transparent;border-radius:8px;padding:7px;white-space:pre-wrap}.cell:focus{outline:none;border-color:#22c55e;background:#fff}.center{text-align:center}.empty{padding:50px;text-align:center;color:#64748b}.row-actions{display:flex;gap:6px;justify-content:center}.count{font-weight:900;color:#2563eb}.current-category{font-weight:900;color:#111827;margin-left:8px}
+        .group-separator-row td,.middle-separator-row td,.sub-separator-row td{padding:0;border-color:#dbe3ef}.group-band-inner,.middle-band-inner,.sub-band-inner{display:flex;align-items:center;gap:10px;min-height:42px;padding:8px 14px;background:#eef6ff;font-weight:900}.middle-band-inner{background:#f0f7ff}.sub-band-inner{background:#f8fbff}.group-band-inner span,.middle-band-inner span,.sub-band-inner span{display:inline-flex;border:1px solid #bfdbfe;border-radius:999px;padding:2px 9px;color:#2563eb;background:#eaf3ff}.group-band-inner em,.middle-band-inner em,.sub-band-inner em{font-style:normal;color:#475569}.checklist-detail-row td{height:78px}.excel-editable-cell{min-height:32px;border:1px solid transparent;border-radius:8px;padding:7px;white-space:pre-wrap}.excel-editable-cell:focus{outline:none;border-color:#22c55e;background:#fff}.checklist-translate-btn,.target-select-btn,.attach-inline-add,.attach-count-btn,.history-open-btn{border:1px solid #bfdbfe;background:#fff;border-radius:9px;padding:5px 9px;font-weight:800;color:#2563eb;cursor:pointer}.btn-line{background:#fff}.manage-cell .btn,.row-actions .btn{margin:2px}.row-done{background:#f8fafc}.locked-row{opacity:.7}.eliminated-row{text-decoration:line-through;color:#94a3b8}.serial-no-cell{text-align:center}.target-cell,.done-cell{text-align:center}.attachment-cell{display:flex;flex-direction:column;gap:4px;align-items:center}.google-style-translate-row td{background:#f8fbff}
         @media(max-width:1280px){.stage-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.guide{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:900px){.stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide{grid-template-columns:1fr}}
       </style></head><body>
         <section class="stage-menu"><div class="stage-head"><div class="stage-title"><strong>구분 선택</strong><span class="project-badge">${qcEscape(projectLabel)}</span></div><span>버튼을 누르면 아래 리스트가 해당 구분으로 변경됩니다.</span></div><div class="stage-grid" id="stageGrid"></div></section>
         <div class="toolbar"><button class="btn btn-primary" id="stageAddRow">+ 행 추가</button><button class="btn" id="stageRefresh">새로고침</button><button class="btn" id="stageDuplicate">선택 복제</button><button class="btn btn-danger" id="stageDelete">선택 삭제</button><button class="btn btn-dark" id="stagePrint">인쇄/PDF</button><button class="btn" id="stageClose">닫기</button><span class="current-category" id="currentCategory"></span><span id="rowCount" class="count"></span></div>
         <div class="guide"><span><b>+ 행 추가</b> 현재 선택 구분에 새 리스트 추가</span><span><b>셀 수정</b> 입력 후 Enter 또는 포커스 이동 시 부모 화면 반영</span><span><b>선택 복제/삭제</b> 체크된 행 기준 실행</span><span><b>새로고침</b> 부모 화면 최신 데이터 재조회</span></div>
-        <div class="stage-table-wrap"><table><thead><tr><th class="center"><input type="checkbox" id="stageToggleAll"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="stageBody"></tbody></table></div>
+        <div class="stage-table-wrap qc-review-table-wrap"><table class="checklist-table"><thead><tr><th class="center"><input type="checkbox" id="stageToggleAll"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>첨부</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="stageBody"></tbody></table></div>
       </body></html>`);
     doc.close();
 
@@ -14449,31 +14450,163 @@ setTimeout(() => {
         });
       });
     };
+    const popupNormalizeGroup = row => typeof normalizeChecklistGroupName === "function" ? normalizeChecklistGroupName(row.group) : (row.group || "");
+    const popupSortRows = list => list.slice().sort((a, b) => {
+      const ag = STAGE_CATEGORIES.indexOf(popupNormalizeGroup(a.row));
+      const bg = STAGE_CATEGORIES.indexOf(popupNormalizeGroup(b.row));
+      const ai = ag < 0 ? 999 : ag;
+      const bi = bg < 0 ? 999 : bg;
+      if (ai !== bi) return ai - bi;
+      const mid = String(a.row.middleCategory || "").localeCompare(String(b.row.middleCategory || ""), "ko", { numeric: true });
+      if (mid !== 0) return mid;
+      const sub = String(a.row.subCategory || "").localeCompare(String(b.row.subCategory || ""), "ko", { numeric: true });
+      if (sub !== 0) return sub;
+      return String(a.row.no || "").localeCompare(String(b.row.no || ""), "ko", { numeric: true });
+    });
+    const popupMiddleCount = (items, middle) => items.filter(({ row }) => (row.middleCategory || "기타") === middle).length;
+    const popupSubCount = (items, middle, sub) => items.filter(({ row }) => (row.middleCategory || "기타") === middle && (row.subCategory || "") === sub).length;
+    const renderPopupGroupBand = (category, count) => `<tr class="group-separator-row"><td colspan="11"><div class="group-band-inner"><span>구분</span><strong>${popupEscape(category)}</strong><em>${count}건</em><small>선택 구분 리스트</small></div></td></tr>`;
+    const renderPopupMiddleBand = (middle, count) => `<tr class="middle-separator-row"><td colspan="11"><div class="middle-band-inner"><span>중분류</span><strong>${popupEscape(middle || "기타")}</strong><em>${count}건</em></div></td></tr>`;
+    const renderPopupSubBand = (sub, count) => `<tr class="sub-separator-row"><td colspan="11"><div class="sub-band-inner"><span>소분류</span><strong>${popupEscape(sub || "기타")}</strong><em>${count}건</em></div></td></tr>`;
+    const renderPopupDetailRow = ({ row, realIndex }) => {
+      if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row);
+      const locked = typeof isChecklistCategoryLocked === "function" ? isChecklistCategoryLocked(row.group) : false;
+      const detail = `
+        <tr class="checklist-detail-row ${row.done ? "row-done" : ""} ${locked ? "locked-row" : ""} ${row.eliminated ? "eliminated-row" : ""}" data-row-index="${realIndex}">
+          <td class="center"><input type="checkbox" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""} onchange="updateChecklistCheck(${realIndex}, this.checked)" title="행 선택"></td>
+          <td><div class="cell excel-editable-cell" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="trade" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'trade', this.innerText)" onkeydown="moveChecklistCell(event, this)">${popupEscape(row.trade || "")}</div></td>
+          <td class="serial-no-cell"><div class="cell excel-editable-cell serial-no-value" ${locked ? '' : 'contenteditable="true" tabindex="0"'} data-row="${realIndex}" data-field="no" onfocus="setChecklistCellFocus(this)" onblur="updateChecklistCell(${realIndex}, 'no', this.innerText)" onkeydown="moveChecklistCell(event, this)">${popupEscape(typeof normalizeChecklistNo === "function" ? normalizeChecklistNo(row.no) : (row.no || ""))}</div></td>
+          <td>${typeof renderChecklistTranslateCell === "function" ? renderChecklistTranslateCell(realIndex, "item", row.item, locked) : `<div class="cell excel-editable-cell" contenteditable data-row="${realIndex}" data-field="item">${popupEscape(row.item || "")}</div>`}</td>
+          <td>${typeof renderChecklistTranslateCell === "function" ? renderChecklistTranslateCell(realIndex, "method", row.method, locked) : `<div class="cell excel-editable-cell" contenteditable data-row="${realIndex}" data-field="method">${popupEscape(row.method || "")}</div>`}</td>
+          <td class="target-cell">${typeof renderChecklistTargetCell === "function" ? renderChecklistTargetCell(row, realIndex) : popupEscape(popupTargetText(row))}</td>
+          <td class="done-cell">${typeof renderChecklistTargetChecks === "function" ? renderChecklistTargetChecks(row, realIndex) : popupEscape(popupStateText(row))}</td>
+          <td>${typeof renderChecklistTranslateCell === "function" ? renderChecklistTranslateCell(realIndex, "comment", row.comment, locked) : `<div class="cell excel-editable-cell" contenteditable data-row="${realIndex}" data-field="comment">${popupEscape(row.comment || "")}</div>`}</td>
+          <td>${typeof renderChecklistAttachmentCell === "function" ? renderChecklistAttachmentCell(row, realIndex) : "첨부 없음"}</td>
+          <td><div class="history-cell">${typeof renderChecklistHistoryButton === "function" ? renderChecklistHistoryButton(row, realIndex) : popupEscape(popupHistoryText(row))}</div></td>
+          <td class="manage-cell"><div class="row-actions row-actions-center"><button class="btn btn-line" ${locked ? "disabled" : ""} onclick="openChecklistModal(${realIndex})">수정</button><button class="btn btn-danger" ${locked ? "disabled" : ""} onclick="deleteChecklistRow(${realIndex})">삭제</button></div></td>
+        </tr>`;
+      const panel = typeof renderChecklistTranslationPanel === "function" ? renderChecklistTranslationPanel(realIndex) : "";
+      return detail + panel;
+    };
     const renderRows = () => {
       const body = doc.getElementById("stageBody");
       const current = doc.getElementById("currentCategory");
       const count = doc.getElementById("rowCount");
       if (!body) return;
-      const data = popupRows();
+      const data = popupSortRows(popupRows());
       if (current) current.textContent = state.category;
       if (count) count.textContent = `현재 ${data.length}건`;
-      body.innerHTML = data.length ? data.map(({ row, realIndex }) => `
-        <tr data-index="${realIndex}">
-          <td class="center"><input type="checkbox" data-row-check value="${realIndex}"></td>
-          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="trade">${popupEscape(row.trade || "")}</div></td>
-          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="no">${popupEscape(row.no || "")}</div></td>
-          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="item">${popupEscape(row.item || "")}</div></td>
-          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="method">${popupEscape(row.method || "")}</div></td>
-          <td>${popupEscape(popupTargetText(row))}</td>
-          <td>${popupEscape(popupStateText(row))}</td>
-          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="comment">${popupEscape(row.comment || "")}</div></td>
-          <td><div class="cell">${popupEscape(popupHistoryText(row))}</div></td>
-          <td><div class="row-actions"><button class="btn" data-stage-action="save" data-stage-index="${realIndex}">저장</button><button class="btn btn-danger" data-stage-action="delete" data-stage-index="${realIndex}">삭제</button></div></td>
-        </tr>`).join("") : `<tr><td colspan="10" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>`;
+      if (!data.length) {
+        body.innerHTML = `<tr><td colspan="11" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>`;
+        return;
+      }
+      const html = [renderPopupGroupBand(state.category, data.length)];
+      let lastMiddle = "";
+      let lastSubKey = "";
+      data.forEach(item => {
+        const row = item.row;
+        const middle = row.middleCategory || "기타";
+        const sub = row.subCategory || "";
+        if (middle !== lastMiddle) {
+          html.push(renderPopupMiddleBand(middle, popupMiddleCount(data, middle)));
+          lastMiddle = middle;
+          lastSubKey = "";
+        }
+        const subKey = `${middle}::${sub}`;
+        if (sub && subKey !== lastSubKey) {
+          html.push(renderPopupSubBand(sub, popupSubCount(data, middle, sub)));
+          lastSubKey = subKey;
+        }
+        html.push(renderPopupDetailRow(item));
+      });
+      body.innerHTML = html.join("");
       bindCellEvents();
     };
-    const checkedIndices = () => Array.from(doc.querySelectorAll("[data-row-check]:checked")).map(input => Number(input.value)).filter(Number.isInteger);
+    const checkedIndices = () => Array.from(doc.querySelectorAll("tr.checklist-detail-row")).filter(tr => tr.querySelector("input[type='checkbox']")?.checked).map(tr => Number(tr.getAttribute("data-row-index"))).filter(Number.isInteger);
     const renderAll = () => { renderButtons(); renderRows(); };
+
+    const refreshPopupSoon = (delay = 120) => win.setTimeout(() => { try { renderAll(); } catch (error) { console.warn("팝업 새로고침 실패", error); } }, delay);
+    const bridgeParentFunction = (name, options = {}) => {
+      win[name] = function(...args){
+        const fn = window[name];
+        if (typeof fn !== "function") return undefined;
+        const result = fn.apply(window, args);
+        if (options.refresh !== false) refreshPopupSoon(options.delay || 180);
+        return result;
+      };
+    };
+    [
+      "openChecklistModal", "deleteChecklistRow", "openChecklistClassifyModal", "openChecklistTargetModal",
+      "openChecklistCheckWindow", "openChecklistHistoryWindow", "openChecklistAttachmentGallery", "openChecklistAttachmentImage",
+      "openAttachmentGallery", "openAttachmentImage", "openImagePreview", "openAttachmentImageWindow",
+      "insertChecklistRowInGroup", "downloadFirstCategoryCsv", "downloadQuestionCategoryCsv", "markQuestionCategorySent"
+    ].forEach(name => bridgeParentFunction(name));
+    win.addChecklistAttachments = function(index, files){
+      const fn = window.addChecklistAttachments;
+      const result = typeof fn === "function" ? fn.call(window, index, files) : undefined;
+      refreshPopupSoon(500);
+      return result;
+    };
+    win.toggleChecklistTranslationPanel = function(event, index, field){
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      const row = checklistRows?.[Number(index)];
+      if (!row) return;
+      const key = `${index}::${field}`;
+      if (!checklistTranslationPanels || typeof checklistTranslationPanels !== "object") window.checklistTranslationPanels = checklistTranslationPanels || {};
+      checklistTranslationPanels[key] = checklistTranslationPanels[key] && checklistTranslationPanels[key].open ? { ...checklistTranslationPanels[key], open: false } : { open: true, field, loading: false, error: "", translatedText: checklistTranslationPanels[key]?.translatedText || "" };
+      renderAll();
+    };
+    win.runChecklistTranslation = async function(index, field){
+      if (typeof window.runChecklistTranslation === "function") await window.runChecklistTranslation(index, field);
+      refreshPopupSoon(50);
+    };
+    win.updateChecklistCheck = function(index, checked){
+      if (typeof window.updateChecklistCheck === "function") window.updateChecklistCheck(index, checked);
+      if (typeof saveChecklistRows === "function") saveChecklistRows();
+      refreshPopupSoon(120);
+    };
+    win.updateChecklistCell = function(index, key, value){
+      if (typeof window.updateChecklistCell === "function") window.updateChecklistCell(index, key, value);
+      if (typeof saveChecklistRows === "function") saveChecklistRows();
+      renderButtons();
+    };
+    win.setChecklistCellFocus = function(el){
+      currentChecklistFocus = { row: Number(el?.dataset?.row), field: el?.dataset?.field, group: checklistRows?.[Number(el?.dataset?.row)]?.group || state.category };
+    };
+    win.moveChecklistCell = function(event, el){
+      const editableKeys = ["Enter", "ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft", "Tab"];
+      if (!editableKeys.includes(event.key) || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
+      const fields = ["trade", "no", "item", "method", "comment"];
+      const currentRow = Number(el?.dataset?.row);
+      const currentField = el?.dataset?.field;
+      const fieldIndex = fields.indexOf(currentField);
+      if (!Number.isInteger(currentRow) || fieldIndex < 0) return;
+      event.preventDefault();
+      win.updateChecklistCell(currentRow, currentField, el.innerText);
+      const visibleRows = Array.from(doc.querySelectorAll("tr.checklist-detail-row")).map(tr => Number(tr.getAttribute("data-row-index"))).filter(Number.isInteger);
+      const rowPosition = visibleRows.indexOf(currentRow);
+      let targetRow = currentRow;
+      let targetField = currentField;
+      if (event.key === "Enter" || event.key === "ArrowDown") targetRow = visibleRows[rowPosition + 1] ?? currentRow;
+      else if (event.key === "ArrowUp") targetRow = visibleRows[rowPosition - 1] ?? currentRow;
+      else if (event.key === "ArrowRight" || event.key === "Tab") {
+        if (fieldIndex < fields.length - 1) targetField = fields[fieldIndex + 1];
+        else { targetRow = visibleRows[rowPosition + 1] ?? currentRow; targetField = fields[0]; }
+      } else if (event.key === "ArrowLeft") {
+        if (fieldIndex > 0) targetField = fields[fieldIndex - 1];
+        else { targetRow = visibleRows[rowPosition - 1] ?? currentRow; targetField = fields[fields.length - 1]; }
+      }
+      const target = doc.querySelector(`.excel-editable-cell[data-row="${targetRow}"][data-field="${targetField}"]`);
+      if (!target || target === el) return;
+      target.focus();
+      const range = doc.createRange();
+      range.selectNodeContents(target);
+      range.collapse(false);
+      const selection = win.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
 
     doc.getElementById("stageAddRow")?.addEventListener("click", () => { window.addQcProjectStageRow?.(state.category); renderAll(); });
     doc.getElementById("stageRefresh")?.addEventListener("click", renderAll);
