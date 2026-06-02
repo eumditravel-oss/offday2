@@ -14191,3 +14191,112 @@ setTimeout(() => {
     }
   }, 0);
 })();
+
+/* =========================================================
+   QC 가독성 개선 우선순위 반영 패치
+   - 선택 프로젝트 표시 강화
+   - 구분/중분류/검색 필터 상태 칩 표시
+   - 필터 초기화 버튼 제공
+   - 구분필터는 사용자가 닫기 전까지 유지
+   ========================================================= */
+(function installChecklistReadabilityPriorityPatch(){
+  function qcSafeText(value){ return String(value ?? '').replace(/\s+/g, ' ').trim(); }
+  function qcCurrentProjectLabel(){
+    const raw = qcSafeText(document.getElementById('checklistProject')?.value || '');
+    return raw || '프로젝트 미선택';
+  }
+  function qcMiddleFilterLabel(){
+    if (!Array.isArray(checklistMiddleFilterOptions) || !checklistMiddleFilterOptions.length) return '';
+    const active = checklistMiddleFilterOptions.filter(option => selectedChecklistMiddleFilters.has(option));
+    if (active.length === checklistMiddleFilterOptions.length) return '중분류 전체';
+    if (!active.length) return '중분류 없음';
+    return active.join(', ');
+  }
+  function qcBuildFilterStatusChips(){
+    const owner = document.getElementById('checklistOwnerFilter')?.value || '전체';
+    const done = document.getElementById('checklistDoneFilter')?.value || '전체';
+    const search = qcSafeText(document.getElementById('checklistSearch')?.value || '');
+    const category = getChecklistCategoryLabel(selectedChecklistCategoryFilter || '전체');
+    const chips = [];
+    chips.push(`<span class="qc-filter-state-chip strong">구분 · ${escapeHtml(category)}</span>`);
+    chips.push(`<span class="qc-filter-state-chip">${escapeHtml(qcMiddleFilterLabel())}</span>`);
+    if (owner !== '전체') chips.push(`<span class="qc-filter-state-chip">담당자 · ${escapeHtml(owner)}</span>`);
+    if (done !== '전체') chips.push(`<span class="qc-filter-state-chip">체크 · ${escapeHtml(done)}</span>`);
+    if (search) chips.push(`<span class="qc-filter-state-chip">검색 · ${escapeHtml(search)}</span>`);
+    return chips.join('');
+  }
+  window.resetChecklistReadabilityFilters = function resetChecklistReadabilityFilters(){
+    selectedChecklistCategoryFilter = '전체';
+    selectedChecklistMiddleFilters.clear();
+    checklistMiddleFilterOptions.forEach(option => selectedChecklistMiddleFilters.add(option));
+    const owner = document.getElementById('checklistOwnerFilter');
+    const done = document.getElementById('checklistDoneFilter');
+    const search = document.getElementById('checklistSearch');
+    if (owner) owner.value = '전체';
+    if (done) done.value = '전체';
+    if (search) search.value = '';
+    checklistCategoryPanelOpen = true;
+    try { applyChecklistDefaultCollapsedView(); } catch(_) {}
+    try { scheduleChecklistGridRender(0); } catch(_) { try { renderChecklistGrid(); } catch(__){} }
+  };
+  renderChecklistCategoryButtons = function renderChecklistCategoryButtonsReadable() {
+    const wrap = document.getElementById('checklistCategoryFilter');
+    if (!wrap) return;
+
+    buildChecklistRenderMetaCache();
+    const visibleCategories = checklistCategoryOptions.filter(category => getChecklistCategoryCount(category) > 0);
+    const categories = ['전체', ...visibleCategories];
+
+    if (selectedChecklistCategoryFilter !== '전체' && !visibleCategories.includes(selectedChecklistCategoryFilter)) {
+      selectedChecklistCategoryFilter = '전체';
+    }
+
+    checklistCategoryPanelOpen = checklistCategoryPanelOpen !== false;
+    const activeLabel = getChecklistCategoryLabel(selectedChecklistCategoryFilter);
+    const activeCount = selectedChecklistCategoryFilter === '전체' ? checklistRows.length : getChecklistCategoryCount(selectedChecklistCategoryFilter);
+    const optionButtons = categories.map(category => {
+      const active = selectedChecklistCategoryFilter === category ? 'active' : '';
+      const count = category === '전체' ? checklistRows.length : getChecklistCategoryCount(category);
+      return `<button type="button" class="category-filter-btn ${active}" onclick="setChecklistCategoryFilter('${escapeJs(category)}')"><span class="category-name">${escapeHtml(getChecklistCategoryLabel(category))}</span><span class="category-count">${count}</span></button>`;
+    }).join('');
+
+    const allVisibleCollapsed = areAllVisibleChecklistGroupsCollapsed();
+    const detailButtonLabel = allVisibleCollapsed ? '펼치기' : '접기';
+    const detailButtonTitle = allVisibleCollapsed ? '현재 조회된 구분의 세부 항목을 모두 펼칩니다.' : '현재 조회된 구분의 세부 항목을 모두 숨기고 구분명만 표시합니다.';
+
+    wrap.innerHTML = `
+      <div class="checklist-filter-shell readability-priority ${checklistCategoryPanelOpen ? 'open' : ''}">
+        <div class="qc-current-project-strip">
+          <div class="qc-current-project-main">
+            <span>선택 프로젝트</span>
+            <strong>${escapeHtml(qcCurrentProjectLabel())}</strong>
+          </div>
+          <button type="button" class="qc-filter-reset-btn" onclick="resetChecklistReadabilityFilters()">필터 초기화</button>
+        </div>
+        <div class="qc-active-filter-strip">
+          <span class="qc-active-filter-title">적용 필터</span>
+          <div class="qc-active-filter-chips">${qcBuildFilterStatusChips()}</div>
+        </div>
+        <div class="checklist-filter-summary" title="구분 필터는 구분 선택 닫기 버튼으로만 접을 수 있습니다.">
+          <div class="filter-summary-main">
+            <span class="filter-summary-label">구분 필터</span>
+            <strong>${escapeHtml(activeLabel)}</strong>
+            <em>${activeCount}건</em>
+          </div>
+          <div class="filter-summary-actions">
+            <button type="button" class="category-filter-reset ${selectedChecklistCategoryFilter === '전체' ? 'disabled' : ''}" onclick="event.stopPropagation(); setChecklistCategoryFilter('전체')">전체보기</button>
+            <button type="button" class="category-filter-toggle ${checklistCategoryPanelOpen ? 'active' : ''}" onclick="event.stopPropagation(); toggleChecklistCategoryPanel()">구분 선택 <span>${checklistCategoryPanelOpen ? '닫기' : '열기'}</span></button>
+            <button type="button" class="category-detail-toggle ${allVisibleCollapsed ? 'expand' : 'collapse'}" title="${detailButtonTitle}" onclick="event.stopPropagation(); toggleChecklistDetailVisibility()">${detailButtonLabel}</button>
+          </div>
+        </div>
+        ${renderChecklistMiddleFilterBar()}
+        <div class="category-filter-panel ${checklistCategoryPanelOpen ? 'open' : ''}">
+          <div class="category-filter-grid">${optionButtons}</div>
+        </div>
+      </div>`;
+  };
+  window.renderChecklistCategoryButtons = renderChecklistCategoryButtons;
+  setTimeout(() => {
+    try { renderChecklistCategoryButtons(); } catch(_) {}
+  }, 0);
+})();
