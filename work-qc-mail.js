@@ -10141,8 +10141,11 @@ const CHECKLIST_TRANSLATION_TARGET_LANG = "vi";
 const CHECKLIST_TRANSLATION_PROVIDER_NAME = "무료 번역 API · Google Translate 스타일 미리보기";
 const FREE_TRANSLATION_ENDPOINT = "https://api.mymemory.translated.net/get";
 const CHECKLIST_TERM_DICTIONARY_STORAGE_KEY = "checklistTermDictionaryRows";
+const CHECKLIST_TERM_SCOPE_OPTIONS = ["공통", "구조", "마감", "토목"];
+const CHECKLIST_TERM_SCOPE_DEFAULT = "공통";
 const checklistTranslationState = {};
 let checklistTermDictionaryRows = [];
+let activeChecklistTermDictionaryScope = CHECKLIST_TERM_SCOPE_DEFAULT;
 
 const defaultChecklistTermDictionaryRows = [
   { ko: "프로젝트", vi: "Dự án", enabled: true },
@@ -10193,34 +10196,138 @@ function getChecklistTranslationText(realIndex, field) {
   return String(row[field] || "").trim();
 }
 
+
+function normalizeChecklistTermScope(value) {
+  const text = String(value || "").trim();
+  if (!text) return CHECKLIST_TERM_SCOPE_DEFAULT;
+  if (text.includes("구조")) return "구조";
+  if (text.includes("마감")) return "마감";
+  if (text.includes("토목")) return "토목";
+  if (CHECKLIST_TERM_SCOPE_OPTIONS.includes(text)) return text;
+  return CHECKLIST_TERM_SCOPE_DEFAULT;
+}
+
+function inferChecklistTermScopeFromTerm(row = {}) {
+  const ko = String(row.ko || "").trim();
+  const text = `${row.scope || ""} ${row.termScope || ""} ${row.middleCategory || ""} ${ko}`;
+  if (/구조|구조팀|철근|콘크리트|레미콘|거푸집|동바리|기초|기둥|슬라브|옹벽|커플러|정착|이음|보|배근|내진|데크/.test(text)) return "구조";
+  if (/마감|건축|창호|방수|견출|단열|타일|도장|수장|인테리어|철거/.test(text)) return "마감";
+  if (/토목|우수|오수|포장|흙막이|부대토목|맨홀|관로/.test(text)) return "토목";
+  return CHECKLIST_TERM_SCOPE_DEFAULT;
+}
+
+function getChecklistRowTermScope(row = {}) {
+  return normalizeChecklistTermScope(row.middleCategory || row.trade || row.group || row.subCategory || "");
+}
+
+function normalizeChecklistTermDictionaryRow(row = {}) {
+  const normalized = {
+    ko: String(row.ko || "").trim(),
+    vi: String(row.vi || "").trim(),
+    enabled: row.enabled !== false,
+    scope: normalizeChecklistTermScope(row.scope || row.termScope || row.category || "")
+  };
+  if (!row.scope && !row.termScope && !row.category) normalized.scope = inferChecklistTermScopeFromTerm(row);
+  return normalized;
+}
+
+function getActiveChecklistTermRows(scope = CHECKLIST_TERM_SCOPE_DEFAULT) {
+  const normalizedScope = normalizeChecklistTermScope(scope);
+  return loadChecklistTermDictionaryRows()
+    .filter(row => row.enabled !== false && row.ko && row.vi)
+    .filter(row => row.scope === CHECKLIST_TERM_SCOPE_DEFAULT || row.scope === normalizedScope)
+    .sort((a, b) => b.ko.length - a.ko.length);
+}
+
+function isChecklistTermBoundaryChar(ch) {
+  return !!ch && /[0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ_]/.test(ch);
+}
+
+function canReplaceChecklistTermAt(source, index, term) {
+  const before = source[index - 1] || "";
+  const after = source[index + term.length] || "";
+  return !isChecklistTermBoundaryChar(before) && !isChecklistTermBoundaryChar(after);
+}
+
+function replaceChecklistTermOccurrences(source, term, replacement) {
+  const text = String(source || "");
+  const ko = String(term || "");
+  if (!ko) return text;
+  let output = "";
+  let cursor = 0;
+  let index = text.indexOf(ko, cursor);
+  while (index !== -1) {
+    if (canReplaceChecklistTermAt(text, index, ko)) {
+      output += text.slice(cursor, index) + replacement;
+      cursor = index + ko.length;
+    } else {
+      output += text.slice(cursor, index + ko.length);
+      cursor = index + ko.length;
+    }
+    index = text.indexOf(ko, cursor);
+  }
+  output += text.slice(cursor);
+  return output;
+}
+
+function findDuplicateChecklistTerms(rows = checklistTermDictionaryRows) {
+  const seen = new Map();
+  const duplicates = [];
+  rows.forEach((row, index) => {
+    const normalized = normalizeChecklistTermDictionaryRow(row);
+    if (!normalized.ko || !normalized.vi) return;
+    const key = `${normalized.scope}::${normalized.ko.replace(/\s+/g, " ").trim()}`;
+    if (seen.has(key)) duplicates.push({ index, firstIndex: seen.get(key), scope: normalized.scope, ko: normalized.ko });
+    else seen.set(key, index);
+  });
+  return duplicates;
+}
+
+function getChecklistTermScopeLabel(scope) {
+  return normalizeChecklistTermScope(scope);
+}
+
+function setChecklistTermDictionaryScope(scope) {
+  activeChecklistTermDictionaryScope = normalizeChecklistTermScope(scope);
+  renderChecklistTermDictionaryModal();
+}
+
 function loadChecklistTermDictionaryRows() {
   if (checklistTermDictionaryRows.length) return checklistTermDictionaryRows;
   try {
     const saved = JSON.parse(localStorage.getItem(CHECKLIST_TERM_DICTIONARY_STORAGE_KEY) || "[]");
     if (Array.isArray(saved) && saved.length) {
-      checklistTermDictionaryRows = saved.map(row => ({
-        ko: String(row.ko || "").trim(),
-        vi: String(row.vi || "").trim(),
-        enabled: row.enabled !== false
-      })).filter(row => row.ko && row.vi);
+      checklistTermDictionaryRows = saved
+        .map(row => normalizeChecklistTermDictionaryRow(row))
+        .filter(row => row.ko && row.vi);
       return checklistTermDictionaryRows;
     }
   } catch (error) {}
-  checklistTermDictionaryRows = defaultChecklistTermDictionaryRows.map(row => ({ ...row }));
+  checklistTermDictionaryRows = defaultChecklistTermDictionaryRows.map(row => normalizeChecklistTermDictionaryRow(row));
   saveChecklistTermDictionaryRows(false);
   return checklistTermDictionaryRows;
 }
 
 function saveChecklistTermDictionaryRows(showMessage = true) {
+  checklistTermDictionaryRows = checklistTermDictionaryRows
+    .map(row => normalizeChecklistTermDictionaryRow(row))
+    .filter(row => row.ko || row.vi);
+  const duplicates = findDuplicateChecklistTerms(checklistTermDictionaryRows);
+  if (duplicates.length) {
+    const first = duplicates[0];
+    showToast(`중복 용어가 있습니다: [${first.scope}] ${first.ko}`);
+    return false;
+  }
   try {
     localStorage.setItem(CHECKLIST_TERM_DICTIONARY_STORAGE_KEY, JSON.stringify(checklistTermDictionaryRows));
   } catch (error) {}
   if (showMessage) showToast("전문용어 사전을 저장했습니다.");
+  return true;
 }
 
 function resetChecklistTermDictionaryRows() {
   if (!confirm("전문용어 사전을 기본값으로 되돌릴까요?")) return;
-  checklistTermDictionaryRows = defaultChecklistTermDictionaryRows.map(row => ({ ...row }));
+  checklistTermDictionaryRows = defaultChecklistTermDictionaryRows.map(row => normalizeChecklistTermDictionaryRow(row));
   saveChecklistTermDictionaryRows(false);
   renderChecklistTermDictionaryModal();
   showToast("전문용어 사전을 기본값으로 복원했습니다.");
@@ -10228,7 +10335,7 @@ function resetChecklistTermDictionaryRows() {
 
 function addChecklistTermDictionaryRow() {
   loadChecklistTermDictionaryRows();
-  checklistTermDictionaryRows.push({ ko: "", vi: "", enabled: true });
+  checklistTermDictionaryRows.push({ ko: "", vi: "", enabled: true, scope: activeChecklistTermDictionaryScope });
   renderChecklistTermDictionaryModal();
 }
 
@@ -10237,6 +10344,7 @@ function updateChecklistTermDictionaryCell(index, field, value) {
   const row = checklistTermDictionaryRows[index];
   if (!row) return;
   if (field === "enabled") row.enabled = !!value;
+  else if (field === "scope") row.scope = normalizeChecklistTermScope(value);
   else row[field] = String(value || "").trim();
 }
 
@@ -10267,54 +10375,74 @@ function renderChecklistTermDictionaryModal() {
   const layer = document.getElementById("checklistTermDictionaryBackdrop");
   if (!layer) return;
   loadChecklistTermDictionaryRows();
-  const rows = checklistTermDictionaryRows.map((row, index) => `
-    <tr>
-      <td><input type="checkbox" ${row.enabled !== false ? "checked" : ""} onchange="updateChecklistTermDictionaryCell(${index}, 'enabled', this.checked)"></td>
-      <td><input type="text" value="${escapeHtml(row.ko)}" placeholder="한글 전문용어" oninput="updateChecklistTermDictionaryCell(${index}, 'ko', this.value)"></td>
-      <td><input type="text" value="${escapeHtml(row.vi)}" placeholder="베트남어 고정 번역" oninput="updateChecklistTermDictionaryCell(${index}, 'vi', this.value)"></td>
-      <td><button type="button" class="btn btn-danger" onclick="deleteChecklistTermDictionaryRow(${index})">삭제</button></td>
-    </tr>
+  const visibleRows = checklistTermDictionaryRows
+    .map((row, index) => ({ ...normalizeChecklistTermDictionaryRow(row), index }))
+    .filter(row => activeChecklistTermDictionaryScope === "전체" || row.scope === activeChecklistTermDictionaryScope);
+  const duplicateKeys = new Set(findDuplicateChecklistTerms(checklistTermDictionaryRows).map(item => `${item.scope}::${item.ko}`));
+  const scopeTabs = CHECKLIST_TERM_SCOPE_OPTIONS.map(scope => `
+    <button type="button" class="checklist-term-scope-tab ${activeChecklistTermDictionaryScope === scope ? "active" : ""}" onclick="setChecklistTermDictionaryScope('${scope}')">
+      ${scope}
+      <span>${checklistTermDictionaryRows.filter(row => normalizeChecklistTermDictionaryRow(row).scope === scope).length}</span>
+    </button>
   `).join("");
+  const rows = visibleRows.map((row) => {
+    const duplicateClass = duplicateKeys.has(`${row.scope}::${row.ko}`) ? " is-duplicate" : "";
+    return `
+    <tr class="${duplicateClass}">
+      <td><input type="checkbox" ${row.enabled !== false ? "checked" : ""} onchange="updateChecklistTermDictionaryCell(${row.index}, 'enabled', this.checked)"></td>
+      <td>
+        <select class="checklist-term-scope-select" onchange="updateChecklistTermDictionaryCell(${row.index}, 'scope', this.value); renderChecklistTermDictionaryModal();">
+          ${CHECKLIST_TERM_SCOPE_OPTIONS.map(scope => `<option value="${scope}" ${row.scope === scope ? "selected" : ""}>${scope}</option>`).join("")}
+        </select>
+      </td>
+      <td><input type="text" value="${escapeHtml(row.ko)}" placeholder="한글 전문용어" oninput="updateChecklistTermDictionaryCell(${row.index}, 'ko', this.value)"></td>
+      <td><input type="text" value="${escapeHtml(row.vi)}" placeholder="베트남어 고정 번역" oninput="updateChecklistTermDictionaryCell(${row.index}, 'vi', this.value)"></td>
+      <td>${duplicateClass ? `<span class="checklist-term-duplicate-badge">중복</span>` : `<span class="checklist-term-scope-badge">${getChecklistTermScopeLabel(row.scope)}</span>`}</td>
+      <td><button type="button" class="btn btn-danger" onclick="deleteChecklistTermDictionaryRow(${row.index})">삭제</button></td>
+    </tr>`;
+  }).join("");
   layer.innerHTML = `
     <div class="checklist-term-dictionary-modal" onclick="event.stopPropagation()">
       <div class="checklist-term-dictionary-head">
         <div>
           <h2>전문용어 고정번역 사전</h2>
-          <p>무료 번역 API 호출 전 전문용어를 보호 토큰으로 치환하고, 번역 후 지정한 베트남어로 복원합니다.</p>
+          <p>중분류별로 전문용어를 분리 관리합니다. 번역 시 현재 행의 중분류와 공통 사전만 적용됩니다.</p>
         </div>
         <button type="button" class="modal-close" onclick="closeChecklistTermDictionaryModal()">×</button>
       </div>
       <div class="checklist-term-dictionary-toolbar">
         <button type="button" class="btn btn-line" onclick="addChecklistTermDictionaryRow()">+ 용어 추가</button>
         <button type="button" class="btn btn-line" onclick="resetChecklistTermDictionaryRows()">기본값 복원</button>
-        <button type="button" class="btn btn-primary" onclick="saveChecklistTermDictionaryRows(true); closeChecklistTermDictionaryModal();">사전 저장</button>
+        <button type="button" class="btn btn-primary" onclick="if (saveChecklistTermDictionaryRows(true)) closeChecklistTermDictionaryModal();">사전 저장</button>
+      </div>
+      <div class="checklist-term-scope-tabs">
+        ${scopeTabs}
       </div>
       <div class="checklist-term-api-guide">
-        <strong>무료 API 데모 연결</strong>
-        <span>현재는 결제수단/API Key 없이 <code>MyMemory 무료 번역 API</code>를 호출하고, 결과 화면은 Google Translate 스타일 템플릿으로 표시합니다. 전문용어는 아래 사전값으로 강제 치환됩니다.</span>
+        <strong>중분류별 사전 적용</strong>
+        <span><code>공통</code> 용어는 모든 행에 적용되고, <code>구조/마감/토목</code> 용어는 해당 중분류 행에서만 적용됩니다. 동일 중분류 안의 동일 한글 용어는 저장되지 않습니다.</span>
       </div>
       <div class="checklist-term-dictionary-body">
         <table>
-          <thead><tr><th>사용</th><th>한글 전문용어</th><th>베트남어 고정 번역</th><th>관리</th></tr></thead>
-          <tbody>${rows || `<tr><td colspan="4" class="empty">등록된 전문용어가 없습니다.</td></tr>`}</tbody>
+          <thead><tr><th>사용</th><th>중분류</th><th>한글 전문용어</th><th>베트남어 고정 번역</th><th>상태</th><th>관리</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="6" class="empty">등록된 전문용어가 없습니다.</td></tr>`}</tbody>
         </table>
       </div>
     </div>`;
   layer.onclick = closeChecklistTermDictionaryModal;
 }
 
-function applyChecklistTermTokenProtection(text) {
+function applyChecklistTermTokenProtection(text, scope = CHECKLIST_TERM_SCOPE_DEFAULT) {
   const source = String(text || "");
-  const terms = loadChecklistTermDictionaryRows()
-    .filter(row => row.enabled !== false && row.ko && row.vi)
-    .sort((a, b) => b.ko.length - a.ko.length);
+  const terms = getActiveChecklistTermRows(scope);
   let protectedText = source;
   const tokenMap = [];
   terms.forEach((row, index) => {
     const token = `CCTERM${String(index).padStart(3, "0")}TOKEN`;
-    if (protectedText.includes(row.ko)) {
-      protectedText = protectedText.split(row.ko).join(token);
-      tokenMap.push({ token, ko: row.ko, vi: row.vi });
+    const nextText = replaceChecklistTermOccurrences(protectedText, row.ko, token);
+    if (nextText !== protectedText) {
+      protectedText = nextText;
+      tokenMap.push({ token, ko: row.ko, vi: row.vi, scope: row.scope });
     }
   });
   return { protectedText, tokenMap };
@@ -10378,21 +10506,19 @@ function buildFreeTranslationUrl(text) {
   return `${FREE_TRANSLATION_ENDPOINT}?${params.toString()}`;
 }
 
-function makeDictionaryOnlyTranslation(text, tokenMap = []) {
+function makeDictionaryOnlyTranslation(text, tokenMap = [], scope = CHECKLIST_TERM_SCOPE_DEFAULT) {
   let output = String(text || "");
-  const terms = loadChecklistTermDictionaryRows()
-    .filter(row => row.enabled !== false && row.ko && row.vi)
-    .sort((a, b) => b.ko.length - a.ko.length);
+  const terms = getActiveChecklistTermRows(scope);
   terms.forEach(({ ko, vi }) => {
-    output = output.split(ko).join(vi);
+    output = replaceChecklistTermOccurrences(output, ko, vi);
   });
   tokenMap.forEach(({ ko, vi }) => {
-    output = output.split(ko).join(vi);
+    output = replaceChecklistTermOccurrences(output, ko, vi);
   });
   return output;
 }
 
-async function requestChecklistTranslation(text, field = "") {
+async function requestChecklistTranslation(text, field = "", scope = CHECKLIST_TERM_SCOPE_DEFAULT) {
   const originalText = String(text || "").trim();
   if (!originalText) {
     return {
@@ -10401,7 +10527,7 @@ async function requestChecklistTranslation(text, field = "") {
     };
   }
 
-  const { protectedText, tokenMap } = applyChecklistTermTokenProtection(originalText);
+  const { protectedText, tokenMap } = applyChecklistTermTokenProtection(originalText, scope);
 
   try {
     const response = await fetch(buildFreeTranslationUrl(protectedText), {
@@ -10425,7 +10551,7 @@ async function requestChecklistTranslation(text, field = "") {
       raw: data
     };
   } catch (error) {
-    const fallbackText = makeDictionaryOnlyTranslation(originalText, tokenMap);
+    const fallbackText = makeDictionaryOnlyTranslation(originalText, tokenMap, scope);
     if (fallbackText && fallbackText !== originalText) {
       return {
         translatedText: `${fallbackText}\n\n※ 무료 번역 API 호출이 실패하여 전문용어 고정 치환 결과만 표시했습니다.`,
@@ -10440,16 +10566,18 @@ async function requestChecklistTranslation(text, field = "") {
 async function runChecklistTranslation(realIndex, field) {
   const key = getChecklistTranslationKey(realIndex, field);
   const text = getChecklistTranslationText(realIndex, field);
+  const termScope = getChecklistRowTermScope(checklistRows[realIndex] || {});
   checklistTranslationState[key] = {
     status: "loading",
     originalText: text,
     translatedText: "",
-    error: ""
+    error: "",
+    termScope
   };
   renderChecklistGrid();
 
   try {
-    const result = await requestChecklistTranslation(text, field);
+    const result = await requestChecklistTranslation(text, field, termScope);
     checklistTranslationState[key] = {
       status: result.source === "dictionary-fallback" ? "ready-fallback" : "ready",
       originalText: text,
