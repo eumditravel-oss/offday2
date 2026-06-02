@@ -13932,3 +13932,445 @@ setTimeout(() => {
   };
   window.duplicateCheckedRows = duplicateCheckedRows;
 })();
+
+/* =========================================================
+   2026-06-02 프로젝트 질의응답 관리 프로젝트 접속/단계별 새창 패치
+   - 프로젝트 검색/선택 + 현재 진행중인 프로젝트 리스트 2개 접속경로 제공
+   - 선택 프로젝트 기준 프로젝트 초기~Z7 견적조건(최종) 단계 버튼 제공
+   - 단계 버튼 클릭 시 해당 구분 리스트를 새 창에서 조회/추가/수정/삭제
+   - QC팀 전달사항 편집 모달 내부에 프로젝트 검색/연결 삽입 기능 추가
+   ========================================================= */
+(function installQcReviewProjectAccessPatch(){
+  const STAGE_CATEGORIES = [
+    "프로젝트 초기",
+    "PM 전달사항",
+    "제출자료 검토사항",
+    "최종자료 검토사항",
+    "Z1. 질의사항(1차)",
+    "Z2. 질의사항(2차)",
+    "Z3. 질의사항(3차)",
+    "Z4. 질의사항(4차)",
+    "Z5. 질의사항(5차)",
+    "Z6. 질의사항(6차)",
+    "Z7. 견적조건(최종)"
+  ];
+  const SAMPLE_PROJECTS = [
+    { projectNo: "PJ-26001", receiveId: "RCV-26001", projectName: "ㅇㅇ시설 신축공사", client: "ㅇㅇ건설", status: "진행중" },
+    { projectNo: "PJ-26002", receiveId: "RCV-26002", projectName: "공동주택 신축공사", client: "대한건설", status: "진행중" },
+    { projectNo: "PJ-26003", receiveId: "RCV-26003", projectName: "업무시설 증축공사", client: "한빛엔지니어링", status: "진행중" },
+    { projectNo: "PJ-26004", receiveId: "RCV-26004", projectName: "물류센터 구조검토", client: "수성개발", status: "진행중" },
+    { projectNo: "PJ-26005", receiveId: "RCV-26005", projectName: "근린생활시설 리모델링", client: "도원건축", status: "진행중" }
+  ];
+  let selectedQcProjectKey = "";
+  let selectedQcProjectData = null;
+
+  function qcTxt(value){ return String(value ?? "").replace(/\s+/g, " ").trim(); }
+  function qcNorm(value){ return qcTxt(value).toLowerCase(); }
+  function qcProjectKey(data = {}){
+    if (typeof projectReceiveLinkKey === "function") {
+      const key = projectReceiveLinkKey(data);
+      if (key) return key;
+    }
+    const receiveId = qcTxt(data.receiveId || data.internalReceiveId || data.linkedReceiveId);
+    if (receiveId) return `RCV:${receiveId}`;
+    const no = qcTxt(data.projectNo || data.pjNo || data.no);
+    if (no) return `NO:${no}`;
+    const name = qcTxt(data.projectName || data.name);
+    return name ? `NAME:${name}` : "";
+  }
+  function qcRowKey(row = {}){
+    return qcTxt(row.projectLinkKey || row.linkedReceiveId || row.receiveId || row.linkedProjectNo || row.pjNo || row.projectNo);
+  }
+  function qcProjectLabel(data = {}){
+    return [data.projectNo || data.pjNo, data.projectName || data.name, data.client || data.clientName].filter(Boolean).join(" · ");
+  }
+  function qcProjectStatus(data = {}){
+    return qcTxt(data.status || data.state || data.progressStatus || data.projectStatus || "진행중");
+  }
+  function qcProjectPool(){
+    let raw = [];
+    try {
+      if (typeof checklistProjectItems === "function") raw = checklistProjectItems();
+      else if (typeof projectReceiveGetCanonicalListItems === "function") raw = projectReceiveGetCanonicalListItems();
+      else if (typeof getProjectReceiveListItems === "function") raw = getProjectReceiveListItems();
+    } catch (error) { raw = []; }
+    const items = (Array.isArray(raw) ? raw : []).map(item => item?.data || item).filter(Boolean).map(item => ({...item}));
+    const merged = [...items, ...SAMPLE_PROJECTS];
+    const seen = new Set();
+    return merged.filter(item => {
+      const label = qcProjectLabel(item);
+      const key = qcProjectKey(item) || label;
+      if (!label || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  function qcOngoingProjects(){
+    const blocked = /완료|취소|중단|보류|종료/;
+    const list = qcProjectPool().filter(item => !blocked.test(qcProjectStatus(item)));
+    return (list.length ? list : qcProjectPool()).slice(0, 12);
+  }
+  function qcFindProject(value = ""){
+    const text = qcNorm(value);
+    if (!text) return null;
+    return qcProjectPool().find(data => {
+      const key = qcNorm(qcProjectKey(data));
+      const no = qcNorm(data.projectNo || data.pjNo || data.no);
+      const receiveId = qcNorm(data.receiveId || data.internalReceiveId || data.linkedReceiveId);
+      const name = qcNorm(data.projectName || data.name);
+      const client = qcNorm(data.client || data.clientName);
+      const label = qcNorm(qcProjectLabel(data));
+      return [key, no, receiveId, name, client, label].some(v => v && (v === text || v.includes(text) || text.includes(v)));
+    }) || null;
+  }
+  function qcEscape(value){ return typeof escapeHtml === "function" ? escapeHtml(value) : String(value ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
+  function qcEscapeJs(value){ return typeof escapeJs === "function" ? escapeJs(value) : String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n"); }
+  function qcToast(message){ if (typeof showToast === "function") showToast(message); else console.log(message); }
+  function qcSetMainInput(data){
+    const input = document.getElementById("checklistProject");
+    if (input && data) input.value = qcProjectLabel(data);
+    if (typeof refreshChecklistProjectOptions === "function") refreshChecklistProjectOptions();
+    if (typeof updateChecklistLinkedProjectContext === "function") updateChecklistLinkedProjectContext();
+  }
+  function qcSelectProjectByValue(value, silent = false){
+    const data = typeof value === "object" && value ? value : qcFindProject(value);
+    if (!data) {
+      if (!silent) qcToast("선택할 프로젝트를 찾지 못했습니다.");
+      return null;
+    }
+    selectedQcProjectData = data;
+    selectedQcProjectKey = qcProjectKey(data);
+    qcSetMainInput(data);
+    renderQcProjectAccessPanel();
+    if (typeof renderChecklistCategoryButtons === "function") renderChecklistCategoryButtons();
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+    if (!silent) qcToast("프로젝트가 연결되었습니다.");
+    return data;
+  }
+  function qcEnsureSelectedProject(){
+    if (selectedQcProjectData && selectedQcProjectKey) return selectedQcProjectData;
+    const input = document.getElementById("checklistProject");
+    const data = qcFindProject(input?.value || "") || qcOngoingProjects()[0] || SAMPLE_PROJECTS[0];
+    return qcSelectProjectByValue(data, true);
+  }
+  function qcStageCount(category, projectKey = selectedQcProjectKey){
+    const key = qcTxt(projectKey);
+    return (Array.isArray(checklistRows) ? checklistRows : []).filter(row => {
+      const group = typeof normalizeChecklistGroupName === "function" ? normalizeChecklistGroupName(row.group) : row.group;
+      const groupOk = group === category;
+      if (!groupOk) return false;
+      if (!key) return true;
+      const rowKey = qcRowKey(row);
+      return !rowKey || rowKey === key;
+    }).length;
+  }
+  function qcStageButtonsHtml(){
+    const selected = qcEnsureSelectedProject();
+    const disabled = selected ? "" : "disabled";
+    return STAGE_CATEGORIES.map(category => `
+      <button type="button" class="qc-project-stage-btn" ${disabled} onclick="openQcProjectStageWindow('${qcEscapeJs(category)}')">
+        <strong>${qcEscape(category)}</strong><span>${qcStageCount(category)}건</span>
+      </button>`).join("");
+  }
+  function renderQcProjectAccessPanel(){
+    const body = document.querySelector("#qcReview .card-body");
+    const toolbar = document.querySelector("#qcReview .checklist-toolbar");
+    if (!body || !toolbar) return;
+    let panel = document.getElementById("qcProjectAccessPanel");
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "qcProjectAccessPanel";
+      panel.className = "qc-project-access-panel";
+      toolbar.insertAdjacentElement("afterend", panel);
+    }
+    const selected = qcEnsureSelectedProject();
+    const projects = qcOngoingProjects();
+    const options = qcProjectPool().map(project => `<option value="${qcEscape(qcProjectLabel(project))}"></option>`).join("");
+    const selectedLabel = selected ? qcProjectLabel(selected) : "";
+    panel.innerHTML = `
+      <datalist id="qcProjectSearchList">${options}</datalist>
+      <div class="qc-project-access-head">
+        <div>
+          <h3>프로젝트 질의응답 접속 경로</h3>
+          <p>프로젝트 검색 선택 또는 현재 진행중인 프로젝트 리스트 선택, 2가지 방식으로 질의응답 리스트를 불러옵니다.</p>
+        </div>
+        <div class="qc-project-selected-badge">선택 프로젝트: <strong>${qcEscape(selectedLabel || "미선택")}</strong></div>
+      </div>
+      <div class="qc-project-access-grid">
+        <section class="qc-project-route-card">
+          <strong>1. 프로젝트 검색</strong>
+          <div class="qc-project-search-row">
+            <input id="qcProjectSearchInput" list="qcProjectSearchList" value="${qcEscape(selectedLabel)}" placeholder="PJ NO, receiveId, 프로젝트명, 업체명 검색">
+            <button type="button" class="btn btn-primary" onclick="selectQcReviewProjectFromSearch()">프로젝트 선택</button>
+          </div>
+          <small>선택 시 기존 프로젝트 검색란에도 반영되고, receiveId/PJ NO 기준으로 하단 리스트가 분리됩니다.</small>
+        </section>
+        <section class="qc-project-route-card qc-ongoing-route-card">
+          <strong>2. 현재 진행중인 프로젝트</strong>
+          <div class="qc-ongoing-project-list">
+            ${projects.map(project => {
+              const active = qcProjectKey(project) === selectedQcProjectKey ? "active" : "";
+              return `<button type="button" class="qc-ongoing-project-item ${active}" onclick="selectQcReviewProjectByKey('${qcEscapeJs(qcProjectKey(project))}')">
+                <b>${qcEscape(project.projectNo || project.pjNo || "NO 없음")}</b>
+                <span>${qcEscape(project.projectName || project.name || "프로젝트명 없음")}</span>
+                <em>${qcEscape(project.client || project.clientName || qcProjectStatus(project))}</em>
+              </button>`;
+            }).join("")}
+          </div>
+        </section>
+      </div>
+      <div class="qc-project-stage-panel">
+        <div class="qc-project-stage-head">
+          <strong>구분 별 리스트 새 창 열기</strong>
+          <span>프로젝트 초기부터 견적조건(최종)까지 버튼을 눌러 구분별 리스트를 새 창에서 확인·추가·수정합니다.</span>
+        </div>
+        <div class="qc-project-stage-grid">${qcStageButtonsHtml()}</div>
+      </div>`;
+  }
+  function qcFindProjectByKey(key){
+    const target = qcTxt(key);
+    return qcProjectPool().find(project => qcProjectKey(project) === target) || null;
+  }
+  window.selectQcReviewProjectByKey = function selectQcReviewProjectByKey(key){
+    const project = qcFindProjectByKey(key);
+    qcSelectProjectByValue(project || key);
+  };
+  window.selectQcReviewProjectFromSearch = function selectQcReviewProjectFromSearch(){
+    const value = document.getElementById("qcProjectSearchInput")?.value || document.getElementById("checklistProject")?.value || "";
+    qcSelectProjectByValue(value);
+  };
+
+  function qcApplyProjectToRow(row, project = selectedQcProjectData){
+    if (!row || !project) return row;
+    const key = qcProjectKey(project);
+    row.project = project.projectName || project.name || row.project || "";
+    row.projectNo = project.projectNo || project.pjNo || row.projectNo || "";
+    row.pjNo = row.projectNo;
+    row.receiveId = project.receiveId || project.internalReceiveId || row.receiveId || "";
+    row.linkedReceiveId = key;
+    row.linkedProjectNo = key;
+    row.projectLinkKey = key;
+    return row;
+  }
+  function qcDefaultMiddle(category){
+    const options = typeof getChecklistMiddleOptions === "function" ? getChecklistMiddleOptions(category) : [];
+    return options[0] || "공통";
+  }
+  function qcDefaultSub(category, middle){
+    const options = typeof getChecklistSubOptions === "function" ? getChecklistSubOptions(category, middle) : [];
+    return options[0] || "";
+  }
+  window.addQcProjectStageRow = function addQcProjectStageRow(category){
+    const project = qcEnsureSelectedProject();
+    if (!project) return false;
+    const middle = qcDefaultMiddle(category);
+    const sub = qcDefaultSub(category, middle);
+    const row = {
+      group: category,
+      middleCategory: middle,
+      subCategory: sub,
+      trade: "",
+      no: typeof nextChecklistNo === "function" ? nextChecklistNo(category, middle, sub) : String((checklistRows || []).length + 1).padStart(3, "0"),
+      item: "",
+      method: "",
+      targets: sub ? [`${middle} · ${sub}`] : [middle],
+      manualTargets: false,
+      done: false,
+      checks: [],
+      checked: false,
+      creator: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자",
+      createdAt: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString(),
+      status: "미확인",
+      objectionEnabled: false,
+      comment: "",
+      attachments: [],
+      history: [{ action: "프로젝트 단계 새 창에서 행 추가", worker: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() }]
+    };
+    if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row);
+    qcApplyProjectToRow(row, project);
+    checklistRows.push(row);
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+    renderQcProjectAccessPanel();
+    return true;
+  };
+  window.updateQcProjectStageCell = function updateQcProjectStageCell(realIndex, field, value){
+    const row = checklistRows?.[Number(realIndex)];
+    if (!row) return false;
+    if (["trade", "no", "item", "method", "comment", "status"].includes(field)) row[field] = qcTxt(value);
+    if (typeof updateChecklistCell === "function" && ["trade", "no", "item", "method", "comment"].includes(field)) updateChecklistCell(Number(realIndex), field, value);
+    if (typeof saveChecklistRows === "function") saveChecklistRows();
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+    return true;
+  };
+  window.deleteQcProjectStageRows = function deleteQcProjectStageRows(indices = []){
+    const sorted = Array.from(new Set(indices.map(Number).filter(Number.isInteger))).sort((a, b) => b - a);
+    sorted.forEach(index => { if (checklistRows[index]) checklistRows.splice(index, 1); });
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+    renderQcProjectAccessPanel();
+    return sorted.length;
+  };
+  window.duplicateQcProjectStageRows = function duplicateQcProjectStageRows(indices = []){
+    const project = qcEnsureSelectedProject();
+    let count = 0;
+    indices.map(Number).filter(Number.isInteger).forEach(index => {
+      const row = checklistRows[index];
+      if (!row) return;
+      const copy = JSON.parse(JSON.stringify(row));
+      copy.id = `qc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      copy.no = typeof nextChecklistNo === "function" ? nextChecklistNo(row.group, row.middleCategory, row.subCategory) : copy.no;
+      copy.checked = false;
+      copy.history = Array.isArray(copy.history) ? copy.history : [];
+      copy.history.push({ action: "프로젝트 단계 새 창에서 복제", worker: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() });
+      qcApplyProjectToRow(copy, project);
+      checklistRows.push(copy);
+      count += 1;
+    });
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+    renderQcProjectAccessPanel();
+    return count;
+  };
+  window.getQcProjectStageRows = function getQcProjectStageRows(category, projectKey = selectedQcProjectKey){
+    const key = qcTxt(projectKey);
+    return (checklistRows || []).map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => {
+      const group = typeof normalizeChecklistGroupName === "function" ? normalizeChecklistGroupName(row.group) : row.group;
+      if (group !== category) return false;
+      if (!key) return true;
+      const rKey = qcRowKey(row);
+      return !rKey || rKey === key;
+    });
+  };
+  window.openQcProjectStageWindow = function openQcProjectStageWindow(category){
+    const project = qcEnsureSelectedProject();
+    if (!project) { qcToast("먼저 프로젝트를 선택해 주세요."); return; }
+    const projectKey = selectedQcProjectKey;
+    const projectLabel = qcProjectLabel(project);
+    const win = window.open("", `qc_stage_${projectKey}_${category}`.replace(/[^a-zA-Z0-9_]/g, "_"), "width=1480,height=860,scrollbars=yes,resizable=yes");
+    if (!win) { qcToast("팝업 차단을 해제해 주세요."); return; }
+    win.document.open();
+    win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${qcEscape(projectLabel)} · ${qcEscape(category)}</title>
+      <style>
+        body{margin:0;background:#f3f6fa;color:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
+        header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #dbe3ef;padding:18px 22px;box-shadow:0 8px 24px rgba(15,23,42,.08);} h1{margin:0 0 5px;font-size:22px;} p{margin:0;color:#64748b;}
+        .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}.btn{border:1px solid #dbe3ef;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;cursor:pointer}.btn-primary{background:#f97316;color:#fff;border-color:#f97316}.btn-danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}.btn-dark{background:#111827;color:#fff;border-color:#111827}
+        .guide{margin:14px 22px 0;padding:12px 14px;background:#fff;border:1px solid #dbe3ef;border-radius:14px;color:#475569;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.guide b{color:#111827}.stage-table-wrap{margin:14px 22px 24px;background:#fff;border:1px solid #dbe3ef;border-radius:16px;overflow:auto;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+        table{width:100%;border-collapse:collapse;min-width:1280px}th,td{border:1px solid #dbe3ef;padding:8px;vertical-align:middle}th{background:#f1f5f9;font-size:13px}.cell{min-height:34px;border:1px solid transparent;border-radius:8px;padding:7px;white-space:pre-wrap}.cell:focus{outline:none;border-color:#22c55e;background:#fff}.center{text-align:center}.empty{padding:50px;text-align:center;color:#64748b}.row-actions{display:flex;gap:6px;justify-content:center}.status-select{width:100%;border:1px solid #dbe3ef;border-radius:8px;padding:8px;background:#fff}.count{font-weight:900;color:#2563eb}.project-badge{display:inline-flex;gap:8px;align-items:center;background:#eef6ff;border:1px solid #bfdbfe;border-radius:999px;padding:6px 10px;color:#1d4ed8;font-weight:800;margin-left:8px}
+      </style></head><body>
+        <header><h1>${qcEscape(category)} <span class="project-badge">${qcEscape(projectLabel)}</span></h1><p>선택 프로젝트의 해당 구분 리스트를 새 창에서 조회·추가·수정합니다.</p>
+          <div class="toolbar"><button class="btn btn-primary" onclick="addRow()">+ 행 추가</button><button class="btn" onclick="refreshRows()">새로고침</button><button class="btn" onclick="duplicateSelected()">선택 복제</button><button class="btn btn-danger" onclick="deleteSelected()">선택 삭제</button><button class="btn btn-dark" onclick="window.print()">인쇄/PDF</button><button class="btn" onclick="window.close()">닫기</button><span id="rowCount" class="count"></span></div></header>
+        <div class="guide"><span><b>+ 행 추가</b> 현재 구분에 새 리스트 추가</span><span><b>셀 수정</b> 입력 후 Enter 또는 포커스 이동 시 부모 화면 반영</span><span><b>선택 복제/삭제</b> 체크된 행 기준 실행</span><span><b>새로고침</b> 부모 화면 최신 데이터 재조회</span></div>
+        <div class="stage-table-wrap"><table><thead><tr><th class="center"><input type="checkbox" onchange="toggleAll(this.checked)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="stageBody"></tbody></table></div>
+        <script>
+          const CATEGORY = ${JSON.stringify(category)};
+          const PROJECT_KEY = ${JSON.stringify(projectKey)};
+          function esc(v){return String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));}
+          function rows(){return window.opener?.getQcProjectStageRows?.(CATEGORY, PROJECT_KEY) || [];}
+          function targetText(row){const targets = window.opener?.getChecklistTargets ? window.opener.getChecklistTargets(row) : (row.targets || []); return Array.isArray(targets) ? targets.join(', ') : String(targets || '');}
+          function stateText(row){return window.opener?.getChecklistDoneState ? window.opener.getChecklistDoneState(row) : (row.status || (row.done ? '확인완료' : '미확인'));}
+          function historyText(row){return Array.isArray(row.history) ? row.history.slice(-2).map(h => [h.action,h.worker,h.time].filter(Boolean).join(' / ')).join('\n') : '';}
+          function render(){const data=rows(); const body=document.getElementById('stageBody'); document.getElementById('rowCount').textContent='현재 '+data.length+'건'; body.innerHTML=data.length?data.map(({row,realIndex})=>'<tr data-index="'+realIndex+'"><td class="center"><input type="checkbox" data-row-check value="'+realIndex+'"></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'trade\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.trade||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'no\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.no||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'item\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.item||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'method\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.method||'')+'</div></td><td>'+esc(targetText(row))+'</td><td>'+esc(stateText(row))+'</td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'comment\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.comment||'')+'</div></td><td><div class="cell">'+esc(historyText(row))+'</div></td><td><div class="row-actions"><button class="btn" onclick="saveRow('+realIndex+')">저장</button><button class="btn btn-danger" onclick="deleteOne('+realIndex+')">삭제</button></div></td></tr>').join(''):'<tr><td colspan="10" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>';}
+          function checked(){return Array.from(document.querySelectorAll('[data-row-check]:checked')).map(i=>Number(i.value));}
+          function toggleAll(v){document.querySelectorAll('[data-row-check]').forEach(i=>i.checked=v);}
+          function addRow(){window.opener?.addQcProjectStageRow?.(CATEGORY); render();}
+          function refreshRows(){render();}
+          function saveCell(index,field,value){window.opener?.updateQcProjectStageCell?.(index,field,value);}
+          function saveRow(index){document.querySelectorAll('tr[data-index="'+index+'"] .cell').forEach(el=>el.blur()); render();}
+          function deleteOne(index){if(confirm('해당 행을 삭제할까요?')){window.opener?.deleteQcProjectStageRows?.([index]); render();}}
+          function deleteSelected(){const ids=checked(); if(!ids.length){alert('삭제할 행을 선택하세요.');return;} if(confirm(ids.length+'건을 삭제할까요?')){window.opener?.deleteQcProjectStageRows?.(ids); render();}}
+          function duplicateSelected(){const ids=checked(); if(!ids.length){alert('복제할 행을 선택하세요.');return;} window.opener?.duplicateQcProjectStageRows?.(ids); render();}
+          function keyCell(event,el){if(event.key==='Enter'&&!event.shiftKey){event.preventDefault(); el.blur(); el.focus();}}
+          render();
+        <\/script></body></html>`);
+    win.document.close();
+  };
+
+  const baseRenderChecklistGrid = typeof renderChecklistGrid === "function" ? renderChecklistGrid : null;
+  if (baseRenderChecklistGrid && !baseRenderChecklistGrid.__qcProjectAccessWrapped) {
+    renderChecklistGrid = function renderChecklistGridWithQcProjectAccess(){
+      const result = baseRenderChecklistGrid.apply(this, arguments);
+      setTimeout(renderQcProjectAccessPanel, 0);
+      return result;
+    };
+    renderChecklistGrid.__qcProjectAccessWrapped = true;
+    window.renderChecklistGrid = renderChecklistGrid;
+  }
+  const baseRefreshOptions = typeof refreshChecklistProjectOptions === "function" ? refreshChecklistProjectOptions : null;
+  refreshChecklistProjectOptions = function refreshChecklistProjectOptionsWithQcProjects(){
+    if (baseRefreshOptions) baseRefreshOptions();
+    const list = document.getElementById("checklistProjectList");
+    if (!list) return;
+    const existing = new Set(Array.from(list.querySelectorAll("option")).map(option => option.value));
+    qcProjectPool().forEach(project => {
+      const label = qcProjectLabel(project);
+      if (!label || existing.has(label)) return;
+      const option = document.createElement("option");
+      option.value = label;
+      list.appendChild(option);
+      existing.add(label);
+    });
+  };
+  window.refreshChecklistProjectOptions = refreshChecklistProjectOptions;
+
+  const baseOpenQcTemplate = typeof openQcTeamTemplateModal === "function" ? openQcTeamTemplateModal : null;
+  if (baseOpenQcTemplate && !baseOpenQcTemplate.__qcProjectSearchWrapped) {
+    openQcTeamTemplateModal = function openQcTeamTemplateModalWithProjectSearch(){
+      const result = baseOpenQcTemplate.apply(this, arguments);
+      setTimeout(injectQcTemplateProjectSearch, 0);
+      return result;
+    };
+    openQcTeamTemplateModal.__qcProjectSearchWrapped = true;
+    window.openQcTeamTemplateModal = openQcTeamTemplateModal;
+  }
+  function injectQcTemplateProjectSearch(){
+    const modal = document.getElementById("qcTeamTemplateModal");
+    if (!modal || modal.querySelector("#qcTemplateProjectLinkBox")) return;
+    const filterRow = modal.querySelector(".qc-template-filter-row");
+    if (!filterRow) return;
+    const selected = qcEnsureSelectedProject();
+    const listId = "qcTemplateProjectSearchList";
+    const box = document.createElement("div");
+    box.id = "qcTemplateProjectLinkBox";
+    box.className = "qc-template-project-link-box";
+    box.innerHTML = `
+      <datalist id="${listId}">${qcProjectPool().map(project => `<option value="${qcEscape(qcProjectLabel(project))}"></option>`).join("")}</datalist>
+      <div><strong>프로젝트 연결 삽입</strong><span>QC팀 전달사항 공통 템플릿을 검색한 프로젝트에 직접 연결해 불러옵니다.</span></div>
+      <input id="qcTemplateProjectSearch" list="${listId}" value="${qcEscape(selected ? qcProjectLabel(selected) : "")}" placeholder="PJ NO, receiveId, 프로젝트명 검색">
+      <button type="button" class="btn btn-line" onclick="connectQcTemplateProjectOnly()">프로젝트 연결</button>
+      <button type="button" class="btn btn-primary" onclick="importSelectedQcTemplateRowsToSearchedProject()">선택 자료 프로젝트에 삽입</button>`;
+    filterRow.insertAdjacentElement("beforebegin", box);
+  }
+  window.connectQcTemplateProjectOnly = function connectQcTemplateProjectOnly(){
+    const value = document.getElementById("qcTemplateProjectSearch")?.value || "";
+    const project = qcSelectProjectByValue(value);
+    if (project) qcToast("QC팀 전달사항 삽입 대상 프로젝트가 연결되었습니다.");
+  };
+  const baseImportQcTemplate = typeof importSelectedQcTeamTemplateRows === "function" ? importSelectedQcTeamTemplateRows : null;
+  if (baseImportQcTemplate && !baseImportQcTemplate.__qcProjectSearchWrapped) {
+    importSelectedQcTeamTemplateRows = function importSelectedQcTeamTemplateRowsWithProject(){
+      const value = document.getElementById("qcTemplateProjectSearch")?.value || "";
+      if (value) qcSelectProjectByValue(value, true);
+      return baseImportQcTemplate.apply(this, arguments);
+    };
+    importSelectedQcTeamTemplateRows.__qcProjectSearchWrapped = true;
+    window.importSelectedQcTeamTemplateRows = importSelectedQcTeamTemplateRows;
+  }
+  window.importSelectedQcTemplateRowsToSearchedProject = function importSelectedQcTemplateRowsToSearchedProject(){
+    const value = document.getElementById("qcTemplateProjectSearch")?.value || "";
+    if (!qcSelectProjectByValue(value)) return;
+    importSelectedQcTeamTemplateRows();
+  };
+
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      refreshChecklistProjectOptions?.();
+      qcEnsureSelectedProject();
+      renderQcProjectAccessPanel();
+    }, 0);
+  });
+  if (document.readyState !== "loading") {
+    setTimeout(() => {
+      refreshChecklistProjectOptions?.();
+      qcEnsureSelectedProject();
+      renderQcProjectAccessPanel();
+    }, 0);
+  }
+})();
