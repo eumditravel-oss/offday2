@@ -13932,3 +13932,162 @@ setTimeout(() => {
   };
   window.duplicateCheckedRows = duplicateCheckedRows;
 })();
+
+/* =========================================================
+   QC 프로젝트 접속 경로 정리 패치
+   - 새 창 기능 제거
+   - 상단 프로젝트 검색은 전체 프로젝트 검색/선택 유지
+   - 접속 경로 카드에는 현재 진행중인 프로젝트 리스트만 가로형으로 표시
+   - 프로젝트 선택 시 접속 경로 영역 접기 / 상단 버튼으로 다시 펼치기
+========================================================= */
+(function installChecklistProjectRouteInlinePatch(){
+  const QC_FALLBACK_PROJECTS = [
+    { projectNo: '2026001', projectName: 'ㅇㅇ시설 신축공사', client: 'ㅇㅇ건설', status: '진행중' },
+    { projectNo: '2026002', projectName: '공동주택 신축공사', client: 'ㅇㅇ건설', status: '진행중' },
+    { projectNo: '2026003', projectName: '업무시설 증축공사', client: 'ㅇㅇ건설', status: '진행중' },
+    { projectNo: '2026004', projectName: '물류센터 구조검토', client: 'ㅇㅇ건설', status: '진행중' },
+    { projectNo: '2026005', projectName: '근린생활시설 리모델링', client: 'ㅇㅇ건설', status: '진행중' }
+  ];
+
+  function qcText(value){ return String(value ?? '').replace(/\s+/g, ' ').trim(); }
+  function qcProjectNoFromData(data = {}, fallback = ''){
+    const raw = qcText(data.projectNo || data.pjNo || data.dbPjNo || data.received || data.receiveNo || data.no || data.id || fallback);
+    const digits = raw.match(/20\d{5}/)?.[0] || raw.match(/\d{7}/)?.[0];
+    return digits || raw || fallback;
+  }
+  function qcProjectName(data = {}){ return qcText(data.projectName || data.name || data.project || data.title || 'ㅇㅇ시설 신축공사'); }
+  function qcProjectClient(){ return 'ㅇㅇ건설'; }
+  function qcProjectKey(data = {}){ return qcProjectNoFromData(data) || qcProjectName(data); }
+  function qcProjectLabel(data = {}){
+    return [qcProjectNoFromData(data), qcProjectName(data), qcProjectClient(data)].filter(Boolean).join(' · ');
+  }
+  function qcCollectProjectItems(){
+    const map = new Map();
+    const add = (raw, idx = 0) => {
+      const data = raw?.data || raw || {};
+      const fallbackNo = String(2026001 + map.size);
+      const no = qcProjectNoFromData(data, fallbackNo);
+      const name = qcProjectName(data);
+      const key = no || name;
+      if (!key || map.has(key)) return;
+      map.set(key, {
+        projectNo: no,
+        projectName: name,
+        client: qcProjectClient(data),
+        status: qcText(data.status || data.progress || data.phase || '진행중') || '진행중'
+      });
+    };
+    try { (window.projectReceiveCompletedProjects || []).forEach(add); } catch(_) {}
+    try { (window.projectReceiveList || []).forEach(add); } catch(_) {}
+    try { (window.pmScheduleProjects || []).forEach((item, idx) => add(item?.project || item, idx)); } catch(_) {}
+    try { (typeof checklistProjectItems === 'function' ? checklistProjectItems() : []).forEach(add); } catch(_) {}
+    QC_FALLBACK_PROJECTS.forEach(add);
+    return Array.from(map.values());
+  }
+  function qcFindProjectByText(value){
+    const text = qcText(value).toLowerCase();
+    const projects = qcCollectProjectItems();
+    if (!text) return projects[0] || null;
+    return projects.find(item => {
+      const no = qcText(item.projectNo).toLowerCase();
+      const name = qcText(item.projectName).toLowerCase();
+      const client = qcText(item.client).toLowerCase();
+      const label = qcProjectLabel(item).toLowerCase();
+      return label.includes(text) || text.includes(no) || text.includes(name) || no.includes(text) || name.includes(text) || client.includes(text);
+    }) || projects[0] || null;
+  }
+  function syncChecklistProjectDatalist(){
+    const list = document.getElementById('checklistProjectList');
+    if (!list) return;
+    list.innerHTML = qcCollectProjectItems().map(project => `<option value="${escapeHtml(qcProjectLabel(project))}"></option>`).join('');
+  }
+  function setChecklistProjectSelection(project){
+    if (!project) return;
+    const input = document.getElementById('checklistProject');
+    if (input) input.value = qcProjectLabel(project);
+    try { checklistLinkedProjectNo = qcProjectKey(project); } catch(_) {}
+  }
+  function renderChecklistRouteProjects(){
+    const wrap = document.getElementById('checklistProjectAccessRoutes');
+    if (!wrap) return;
+    syncChecklistProjectDatalist();
+    const projects = qcCollectProjectItems();
+    const selected = qcFindProjectByText(document.getElementById('checklistProject')?.value || '') || projects[0];
+    const rows = projects.map((item, idx) => {
+      const active = selected && qcProjectKey(item) === qcProjectKey(selected) ? 'active' : '';
+      return `<button type="button" class="qc-project-route-row ${active}" onclick="selectChecklistActiveProject(${idx})">
+        <strong>${escapeHtml(item.projectNo)}</strong>
+        <span>${escapeHtml(item.projectName)}</span>
+        <em>${escapeHtml(item.client)}</em>
+        <small>${escapeHtml(item.status || '진행중')}</small>
+      </button>`;
+    }).join('');
+    wrap.innerHTML = `
+      <div class="qc-project-route-card">
+        <div class="qc-route-head compact">
+          <div>
+            <strong>프로젝트 질의응답 접속 경로</strong>
+            <span>상단 프로젝트 검색 또는 현재 진행중인 프로젝트 리스트에서 선택 후 프로젝트 선택 버튼을 누릅니다.</span>
+          </div>
+        </div>
+        <section class="qc-route-section qc-route-current-only">
+          <div class="qc-route-section-title">
+            <h3>현재 진행중인 프로젝트</h3>
+            <p>리스트를 클릭하면 상단 프로젝트 검색 값에 반영됩니다.</p>
+          </div>
+          <div class="qc-current-project-list horizontal">${rows}</div>
+        </section>
+      </div>`;
+  }
+  function setChecklistRouteCollapsed(collapsed){
+    const wrap = document.getElementById('checklistProjectAccessRoutes');
+    if (!wrap) return;
+    wrap.classList.toggle('is-collapsed', !!collapsed);
+  }
+
+  window.refreshChecklistProjectRoutes = function refreshChecklistProjectRoutes(){
+    renderChecklistRouteProjects();
+  };
+  window.selectChecklistActiveProject = function selectChecklistActiveProject(index){
+    const project = qcCollectProjectItems()[Number(index)] || qcCollectProjectItems()[0];
+    setChecklistProjectSelection(project);
+    renderChecklistRouteProjects();
+    try { scheduleChecklistGridRender(0); } catch(_) { try { renderChecklistGrid(); } catch(__){} }
+  };
+  window.selectChecklistProjectAndCollapse = function selectChecklistProjectAndCollapse(){
+    const project = qcFindProjectByText(document.getElementById('checklistProject')?.value || '') || qcCollectProjectItems()[0];
+    setChecklistProjectSelection(project);
+    setChecklistRouteCollapsed(true);
+    try { scheduleChecklistGridRender(0); } catch(_) { try { renderChecklistGrid(); } catch(__){} }
+    try { showToast('프로젝트가 선택되었습니다.'); } catch(_) {}
+  };
+  window.openChecklistProjectSelector = function openChecklistProjectSelector(){
+    setChecklistRouteCollapsed(false);
+    renderChecklistRouteProjects();
+    const wrap = document.getElementById('checklistProjectAccessRoutes');
+    if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  window.openChecklistSelectedProjectWindow = window.selectChecklistProjectAndCollapse;
+
+  const oldRenderChecklistGridForRoute = window.renderChecklistGrid || renderChecklistGrid;
+  if (!window.__qcProjectRouteRenderHooked) {
+    window.__qcProjectRouteRenderHooked = true;
+    window.renderChecklistGrid = function renderChecklistGridWithProjectRoute(){
+      const result = oldRenderChecklistGridForRoute.apply(this, arguments);
+      try { renderChecklistRouteProjects(); } catch(_) {}
+      return result;
+    };
+    try { renderChecklistGrid = window.renderChecklistGrid; } catch(_) {}
+  }
+
+  setTimeout(() => {
+    syncChecklistProjectDatalist();
+    renderChecklistRouteProjects();
+    const input = document.getElementById('checklistProject');
+    if (input && !input.__qcProjectSearchBound) {
+      input.__qcProjectSearchBound = true;
+      input.addEventListener('input', () => { syncChecklistProjectDatalist(); renderChecklistRouteProjects(); });
+      input.addEventListener('change', () => { syncChecklistProjectDatalist(); renderChecklistRouteProjects(); });
+    }
+  }, 0);
+})();
