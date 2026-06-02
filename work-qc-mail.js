@@ -14345,13 +14345,18 @@ setTimeout(() => {
     const projectLabel = qcProjectLabel(project);
     const win = window.open("", `qc_stage_inline_${projectKey}`.replace(/[^a-zA-Z0-9_]/g, "_"), "width=1480,height=860,scrollbars=yes,resizable=yes");
     if (!win) { qcToast("팝업 차단을 해제해 주세요."); return; }
-    win.document.open();
-    win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${qcEscape(projectLabel)} · 구분 별 리스트</title>
+
+    const doc = win.document;
+    doc.open();
+    doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${qcEscape(projectLabel)} · 구분 별 리스트</title>
       <style>
         body{margin:0;background:#f3f6fa;color:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
-        header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #dbe3ef;padding:18px 22px;box-shadow:0 8px 24px rgba(15,23,42,.08);} h1{margin:0 0 5px;font-size:22px;} p{margin:0;color:#64748b;}
+        header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #dbe3ef;padding:18px 22px;box-shadow:0 8px 24px rgba(15,23,42,.08);}
+        h1{margin:0 0 5px;font-size:22px;} p{margin:0;color:#64748b;}
         .project-badge{display:inline-flex;gap:8px;align-items:center;background:#eef6ff;border:1px solid #bfdbfe;border-radius:999px;padding:6px 10px;color:#1d4ed8;font-weight:800;margin-left:8px}
-        .stage-menu{margin:16px 22px 0;background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.stage-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}.stage-head strong{font-size:18px}.stage-head span{color:#64748b}.stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.stage-btn{border:1px solid #dbe3ef;background:#fff;border-radius:14px;padding:13px 10px;cursor:pointer;font-weight:900;text-align:center}.stage-btn:hover,.stage-btn.active{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.10)}.stage-btn span{display:block;margin-top:7px;color:#2563eb;font-size:12px}
+        .stage-menu{margin:16px 22px 0;background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+        .stage-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}.stage-head strong{font-size:18px}.stage-head span{color:#64748b}
+        .stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.stage-btn{border:1px solid #dbe3ef;background:#fff;border-radius:14px;padding:13px 10px;cursor:pointer;font-weight:900;text-align:center}.stage-btn:hover,.stage-btn.active{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.10)}.stage-btn span{display:block;margin-top:7px;color:#2563eb;font-size:12px}
         .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 22px 0}.btn{border:1px solid #dbe3ef;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;cursor:pointer}.btn-primary{background:#f97316;color:#fff;border-color:#f97316}.btn-danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}.btn-dark{background:#111827;color:#fff;border-color:#111827}
         .guide{margin:10px 22px 0;padding:12px 14px;background:#fff;border:1px solid #dbe3ef;border-radius:14px;color:#475569;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.guide b{color:#111827}.stage-table-wrap{margin:14px 22px 24px;background:#fff;border:1px solid #dbe3ef;border-radius:16px;overflow:auto;box-shadow:0 8px 24px rgba(15,23,42,.06)}
         table{width:100%;border-collapse:collapse;min-width:1280px}th,td{border:1px solid #dbe3ef;padding:8px;vertical-align:middle}th{background:#f1f5f9;font-size:13px}.cell{min-height:34px;border:1px solid transparent;border-radius:8px;padding:7px;white-space:pre-wrap}.cell:focus{outline:none;border-color:#22c55e;background:#fff}.center{text-align:center}.empty{padding:50px;text-align:center;color:#64748b}.row-actions{display:flex;gap:6px;justify-content:center}.count{font-weight:900;color:#2563eb}.current-category{font-weight:900;color:#111827;margin-left:8px}
@@ -14359,77 +14364,140 @@ setTimeout(() => {
       </style></head><body>
         <header><h1>구분 별 리스트 <span class="project-badge">${qcEscape(projectLabel)}</span></h1><p>상단에서 구분을 선택하면 아래 리스트 영역이 같은 창 안에서 바로 전환됩니다.</p></header>
         <section class="stage-menu"><div class="stage-head"><strong>구분 선택</strong><span>버튼을 누르면 아래 리스트가 해당 구분으로 변경됩니다.</span></div><div class="stage-grid" id="stageGrid"></div></section>
-        <div class="toolbar"><button class="btn btn-primary" onclick="addRow()">+ 행 추가</button><button class="btn" onclick="refreshRows()">새로고침</button><button class="btn" onclick="duplicateSelected()">선택 복제</button><button class="btn btn-danger" onclick="deleteSelected()">선택 삭제</button><button class="btn btn-dark" onclick="window.print()">인쇄/PDF</button><button class="btn" onclick="window.close()">닫기</button><span class="current-category" id="currentCategory"></span><span id="rowCount" class="count"></span></div>
+        <div class="toolbar"><button class="btn btn-primary" id="stageAddRow">+ 행 추가</button><button class="btn" id="stageRefresh">새로고침</button><button class="btn" id="stageDuplicate">선택 복제</button><button class="btn btn-danger" id="stageDelete">선택 삭제</button><button class="btn btn-dark" id="stagePrint">인쇄/PDF</button><button class="btn" id="stageClose">닫기</button><span class="current-category" id="currentCategory"></span><span id="rowCount" class="count"></span></div>
         <div class="guide"><span><b>+ 행 추가</b> 현재 선택 구분에 새 리스트 추가</span><span><b>셀 수정</b> 입력 후 Enter 또는 포커스 이동 시 부모 화면 반영</span><span><b>선택 복제/삭제</b> 체크된 행 기준 실행</span><span><b>새로고침</b> 부모 화면 최신 데이터 재조회</span></div>
-        <div class="stage-table-wrap"><table><thead><tr><th class="center"><input type="checkbox" onchange="toggleAll(this.checked)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="stageBody"></tbody></table></div>
-        <script>
-          const PROJECT_KEY = ${JSON.stringify(projectKey)};
-          let CATEGORY = '프로젝트 초기';
-          function esc(v){return String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));}
-          const FALLBACK_CATEGORIES = ${JSON.stringify(STAGE_CATEGORIES)};
-          let __stageCategoryList = [];
-          function categories(){
-            try {
-              const list = window.opener && typeof window.opener.getQcProjectStageCategories === 'function'
-                ? window.opener.getQcProjectStageCategories()
-                : [];
-              if (Array.isArray(list) && list.length) return list;
-            } catch (error) {
-              console.warn('구분 목록 로드 실패 - 기본 구분 목록으로 대체', error);
-            }
-            return FALLBACK_CATEGORIES.map(function(category){ return { category: category, count: 0 }; });
+        <div class="stage-table-wrap"><table><thead><tr><th class="center"><input type="checkbox" id="stageToggleAll"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="stageBody"></tbody></table></div>
+      </body></html>`);
+    doc.close();
+
+    const state = { category: STAGE_CATEGORIES[0] || "프로젝트 초기" };
+    const popupEscape = value => String(value ?? "").replace(/[&<>"]/g, match => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[match]));
+    const popupCategories = () => {
+      try {
+        const list = typeof window.getQcProjectStageCategories === "function" ? window.getQcProjectStageCategories() : [];
+        if (Array.isArray(list) && list.length) return list;
+      } catch (error) {
+        console.warn("구분 목록 로드 실패 - 기본 구분 목록으로 대체", error);
+      }
+      return STAGE_CATEGORIES.map(category => ({ category, count: qcStageCount(category, projectKey) }));
+    };
+    const popupRows = () => {
+      try {
+        const list = typeof window.getQcProjectStageRows === "function" ? window.getQcProjectStageRows(state.category, projectKey) : [];
+        return Array.isArray(list) ? list : [];
+      } catch (error) {
+        console.warn("구분 리스트 로드 실패", error);
+        return [];
+      }
+    };
+    const popupTargetText = row => {
+      const targets = typeof getChecklistTargets === "function" ? getChecklistTargets(row) : (row.targets || []);
+      return Array.isArray(targets) ? targets.join(", ") : String(targets || "");
+    };
+    const popupStateText = row => typeof getChecklistDoneState === "function" ? getChecklistDoneState(row) : (row.status || (row.done ? "확인완료" : "미확인"));
+    const popupHistoryText = row => Array.isArray(row.history) ? row.history.slice(-2).map(item => [item.action, item.worker, item.time].filter(Boolean).join(" / ")).join("\n") : "";
+
+    const bindCellEvents = () => {
+      doc.querySelectorAll("[data-stage-field]").forEach(cell => {
+        if (cell.__stageBound) return;
+        cell.__stageBound = true;
+        cell.addEventListener("blur", () => {
+          const index = Number(cell.getAttribute("data-stage-index"));
+          const field = cell.getAttribute("data-stage-field");
+          if (Number.isInteger(index) && field) window.updateQcProjectStageCell?.(index, field, cell.innerText);
+          renderButtons();
+        });
+        cell.addEventListener("keydown", event => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            cell.blur();
+            cell.focus();
           }
-          function rows(){
-            try {
-              const list = window.opener && typeof window.opener.getQcProjectStageRows === 'function'
-                ? window.opener.getQcProjectStageRows(CATEGORY, PROJECT_KEY)
-                : [];
-              return Array.isArray(list) ? list : [];
-            } catch (error) {
-              console.warn('구분 리스트 로드 실패', error);
-              return [];
-            }
+        });
+      });
+      doc.querySelectorAll("[data-stage-action='save']").forEach(button => {
+        button.addEventListener("click", () => {
+          const index = Number(button.getAttribute("data-stage-index"));
+          doc.querySelectorAll(`tr[data-index="${index}"] [data-stage-field]`).forEach(cell => cell.blur());
+          renderAll();
+        });
+      });
+      doc.querySelectorAll("[data-stage-action='delete']").forEach(button => {
+        button.addEventListener("click", () => {
+          const index = Number(button.getAttribute("data-stage-index"));
+          if (Number.isInteger(index) && win.confirm("해당 행을 삭제할까요?")) {
+            window.deleteQcProjectStageRows?.([index]);
+            renderAll();
           }
-          function targetText(row){const targets = window.opener?.getChecklistTargets ? window.opener.getChecklistTargets(row) : (row.targets || []); return Array.isArray(targets) ? targets.join(', ') : String(targets || '');}
-          function stateText(row){return window.opener?.getChecklistDoneState ? window.opener.getChecklistDoneState(row) : (row.status || (row.done ? '확인완료' : '미확인'));}
-          function historyText(row){return Array.isArray(row.history) ? row.history.slice(-2).map(h => [h.action,h.worker,h.time].filter(Boolean).join(' / ')).join('\n') : '';}
-          function renderButtons(){
-            const grid = document.getElementById('stageGrid');
-            if (!grid) return;
-            const list = categories();
-            __stageCategoryList = list.map(function(item){ return item && item.category ? item.category : ''; });
-            grid.innerHTML = list.length
-              ? list.map(function(item, index){
-                  const category = item && item.category ? item.category : '';
-                  const count = item && typeof item.count !== 'undefined' ? item.count : 0;
-                  return '<button type="button" class="stage-btn '+(category===CATEGORY?'active':'')+'" data-stage-index="'+index+'"><strong>'+esc(category)+'</strong><span>'+esc(count)+'건</span></button>';
-                }).join('')
-              : FALLBACK_CATEGORIES.map(function(category, index){
-                  __stageCategoryList[index] = category;
-                  return '<button type="button" class="stage-btn '+(category===CATEGORY?'active':'')+'" data-stage-index="'+index+'"><strong>'+esc(category)+'</strong><span>0건</span></button>';
-                }).join('');
-            grid.querySelectorAll('[data-stage-index]').forEach(function(button){
-              button.addEventListener('click', function(){
-                const index = Number(button.getAttribute('data-stage-index'));
-                selectCategory(__stageCategoryList[index] || FALLBACK_CATEGORIES[index] || CATEGORY);
-              });
-            });
-          }
-          function selectCategory(category){CATEGORY=category; renderButtons(); render();}
-          function render(){const data=rows(); const body=document.getElementById('stageBody'); document.getElementById('currentCategory').textContent=CATEGORY; document.getElementById('rowCount').textContent='현재 '+data.length+'건'; body.innerHTML=data.length?data.map(({row,realIndex})=>'<tr data-index="'+realIndex+'"><td class="center"><input type="checkbox" data-row-check value="'+realIndex+'"></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'trade\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.trade||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'no\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.no||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'item\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.item||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'method\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.method||'')+'</div></td><td>'+esc(targetText(row))+'</td><td>'+esc(stateText(row))+'</td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'comment\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.comment||'')+'</div></td><td><div class="cell">'+esc(historyText(row))+'</div></td><td><div class="row-actions"><button class="btn" onclick="saveRow('+realIndex+')">저장</button><button class="btn btn-danger" onclick="deleteOne('+realIndex+')">삭제</button></div></td></tr>').join(''):'<tr><td colspan="10" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>';}
-          function checked(){return Array.from(document.querySelectorAll('[data-row-check]:checked')).map(i=>Number(i.value));}
-          function toggleAll(v){document.querySelectorAll('[data-row-check]').forEach(i=>i.checked=v);}
-          function addRow(){window.opener?.addQcProjectStageRow?.(CATEGORY); refreshRows();}
-          function refreshRows(){renderButtons(); render();}
-          function saveCell(index,field,value){window.opener?.updateQcProjectStageCell?.(index,field,value); renderButtons();}
-          function saveRow(index){document.querySelectorAll('tr[data-index="'+index+'"] .cell').forEach(el=>el.blur()); refreshRows();}
-          function deleteOne(index){if(confirm('해당 행을 삭제할까요?')){window.opener?.deleteQcProjectStageRows?.([index]); refreshRows();}}
-          function deleteSelected(){const ids=checked(); if(!ids.length){alert('삭제할 행을 선택하세요.');return;} if(confirm(ids.length+'건을 삭제할까요?')){window.opener?.deleteQcProjectStageRows?.(ids); refreshRows();}}
-          function duplicateSelected(){const ids=checked(); if(!ids.length){alert('복제할 행을 선택하세요.');return;} window.opener?.duplicateQcProjectStageRows?.(ids); refreshRows();}
-          function keyCell(event,el){if(event.key==='Enter'&&!event.shiftKey){event.preventDefault(); el.blur(); el.focus();}}
-          renderButtons(); render();
-        <\/script></body></html>`);
-    win.document.close();
+        });
+      });
+    };
+    const renderButtons = () => {
+      const grid = doc.getElementById("stageGrid");
+      if (!grid) return;
+      const list = popupCategories();
+      grid.innerHTML = list.map((item, index) => {
+        const category = item?.category || STAGE_CATEGORIES[index] || "";
+        const count = typeof item?.count !== "undefined" ? item.count : 0;
+        return `<button type="button" class="stage-btn ${category === state.category ? "active" : ""}" data-stage-category-index="${index}"><strong>${popupEscape(category)}</strong><span>${popupEscape(count)}건</span></button>`;
+      }).join("") || STAGE_CATEGORIES.map((category, index) => `<button type="button" class="stage-btn ${category === state.category ? "active" : ""}" data-stage-category-index="${index}"><strong>${popupEscape(category)}</strong><span>0건</span></button>`).join("");
+      const categoryList = (list.length ? list : STAGE_CATEGORIES.map(category => ({ category })));
+      grid.querySelectorAll("[data-stage-category-index]").forEach(button => {
+        button.addEventListener("click", () => {
+          const index = Number(button.getAttribute("data-stage-category-index"));
+          state.category = categoryList[index]?.category || STAGE_CATEGORIES[index] || state.category;
+          renderAll();
+        });
+      });
+    };
+    const renderRows = () => {
+      const body = doc.getElementById("stageBody");
+      const current = doc.getElementById("currentCategory");
+      const count = doc.getElementById("rowCount");
+      if (!body) return;
+      const data = popupRows();
+      if (current) current.textContent = state.category;
+      if (count) count.textContent = `현재 ${data.length}건`;
+      body.innerHTML = data.length ? data.map(({ row, realIndex }) => `
+        <tr data-index="${realIndex}">
+          <td class="center"><input type="checkbox" data-row-check value="${realIndex}"></td>
+          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="trade">${popupEscape(row.trade || "")}</div></td>
+          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="no">${popupEscape(row.no || "")}</div></td>
+          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="item">${popupEscape(row.item || "")}</div></td>
+          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="method">${popupEscape(row.method || "")}</div></td>
+          <td>${popupEscape(popupTargetText(row))}</td>
+          <td>${popupEscape(popupStateText(row))}</td>
+          <td><div class="cell" contenteditable data-stage-index="${realIndex}" data-stage-field="comment">${popupEscape(row.comment || "")}</div></td>
+          <td><div class="cell">${popupEscape(popupHistoryText(row))}</div></td>
+          <td><div class="row-actions"><button class="btn" data-stage-action="save" data-stage-index="${realIndex}">저장</button><button class="btn btn-danger" data-stage-action="delete" data-stage-index="${realIndex}">삭제</button></div></td>
+        </tr>`).join("") : `<tr><td colspan="10" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>`;
+      bindCellEvents();
+    };
+    const checkedIndices = () => Array.from(doc.querySelectorAll("[data-row-check]:checked")).map(input => Number(input.value)).filter(Number.isInteger);
+    const renderAll = () => { renderButtons(); renderRows(); };
+
+    doc.getElementById("stageAddRow")?.addEventListener("click", () => { window.addQcProjectStageRow?.(state.category); renderAll(); });
+    doc.getElementById("stageRefresh")?.addEventListener("click", renderAll);
+    doc.getElementById("stageDuplicate")?.addEventListener("click", () => {
+      const ids = checkedIndices();
+      if (!ids.length) { win.alert("복제할 행을 선택하세요."); return; }
+      window.duplicateQcProjectStageRows?.(ids);
+      renderAll();
+    });
+    doc.getElementById("stageDelete")?.addEventListener("click", () => {
+      const ids = checkedIndices();
+      if (!ids.length) { win.alert("삭제할 행을 선택하세요."); return; }
+      if (win.confirm(`${ids.length}건을 삭제할까요?`)) {
+        window.deleteQcProjectStageRows?.(ids);
+        renderAll();
+      }
+    });
+    doc.getElementById("stagePrint")?.addEventListener("click", () => win.print());
+    doc.getElementById("stageClose")?.addEventListener("click", () => win.close());
+    doc.getElementById("stageToggleAll")?.addEventListener("change", event => {
+      doc.querySelectorAll("[data-row-check]").forEach(input => { input.checked = event.target.checked; });
+    });
+    renderAll();
   };
 
   window.openQcProjectStageWindow = function openQcProjectStageWindow(category){
