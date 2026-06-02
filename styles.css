@@ -20535,3 +20535,38 @@ button.btn-orange{
 .estimate-db-manager-search-item span{font-size:12px;color:#334155;font-weight:800;white-space:nowrap;}
 .estimate-db-manager-search-item em{font-style:normal;font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .estimate-db-manager-search-empty{border:1px dashed #dbe5f0;border-radius:10px;background:#f8fafc;color:#64748b;font-size:12px;font-weight:800;padding:10px 12px;}
+
+/* === 프로젝트 질의응답 관리: 진한 세로 구분선 제거 ===
+   전역 .excel-grid 구분선 보정이 프로젝트 질의응답 표에도 적용되어
+   검토항목/체크여부 주변에 굵은 세로선이 생기는 문제를 방지합니다. */
+#qcReview .excel-grid th,
+#qcReview .excel-grid td,
+#qcReview .excel-grid thead th,
+#qcReview .excel-grid tbody td,
+#qcReview .excel-grid thead th:nth-child(4),
+#qcReview .excel-grid tbody td:nth-child(4),
+#qcReview .excel-grid thead th:nth-child(7),
+#qcReview .excel-grid tbody td:nth-child(7),
+#qcReview .excel-grid thead th:nth-child(12),
+#qcReview .excel-grid tbody td:nth-child(12),
+#qcReview .excel-grid th.section-split,
+#qcReview .excel-grid td.section-split,
+#qcReview .excel-grid th.section-divider,
+#qcReview .excel-grid td.section-divider,
+#qcReview .excel-grid th.group-divider,
+#qcReview .excel-grid td.group-divider,
+#qcReview .excel-grid th.divider-right,
+#qcReview .excel-grid td.divider-right,
+#qcReview .excel-grid .hard-divider{
+  border-right:1px solid #dbe3ef !important;
+  box-shadow:none !important;
+  background-clip:padding-box !important;
+}
+#qcReview .excel-grid th,
+#qcReview .excel-grid td{
+  border-left:0 !important;
+  border-bottom:1px solid #dbe3ef !important;
+}
+#qcReview .excel-grid th{
+  border-bottom:1px solid #cbd5e1 !important;
+}
