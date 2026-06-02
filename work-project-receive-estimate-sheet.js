@@ -2669,6 +2669,7 @@ const ESTIMATE_PERIOD_COLUMNS = [
 ];
 const ESTIMATE_PERIOD_STATUS_LIST = ["수주", "실주", "예가", "대기중", "작업취소"];
 const ESTIMATE_PERIOD_TENDER_LIST = ["견적서 최저가", "연간단가"];
+const ESTIMATE_PERIOD_BID_LIST = ["개산견적", "공사비검증", "실행", "입찰", "클레임", "턴키"];
 
 let estimatePeriodEditRows = [];
 let estimatePeriodFilters = { from: "", to: "", status: "전체", q: "" };
@@ -3497,9 +3498,13 @@ function renderEstimatePeriodManage() {
       if (col.type === "status") {
         return `<td class="center"><select class="status-select" data-period-key="${col.key}">${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option value="${s}" ${String(row[col.key] || "").includes(s) ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
       }
+      if (col.key === "bid") {
+        const selectedBid = estimatePeriodNormalizeText(row[col.key] || "");
+        return `<td class="center"><select class="status-select bid-select" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_BID_LIST.map(s => `<option value="${s}" ${selectedBid === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+      }
       if (col.key === "tender") {
         const selectedTender = estimatePeriodNormalizeText(row[col.key] || "");
-        return `<td class="center"><select class="status-select tender-select" data-period-key="${col.key}"><option value=""></option>${ESTIMATE_PERIOD_TENDER_LIST.map(s => `<option value="${s}" ${selectedTender === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        return `<td class="center"><select class="status-select tender-select" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_TENDER_LIST.map(s => `<option value="${s}" ${selectedTender === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
       }
       let value = row[col.key] ?? "";
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
@@ -4148,7 +4153,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     usage: ['창고','공장','제약공장','식품공장','반도체공장','물류센터','아파트형공장','공동주택','오피스텔','주상복합','업무시설','오피스','근린생활시설','지식산업센터','기숙사','연수원','학교','교육연구시설','연구소','역사'],
     count: ['1회','2회','3회','1회차','2회차','3회차','변경전','변경후','변경도서','기타'],
     unitWork: ['공내역서','비교내역서','설계예가','단가작업','기타'],
-    bid: ['실행','입찰','본사 실행','본사 입찰','현장 실행','대관','기타']
+    bid: ['개산견적','공사비검증','실행','입찰','클레임','턴키']
   };
   let dropdown = null;
   let dropdownOwner = null;
