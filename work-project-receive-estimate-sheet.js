@@ -7880,3 +7880,212 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
     }, 0);
   }, true);
 })();
+
+/* 2026-06-02 period estimate Enter-command dropdown fix
+   핵심 원인: native select는 Enter로 드롭다운을 열거나 값을 확정할 때 브라우저/OS 기본 UI가 포커스를 먼저 가져가서
+   셀 포커스 복구 로직이 누락될 수 있습니다. 기간별 견적서 관리 내부에서는 Enter를 native select에 맡기지 않고,
+   표 내부 전용 키보드 드롭다운을 띄워 선택 셀 유지와 방향키 이동 기준을 안정적으로 보존합니다. */
+(function estimatePeriodKeyboardDropdownCommandPatch(){
+  if (window.__estimatePeriodKeyboardDropdownCommandPatch === true) return;
+  window.__estimatePeriodKeyboardDropdownCommandPatch = true;
+
+  const TABLE_SELECTOR = ".estimate-period-manage-table";
+  const SELECT_SELECTOR = `${TABLE_SELECTOR} tbody select.status-select`;
+  const CELL_SELECTOR = `${TABLE_SELECTOR} tbody tr[data-period-row-id] td`;
+  const MENU_CLASS = "period-keyboard-select-menu";
+  const ITEM_CLASS = "period-keyboard-select-item";
+  let menu = null;
+  let activeSelect = null;
+  let activeIndex = 0;
+
+  function asElement(target) {
+    return target && target.nodeType === 1 ? target : (target?.parentElement || null);
+  }
+
+  function isPeriodVisible(select) {
+    const table = select?.closest?.(TABLE_SELECTOR);
+    if (!table) return false;
+    if (typeof estimatePeriodIsTableVisible === "function") return estimatePeriodIsTableVisible(table);
+    const panel = table.closest?.("#estimatePeriodManage");
+    if (panel && !panel.classList.contains("active")) return false;
+    const rect = table.getBoundingClientRect?.();
+    return !!rect && rect.width > 0 && rect.height > 0;
+  }
+
+  function rememberSelectCell(select) {
+    const td = select?.closest?.(CELL_SELECTOR);
+    if (!td || !isPeriodVisible(select)) return null;
+    if (typeof estimatePeriodRememberActiveCell === "function") estimatePeriodRememberActiveCell(td);
+    td.classList.add("period-cell-focused");
+    td.setAttribute("tabindex", "0");
+    window.__estimatePeriodActiveCell = td;
+    window.__estimatePeriodActiveTable = td.closest?.(TABLE_SELECTOR);
+    return td;
+  }
+
+  function focusSelectCell(select) {
+    const td = rememberSelectCell(select);
+    if (!td) return;
+    try { select.focus({ preventScroll: true }); } catch (_) { select.focus?.(); }
+    rememberSelectCell(select);
+  }
+
+  function ensureStyle() {
+    if (document.getElementById("periodKeyboardSelectMenuStyle")) return;
+    const style = document.createElement("style");
+    style.id = "periodKeyboardSelectMenuStyle";
+    style.textContent = `
+      .${MENU_CLASS}{position:fixed;z-index:999999;background:#fff;border:1px solid #94a3b8;border-radius:10px;box-shadow:0 14px 32px rgba(15,23,42,.18);padding:4px;max-height:220px;overflow:auto;font-size:12px;font-weight:800;color:#0f172a;box-sizing:border-box;}
+      .${ITEM_CLASS}{display:block;width:100%;border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:7px;white-space:nowrap;cursor:pointer;font:inherit;color:inherit;}
+      .${ITEM_CLASS}.is-active{background:#e0f2fe;outline:2px solid #38bdf8;outline-offset:-2px;}
+      .${ITEM_CLASS}.is-selected{box-shadow:inset 3px 0 0 #22c55e;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function getOptions(select) {
+    return Array.from(select?.options || []).map((option, index) => ({
+      index,
+      value: option.value,
+      label: option.textContent || option.value || "(빈 값)",
+      selected: option.selected
+    }));
+  }
+
+  function removeMenu({ keepFocus = true } = {}) {
+    const select = activeSelect;
+    if (menu?.parentNode) menu.parentNode.removeChild(menu);
+    menu = null;
+    activeSelect = null;
+    activeIndex = 0;
+    if (keepFocus && select?.isConnected) focusSelectCell(select);
+  }
+
+  function paintActive() {
+    if (!menu) return;
+    menu.querySelectorAll(`.${ITEM_CLASS}`).forEach((btn, index) => {
+      btn.classList.toggle("is-active", index === activeIndex);
+      if (index === activeIndex) btn.scrollIntoView?.({ block: "nearest" });
+    });
+  }
+
+  function applyOption(select, optionIndex) {
+    const options = getOptions(select);
+    const option = options[optionIndex];
+    if (!option) return;
+    const previous = select.value;
+    select.value = option.value;
+    rememberSelectCell(select);
+    if (select.value !== previous) {
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    // change 핸들러가 저장/요약 갱신을 처리한 뒤에도 같은 셀이 선택 상태를 유지하도록 한 번 더 고정합니다.
+    [0, 20, 80].forEach(delay => window.setTimeout?.(() => focusSelectCell(select), delay));
+    window.requestAnimationFrame?.(() => focusSelectCell(select));
+  }
+
+  function openMenu(select) {
+    if (!select || !isPeriodVisible(select)) return false;
+    ensureStyle();
+    if (menu && activeSelect === select) {
+      paintActive();
+      focusSelectCell(select);
+      return true;
+    }
+    removeMenu({ keepFocus: false });
+    activeSelect = select;
+    rememberSelectCell(select);
+    const options = getOptions(select);
+    activeIndex = Math.max(0, options.findIndex(item => item.selected));
+    if (activeIndex < 0) activeIndex = 0;
+
+    menu = document.createElement("div");
+    menu.className = MENU_CLASS;
+    menu.setAttribute("role", "listbox");
+    menu.innerHTML = options.map((item, index) => `
+      <button class="${ITEM_CLASS}${index === activeIndex ? " is-active" : ""}${item.selected ? " is-selected" : ""}" type="button" role="option" data-index="${index}" aria-selected="${item.selected ? "true" : "false"}">${item.label}</button>
+    `).join("");
+    document.body.appendChild(menu);
+
+    const rect = select.getBoundingClientRect();
+    const menuWidth = Math.max(rect.width, 140);
+    const left = Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - menuWidth - 8));
+    const belowTop = rect.bottom + 4;
+    const menuHeight = Math.min(220, Math.max(40, menu.getBoundingClientRect().height || 180));
+    const top = belowTop + menuHeight > window.innerHeight - 8 ? Math.max(8, rect.top - menuHeight - 4) : belowTop;
+    menu.style.minWidth = `${menuWidth}px`;
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+
+    menu.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+    menu.addEventListener("click", event => {
+      const btn = asElement(event.target)?.closest?.(`.${ITEM_CLASS}`);
+      if (!btn || !activeSelect) return;
+      event.preventDefault();
+      event.stopPropagation();
+      activeIndex = Number(btn.dataset.index || 0);
+      applyOption(activeSelect, activeIndex);
+      removeMenu({ keepFocus: true });
+    }, true);
+    paintActive();
+    focusSelectCell(select);
+    return true;
+  }
+
+  document.addEventListener("keydown", event => {
+    const target = asElement(event.target);
+    const select = target?.closest?.(SELECT_SELECTOR);
+    const isMenuOpen = !!(menu && activeSelect?.isConnected);
+
+    if (isMenuOpen && ["ArrowDown", "ArrowUp", "Home", "End", "Enter", "Escape", "Tab"].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      const options = getOptions(activeSelect);
+      if (!options.length) return;
+      if (event.key === "ArrowDown") activeIndex = Math.min(options.length - 1, activeIndex + 1);
+      if (event.key === "ArrowUp") activeIndex = Math.max(0, activeIndex - 1);
+      if (event.key === "Home") activeIndex = 0;
+      if (event.key === "End") activeIndex = options.length - 1;
+      if (event.key === "Escape") { removeMenu({ keepFocus: true }); return; }
+      if (event.key === "Tab") { removeMenu({ keepFocus: true }); return; }
+      if (event.key === "Enter") {
+        applyOption(activeSelect, activeIndex);
+        removeMenu({ keepFocus: true });
+        return;
+      }
+      paintActive();
+      focusSelectCell(activeSelect);
+      return;
+    }
+
+    if (!select || !isPeriodVisible(select)) return;
+    rememberSelectCell(select);
+    if (event.key !== "Enter") return;
+
+    // 기간별 견적서 관리 안에서는 Enter가 native select를 열지 않고 전용 리스트를 엽니다.
+    // 이렇게 해야 Enter 선택 후 셀 선택 표시가 사라지는 브라우저 기본 포커스 이탈을 원천 차단할 수 있습니다.
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    openMenu(select);
+  }, true);
+
+  document.addEventListener("pointerdown", event => {
+    if (!menu) return;
+    const target = asElement(event.target);
+    if (target?.closest?.(`.${MENU_CLASS}`)) return;
+    if (target?.closest?.(SELECT_SELECTOR) === activeSelect) return;
+    removeMenu({ keepFocus: false });
+  }, true);
+
+  window.addEventListener("scroll", () => {
+    if (menu && activeSelect?.isConnected) openMenu(activeSelect);
+  }, true);
+  window.addEventListener("resize", () => {
+    if (menu && activeSelect?.isConnected) openMenu(activeSelect);
+  });
+})();
