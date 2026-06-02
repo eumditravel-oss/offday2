@@ -20707,3 +20707,20 @@ button.btn-orange{
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+/* 2026-06-02 QC 프로젝트 접속 경로 보완 */
+.qc-ongoing-select-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+.qc-ongoing-select-row .btn{
+  min-width:130px;
+}
+#qcProjectAccessPanel .qc-project-stage-panel{
+  display:none !important;
+}
+.qc-ongoing-route-card .qc-ongoing-project-item em{
+  font-weight:700;
+  color:#475569;
+}
