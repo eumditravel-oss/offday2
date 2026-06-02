@@ -14866,3 +14866,421 @@ setTimeout(() => {
     }, 0);
   }
 })();
+
+/* =========================================================
+   2026-06-02 QC 구분별 리스트 새창 최종 보정 패치
+   - data1037 기준의 체크리스트 행/커맨드 구조를 새창 안에서 복구
+   - 구분 선택 + 리스트를 한 창에 배치하고 CON-COST 톤으로 정리
+   - 모든 프로젝트에 기본 더미데이터를 동일 연결
+   ========================================================= */
+(function installQcStagePopupRestoreFinal(){
+  const QC_FINAL_STAGES = [
+    "프로젝트 초기", "PM 전달사항", "QC팀 전달사항", "제출자료 검토사항", "최종자료 검토사항",
+    "Z1. 질의사항(1차)", "Z2. 질의사항(2차)", "Z3. 질의사항(3차)", "Z4. 질의사항(4차)",
+    "Z5. 질의사항(5차)", "Z6. 질의사항(6차)", "Z7. 견적조건(최종)"
+  ];
+  const QC_SAMPLE_PROJECTS_FINAL = [
+    { projectNo:"2026001", receiveId:"RCV-2026001", projectName:"ㅇㅇ시설 신축공사", client:"ㅇㅇ건설", status:"진행중" },
+    { projectNo:"2026002", receiveId:"RCV-2026002", projectName:"공동주택 신축공사", client:"ㅇㅇ건설", status:"진행중" },
+    { projectNo:"2026003", receiveId:"RCV-2026003", projectName:"업무시설 증축공사", client:"ㅇㅇ건설", status:"진행중" },
+    { projectNo:"2026004", receiveId:"RCV-2026004", projectName:"물류센터 구조검토", client:"ㅇㅇ건설", status:"진행중" },
+    { projectNo:"2026005", receiveId:"RCV-2026005", projectName:"근린생활시설 리모델링", client:"ㅇㅇ건설", status:"진행중" },
+    { projectNo:"2026006", receiveId:"RCV-2026006", projectName:"오피스텔 증축공사", client:"ㅇㅇ건설", status:"진행중" }
+  ];
+  let qcFinalSeedApplied = false;
+  const txt = value => String(value ?? "").replace(/\s+/g, " ").trim();
+  const esc = value => String(value ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+  const normGroup = value => typeof normalizeChecklistGroupName === "function" ? normalizeChecklistGroupName(value) : txt(value);
+  const nowText = () => typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString();
+  const worker = () => typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자";
+  const toast = message => typeof showToast === "function" ? showToast(message) : console.log(message);
+
+  function displayProjectNo(data = {}){
+    const raw = txt(data.projectNo || data.pjNo || data.no || data.receiveId || "");
+    const digits = raw.replace(/\D/g, "");
+    if (/^2026\d{3}$/.test(digits)) return digits;
+    const m = raw.match(/(?:PJ|RCV)?[-_\s]*26[-_\s]*(\d{3})/i);
+    if (m) return `2026${m[1]}`;
+    if (/^26\d{3}$/.test(digits)) return `20${digits}`;
+    return raw || "2026001";
+  }
+  function projectKey(data = {}){ return `PN:${displayProjectNo(data)}`; }
+  function projectLabel(data = {}){
+    return [displayProjectNo(data), data.projectName || data.name || "프로젝트명", data.client || data.clientName || "ㅇㅇ건설"].filter(Boolean).join(" · ");
+  }
+  function normalizeProject(data = {}){
+    return {
+      ...data,
+      projectNo: displayProjectNo(data),
+      projectName: data.projectName || data.name || "프로젝트명",
+      client: "ㅇㅇ건설",
+      status: data.status || data.state || data.progressStatus || "진행중"
+    };
+  }
+  function projectPool(){
+    let raw = [];
+    try {
+      if (typeof checklistProjectItems === "function") raw = checklistProjectItems();
+      else if (typeof projectReceiveGetCanonicalListItems === "function") raw = projectReceiveGetCanonicalListItems();
+      else if (typeof getProjectReceiveListItems === "function") raw = getProjectReceiveListItems();
+    } catch (error) { raw = []; }
+    const fromApp = (Array.isArray(raw) ? raw : []).map(item => item?.data || item).filter(Boolean).map(normalizeProject);
+    const merged = [...fromApp, ...QC_SAMPLE_PROJECTS_FINAL.map(normalizeProject)];
+    const seen = new Set();
+    return merged.filter(item => {
+      const key = projectKey(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  function findProject(value){
+    const q = txt(value).toLowerCase();
+    if (!q) return null;
+    return projectPool().find(p => {
+      const hay = [projectKey(p), displayProjectNo(p), p.receiveId, p.projectName, p.client, projectLabel(p)].map(v => txt(v).toLowerCase());
+      return hay.some(v => v && (v === q || v.includes(q) || q.includes(v)));
+    }) || null;
+  }
+  function currentProject(){
+    const input = document.getElementById("checklistProject");
+    const found = findProject(input?.value || "");
+    return found || projectPool()[0] || normalizeProject(QC_SAMPLE_PROJECTS_FINAL[0]);
+  }
+  function rowProjectKey(row = {}){ return txt(row.projectLinkKey || row.linkedProjectKey || row.linkedProjectNo || row.projectNo || row.pjNo); }
+  function applyProjectToRow(row, project){
+    const key = projectKey(project);
+    row.projectLinkKey = key;
+    row.linkedProjectKey = key;
+    row.projectNo = displayProjectNo(project);
+    row.linkedProjectNo = displayProjectNo(project);
+    row.receiveId = row.receiveId || project.receiveId || `RCV-${displayProjectNo(project)}`;
+    row.project = project.projectName || project.name || row.project || "";
+    row.projectName = project.projectName || project.name || row.projectName || "";
+    row.client = "ㅇㅇ건설";
+    return row;
+  }
+  function rowSeedKey(row = {}){
+    return [normGroup(row.group), row.middleCategory || "", row.subCategory || "", row.trade || "", row.no || "", row.item || "", row.method || ""].map(txt).join("||");
+  }
+  function buildSeedRows(){
+    const rows = Array.isArray(checklistRows) ? checklistRows : [];
+    const seen = new Set();
+    const seeds = [];
+    rows.forEach(row => {
+      const group = normGroup(row.group);
+      if (!QC_FINAL_STAGES.includes(group)) return;
+      const key = rowSeedKey(row);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const copy = JSON.parse(JSON.stringify(row));
+      delete copy.projectLinkKey; delete copy.linkedProjectKey; delete copy.linkedProjectNo; delete copy.projectNo; delete copy.pjNo;
+      copy.group = group;
+      seeds.push(copy);
+    });
+    return seeds;
+  }
+  function ensureProjectStageRows(){
+    if (qcFinalSeedApplied) return;
+    qcFinalSeedApplied = true;
+    if (!Array.isArray(checklistRows)) return;
+    const projects = projectPool();
+    const seeds = buildSeedRows();
+    if (!projects.length || !seeds.length) return;
+    let added = 0;
+    projects.forEach(project => {
+      const pKey = projectKey(project);
+      seeds.forEach(seed => {
+        const group = normGroup(seed.group);
+        if (!QC_FINAL_STAGES.includes(group)) return;
+        const seedKey = rowSeedKey(seed);
+        const exists = checklistRows.some(row => normGroup(row.group) === group && rowProjectKey(row) === pKey && rowSeedKey(row) === seedKey);
+        if (exists) return;
+        const copy = JSON.parse(JSON.stringify(seed));
+        copy.id = `qc_final_${displayProjectNo(project)}_${added}_${Math.random().toString(36).slice(2, 8)}`;
+        copy.checked = false;
+        copy.history = Array.isArray(copy.history) ? copy.history : [];
+        copy.history.push({ action:"프로젝트별 더미데이터 자동 연결", worker:"SYSTEM", time:nowText() });
+        copy._qcFinalSeed = true;
+        applyProjectToRow(copy, project);
+        checklistRows.push(copy);
+        added += 1;
+      });
+    });
+    if (added && typeof saveChecklistRows === "function") saveChecklistRows();
+  }
+  function stageRows(stage, project){
+    ensureProjectStageRows();
+    const pKey = projectKey(project);
+    const rows = (Array.isArray(checklistRows) ? checklistRows : []).map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => normGroup(row.group) === stage && rowProjectKey(row) === pKey);
+    if (rows.length) return rows;
+    return (Array.isArray(checklistRows) ? checklistRows : []).map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => normGroup(row.group) === stage && !rowProjectKey(row));
+  }
+  function stageCount(stage, project){ return stageRows(stage, project).length; }
+  function sortStageRows(items){
+    return [...items].sort((a,b) => {
+      const mid = txt(a.row.middleCategory || "기타").localeCompare(txt(b.row.middleCategory || "기타"), "ko", { numeric:true });
+      if (mid) return mid;
+      const sub = txt(a.row.subCategory || "").localeCompare(txt(b.row.subCategory || ""), "ko", { numeric:true });
+      if (sub) return sub;
+      return txt(a.row.no || "").localeCompare(txt(b.row.no || ""), "ko", { numeric:true });
+    });
+  }
+  function persistAndRefreshParent(){
+    if (typeof saveChecklistRows === "function") saveChecklistRows();
+    if (typeof renderChecklistCategoryButtons === "function") renderChecklistCategoryButtons();
+    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
+  }
+  function nextNoForStage(stage, project){
+    const nums = stageRows(stage, project).map(({ row }) => parseInt(String(row.no || "").replace(/\D/g, ""), 10)).filter(Number.isFinite);
+    return String((nums.length ? Math.max(...nums) + 1 : 1)).padStart(3, "0");
+  }
+  function getTargets(row){ return typeof getChecklistTargets === "function" ? getChecklistTargets(row) : (Array.isArray(row.targets) ? row.targets : []); }
+  function formatTarget(target){ return typeof formatChecklistAssigneeLabel === "function" ? formatChecklistAssigneeLabel(target) : target; }
+  function normalizeRow(row){ if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row); }
+
+  window.openQcProjectStageMenuWindow = function openQcProjectStageMenuWindowFinal(){
+    const project = currentProject();
+    if (!project) { toast("프로젝트를 먼저 선택해 주세요."); return; }
+    const input = document.getElementById("checklistProject");
+    if (input) input.value = projectLabel(project);
+    ensureProjectStageRows();
+    const initial = QC_FINAL_STAGES.find(stage => stageCount(stage, project) > 0) || QC_FINAL_STAGES[0];
+    const popupWidth = Math.max(1720, Math.min((screen.availWidth || 1920) - 24, 1920));
+    const popupHeight = Math.max(940, Math.min((screen.availHeight || 1080) - 40, 1040));
+    const win = window.open("", `qc_stage_final_${displayProjectNo(project)}`, `width=${popupWidth},height=${popupHeight},left=8,top=8,scrollbars=yes,resizable=yes`);
+    if (!win) { toast("팝업 차단을 해제해 주세요."); return; }
+    const doc = win.document;
+    let currentStage = initial;
+    let activeTranslation = "";
+    const checkedIndices = () => Array.from(doc.querySelectorAll("[data-row-check]:checked")).map(input => Number(input.value)).filter(Number.isInteger);
+
+    doc.open();
+    doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${esc(projectLabel(project))} · 구분 리스트</title><style>
+      :root{--orange:#f97316;--navy:#111827;--line:#dbe3ef;--blue:#2563eb;--soft:#f8fbff;--text:#0f172a;}
+      *{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}body:before{content:"";position:fixed;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--orange),#fb923c);z-index:20}.wrap{padding:18px 22px 28px;}.stage-card,.command-guide,.table-wrap{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.055)}.stage-card{padding:13px 16px;margin-bottom:10px}.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.stage-title{display:flex;align-items:center;gap:10px;min-width:0}.stage-title strong{font-size:18px;letter-spacing:-.02em}.project-pill{display:inline-flex;align-items:center;max-width:850px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:6px 12px;font-size:18px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stage-guide{font-size:13px;color:#64748b;white-space:nowrap}.stage-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.stage-btn{height:56px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:900;line-height:1.15;color:#111827;transition:.15s}.stage-btn:hover{border-color:var(--orange);background:#fff7ed}.stage-btn.active{border-color:var(--blue);background:#eff6ff;box-shadow:0 0 0 2px rgba(37,99,235,.12)}.stage-btn .count{font-size:12px;color:#2563eb}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.toolbar .current{font-weight:900;color:#111827;margin-left:6px}.toolbar .current b{color:#2563eb}.btn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 14px;font-weight:900;cursor:pointer;color:#111827}.btn:hover{background:#f8fafc}.btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}.btn-primary:hover{background:#ea580c}.btn-danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}.btn-dark{background:#111827;border-color:#111827;color:#fff}.btn-line{background:#fff}.command-guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:10px 14px;margin-bottom:12px;color:#475569}.command-guide b{color:#111827}.table-wrap{overflow:auto;max-height:calc(100vh - 310px)}table{width:100%;min-width:1540px;border-collapse:collapse}th,td{border:1px solid var(--line);vertical-align:middle;padding:8px}th{background:#f1f5f9;text-align:center;font-size:13px;font-weight:900;color:#111827}.center{text-align:center}.group-row td,.middle-row td,.sub-row td{padding:0}.band{display:flex;align-items:center;gap:10px;min-height:42px;padding:8px 14px;font-weight:900}.group-row .band{background:#eef6ff}.middle-row .band{background:#f0f7ff}.sub-row .band{background:#f8fbff}.band span{display:inline-flex;border:1px solid #bfdbfe;background:#eff6ff;color:#2563eb;border-radius:999px;padding:3px 9px;font-size:12px}.band em{font-style:normal;color:#475569}.detail-row td{height:78px;background:#fff}.cell{min-height:34px;border:1px solid transparent;border-radius:8px;padding:7px;white-space:pre-wrap;line-height:1.45}.cell:focus{outline:none;border-color:#22c55e;background:#fff;box-shadow:0 0 0 2px rgba(34,197,94,.12)}.stack{display:flex;flex-direction:column;gap:6px;align-items:center}.mini-btn{border:1px solid #bfdbfe;background:#fff;color:#2563eb;border-radius:9px;padding:5px 9px;font-size:12px;font-weight:900;cursor:pointer}.mini-btn:hover{background:#eff6ff}.chip{display:inline-flex;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:800}.muted{color:#94a3b8;font-size:12px}.actions{display:flex;gap:6px;justify-content:center;align-items:center}.actions .btn{padding:7px 10px}.translation-row td{background:#f8fbff}.translate-panel{border:1px solid #dbe3ef;background:#fff;border-radius:14px;padding:12px}.translate-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.translate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.translate-box{border:1px solid #e5edf6;background:#f8fafc;border-radius:12px;padding:10px;min-height:80px;white-space:pre-wrap}.attach-cell{display:flex;flex-direction:column;align-items:center;gap:5px}.hidden-file{display:none}.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:1000;display:flex;align-items:center;justify-content:center;padding:28px}.modal-card{width:min(960px,calc(100vw - 56px));max-height:calc(100vh - 56px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.22)}.modal-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:18px 20px;border-bottom:1px solid #e5edf6}.modal-head strong{font-size:20px}.modal-head span{display:block;color:#64748b;margin-top:4px}.modal-body{padding:18px 20px;display:grid;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #e5edf6}.modal-x{border:0;background:#f1f5f9;border-radius:10px;width:34px;height:34px;font-size:20px;cursor:pointer}.field{display:grid;gap:6px}.field label{font-weight:900;color:#334155}.field select,.field input{height:42px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-weight:800}.target-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:420px;overflow:auto;border:1px solid #e5edf6;border-radius:14px;padding:10px;background:#f8fafc}.target-option{display:flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;font-weight:800}.target-option small{display:block;color:#64748b;font-weight:700}.empty{padding:55px;text-align:center;color:#64748b}.row-done td{background:#f8fafc}.row-eliminated{opacity:.55;text-decoration:line-through}@media(max-width:1400px){.stage-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.command-guide{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:900px){.stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.command-guide{grid-template-columns:1fr}.project-pill{font-size:14px}}
+    </style></head><body><div class="wrap"><section class="stage-card"><div class="stage-head"><div class="stage-title"><strong>구분 선택</strong><span class="project-pill">${esc(projectLabel(project))}</span></div><span class="stage-guide">버튼을 누르면 아래 리스트가 해당 구분으로 변경됩니다.</span></div><div class="stage-grid" id="stageGrid"></div></section><div class="toolbar"><button class="btn btn-primary" id="addRow">+ 행 추가</button><button class="btn" id="refreshRows">새로고침</button><button class="btn" id="duplicateRows">선택 복제</button><button class="btn btn-danger" id="deleteRows">선택 삭제</button><button class="btn btn-dark" id="printRows">인쇄/PDF</button><button class="btn" id="closePopup">닫기</button><span class="current" id="stageCurrent"></span></div><div class="command-guide"><div><b>+ 행 추가</b> 현재 선택 구분에 새 리스트 추가</div><div><b>셀 수정</b> 입력 후 Enter 또는 방향키 이동 시 반영</div><div><b>선택 복제/삭제</b> 체크된 행 기준 실행</div><div><b>새로고침</b> 부모 화면 최신 데이터 재조회</div></div><div class="table-wrap"><table><thead><tr><th style="width:44px"><input type="checkbox" id="toggleAll"></th><th style="width:90px">공종</th><th style="width:80px">일련번호</th><th style="width:270px">검토항목</th><th style="width:300px">검토방법</th><th style="width:150px">요청 대상</th><th style="width:110px">체크 여부</th><th style="width:260px">코멘트</th><th style="width:120px">첨부</th><th style="width:190px">처리 이력</th><th style="width:130px">관리</th></tr></thead><tbody id="stageBody"></tbody></table></div></div></body></html>`);
+    doc.close();
+
+    const modalRootId = "popupModalRoot";
+    function rowByIndex(index){ return checklistRows?.[Number(index)] || null; }
+    function closeModal(){ doc.getElementById(modalRootId)?.remove(); }
+    function renderButtons(){
+      const grid = doc.getElementById("stageGrid");
+      if (!grid) return;
+      grid.innerHTML = QC_FINAL_STAGES.map(stage => `<button type="button" class="stage-btn ${stage === currentStage ? "active" : ""}" data-stage="${esc(stage)}"><strong>${esc(stage)}</strong><span class="count">${stageCount(stage, project)}건</span></button>`).join("");
+      const current = doc.getElementById("stageCurrent");
+      if (current) current.innerHTML = `${esc(currentStage)} <b>현재 ${stageRows(currentStage, project).length}건</b>`;
+    }
+    function band(type, label, count){
+      const className = type === "group" ? "group-row" : (type === "middle" ? "middle-row" : "sub-row");
+      const tag = type === "group" ? "구분" : (type === "middle" ? "중분류" : "소분류");
+      return `<tr class="${className}"><td colspan="11"><div class="band"><span>${tag}</span><strong>${esc(label || "기타")}</strong><em>${count}건</em>${type === "group" ? "<small>선택 구분 리스트</small>" : ""}</div></td></tr>`;
+    }
+    function translateCell(row, realIndex, field){
+      const value = row[field] || "";
+      return `<div class="stack"><div class="cell editable-cell" contenteditable="true" tabindex="0" data-row="${realIndex}" data-field="${field}">${esc(value)}</div><button type="button" class="mini-btn" data-action="translate" data-row="${realIndex}" data-field="${field}">번역</button></div>`;
+    }
+    function targetCell(row, realIndex){
+      const targets = row.manualTargets ? getTargets(row) : [];
+      const chips = targets.map(t => `<span class="chip">${esc(formatTarget(t))}</span>`).join("") || `<span class="muted">미지정</span>`;
+      const hasMiddle = typeof getChecklistMiddleOptions === "function" ? getChecklistMiddleOptions(row.group).length > 0 : true;
+      return `<div class="stack">${hasMiddle ? `<button type="button" class="mini-btn" data-action="classify" data-row="${realIndex}">중분류 지정</button>` : ""}<button type="button" class="mini-btn" data-action="target" data-row="${realIndex}">대상 선택</button>${chips}</div>`;
+    }
+    function checkCell(row, realIndex){
+      normalizeRow(row);
+      const checks = Array.isArray(row.checks) ? row.checks : [];
+      const done = checks.filter(c => c.done || c.na).length;
+      return `<button type="button" class="mini-btn" data-action="check" data-row="${realIndex}">보기 <span>${done}/${checks.length}</span></button>`;
+    }
+    function attachmentCell(row, realIndex){
+      const files = Array.isArray(row.attachments) ? row.attachments : [];
+      const inputId = `popupFile_${realIndex}`;
+      return `<div class="attach-cell"><button type="button" class="mini-btn" data-action="attachment" data-row="${realIndex}">${files.length ? `${files.length}개 첨부` : "첨부 없음"}</button><input type="file" class="hidden-file" id="${inputId}" data-file-row="${realIndex}" accept="image/*" multiple><button type="button" class="mini-btn" data-action="file" data-input="${inputId}">+ 첨부</button></div>`;
+    }
+    function historyCell(row, realIndex){
+      const history = Array.isArray(row.history) ? row.history : [];
+      return history.length ? `<button type="button" class="mini-btn" data-action="history" data-row="${realIndex}">보기 <span>${history.length}</span></button>` : `<span class="muted">이력 없음</span>`;
+    }
+    function translationPanel(realIndex){
+      if (!activeTranslation) return "";
+      const [rowKey, field] = activeTranslation.split("::");
+      if (String(realIndex) !== rowKey) return "";
+      const row = rowByIndex(realIndex) || {};
+      const key = typeof getChecklistTranslationKey === "function" ? getChecklistTranslationKey(realIndex, field) : `${realIndex}::${field}`;
+      const state = (typeof checklistTranslationState !== "undefined" && checklistTranslationState[key]) ? checklistTranslationState[key] : { status:"idle", originalText:row[field] || "", translatedText:"", error:"" };
+      return `<tr class="translation-row"><td colspan="11"><div class="translate-panel"><div class="translate-head"><strong>번역 미리보기</strong><div><button class="mini-btn" data-action="rerun-translate" data-row="${realIndex}" data-field="${field}">다시 번역</button> <button class="mini-btn" data-action="close-translate">닫기</button></div></div><div class="translate-grid"><div class="translate-box"><b>원문</b><br>${esc(state.originalText || row[field] || "")}</div><div class="translate-box"><b>번역 결과</b><br>${esc(state.error || state.translatedText || "번역 결과가 여기에 표시됩니다.")}</div></div></div></td></tr>`;
+    }
+    function renderRows(){
+      const body = doc.getElementById("stageBody");
+      if (!body) return;
+      const data = sortStageRows(stageRows(currentStage, project));
+      if (!data.length) { body.innerHTML = `<tr><td colspan="11" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>`; return; }
+      const html = [band("group", currentStage, data.length)];
+      let lastMiddle = "";
+      let lastSub = "";
+      data.forEach(item => {
+        const row = item.row;
+        normalizeRow(row);
+        const middle = row.middleCategory || "기타";
+        const sub = row.subCategory || "";
+        if (middle !== lastMiddle) {
+          html.push(band("middle", middle, data.filter(({ row: r }) => (r.middleCategory || "기타") === middle).length));
+          lastMiddle = middle; lastSub = "";
+        }
+        const subKey = `${middle}::${sub}`;
+        if (sub && subKey !== lastSub) {
+          html.push(band("sub", sub, data.filter(({ row: r }) => (r.middleCategory || "기타") === middle && (r.subCategory || "") === sub).length));
+          lastSub = subKey;
+        }
+        const locked = typeof isChecklistCategoryLocked === "function" ? isChecklistCategoryLocked(row.group) : false;
+        html.push(`<tr class="detail-row ${row.done ? "row-done" : ""} ${row.eliminated ? "row-eliminated" : ""}" data-row-index="${item.realIndex}"><td class="center"><input type="checkbox" data-row-check value="${item.realIndex}" ${row.checked ? "checked" : ""} ${locked ? "disabled" : ""}></td><td><div class="cell editable-cell" contenteditable="true" tabindex="0" data-row="${item.realIndex}" data-field="trade">${esc(row.trade || "")}</div></td><td class="center"><div class="cell editable-cell" contenteditable="true" tabindex="0" data-row="${item.realIndex}" data-field="no">${esc(typeof normalizeChecklistNo === "function" ? normalizeChecklistNo(row.no) : row.no || "")}</div></td><td>${translateCell(row, item.realIndex, "item")}</td><td>${translateCell(row, item.realIndex, "method")}</td><td>${targetCell(row, item.realIndex)}</td><td class="center">${checkCell(row, item.realIndex)}</td><td>${translateCell(row, item.realIndex, "comment")}</td><td>${attachmentCell(row, item.realIndex)}</td><td>${historyCell(row, item.realIndex)}</td><td><div class="actions"><button class="btn btn-line" data-action="save" data-row="${item.realIndex}">저장</button><button class="btn btn-danger" data-action="delete-one" data-row="${item.realIndex}">삭제</button></div></td></tr>`);
+        html.push(translationPanel(item.realIndex));
+      });
+      body.innerHTML = html.join("");
+      renderButtons();
+    }
+    function renderAll(){ renderButtons(); renderRows(); }
+    function updateCell(el){
+      const row = rowByIndex(el.dataset.row); if (!row) return;
+      row[el.dataset.field] = el.innerText.replace(/\u00a0/g, " ").trim();
+      row.history = Array.isArray(row.history) ? row.history : [];
+      row.history.push({ action:"셀 수정", target:el.dataset.field, worker:worker(), time:nowText() });
+      persistAndRefreshParent();
+    }
+    function moveCell(event, el){
+      const keys = ["Enter","ArrowDown","ArrowUp","ArrowLeft","ArrowRight","Tab"];
+      if (!keys.includes(event.key) || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
+      event.preventDefault();
+      updateCell(el);
+      const fields = ["trade","no","item","method","comment"];
+      const rows = Array.from(doc.querySelectorAll("tr.detail-row")).map(tr => Number(tr.dataset.rowIndex)).filter(Number.isInteger);
+      const r = Number(el.dataset.row), f = el.dataset.field;
+      let rowPos = rows.indexOf(r), fieldPos = fields.indexOf(f);
+      let nr = r, nf = f;
+      if (event.key === "Enter" || event.key === "ArrowDown") nr = rows[rowPos + 1] ?? r;
+      else if (event.key === "ArrowUp") nr = rows[rowPos - 1] ?? r;
+      else if (event.key === "ArrowRight" || event.key === "Tab") { if (fieldPos < fields.length - 1) nf = fields[fieldPos + 1]; else { nr = rows[rowPos + 1] ?? r; nf = fields[0]; } }
+      else if (event.key === "ArrowLeft") { if (fieldPos > 0) nf = fields[fieldPos - 1]; else { nr = rows[rowPos - 1] ?? r; nf = fields[fields.length - 1]; } }
+      const target = doc.querySelector(`.editable-cell[data-row="${nr}"][data-field="${nf}"]`);
+      if (target) { target.focus(); const range = doc.createRange(); range.selectNodeContents(target); range.collapse(false); const sel = win.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+    }
+    function addRow(){
+      const row = { id:`qc_new_${Date.now()}_${Math.random().toString(36).slice(2,6)}`, group:currentStage, trade:"", no:nextNoForStage(currentStage, project), item:"", method:"", owner:"", targets:[], checks:[], comment:"", attachments:[], history:[{ action:"행 추가", worker:worker(), time:nowText() }] };
+      applyProjectToRow(row, project);
+      checklistRows.push(row);
+      persistAndRefreshParent(); renderAll();
+    }
+    function duplicateRows(){
+      const ids = checkedIndices();
+      if (!ids.length) { win.alert("복제할 행을 선택하세요."); return; }
+      ids.forEach(index => { const src = rowByIndex(index); if (!src) return; const copy = JSON.parse(JSON.stringify(src)); copy.id = `qc_dup_${Date.now()}_${Math.random().toString(36).slice(2,6)}`; copy.checked = false; copy.no = nextNoForStage(currentStage, project); copy.history = Array.isArray(copy.history) ? copy.history : []; copy.history.push({ action:"행 복제", worker:worker(), time:nowText() }); applyProjectToRow(copy, project); checklistRows.push(copy); });
+      persistAndRefreshParent(); renderAll();
+    }
+    function deleteRows(indices){
+      const ids = (indices || checkedIndices()).sort((a,b) => b-a);
+      if (!ids.length) { win.alert("삭제할 행을 선택하세요."); return; }
+      if (!win.confirm(`${ids.length}건을 삭제할까요?`)) return;
+      ids.forEach(index => { if (checklistRows[index]) checklistRows.splice(index, 1); });
+      persistAndRefreshParent(); renderAll();
+    }
+    function openClassify(index){
+      const row = rowByIndex(index); if (!row) return;
+      normalizeRow(row);
+      const mids = typeof getChecklistMiddleOptions === "function" ? getChecklistMiddleOptions(row.group) : [];
+      const currentMid = row.middleCategory || mids[0] || "";
+      const subs = typeof getChecklistSubOptions === "function" ? getChecklistSubOptions(row.group, currentMid) : [];
+      const currentSub = row.subCategory || subs[0] || "";
+      closeModal();
+      const layer = doc.createElement("div"); layer.id = modalRootId; layer.className = "modal-backdrop";
+      layer.innerHTML = `<div class="modal-card" data-modal-card><div class="modal-head"><div><strong>중분류 지정</strong><span>${esc(row.no || "-")} · ${esc(row.group || "")}</span></div><button class="modal-x" data-action="close-modal">×</button></div><div class="modal-body"><div class="field"><label>중분류</label><select id="popupMiddle">${mids.map(v => `<option value="${esc(v)}" ${v === currentMid ? "selected" : ""}>${esc(v)}</option>`).join("") || `<option value="">중분류 없음</option>`}</select></div><div class="field"><label>소분류</label><select id="popupSub">${subs.map(v => `<option value="${esc(v)}" ${v === currentSub ? "selected" : ""}>${esc(v)}</option>`).join("") || `<option value="">소분류 없음</option>`}</select></div></div><div class="modal-foot"><button class="btn" data-action="close-modal">닫기</button><button class="btn btn-primary" data-action="apply-classify" data-row="${index}">적용</button></div></div>`;
+      doc.body.appendChild(layer);
+      doc.getElementById("popupMiddle")?.addEventListener("change", e => { const opts = typeof getChecklistSubOptions === "function" ? getChecklistSubOptions(row.group, e.target.value) : []; const sub = doc.getElementById("popupSub"); if (sub) sub.innerHTML = opts.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("") || `<option value="">소분류 없음</option>`; });
+    }
+    function applyClassify(index){
+      const row = rowByIndex(index); if (!row) return;
+      row.middleCategory = doc.getElementById("popupMiddle")?.value || "";
+      row.subCategory = doc.getElementById("popupSub")?.value || "";
+      row.manualTargets = false; row.targets = []; row.checks = [];
+      normalizeRow(row);
+      row.history = Array.isArray(row.history) ? row.history : [];
+      row.history.push({ action:"중분류 지정", target:row.middleCategory || "", worker:worker(), time:nowText() });
+      closeModal(); persistAndRefreshParent(); renderAll();
+    }
+    function openTarget(index){
+      const row = rowByIndex(index); if (!row) return; normalizeRow(row);
+      const depts = typeof getChecklistAssigneeDepartments === "function" ? getChecklistAssigneeDepartments() : [];
+      const emps = typeof getChecklistActiveEmployees === "function" ? getChecklistActiveEmployees() : [];
+      const current = new Set(getTargets(row));
+      const deptHtml = depts.map(dept => { const target = typeof makeChecklistDepartmentTarget === "function" ? makeChecklistDepartmentTarget(dept) : `부서:${dept}`; return `<label class="target-option"><input type="checkbox" data-target="${esc(target)}" ${current.has(target) ? "checked" : ""}><div><b>${esc(dept)}</b><small>부서</small></div></label>`; }).join("");
+      const empHtml = emps.map(emp => { const target = typeof makeChecklistEmployeeTarget === "function" ? makeChecklistEmployeeTarget(emp) : `개인:${emp.empNo || emp.name}`; const label = typeof displayName === "function" ? displayName(emp) : (emp.name || emp.empNo || ""); return `<label class="target-option"><input type="checkbox" data-target="${esc(target)}" ${current.has(target) ? "checked" : ""}><div><b>${esc(label)}</b><small>${esc(emp.dept || "개인")}</small></div></label>`; }).join("");
+      closeModal();
+      const layer = doc.createElement("div"); layer.id = modalRootId; layer.className = "modal-backdrop";
+      layer.innerHTML = `<div class="modal-card" data-modal-card><div class="modal-head"><div><strong>요청 대상 선택</strong><span>인사카드 기준으로 부서 또는 개인을 지정합니다.</span></div><button class="modal-x" data-action="close-modal">×</button></div><div class="modal-body"><div class="field"><label>검색</label><input id="targetSearch" placeholder="부서명, 이름 검색"></div><div class="target-list" id="targetList">${deptHtml}${empHtml}</div></div><div class="modal-foot"><button class="btn" data-action="clear-targets">전체 해제</button><button class="btn" data-action="close-modal">닫기</button><button class="btn btn-primary" data-action="apply-target" data-row="${index}">적용</button></div></div>`;
+      doc.body.appendChild(layer);
+      doc.getElementById("targetSearch")?.addEventListener("input", e => { const q = txt(e.target.value).toLowerCase(); doc.querySelectorAll(".target-option").forEach(el => { el.style.display = !q || txt(el.textContent).toLowerCase().includes(q) ? "flex" : "none"; }); });
+    }
+    function applyTarget(index){
+      const row = rowByIndex(index); if (!row) return;
+      const targets = Array.from(doc.querySelectorAll("[data-target]:checked")).map(el => el.dataset.target).filter(Boolean);
+      row.manualTargets = targets.length > 0; row.targets = targets; row.owner = targets.map(formatTarget).join(", ");
+      row.checks = targets.map(t => ({ target: typeof getChecklistCheckTargetForAssignee === "function" ? getChecklistCheckTargetForAssignee(t) : t, done:false, na:false, checkedBy:"", checkedAt:"" }));
+      row.history = Array.isArray(row.history) ? row.history : [];
+      row.history.push({ action:"요청대상 변경", target:row.owner, worker:worker(), time:nowText() });
+      closeModal(); persistAndRefreshParent(); renderAll();
+    }
+    function addFiles(index, fileList){
+      const row = rowByIndex(index); if (!row || !fileList?.length) return;
+      row.attachments = Array.isArray(row.attachments) ? row.attachments : [];
+      const files = Array.from(fileList).filter(file => String(file.type || "").startsWith("image/"));
+      if (!files.length) { win.alert("이미지 파일만 첨부할 수 있습니다."); return; }
+      let loaded = 0;
+      files.forEach(file => { const reader = new win.FileReader(); reader.onload = event => { row.attachments.push({ name:file.name, dataUrl:event.target.result, addedAt:nowText(), addedBy:worker() }); loaded += 1; if (loaded === files.length) { row.history = Array.isArray(row.history) ? row.history : []; row.history.push({ action:"사진첨부", worker:worker(), time:nowText() }); persistAndRefreshParent(); renderAll(); } }; reader.readAsDataURL(file); });
+    }
+    async function runTranslation(index, field){
+      activeTranslation = `${index}::${field}`;
+      renderRows();
+      if (typeof runChecklistTranslation === "function") {
+        try { await runChecklistTranslation(index, field); } catch (error) { console.warn(error); }
+      }
+      renderRows();
+    }
+
+    doc.addEventListener("click", event => {
+      const stageBtn = event.target.closest("[data-stage]");
+      if (stageBtn) { currentStage = stageBtn.dataset.stage; activeTranslation = ""; renderAll(); return; }
+      const actionEl = event.target.closest("[data-action]");
+      if (!actionEl) return;
+      const action = actionEl.dataset.action;
+      const index = Number(actionEl.dataset.row);
+      if (action === "close-modal") closeModal();
+      else if (action === "classify") openClassify(index);
+      else if (action === "apply-classify") applyClassify(index);
+      else if (action === "target") openTarget(index);
+      else if (action === "clear-targets") doc.querySelectorAll("[data-target]").forEach(el => { el.checked = false; });
+      else if (action === "apply-target") applyTarget(index);
+      else if (action === "translate" || action === "rerun-translate") runTranslation(index, actionEl.dataset.field);
+      else if (action === "close-translate") { activeTranslation = ""; renderRows(); }
+      else if (action === "check" && typeof openChecklistCheckWindow === "function") openChecklistCheckWindow(index);
+      else if (action === "history" && typeof openChecklistHistoryWindow === "function") openChecklistHistoryWindow(index);
+      else if (action === "attachment" && typeof openChecklistAttachmentGallery === "function") openChecklistAttachmentGallery(index);
+      else if (action === "file") doc.getElementById(actionEl.dataset.input)?.click();
+      else if (action === "save") { const row = rowByIndex(index); if (row) { row.history = Array.isArray(row.history) ? row.history : []; row.history.push({ action:"저장", worker:worker(), time:nowText() }); persistAndRefreshParent(); toast("저장되었습니다."); } }
+      else if (action === "delete-one") deleteRows([index]);
+    });
+    doc.addEventListener("change", event => {
+      if (event.target?.id === "toggleAll") doc.querySelectorAll("[data-row-check]").forEach(input => { input.checked = event.target.checked; });
+      if (event.target?.matches("[data-file-row]")) { addFiles(Number(event.target.dataset.fileRow), event.target.files); event.target.value = ""; }
+    });
+    doc.addEventListener("blur", event => { if (event.target?.classList?.contains("editable-cell")) updateCell(event.target); }, true);
+    doc.addEventListener("keydown", event => { if (event.target?.classList?.contains("editable-cell")) moveCell(event, event.target); });
+    doc.getElementById("addRow")?.addEventListener("click", addRow);
+    doc.getElementById("refreshRows")?.addEventListener("click", () => { ensureProjectStageRows(); renderAll(); });
+    doc.getElementById("duplicateRows")?.addEventListener("click", duplicateRows);
+    doc.getElementById("deleteRows")?.addEventListener("click", () => deleteRows());
+    doc.getElementById("printRows")?.addEventListener("click", () => win.print());
+    doc.getElementById("closePopup")?.addEventListener("click", () => win.close());
+    renderAll();
+  };
+  window.openQcProjectStageWindow = function openQcProjectStageWindowFinal(){ window.openQcProjectStageMenuWindow(); };
+})();
