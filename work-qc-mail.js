@@ -14366,12 +14366,55 @@ setTimeout(() => {
           const PROJECT_KEY = ${JSON.stringify(projectKey)};
           let CATEGORY = '프로젝트 초기';
           function esc(v){return String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));}
-          function categories(){return window.opener?.getQcProjectStageCategories?.() || [];}
-          function rows(){return window.opener?.getQcProjectStageRows?.(CATEGORY, PROJECT_KEY) || [];}
+          const FALLBACK_CATEGORIES = ${JSON.stringify(STAGE_CATEGORIES)};
+          let __stageCategoryList = [];
+          function categories(){
+            try {
+              const list = window.opener && typeof window.opener.getQcProjectStageCategories === 'function'
+                ? window.opener.getQcProjectStageCategories()
+                : [];
+              if (Array.isArray(list) && list.length) return list;
+            } catch (error) {
+              console.warn('구분 목록 로드 실패 - 기본 구분 목록으로 대체', error);
+            }
+            return FALLBACK_CATEGORIES.map(function(category){ return { category: category, count: 0 }; });
+          }
+          function rows(){
+            try {
+              const list = window.opener && typeof window.opener.getQcProjectStageRows === 'function'
+                ? window.opener.getQcProjectStageRows(CATEGORY, PROJECT_KEY)
+                : [];
+              return Array.isArray(list) ? list : [];
+            } catch (error) {
+              console.warn('구분 리스트 로드 실패', error);
+              return [];
+            }
+          }
           function targetText(row){const targets = window.opener?.getChecklistTargets ? window.opener.getChecklistTargets(row) : (row.targets || []); return Array.isArray(targets) ? targets.join(', ') : String(targets || '');}
           function stateText(row){return window.opener?.getChecklistDoneState ? window.opener.getChecklistDoneState(row) : (row.status || (row.done ? '확인완료' : '미확인'));}
           function historyText(row){return Array.isArray(row.history) ? row.history.slice(-2).map(h => [h.action,h.worker,h.time].filter(Boolean).join(' / ')).join('\n') : '';}
-          function renderButtons(){const grid=document.getElementById('stageGrid'); const list=categories(); grid.innerHTML=list.map(({category,count})=>'<button type="button" class="stage-btn '+(category===CATEGORY?'active':'')+'" onclick="selectCategory(\''+String(category).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')"><strong>'+esc(category)+'</strong><span>'+count+'건</span></button>').join('') || '<div class="empty">구분 목록이 없습니다.</div>';}
+          function renderButtons(){
+            const grid = document.getElementById('stageGrid');
+            if (!grid) return;
+            const list = categories();
+            __stageCategoryList = list.map(function(item){ return item && item.category ? item.category : ''; });
+            grid.innerHTML = list.length
+              ? list.map(function(item, index){
+                  const category = item && item.category ? item.category : '';
+                  const count = item && typeof item.count !== 'undefined' ? item.count : 0;
+                  return '<button type="button" class="stage-btn '+(category===CATEGORY?'active':'')+'" data-stage-index="'+index+'"><strong>'+esc(category)+'</strong><span>'+esc(count)+'건</span></button>';
+                }).join('')
+              : FALLBACK_CATEGORIES.map(function(category, index){
+                  __stageCategoryList[index] = category;
+                  return '<button type="button" class="stage-btn '+(category===CATEGORY?'active':'')+'" data-stage-index="'+index+'"><strong>'+esc(category)+'</strong><span>0건</span></button>';
+                }).join('');
+            grid.querySelectorAll('[data-stage-index]').forEach(function(button){
+              button.addEventListener('click', function(){
+                const index = Number(button.getAttribute('data-stage-index'));
+                selectCategory(__stageCategoryList[index] || FALLBACK_CATEGORIES[index] || CATEGORY);
+              });
+            });
+          }
           function selectCategory(category){CATEGORY=category; renderButtons(); render();}
           function render(){const data=rows(); const body=document.getElementById('stageBody'); document.getElementById('currentCategory').textContent=CATEGORY; document.getElementById('rowCount').textContent='현재 '+data.length+'건'; body.innerHTML=data.length?data.map(({row,realIndex})=>'<tr data-index="'+realIndex+'"><td class="center"><input type="checkbox" data-row-check value="'+realIndex+'"></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'trade\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.trade||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'no\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.no||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'item\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.item||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'method\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.method||'')+'</div></td><td>'+esc(targetText(row))+'</td><td>'+esc(stateText(row))+'</td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'comment\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.comment||'')+'</div></td><td><div class="cell">'+esc(historyText(row))+'</div></td><td><div class="row-actions"><button class="btn" onclick="saveRow('+realIndex+')">저장</button><button class="btn btn-danger" onclick="deleteOne('+realIndex+')">삭제</button></div></td></tr>').join(''):'<tr><td colspan="10" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>';}
           function checked(){return Array.from(document.querySelectorAll('[data-row-check]:checked')).map(i=>Number(i.value));}
@@ -14496,308 +14539,4 @@ setTimeout(() => {
       renderQcProjectAccessPanel();
     }, 0);
   }
-})();
-
-
-/* =========================================================
-   2026-06-02 프로젝트 질의응답 구분선택/더미데이터 최종 보정 패치
-   - 새 창 구분 선택 버튼이 비어 보이는 문제 방지
-   - 모든 프로젝트에 동일 더미데이터 강제 연결
-   - 새 창 내부에서 구분 선택 + 하단 리스트를 한 화면에서 렌더링
-   ========================================================= */
-(function installQcStageInlineFinalFix(){
-  const FINAL_STAGE_CATEGORIES = [
-    "프로젝트 초기",
-    "PM 전달사항",
-    "QC팀 전달사항",
-    "제출자료 검토사항",
-    "최종자료 검토사항",
-    "Z1. 질의사항(1차)",
-    "Z2. 질의사항(2차)",
-    "Z3. 질의사항(3차)",
-    "Z4. 질의사항(4차)",
-    "Z5. 질의사항(5차)",
-    "Z6. 질의사항(6차)",
-    "Z7. 견적조건(최종)"
-  ];
-  const FINAL_SAMPLE_PROJECTS = [
-    { projectNo: "2026001", receiveId: "RCV-2026001", projectName: "ㅇㅇ시설 신축공사", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "2026002", receiveId: "RCV-2026002", projectName: "공동주택 신축공사", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "2026003", receiveId: "RCV-2026003", projectName: "업무시설 증축공사", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "2026004", receiveId: "RCV-2026004", projectName: "물류센터 구조검토", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "2026005", receiveId: "RCV-2026005", projectName: "근린생활시설 리모델링", client: "ㅇㅇ건설", status: "진행중" },
-    { projectNo: "2026006", receiveId: "RCV-2026006", projectName: "오피스텔 증축공사", client: "ㅇㅇ건설", status: "진행중" }
-  ];
-  const FINAL_SEED_ROWS = {
-    "프로젝트 초기": [
-      { trade: "계약", no: "001", item: "프로젝트 업무 특성 파악", method: "접수자료 확인 후 PM 전달", targets: ["중분류 미지정"], comment: "구조소송, 입찰, 본실행, 설계내역 등 초기 업무 성격 확인" },
-      { trade: "접수자료", no: "002", item: "입찰 내역서, 산출기준서, 공사 특기사항 접수 파악", method: "접수자료 확인 후 PM 전달", targets: ["대상 선택"], comment: "" },
-      { trade: "접수자료", no: "003", item: "내역서, 산출서, 기준서 접수 여부 확인", method: "내역서, 산출서, 기준서 파일 수신 여부 확인", targets: ["중분류 미지정"], comment: "" },
-      { trade: "계약", no: "004", item: "착수 전 계약조건 및 일정 확인", method: "발주처 요청사항과 내부 일정 대조", targets: ["대상 선택"], comment: "" }
-    ],
-    "PM 전달사항": [
-      { trade: "공통", no: "001", item: "PM 전달 필요 자료 정리", method: "접수자료와 의뢰 메모 기준으로 전달", targets: ["PM"], comment: "" },
-      { trade: "공통", no: "002", item: "업무범위 및 제외범위 확인", method: "견적조건과 작업범위 대조", targets: ["PM"], comment: "" },
-      { trade: "공통", no: "003", item: "작업 일정 및 우선순위 전달", method: "납품예정일 기준 우선순위 검토", targets: ["PM"], comment: "" },
-      { trade: "공통", no: "004", item: "누락자료 요청사항 전달", method: "도면/내역/기준서 누락 여부 확인", targets: ["PM"], comment: "" },
-      { trade: "공통", no: "005", item: "특이조건 및 리스크 전달", method: "의뢰 메모와 특기사항 확인", targets: ["PM"], comment: "" }
-    ],
-    "QC팀 전달사항": [
-      { trade: "공통", no: "001", item: "QC 검토 기준 공유", method: "검토 전 QC팀 확인사항 전달", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "002", item: "검토 중점사항 지정", method: "공종별 중점 검토항목 지정", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "003", item: "발주처 요구사항 반영 확인", method: "발주처 요구사항과 산출자료 대조", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "004", item: "최종 송부 전 검토 요청", method: "최종 제출 전 QC 검토 요청", targets: ["QC팀"], comment: "" }
-    ],
-    "제출자료 검토사항": [
-      { trade: "공통", no: "001", item: "제출자료 파일 구성 확인", method: "제출 폴더와 파일명 기준 확인", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "002", item: "내역서/산출서/도면 일치 여부 확인", method: "파일 간 기준명과 물량 대조", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "003", item: "표지 및 목차 구성 확인", method: "제출 양식 기준 확인", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "004", item: "발주처 요청 양식 반영 확인", method: "발주처 요청자료와 제출자료 대조", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "005", item: "최종 제출본 누락 확인", method: "송부 전 파일 목록 재확인", targets: ["QC팀"], comment: "" }
-    ],
-    "최종자료 검토사항": [
-      { trade: "공통", no: "001", item: "최종자료 산출 기준 확인", method: "최종 내역과 산출근거 대조", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "002", item: "최종 금액 및 물량 검증", method: "주요 공종별 합계 검산", targets: ["QC팀"], comment: "" },
-      { trade: "공통", no: "003", item: "최종 송부 전 이력 확인", method: "수정사항 반영 여부 확인", targets: ["QC팀"], comment: "" }
-    ],
-    "Z1. 질의사항(1차)": [
-      { trade: "공통", no: "001", item: "1차 질의사항 정리", method: "접수자료 기준 불명확 항목 정리", targets: ["PM"], comment: "" },
-      { trade: "공통", no: "002", item: "1차 질의 회신 반영", method: "회신 내용 기준 산출조건 반영", targets: ["PM"], comment: "" }
-    ],
-    "Z2. 질의사항(2차)": [
-      { trade: "공통", no: "001", item: "2차 질의사항 정리", method: "추가 검토 중 발생한 질의 정리", targets: ["PM"], comment: "" }
-    ],
-    "Z3. 질의사항(3차)": [
-      { trade: "공통", no: "001", item: "3차 질의사항 정리", method: "후속 검토 질의사항 정리", targets: ["PM"], comment: "" }
-    ],
-    "Z4. 질의사항(4차)": [
-      { trade: "공통", no: "001", item: "4차 질의사항 정리", method: "후속 검토 질의사항 정리", targets: ["PM"], comment: "" }
-    ],
-    "Z5. 질의사항(5차)": [
-      { trade: "공통", no: "001", item: "5차 질의사항 정리", method: "후속 검토 질의사항 정리", targets: ["PM"], comment: "" }
-    ],
-    "Z6. 질의사항(6차)": [
-      { trade: "공통", no: "001", item: "6차 질의사항 정리", method: "후속 검토 질의사항 정리", targets: ["PM"], comment: "" }
-    ],
-    "Z7. 견적조건(최종)": [
-      { trade: "공통", no: "001", item: "최종 견적조건 확정", method: "질의 회신 및 최종 조건 기준 확정", targets: ["PM", "QC팀"], comment: "" }
-    ]
-  };
-  function t(v){ return String(v ?? "").replace(/\s+/g, " ").trim(); }
-  function h(v){ return String(v ?? "").replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
-  function j(v){ return String(v ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n"); }
-  function displayNo(data = {}){
-    const raw = t(data.projectNo || data.pjNo || data.no || data.receiveId || data.internalReceiveId || data.linkedReceiveId || "");
-    const digits = raw.replace(/\D/g, "");
-    if (/^2026\d{3}$/.test(digits)) return digits;
-    const match = raw.match(/(?:PJ|RCV)?[-_\s]*26[-_\s]*(\d{3})/i);
-    if (match) return `2026${match[1]}`;
-    if (/^26\d{3}$/.test(digits)) return `20${digits}`;
-    return raw || "2026001";
-  }
-  function projectKey(data = {}){ return displayNo(data); }
-  function projectLabel(data = {}){ return [displayNo(data), data.projectName || data.name || "프로젝트명 없음", "ㅇㅇ건설"].filter(Boolean).join(" · "); }
-  function pool(){
-    let raw = [];
-    try {
-      if (typeof checklistProjectItems === "function") raw = checklistProjectItems();
-      else if (typeof projectReceiveGetCanonicalListItems === "function") raw = projectReceiveGetCanonicalListItems();
-      else if (typeof getProjectReceiveListItems === "function") raw = getProjectReceiveListItems();
-    } catch (error) { raw = []; }
-    const normalized = (Array.isArray(raw) ? raw : []).map(item => item && (item.data || item)).filter(Boolean).map(item => ({ ...item, client: "ㅇㅇ건설" }));
-    const merged = [...normalized, ...FINAL_SAMPLE_PROJECTS];
-    const seen = new Set();
-    return merged.filter(item => {
-      const key = projectKey(item);
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-  function findProject(value){
-    const q = t(value).toLowerCase();
-    if (!q) return pool()[0] || FINAL_SAMPLE_PROJECTS[0];
-    return pool().find(p => [projectKey(p), projectLabel(p), p.projectName, p.name, p.receiveId].some(v => t(v).toLowerCase().includes(q) || q.includes(t(v).toLowerCase()))) || pool()[0] || FINAL_SAMPLE_PROJECTS[0];
-  }
-  function selectedProject(){
-    const input = document.getElementById("checklistProject");
-    return findProject(input && input.value ? input.value : "");
-  }
-  function rowProjectKey(row = {}){
-    const raw = t(row.projectNo || row.pjNo || row.linkedProjectNo || row.projectLinkKey || row.linkedReceiveId || row.receiveId || "");
-    const digits = raw.replace(/\D/g, "");
-    if (/^2026\d{3}$/.test(digits)) return digits;
-    const match = raw.match(/(?:PJ|RCV)?[-_\s]*26[-_\s]*(\d{3})/i);
-    if (match) return `2026${match[1]}`;
-    if (/^26\d{3}$/.test(digits)) return `20${digits}`;
-    return raw;
-  }
-  function normalizeGroup(group){ return typeof normalizeChecklistGroupName === "function" ? normalizeChecklistGroupName(group) : t(group); }
-  function applyProject(row, project){
-    const no = projectKey(project);
-    row.projectNo = no;
-    row.pjNo = no;
-    row.project = project.projectName || project.name || "";
-    row.client = "ㅇㅇ건설";
-    row.receiveId = project.receiveId || `RCV-${no}`;
-    row.linkedReceiveId = no;
-    row.linkedProjectNo = no;
-    row.projectLinkKey = no;
-    return row;
-  }
-  function ensureProjectSeeds(project){
-    if (!Array.isArray(checklistRows)) return;
-    const no = projectKey(project);
-    Object.entries(FINAL_SEED_ROWS).forEach(([group, rows]) => {
-      rows.forEach(seed => {
-        const exists = checklistRows.some(row => normalizeGroup(row.group) === group && rowProjectKey(row) === no && t(row.no) === t(seed.no) && t(row.item) === t(seed.item));
-        if (exists) return;
-        const copy = JSON.parse(JSON.stringify(seed));
-        copy.id = `qc_final_seed_${no}_${group}_${copy.no}_${Math.random().toString(36).slice(2, 8)}`;
-        copy.group = group;
-        copy.middleCategory = copy.middleCategory || copy.trade || "공통";
-        copy.subCategory = copy.subCategory || "";
-        copy.done = false;
-        copy.checked = false;
-        copy.status = copy.status || "미확인";
-        copy.attachments = Array.isArray(copy.attachments) ? copy.attachments : [];
-        copy.history = Array.isArray(copy.history) ? copy.history : [];
-        copy.history.push({ action: "프로젝트별 기본 더미데이터 연결", worker: "SYSTEM", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() });
-        copy._qcFinalSeed = true;
-        applyProject(copy, project);
-        if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(copy);
-        checklistRows.push(copy);
-      });
-    });
-    if (typeof saveChecklistRows === "function") saveChecklistRows();
-  }
-  function ensureAllProjectSeeds(){ pool().forEach(ensureProjectSeeds); }
-  function rowsFor(category, key){
-    const project = pool().find(p => projectKey(p) === t(key)) || selectedProject();
-    ensureProjectSeeds(project);
-    const no = projectKey(project);
-    const group = normalizeGroup(category || FINAL_STAGE_CATEGORIES[0]);
-    return (Array.isArray(checklistRows) ? checklistRows : []).map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => normalizeGroup(row.group) === group && rowProjectKey(row) === no);
-  }
-  window.getQcProjectStageCategories = function getQcProjectStageCategories(projectNo){
-    const project = pool().find(p => projectKey(p) === t(projectNo)) || selectedProject();
-    ensureProjectSeeds(project);
-    const no = projectKey(project);
-    return FINAL_STAGE_CATEGORIES.map(category => ({
-      category,
-      count: (Array.isArray(checklistRows) ? checklistRows : []).filter(row => normalizeGroup(row.group) === category && rowProjectKey(row) === no).length
-    }));
-  };
-  window.getQcProjectStageRows = function getQcProjectStageRows(category, projectNo){ return rowsFor(category, projectNo); };
-  window.addQcProjectStageRow = function addQcProjectStageRow(category, projectNo){
-    if (!Array.isArray(checklistRows)) return false;
-    const project = pool().find(p => projectKey(p) === t(projectNo)) || selectedProject();
-    const no = projectKey(project);
-    const group = normalizeGroup(category || FINAL_STAGE_CATEGORIES[0]);
-    const rows = rowsFor(group, no);
-    const row = {
-      id: `qc_add_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      group,
-      middleCategory: "공통",
-      subCategory: "",
-      trade: "",
-      no: String(rows.length + 1).padStart(3, "0"),
-      item: "",
-      method: "",
-      targets: ["대상 선택"],
-      done: false,
-      checked: false,
-      status: "미확인",
-      comment: "",
-      attachments: [],
-      history: [{ action: "구분 별 리스트에서 행 추가", worker: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() }]
-    };
-    applyProject(row, project);
-    if (typeof normalizeChecklistRow === "function") normalizeChecklistRow(row);
-    checklistRows.push(row);
-    if (typeof saveChecklistRows === "function") saveChecklistRows();
-    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
-    return true;
-  };
-  window.updateQcProjectStageCell = function updateQcProjectStageCell(realIndex, field, value){
-    const row = Array.isArray(checklistRows) ? checklistRows[Number(realIndex)] : null;
-    if (!row) return false;
-    if (["trade", "no", "item", "method", "comment", "status"].includes(field)) row[field] = t(value);
-    if (typeof saveChecklistRows === "function") saveChecklistRows();
-    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
-    return true;
-  };
-  window.deleteQcProjectStageRows = function deleteQcProjectStageRows(indices = []){
-    const sorted = Array.from(new Set(indices.map(Number).filter(Number.isInteger))).sort((a, b) => b - a);
-    sorted.forEach(index => { if (Array.isArray(checklistRows) && checklistRows[index]) checklistRows.splice(index, 1); });
-    if (typeof saveChecklistRows === "function") saveChecklistRows();
-    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
-    return sorted.length;
-  };
-  window.duplicateQcProjectStageRows = function duplicateQcProjectStageRows(indices = []){
-    if (!Array.isArray(checklistRows)) return 0;
-    let count = 0;
-    indices.map(Number).filter(Number.isInteger).forEach(index => {
-      const row = checklistRows[index];
-      if (!row) return;
-      const copy = JSON.parse(JSON.stringify(row));
-      copy.id = `qc_dup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      copy.checked = false;
-      copy.history = Array.isArray(copy.history) ? copy.history : [];
-      copy.history.push({ action: "구분 별 리스트에서 행 복제", worker: typeof getCurrentWorkerName === "function" ? getCurrentWorkerName() : "작성자", time: typeof getChecklistTimeText === "function" ? getChecklistTimeText() : new Date().toLocaleString() });
-      checklistRows.push(copy);
-      count += 1;
-    });
-    if (typeof saveChecklistRows === "function") saveChecklistRows();
-    if (typeof renderChecklistGrid === "function") renderChecklistGrid();
-    return count;
-  };
-  window.openQcProjectStageMenuWindow = function openQcProjectStageMenuWindow(){
-    const project = selectedProject();
-    ensureAllProjectSeeds();
-    ensureProjectSeeds(project);
-    const no = projectKey(project);
-    const label = projectLabel(project);
-    const categoryJson = JSON.stringify(FINAL_STAGE_CATEGORIES);
-    const win = window.open("", `qc_stage_inline_${no}`.replace(/[^a-zA-Z0-9_]/g, "_"), "width=1480,height=860,scrollbars=yes,resizable=yes");
-    if (!win) { if (typeof showToast === "function") showToast("팝업 차단을 해제해 주세요."); return; }
-    win.document.open();
-    win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${h(label)} · 구분 별 리스트</title>
-      <style>
-        body{margin:0;background:#f3f6fa;color:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #dbe3ef;padding:18px 22px;box-shadow:0 8px 24px rgba(15,23,42,.08)}h1{margin:0 0 5px;font-size:22px}p{margin:0;color:#64748b}.project-badge{display:inline-flex;align-items:center;background:#eef6ff;border:1px solid #bfdbfe;border-radius:999px;padding:6px 10px;color:#1d4ed8;font-weight:900;margin-left:8px}.stage-menu{margin:16px 22px 0;background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.stage-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}.stage-head strong{font-size:18px}.stage-head span{color:#64748b}.stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-height:72px}.stage-btn{border:1px solid #dbe3ef;background:#fff;border-radius:14px;padding:13px 10px;cursor:pointer;font-weight:900;text-align:center}.stage-btn:hover,.stage-btn.active{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.10)}.stage-btn span{display:block;margin-top:7px;color:#2563eb;font-size:12px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 22px 0}.btn{border:1px solid #dbe3ef;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;cursor:pointer}.btn-primary{background:#f97316;color:#fff;border-color:#f97316}.btn-danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}.btn-dark{background:#111827;color:#fff;border-color:#111827}.guide{margin:10px 22px 0;padding:12px 14px;background:#fff;border:1px solid #dbe3ef;border-radius:14px;color:#475569;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.guide b{color:#111827}.stage-table-wrap{margin:14px 22px 24px;background:#fff;border:1px solid #dbe3ef;border-radius:16px;overflow:auto;box-shadow:0 8px 24px rgba(15,23,42,.06)}table{width:100%;border-collapse:collapse;min-width:1280px}th,td{border:1px solid #dbe3ef;padding:8px;vertical-align:middle}th{background:#f1f5f9;font-size:13px}.cell{min-height:34px;border:1px solid transparent;border-radius:8px;padding:7px;white-space:pre-wrap}.cell:focus{outline:none;border-color:#22c55e;background:#fff}.center{text-align:center}.empty{padding:50px;text-align:center;color:#64748b}.row-actions{display:flex;gap:6px;justify-content:center}.count,.current-category{font-weight:900;color:#2563eb;margin-left:8px}@media(max-width:980px){.stage-grid,.guide{grid-template-columns:1fr 1fr}}
-      </style></head><body>
-        <header><h1>구분 별 리스트 <span class="project-badge">${h(label)}</span></h1><p>상단에서 구분을 선택하면 아래 리스트 영역이 같은 창 안에서 바로 전환됩니다.</p></header>
-        <section class="stage-menu"><div class="stage-head"><strong>구분 선택</strong><span>버튼을 누르면 아래 리스트가 해당 구분으로 변경됩니다.</span></div><div class="stage-grid" id="stageGrid"></div></section>
-        <div class="toolbar"><button class="btn btn-primary" onclick="addRow()">+ 행 추가</button><button class="btn" onclick="refreshRows()">새로고침</button><button class="btn" onclick="duplicateSelected()">선택 복제</button><button class="btn btn-danger" onclick="deleteSelected()">선택 삭제</button><button class="btn btn-dark" onclick="window.print()">인쇄/PDF</button><button class="btn" onclick="window.close()">닫기</button><span class="current-category" id="currentCategory"></span><span id="rowCount" class="count"></span></div>
-        <div class="guide"><span><b>+ 행 추가</b> 현재 선택 구분에 새 리스트 추가</span><span><b>셀 수정</b> 입력 후 Enter 또는 포커스 이동 시 부모 화면 반영</span><span><b>선택 복제/삭제</b> 체크된 행 기준 실행</span><span><b>새로고침</b> 부모 화면 최신 데이터 재조회</span></div>
-        <div class="stage-table-wrap"><table><thead><tr><th class="center"><input type="checkbox" onchange="toggleAll(this.checked)"></th><th>공종</th><th>일련번호</th><th>검토항목</th><th>검토방법</th><th>요청 대상</th><th>체크 여부</th><th>코멘트</th><th>처리 이력</th><th>관리</th></tr></thead><tbody id="stageBody"></tbody></table></div>
-        <script>
-          const PROJECT_NO = ${JSON.stringify(no)};
-          const FALLBACK_CATEGORIES = ${categoryJson};
-          let CATEGORY = FALLBACK_CATEGORIES[0] || '프로젝트 초기';
-          function esc(v){return String(v??'').replace(/[&<>\"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m];});}
-          function categories(){try{const list=window.opener&&window.opener.getQcProjectStageCategories?window.opener.getQcProjectStageCategories(PROJECT_NO):[];return Array.isArray(list)&&list.length?list:FALLBACK_CATEGORIES.map(function(c){return {category:c,count:0};});}catch(e){return FALLBACK_CATEGORIES.map(function(c){return {category:c,count:0};});}}
-          function rows(){try{const list=window.opener&&window.opener.getQcProjectStageRows?window.opener.getQcProjectStageRows(CATEGORY, PROJECT_NO):[];return Array.isArray(list)?list:[];}catch(e){console.error(e);return [];}}
-          function targetText(row){const targets=row.targets||row.requestTargets||[];return Array.isArray(targets)?targets.join(', '):String(targets||'');}
-          function stateText(row){return row.status||(row.done?'확인완료':'미확인');}
-          function historyText(row){return Array.isArray(row.history)?row.history.slice(-2).map(function(h){return [h.action,h.worker,h.time].filter(Boolean).join(' / ');}).join('\n'):'';}
-          function renderButtons(){const grid=document.getElementById('stageGrid');if(!grid)return;const list=categories();grid.innerHTML=list.map(function(info){const c=info.category;const count=info.count||0;return '<button type="button" class="stage-btn '+(c===CATEGORY?'active':'')+'" onclick="selectCategory(\''+String(c).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')"><strong>'+esc(c)+'</strong><span>'+count+'건</span></button>';}).join('');}
-          function selectCategory(category){CATEGORY=category;renderButtons();render();}
-          function render(){const data=rows();const body=document.getElementById('stageBody');document.getElementById('currentCategory').textContent=CATEGORY;document.getElementById('rowCount').textContent='현재 '+data.length+'건';body.innerHTML=data.length?data.map(function(info){const row=info.row||{};const realIndex=info.realIndex;return '<tr data-index="'+realIndex+'"><td class="center"><input type="checkbox" data-row-check value="'+realIndex+'"></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'trade\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.trade||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'no\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.no||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'item\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.item||'')+'</div></td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'method\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.method||'')+'</div></td><td>'+esc(targetText(row))+'</td><td>'+esc(stateText(row))+'</td><td><div class="cell" contenteditable onblur="saveCell('+realIndex+', \'comment\', this.innerText)" onkeydown="keyCell(event,this)">'+esc(row.comment||'')+'</div></td><td><div class="cell">'+esc(historyText(row))+'</div></td><td><div class="row-actions"><button class="btn" onclick="saveRow('+realIndex+')">저장</button><button class="btn btn-danger" onclick="deleteOne('+realIndex+')">삭제</button></div></td></tr>';}).join(''):'<tr><td colspan="10" class="empty">현재 구분에 등록된 리스트가 없습니다. + 행 추가로 새 리스트를 만들 수 있습니다.</td></tr>';}
-          function checked(){return Array.from(document.querySelectorAll('[data-row-check]:checked')).map(function(i){return Number(i.value);});}
-          function toggleAll(v){document.querySelectorAll('[data-row-check]').forEach(function(i){i.checked=v;});}
-          function addRow(){try{window.opener&&window.opener.addQcProjectStageRow&&window.opener.addQcProjectStageRow(CATEGORY,PROJECT_NO);}catch(e){console.error(e);}refreshRows();}
-          function refreshRows(){renderButtons();render();}
-          function saveCell(index,field,value){try{window.opener&&window.opener.updateQcProjectStageCell&&window.opener.updateQcProjectStageCell(index,field,value);}catch(e){console.error(e);}renderButtons();}
-          function saveRow(index){document.querySelectorAll('tr[data-index="'+index+'"] .cell').forEach(function(el){el.blur();});refreshRows();}
-          function deleteOne(index){if(confirm('해당 행을 삭제할까요?')){try{window.opener&&window.opener.deleteQcProjectStageRows&&window.opener.deleteQcProjectStageRows([index]);}catch(e){console.error(e);}refreshRows();}}
-          function deleteSelected(){const ids=checked();if(!ids.length){alert('삭제할 행을 선택하세요.');return;}if(confirm(ids.length+'건을 삭제할까요?')){try{window.opener&&window.opener.deleteQcProjectStageRows&&window.opener.deleteQcProjectStageRows(ids);}catch(e){console.error(e);}refreshRows();}}
-          function duplicateSelected(){const ids=checked();if(!ids.length){alert('복제할 행을 선택하세요.');return;}try{window.opener&&window.opener.duplicateQcProjectStageRows&&window.opener.duplicateQcProjectStageRows(ids);}catch(e){console.error(e);}refreshRows();}
-          function keyCell(event,el){if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();el.blur();el.focus();}}
-          renderButtons();render();
-        <\/script></body></html>`);
-    win.document.close();
-  };
-  window.openQcProjectStageWindow = function openQcProjectStageWindow(){ window.openQcProjectStageMenuWindow(); };
-  try { ensureAllProjectSeeds(); } catch (error) { console.warn("QC stage seed apply failed", error); }
 })();
