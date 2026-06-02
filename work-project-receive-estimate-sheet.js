@@ -3508,15 +3508,15 @@ function renderEstimatePeriodManage() {
         return `<td class="center">${btn}</td>`;
       }
       if (col.type === "status") {
-        return `<td class="center"><select class="status-select" data-period-key="${col.key}">${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option value="${s}" ${String(row[col.key] || "").includes(s) ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        return `<td class="center period-select-cell" data-period-key="${col.key}"><select class="status-select" tabindex="-1" data-period-select="1" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}">${ESTIMATE_PERIOD_STATUS_LIST.map(s => `<option value="${s}" ${String(row[col.key] || "").includes(s) ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
       }
       if (col.key === "bid") {
         const selectedBid = estimatePeriodNormalizeText(row[col.key] || "");
-        return `<td class="center"><select class="status-select bid-select" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_BID_LIST.map(s => `<option value="${s}" ${selectedBid === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        return `<td class="center period-select-cell" data-period-key="${col.key}"><select class="status-select bid-select" tabindex="-1" data-period-select="1" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_BID_LIST.map(s => `<option value="${s}" ${selectedBid === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
       }
       if (col.key === "tender") {
         const selectedTender = estimatePeriodNormalizeText(row[col.key] || "");
-        return `<td class="center"><select class="status-select tender-select" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_TENDER_LIST.map(s => `<option value="${s}" ${selectedTender === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
+        return `<td class="center period-select-cell" data-period-key="${col.key}"><select class="status-select tender-select" tabindex="-1" data-period-select="1" data-period-key="${col.key}" aria-label="${estimateSheetHtml(col.label)}"><option value=""></option>${ESTIMATE_PERIOD_TENDER_LIST.map(s => `<option value="${s}" ${selectedTender === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>`;
       }
       let value = row[col.key] ?? "";
       if (["area", "unitPrice", "amount"].includes(col.key)) value = estimatePeriodDisplayNumber(value);
@@ -3544,8 +3544,9 @@ function renderEstimatePeriodManage() {
     }, true);
   });
   host.querySelectorAll(".status-select").forEach(sel => {
-    const keepFocus = () => {
-      sel.__periodKeepFocusUntil = Date.now() + 350;
+    sel.tabIndex = -1;
+    sel.setAttribute("data-period-select", "1");
+    const keepCellFocus = () => {
       const td = sel.closest?.("td");
       if (!td) return;
       estimatePeriodRememberActiveCell(td);
@@ -3555,42 +3556,26 @@ function renderEstimatePeriodManage() {
         try { td.focus({ preventScroll: true }); } catch (_) { td.focus?.(); }
       }, 0);
     };
+    sel.addEventListener("focus", event => {
+      event.stopPropagation();
+      keepCellFocus();
+    }, true);
     sel.addEventListener("change", () => {
-      keepFocus();
+      // 값 저장/요약 갱신만 수행하고, native select에는 다시 포커스를 주지 않습니다.
       estimatePeriodPersistRenderedRows(false);
       const refreshedRows = estimatePeriodSortRowsDesc(estimatePeriodAllRowsForList());
       renderEstimatePeriodSummaryCards(estimatePeriodSummary(estimatePeriodFilterRows(refreshedRows)));
-      keepFocus();
+      keepCellFocus();
     });
     sel.addEventListener("keydown", event => {
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-        estimatePeriodHandleNavKey(event, sel);
-        return;
-      }
-      if (event.key === "Enter") {
-        // 드롭다운에서 Enter로 항목을 확정하면 브라우저가 포커스를 body/바깥 버튼으로 넘기는 경우가 있어
-        // 선택값 반영 후에도 같은 셀을 다시 활성 셀로 유지합니다.
-        window.setTimeout?.(() => {
-          keepFocus();
-          estimatePeriodPersistRenderedRows(false);
-        }, 0);
+      if (["Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        keepCellFocus();
       }
     }, true);
-    sel.addEventListener("keyup", event => {
-      if (event.key === "Enter") keepFocus();
-    }, true);
-    sel.addEventListener("blur", () => {
-      const td = sel.closest?.("td");
-      if (!td || window.__estimatePeriodActiveCell !== td || Date.now() > Number(sel.__periodKeepFocusUntil || 0)) return;
-      window.setTimeout?.(() => {
-        const active = document.activeElement;
-        const table = td.closest?.(".estimate-period-manage-table");
-        if (table && !active?.closest?.(".estimate-period-manage-table") && document.body.contains(td)) {
-          estimatePeriodRememberActiveCell(td);
-          try { td.focus({ preventScroll: true }); } catch (_) { td.focus?.(); }
-        }
-      }, 0);
-    }, true);
+    sel.addEventListener("blur", keepCellFocus, true);
   });
   const count = document.getElementById("estimatePeriodSentCount");
   if (count) count.textContent = `${estimatePeriodSentRows.length.toLocaleString("ko-KR")}건`;
@@ -7534,7 +7519,9 @@ function estimatePeriodGetTableFromHost(host) {
 
 function estimatePeriodGetCellControl(td) {
   if (!td) return null;
-  return td.querySelector?.("input.estimate-period-cell-input, select.status-select, button.estimate-period-detail-btn, textarea") || td;
+  // 기간별 견적서 관리의 select는 native 포커스 대상에서 제외합니다.
+  // Enter 드롭다운은 td 셀 기준 커스텀 메뉴로만 처리해야 두 번째 Enter 선택 후 셀 선택이 풀리지 않습니다.
+  return td.querySelector?.("input.estimate-period-cell-input, textarea, button.estimate-period-detail-btn") || td;
 }
 
 function estimatePeriodFindCellFromEvent(eventOrElement) {
@@ -7930,9 +7917,17 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
     return true;
   }
 
-  document.addEventListener("keydown", event => {
+  function findCommandSelect(event) {
     const target = asElement(event.target);
-    const select = target?.closest?.(SELECT_SELECTOR);
+    const direct = target?.closest?.(SELECT_SELECTOR);
+    if (direct && isPeriodVisible(direct)) return direct;
+    const td = target?.closest?.(CELL_SELECTOR) || (window.__estimatePeriodActiveCell?.isConnected ? window.__estimatePeriodActiveCell : null);
+    const select = td?.querySelector?.("select.status-select[data-period-select='1'], select.status-select");
+    return select && isPeriodVisible(select) ? select : null;
+  }
+
+  document.addEventListener("keydown", event => {
+    const select = findCommandSelect(event);
     const isMenuOpen = !!(menu && activeSelect?.isConnected);
 
     if (isMenuOpen && ["ArrowDown", "ArrowUp", "Home", "End", "Enter", "Escape", "Tab"].includes(event.key)) {
@@ -7967,6 +7962,13 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
     event.stopPropagation();
     event.stopImmediatePropagation?.();
     openMenu(select);
+  }, true);
+
+  document.addEventListener("focusin", event => {
+    const select = asElement(event.target)?.closest?.(SELECT_SELECTOR);
+    if (!select || !isPeriodVisible(select)) return;
+    // native select가 포커스를 얻는 순간 즉시 td 셀 기준으로 되돌립니다.
+    focusSelectCell(select);
   }, true);
 
   document.addEventListener("pointerdown", event => {
