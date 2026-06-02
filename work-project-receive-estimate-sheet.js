@@ -5101,8 +5101,11 @@ if (estimateCentralOriginalRenderEstimatePeriodManage) {
 }
 const estimateCentralOriginalPersistPeriodRows = typeof estimatePeriodPersistRenderedRows === "function" ? estimatePeriodPersistRenderedRows : null;
 if (estimateCentralOriginalPersistPeriodRows) {
-  window.estimatePeriodPersistRenderedRows = function estimateCentralPersistPeriodRows() {
-    const result = estimateCentralOriginalPersistPeriodRows();
+  window.estimatePeriodPersistRenderedRows = function estimateCentralPersistPeriodRows(rerender = true) {
+    // 기간별 견적서 관리 Enter 셀렉트는 값을 확정할 때 rerender=false로 저장합니다.
+    // 기존 wrapper가 인자를 넘기지 않아 원본 함수 기본값(rerender=true)이 실행되면서
+    // 표 DOM이 다시 그려지고, 선택 셀이 사라지는 문제가 있었습니다.
+    const result = estimateCentralOriginalPersistPeriodRows(rerender);
     estimatePeriodAllRowsForList?.().filter(row => row.source !== "template").forEach(row => estimateCentralPeriodRowToRequestDb(row));
     return result;
   };
