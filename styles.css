@@ -20637,3 +20637,82 @@ button.btn-orange{
   color:#fff!important;
   border-color:#f97316!important;
 }
+
+/* QC 중분류 필터: 구조/마감/토목 표시 제어 */
+.checklist-middle-filter-bar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  padding:0 14px 12px;
+  background:linear-gradient(180deg,#fff,#fbfdff);
+  border-top:1px solid #eef2f7;
+  flex-wrap:wrap;
+}
+.checklist-middle-filter-title{
+  margin-right:auto;
+  font-size:12px;
+  font-weight:900;
+  color:#475569;
+  white-space:nowrap;
+}
+.checklist-middle-filter-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:30px;
+  padding:0 10px;
+  border:1px solid #dbe3ef;
+  border-radius:999px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+}
+.checklist-middle-filter-chip input{
+  width:14px;
+  height:14px;
+  margin:0;
+  accent-color:#f97316;
+}
+.checklist-middle-filter-chip em{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#eef2f7;
+  color:#475569;
+  font-style:normal;
+  font-size:11px;
+  font-weight:900;
+}
+.checklist-middle-filter-chip.active{
+  border-color:#fed7aa;
+  background:#fff7ed;
+  color:#9a3412;
+}
+.checklist-middle-filter-chip.active em{
+  background:#f97316;
+  color:#fff;
+}
+.checklist-middle-filter-reset{
+  min-height:30px;
+  padding:0 10px;
+  border:1px solid #dbe3ef;
+  border-radius:999px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.checklist-middle-filter-chip:hover,
+.checklist-middle-filter-reset:hover{
+  border-color:#f97316;
+  box-shadow:0 0 0 3px rgba(249,115,22,.10);
+}
