@@ -3549,9 +3549,10 @@ function renderEstimatePeriodManage() {
       const td = sel.closest?.("td");
       if (!td) return;
       estimatePeriodRememberActiveCell(td);
+      td.setAttribute("tabindex", "0");
       window.setTimeout?.(() => {
         estimatePeriodRememberActiveCell(td);
-        try { sel.focus({ preventScroll: true }); } catch (_) { sel.focus?.(); }
+        try { td.focus({ preventScroll: true }); } catch (_) { td.focus?.(); }
       }, 0);
     };
     sel.addEventListener("change", () => {
@@ -3586,7 +3587,7 @@ function renderEstimatePeriodManage() {
         const table = td.closest?.(".estimate-period-manage-table");
         if (table && !active?.closest?.(".estimate-period-manage-table") && document.body.contains(td)) {
           estimatePeriodRememberActiveCell(td);
-          try { sel.focus({ preventScroll: true }); } catch (_) { sel.focus?.(); }
+          try { td.focus({ preventScroll: true }); } catch (_) { td.focus?.(); }
         }
       }, 0);
     }, true);
@@ -7766,119 +7767,10 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
 }
 
 /* 2026-06-02 period estimate select Enter focus retention hard fix
-   기간별 견적서 관리의 select(실행/입찰, 투찰, 수주/실주 등)에서 Enter로 드롭다운 값을 확정한 뒤
-   브라우저가 포커스를 body/바깥 영역으로 넘겨도 선택 셀 표시와 방향키 이동 기준을 강제로 유지합니다. */
-(function estimatePeriodSelectEnterFocusRetentionPatch(){
-  if (window.__estimatePeriodSelectEnterFocusRetentionPatch === true) return;
+   비활성화: 기간별 견적서 관리의 Enter 드롭다운은 아래 전용 키보드 드롭다운 패치에서 td 셀 기준으로만 처리합니다.
+   기존 패치는 select.focus()를 반복 호출해 두 번째 Enter 선택 후 native select 포커스/blur가 다시 개입하는 원인이었습니다. */
+(function estimatePeriodSelectEnterFocusRetentionPatchDisabled(){
   window.__estimatePeriodSelectEnterFocusRetentionPatch = true;
-
-  const PERIOD_TABLE_SELECTOR = ".estimate-period-manage-table";
-  const PERIOD_ROW_CELL_SELECTOR = `${PERIOD_TABLE_SELECTOR} tbody tr[data-period-row-id] td`;
-  const PERIOD_SELECT_SELECTOR = `${PERIOD_TABLE_SELECTOR} tbody select.status-select`;
-
-  function getElement(target) {
-    return target && target.nodeType === 1 ? target : (target?.parentElement || null);
-  }
-
-  function isVisiblePeriodTable(table) {
-    if (typeof estimatePeriodIsTableVisible === "function") return estimatePeriodIsTableVisible(table);
-    if (!table || !table.isConnected) return false;
-    const panel = table.closest?.("#estimatePeriodManage");
-    if (panel && !panel.classList.contains("active")) return false;
-    const rect = table.getBoundingClientRect?.();
-    return !!rect && rect.width > 0 && rect.height > 0;
-  }
-
-  function rememberCell(td) {
-    const cell = td?.closest?.(PERIOD_ROW_CELL_SELECTOR);
-    const table = cell?.closest?.(PERIOD_TABLE_SELECTOR);
-    if (!cell || !table || !isVisiblePeriodTable(table)) return null;
-
-    if (typeof estimatePeriodRememberActiveCell === "function") {
-      estimatePeriodRememberActiveCell(cell);
-    } else {
-      window.__estimatePeriodActiveCell = cell;
-      window.__estimatePeriodActiveTable = table;
-      table.querySelectorAll("td.period-cell-focused").forEach(item => {
-        if (item !== cell) item.classList.remove("period-cell-focused");
-      });
-      cell.classList.add("period-cell-focused");
-      cell.setAttribute("tabindex", "0");
-    }
-    cell.classList.add("period-cell-focused");
-    cell.setAttribute("tabindex", "0");
-    window.__estimatePeriodActiveCell = cell;
-    window.__estimatePeriodActiveTable = table;
-    window.__estimatePeriodSelectEnterLockUntil = Date.now() + 900;
-    return cell;
-  }
-
-  function refocusCellControl(td, preferSelect) {
-    const cell = rememberCell(td);
-    if (!cell) return;
-    const control = preferSelect?.isConnected ? preferSelect : (cell.querySelector?.("select.status-select, input.estimate-period-cell-input, button.estimate-period-detail-btn, textarea") || cell);
-    const active = document.activeElement;
-    const table = cell.closest?.(PERIOD_TABLE_SELECTOR);
-    const activeInsideSameTable = !!(active && table && active.closest?.(PERIOD_TABLE_SELECTOR) === table);
-
-    // 이미 같은 표 안에 포커스가 있으면 셀 표시만 유지하고, 바깥으로 빠졌을 때만 다시 포커스합니다.
-    if (!activeInsideSameTable || active === document.body || active === document.documentElement) {
-      try { control?.focus?.({ preventScroll: true }); } catch (_) { control?.focus?.(); }
-    }
-    rememberCell(cell);
-  }
-
-  function reinforceSelectCell(selectEl) {
-    const select = getElement(selectEl)?.closest?.(PERIOD_SELECT_SELECTOR);
-    const td = select?.closest?.(PERIOD_ROW_CELL_SELECTOR);
-    if (!td) return;
-    rememberCell(td);
-    [0, 25, 80, 180, 360, 700].forEach(delay => {
-      window.setTimeout?.(() => refocusCellControl(td, select), delay);
-    });
-    window.requestAnimationFrame?.(() => refocusCellControl(td, select));
-  }
-
-  document.addEventListener("keydown", event => {
-    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
-    if (!select) return;
-    const td = select.closest?.(PERIOD_ROW_CELL_SELECTOR);
-    if (!td) return;
-
-    rememberCell(td);
-
-    if (event.key === "Enter") {
-      // preventDefault를 걸면 native select의 항목 확정 동작이 막힐 수 있으므로, 선택은 브라우저에 맡기고 포커스만 복구합니다.
-      reinforceSelectCell(select);
-    }
-  }, true);
-
-  document.addEventListener("keyup", event => {
-    if (event.key !== "Enter") return;
-    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
-    if (select) reinforceSelectCell(select);
-  }, true);
-
-  document.addEventListener("change", event => {
-    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
-    if (select) reinforceSelectCell(select);
-  }, true);
-
-  document.addEventListener("focusout", event => {
-    const select = getElement(event.target)?.closest?.(PERIOD_SELECT_SELECTOR);
-    if (!select) return;
-    const td = select.closest?.(PERIOD_ROW_CELL_SELECTOR);
-    if (!td) return;
-    const stillLocked = Date.now() <= Number(window.__estimatePeriodSelectEnterLockUntil || 0);
-    if (!stillLocked) return;
-    window.setTimeout?.(() => {
-      const active = document.activeElement;
-      const table = td.closest?.(PERIOD_TABLE_SELECTOR);
-      if (table && isVisiblePeriodTable(table) && (!active || !active.closest?.(PERIOD_TABLE_SELECTOR))) {
-        refocusCellControl(td, select);
-      }
-    }, 0);
-  }, true);
 })();
 
 /* 2026-06-02 period estimate Enter-command dropdown fix
@@ -7926,10 +7818,8 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
   function focusSelectCell(select) {
     const td = rememberSelectCell(select);
     if (!td) return;
-    // 핵심 보정: 기간별 견적서 관리의 Enter 커맨드 드롭다운이 열린 뒤에는
-    // native select가 다시 Enter 기본 동작을 가져가지 않도록 포커스를 select가 아닌 td에 둡니다.
-    // 이렇게 해야 첫 Enter=전용 리스트 열기, 두 번째 Enter=전용 리스트 항목 확정 후에도
-    // 셀 선택 표시와 방향키 이동 기준이 해제되지 않습니다.
+    // 핵심: Enter 전용 드롭다운 사용 중에는 native select에 다시 포커스를 주지 않습니다.
+    // select.focus()가 실행되면 브라우저 기본 select UI가 다시 개입해 두 번째 Enter 후 셀 선택이 해제될 수 있습니다.
     try { td.focus({ preventScroll: true }); } catch (_) { td.focus?.(); }
     rememberSelectCell(select);
   }
@@ -7983,7 +7873,8 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
     if (select.value !== previous) {
       select.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    // change 핸들러가 저장/요약 갱신을 처리한 뒤에도 같은 셀이 선택 상태를 유지하도록 한 번 더 고정합니다.
+    // change 핸들러가 저장/요약 갱신을 처리한 뒤에도 native select가 아닌 td 셀 기준을 유지합니다.
+    // activeElement가 select이면 즉시 td로 되돌려 두 번째 Enter 후 포커스 이탈을 차단합니다.
     [0, 20, 80].forEach(delay => window.setTimeout?.(() => focusSelectCell(select), delay));
     window.requestAnimationFrame?.(() => focusSelectCell(select));
   }
