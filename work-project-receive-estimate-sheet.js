@@ -7590,6 +7590,37 @@ function estimatePeriodFocusGridCell(host, rowIndex, colIndex) {
   return true;
 }
 
+/* 2026-06-02 기간별 견적서 관리 select Enter 포커스 보강
+   드롭다운 셀에서 Enter로 값을 확정한 직후 브라우저가 focus를 body/외부 버튼으로 이동시키는 경우에도
+   현재 td 선택 표시와 select 포커스를 유지해, 곧바로 방향키로 다음 영역 이동이 가능하게 합니다. */
+function estimatePeriodKeepDropdownCellSelected(control, event) {
+  const select = control?.closest?.("select.status-select");
+  if (!select) return false;
+  const td = select.closest?.("td");
+  const table = td?.closest?.(".estimate-period-manage-table");
+  if (!td || !table || !estimatePeriodIsTableVisible(table)) return false;
+
+  // native select의 Enter 확정 동작은 막지 않고, 외부 Enter 핸들러만 차단합니다.
+  event?.stopPropagation?.();
+  event?.stopImmediatePropagation?.();
+  select.__periodKeepFocusUntil = Date.now() + 1200;
+  estimatePeriodRememberActiveCell(td);
+
+  const restore = () => {
+    if (!td.isConnected || !estimatePeriodIsTableVisible(table)) return;
+    estimatePeriodRememberActiveCell(td);
+    try { select.focus({ preventScroll: true }); } catch (_) { select.focus?.(); }
+  };
+
+  window.setTimeout?.(() => {
+    try { estimatePeriodPersistRenderedRows?.(false); } catch (_) {}
+    restore();
+  }, 0);
+  window.setTimeout?.(restore, 40);
+  window.setTimeout?.(restore, 160);
+  return true;
+}
+
 function estimatePeriodHandleNavKey(event, el) {
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
   if (!event || !keyMap[event.key]) return false;
@@ -7651,6 +7682,27 @@ function estimatePeriodBindCellNavigation(host) {
     control.addEventListener("pointerdown", () => {
       const td = control.closest?.("td");
       if (td) estimatePeriodRememberActiveCell(td);
+    }, true);
+    control.addEventListener("keydown", event => {
+      if (event.key === "Enter" && control.matches?.("select.status-select")) {
+        estimatePeriodKeepDropdownCellSelected(control, event);
+      }
+    }, true);
+    control.addEventListener("keyup", event => {
+      if (event.key === "Enter" && control.matches?.("select.status-select")) {
+        estimatePeriodKeepDropdownCellSelected(control, event);
+      }
+    }, true);
+    control.addEventListener("blur", () => {
+      if (!control.matches?.("select.status-select")) return;
+      const td = control.closest?.("td");
+      const table = td?.closest?.(".estimate-period-manage-table");
+      if (!td || window.__estimatePeriodActiveCell !== td || Date.now() > Number(control.__periodKeepFocusUntil || 0)) return;
+      window.setTimeout?.(() => {
+        if (!td.isConnected || !estimatePeriodIsTableVisible(table)) return;
+        estimatePeriodRememberActiveCell(td);
+        try { control.focus({ preventScroll: true }); } catch (_) { control.focus?.(); }
+      }, 0);
     }, true);
   });
   if (table.dataset.navBoundV5 !== "1") {
