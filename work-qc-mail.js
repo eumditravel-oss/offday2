@@ -35,6 +35,8 @@ const checklistCategoryOptions = [
 
 
 let selectedChecklistCategoryFilter = "전체";
+const checklistMiddleFilterOptions = ["구조", "마감", "토목"];
+const selectedChecklistMiddleFilters = new Set(checklistMiddleFilterOptions);
 let checklistCategoryPanelOpen = false;
 const collapsedChecklistGroups = new Set();
 const collapsedChecklistMiddles = new Set();
@@ -9944,12 +9946,68 @@ function resetChecklistDetailRenderLimit() {
   checklistDetailRenderLimit = CHECKLIST_DETAIL_RENDER_STEP;
 }
 
+
+function getChecklistMiddleFilterKey(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (text.includes("구조")) return "구조";
+  if (text.includes("마감")) return "마감";
+  if (text.includes("토목")) return "토목";
+  return "";
+}
+
+function isChecklistMiddleFilterEnabled(value) {
+  const key = getChecklistMiddleFilterKey(value);
+  return !key || selectedChecklistMiddleFilters.has(key);
+}
+
+function getChecklistMiddleFilterCounts() {
+  const counts = Object.fromEntries(checklistMiddleFilterOptions.map(option => [option, 0]));
+  checklistRows.forEach(row => {
+    normalizeChecklistRow(row);
+    const key = getChecklistMiddleFilterKey(row.middleCategory);
+    if (key && Object.prototype.hasOwnProperty.call(counts, key)) counts[key] += 1;
+  });
+  return counts;
+}
+
+function toggleChecklistMiddleFilter(option, checked) {
+  if (!checklistMiddleFilterOptions.includes(option)) return;
+  if (checked) selectedChecklistMiddleFilters.add(option);
+  else selectedChecklistMiddleFilters.delete(option);
+  scheduleChecklistGridRender(0);
+}
+
+function setAllChecklistMiddleFilters(checked) {
+  selectedChecklistMiddleFilters.clear();
+  if (checked) checklistMiddleFilterOptions.forEach(option => selectedChecklistMiddleFilters.add(option));
+  scheduleChecklistGridRender(0);
+}
+
+function renderChecklistMiddleFilterBar() {
+  const counts = getChecklistMiddleFilterCounts();
+  const allChecked = checklistMiddleFilterOptions.every(option => selectedChecklistMiddleFilters.has(option));
+  const items = checklistMiddleFilterOptions.map(option => {
+    const checked = selectedChecklistMiddleFilters.has(option) ? "checked" : "";
+    return `<label class="checklist-middle-filter-chip ${checked ? "active" : ""}">
+      <input type="checkbox" ${checked} onchange="toggleChecklistMiddleFilter('${escapeJs(option)}', this.checked)">
+      <span>${escapeHtml(option)}</span>
+      <em>${counts[option] || 0}</em>
+    </label>`;
+  }).join("");
+  return `<div class="checklist-middle-filter-bar" aria-label="중분류 필터">
+    <span class="checklist-middle-filter-title">중분류 필터</span>
+    ${items}
+    <button type="button" class="checklist-middle-filter-reset" onclick="setAllChecklistMiddleFilters(${allChecked ? 'false' : 'true'})">${allChecked ? '전체 해제' : '전체 선택'}</button>
+  </div>`;
+}
+
 function getChecklistRenderSignature() {
   const project = (document.getElementById("checklistProject")?.value || "").trim();
   const owner = document.getElementById("checklistOwnerFilter")?.value || "전체";
   const doneFilter = document.getElementById("checklistDoneFilter")?.value || "전체";
   const search = (document.getElementById("checklistSearch")?.value || "").trim().toLowerCase();
-  return [project, owner, doneFilter, search, selectedChecklistCategoryFilter || "전체"].join("||");
+  return [project, owner, doneFilter, search, selectedChecklistCategoryFilter || "전체", Array.from(selectedChecklistMiddleFilters).sort().join(",")].join("||");
 }
 
 function loadMoreChecklistRows() {
@@ -10038,6 +10096,7 @@ function renderChecklistCategoryButtons() {
           <button type="button" class="category-detail-toggle ${allVisibleCollapsed ? "expand" : "collapse"}" title="${detailButtonTitle}" onclick="event.stopPropagation(); toggleChecklistDetailVisibility()">${detailButtonLabel}</button>
         </div>
       </div>
+      ${renderChecklistMiddleFilterBar()}
       <div class="category-filter-panel ${checklistCategoryPanelOpen ? "open" : ""}">
         <div class="category-filter-grid">${optionButtons}</div>
       </div>
@@ -10059,12 +10118,13 @@ function getChecklistFilteredRows() {
     const projectOk = !project || rowProject.includes(project) || project.includes(rowProject);
     const group = normalizeChecklistGroupName(row.group);
     const categoryOk = categoryFilter === "전체" || group === categoryFilter;
+    const middleOk = isChecklistMiddleFilterEnabled(row.middleCategory);
     const ownerOk = owner === "전체" || targets.includes(owner);
     const state = getChecklistDoneState(row);
     const doneOk = doneFilter === "전체" || state === doneFilter;
     const text = `${rowProject} ${row.group} ${row.middleCategory || ""} ${row.subCategory || ""} ${row.trade} ${row.no} ${row.item} ${row.method} ${targets.join(" ")} ${state} ${row.comment}`.toLowerCase();
 
-    return projectOk && categoryOk && ownerOk && doneOk && (!search || text.includes(search));
+    return projectOk && categoryOk && middleOk && ownerOk && doneOk && (!search || text.includes(search));
   });
 }
 
