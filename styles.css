@@ -20905,3 +20905,302 @@ button.btn-orange{
 #qcReview .translation-panel-row td{
   padding:4px 8px !important;
 }
+
+/* =========================================================
+   QC 가독성 개선 우선순위 반영
+   1) 현재 프로젝트 표시 강화 2) 필터 상태 칩 3) 헤더 고정
+   4) 버튼 중요도 구분 5) 리스트 밀도/필터 밀도 재조정
+   ========================================================= */
+#qcReview.qc-project-picked .checklist-category-filter{
+  display:block!important;
+}
+#qcReview .excel-grid-wrap{
+  max-height:calc(100vh - 300px);
+  overflow:auto;
+  border:1px solid #dbe3ef;
+  border-radius:14px;
+  background:#fff;
+  overscroll-behavior:contain;
+}
+#qcReview .excel-grid{
+  border-collapse:separate!important;
+  border-spacing:0!important;
+}
+#qcReview .excel-grid thead th{
+  position:sticky;
+  top:0;
+  z-index:6;
+  background:#f8fafc!important;
+  color:#334155!important;
+  box-shadow:0 1px 0 #cbd5e1;
+}
+#qcReview .checklist-filter-shell.readability-priority{
+  border:1px solid #dbe3ef;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 8px 22px rgba(15,23,42,.045);
+  overflow:hidden;
+}
+#qcReview .qc-current-project-strip{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 14px;
+  border-bottom:1px solid #edf2f7;
+  background:linear-gradient(90deg,#fff7ed 0%,#ffffff 58%);
+}
+#qcReview .qc-current-project-main{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+#qcReview .qc-current-project-main span{
+  flex:0 0 auto;
+  font-size:12px;
+  font-weight:900;
+  color:#9a3412;
+  background:#ffedd5;
+  border:1px solid #fed7aa;
+  border-radius:999px;
+  padding:4px 9px;
+}
+#qcReview .qc-current-project-main strong{
+  min-width:0;
+  max-width:960px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:15px;
+  font-weight:900;
+  color:#0f172a;
+  letter-spacing:-.2px;
+}
+#qcReview .qc-filter-reset-btn{
+  height:28px;
+  padding:0 10px;
+  border:1px solid #dbe3ef;
+  border-radius:10px;
+  background:#fff;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+#qcReview .qc-filter-reset-btn:hover{
+  border-color:#f97316;
+  color:#ea580c;
+  box-shadow:0 0 0 3px rgba(249,115,22,.1);
+}
+#qcReview .qc-active-filter-strip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  border-bottom:1px solid #edf2f7;
+  background:#fbfdff;
+}
+#qcReview .qc-active-filter-title{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:900;
+  color:#64748b;
+}
+#qcReview .qc-active-filter-chips{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  min-width:0;
+}
+#qcReview .qc-filter-state-chip{
+  display:inline-flex;
+  align-items:center;
+  height:22px;
+  padding:0 8px;
+  border:1px solid #dbeafe;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+#qcReview .qc-filter-state-chip.strong{
+  border-color:#fed7aa;
+  background:#fff7ed;
+  color:#c2410c;
+}
+#qcReview .checklist-filter-summary{
+  min-height:40px!important;
+  padding:6px 12px!important;
+  border-bottom:1px solid #edf2f7;
+  background:#fff!important;
+}
+#qcReview .filter-summary-label{
+  height:22px!important;
+  padding:0 8px!important;
+  font-size:11px!important;
+}
+#qcReview .filter-summary-main strong{
+  font-size:13px!important;
+}
+#qcReview .filter-summary-main em{
+  height:20px!important;
+  min-width:28px!important;
+  font-size:11px!important;
+}
+#qcReview .category-filter-reset,
+#qcReview .category-filter-toggle,
+#qcReview .category-detail-toggle{
+  height:28px!important;
+  min-height:28px!important;
+  padding:0 10px!important;
+  border-radius:10px!important;
+  font-size:12px!important;
+  font-weight:900!important;
+}
+#qcReview .category-filter-toggle.active,
+#qcReview .category-detail-toggle.expand{
+  background:#111827!important;
+  color:#fff!important;
+  border-color:#111827!important;
+}
+#qcReview .category-detail-toggle.collapse{
+  background:#ecfdf5!important;
+  color:#15803d!important;
+  border-color:#bbf7d0!important;
+}
+#qcReview .checklist-middle-filter-bar{
+  justify-content:flex-start!important;
+  padding:8px 12px!important;
+  gap:5px!important;
+  background:#f8fafc!important;
+  border-bottom:1px solid #edf2f7!important;
+  border-top:0!important;
+}
+#qcReview .checklist-middle-filter-title{
+  margin-right:4px!important;
+  font-size:11px!important;
+  color:#64748b!important;
+}
+#qcReview .checklist-middle-filter-chip,
+#qcReview .checklist-middle-filter-reset{
+  min-height:22px!important;
+  height:22px!important;
+  padding:0 7px!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+  gap:4px!important;
+}
+#qcReview .checklist-middle-filter-chip input{
+  width:12px!important;
+  height:12px!important;
+}
+#qcReview .checklist-middle-filter-chip em{
+  min-width:16px!important;
+  height:16px!important;
+  padding:0 4px!important;
+  font-size:10px!important;
+}
+#qcReview .category-filter-panel{
+  padding:8px 10px 10px!important;
+  background:#fff!important;
+}
+#qcReview .category-filter-grid{
+  gap:6px!important;
+}
+#qcReview .category-filter-btn{
+  min-height:34px!important;
+  height:34px!important;
+  padding:0 10px!important;
+  border-radius:10px!important;
+  font-size:12px!important;
+}
+#qcReview .category-filter-btn .category-count{
+  height:18px!important;
+  min-width:22px!important;
+  padding:0 5px!important;
+  font-size:10px!important;
+}
+#qcReview .excel-grid thead th,
+#qcReview .excel-grid tbody td{
+  font-size:11.5px!important;
+  line-height:1.18!important;
+  padding:3px 5px!important;
+}
+#qcReview .excel-grid thead th{
+  height:26px!important;
+  min-height:26px!important;
+}
+#qcReview .excel-grid tbody tr.checklist-detail-row td{
+  padding:3px 5px!important;
+}
+#qcReview .excel-editable-cell,
+#qcReview .excel-grid .cell{
+  min-height:20px!important;
+  padding:3px 5px!important;
+  line-height:1.18!important;
+  font-size:11.5px!important;
+}
+#qcReview .group-band-inner{
+  min-height:30px!important;
+  padding:5px 8px!important;
+}
+#qcReview .middle-band-inner,
+#qcReview .sub-band-inner{
+  min-height:28px!important;
+  padding:5px 10px!important;
+}
+#qcReview .group-toggle-btn,
+#qcReview .middle-toggle-btn,
+#qcReview .sub-toggle-btn{
+  width:18px!important;
+  height:18px!important;
+  min-width:18px!important;
+}
+#qcReview .btn-danger,
+#qcReview .row-actions .btn-danger,
+#qcReview .row-actions-center .btn-danger{
+  background:#fee2e2!important;
+  border-color:#fecaca!important;
+  color:#b91c1c!important;
+}
+#qcReview .btn-primary,
+#qcReview .group-mini-btn.btn-primary{
+  background:#f97316!important;
+  border-color:#f97316!important;
+  color:#fff!important;
+}
+#qcReview .group-mini-btn,
+#qcReview .row-actions .btn,
+#qcReview .row-actions-center .btn,
+#qcReview .target-select-btn,
+#qcReview .history-view-btn,
+#qcReview .attach-inline-add,
+#qcReview .btn-objection{
+  min-height:21px!important;
+  height:21px!important;
+  padding:0 6px!important;
+  font-size:10.5px!important;
+  border-radius:7px!important;
+}
+#qcReview .target-people-select-btn,
+#qcReview .checklist-check-view-btn,
+#qcReview .history-view-btn{
+  border-color:#bfdbfe!important;
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+}
+#qcReview .classify-select-btn{
+  border-color:#dbe3ef!important;
+  background:#f8fafc!important;
+  color:#334155!important;
+}
+#qcReview .attach-inline-add,
+#qcReview .attach-count{
+  border-color:#dbe3ef!important;
+  background:#fff!important;
+  color:#334155!important;
+}
