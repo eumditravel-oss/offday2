@@ -21302,3 +21302,27 @@ button.btn-orange{
 .estimate-period-manage-table td.period-cell-focused:focus{
   outline:none !important;
 }
+
+/* 2026-06-02 기간별 견적서 관리 Enter 셀렉트 근본 보정
+   select는 값 보관/표시용으로만 두고, 키보드 포커스와 선택 표시는 td.period-cell-focused 기준으로 고정합니다. */
+.estimate-period-manage-table td.period-select-cell{
+  cursor:default !important;
+}
+.estimate-period-manage-table td.period-select-cell .status-select{
+  pointer-events:none !important;
+  user-select:none !important;
+}
+.estimate-period-manage-table td.period-select-cell .status-select:focus{
+  outline:none !important;
+  box-shadow:none !important;
+}
+.estimate-period-manage-table td.period-cell-focused,
+.estimate-period-manage-table td.period-cell-focused.period-select-cell{
+  box-shadow:inset 0 0 0 2px #22c55e !important;
+  background:#fff !important;
+  outline:none !important;
+}
+.estimate-period-manage-table td.period-cell-focused.period-select-cell .status-select{
+  box-shadow:none !important;
+  background:#fff !important;
+}
