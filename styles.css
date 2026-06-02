@@ -20725,11 +20725,9 @@ button.btn-orange{
   color:#475569;
 }
 
-/* 2026-06-02 QC 진행중 프로젝트 리스트 내부 스크롤 우선 적용 */
-.qc-ongoing-route-card .qc-ongoing-project-list{
+/* 2026-06-02 QC 프로젝트 리스트 내부 스크롤 우선 적용 보완 */
+.qc-ongoing-route-card .qc-ongoing-project-list,
+#qcProjectAccessPanel .qc-ongoing-project-list{
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-.qc-ongoing-route-card{
-  overscroll-behavior: contain;
+  scroll-behavior: auto;
 }
