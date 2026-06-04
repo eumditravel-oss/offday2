@@ -4138,54 +4138,6 @@ function addEstimateRequestMemo() {
   const row = estimateRequestNormalizeRow({ status: "의뢰메모" });
   openEstimateRequestMemoWindow(row.id, true);
 }
-
-function estimateRequestNormalizeCompanyKeyword(value = "") {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/[()（）㈜주식회사]/g, "")
-    .replace(/[^0-9a-z가-힣]/g, "");
-}
-function estimateRequestPushCompanyHistory(list, value) {
-  const text = String(value || "").trim();
-  if (!text) return;
-  const normalized = estimateRequestNormalizeCompanyKeyword(text);
-  if (!normalized) return;
-  if (!list.some(item => estimateRequestNormalizeCompanyKeyword(item) === normalized || item === text)) list.push(text);
-}
-function estimateRequestGetCompanyHistory(currentValue = "") {
-  const list = [];
-  estimateRequestPushCompanyHistory(list, currentValue);
-  try {
-    estimateRequestLoadRows?.();
-    (estimateRequestRows || []).forEach(row => {
-      estimateRequestPushCompanyHistory(list, row?.company);
-      const extracted = estimateRequestExtractCompany?.(row?.memo || row?.rawMemo || "");
-      estimateRequestPushCompanyHistory(list, extracted);
-    });
-  } catch (_) {}
-  try {
-    (estimateSheetRecords || []).forEach(row => {
-      estimateRequestPushCompanyHistory(list, row?.recipient);
-      estimateRequestPushCompanyHistory(list, row?.company);
-      estimateRequestPushCompanyHistory(list, row?.client);
-    });
-  } catch (_) {}
-  try {
-    (estimatePeriodSentRows || []).forEach(row => estimateRequestPushCompanyHistory(list, row?.company));
-  } catch (_) {}
-  try {
-    const tabs = ["pj", "progress", "mep"];
-    tabs.forEach(tab => {
-      const sheet = estimateDbSheets?.[tab];
-      if (!sheet || !Array.isArray(sheet.rows)) return;
-      const candidates = tab === "pj" ? ["거래처명", "업체명", "계약업체"] : ["업체명", "거래처명", "계약업체"];
-      const indexes = candidates.map(name => getEstimateDbColumnIndexByHeader?.(tab, name)).filter(index => Number.isFinite(index) && index >= 0);
-      sheet.rows.forEach(row => indexes.forEach(index => estimateRequestPushCompanyHistory(list, row?.[index])));
-    });
-  } catch (_) {}
-  return list.slice(0, 80);
-}
 function openEstimateRequestMemoWindow(id, isNew = false) {
   estimateRequestLoadRows();
   let row = estimateRequestRows.find(r => r.id === id);
@@ -4207,7 +4159,6 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   const count = estimateRequestHtml(row.count || "");
   const unitWork = estimateRequestHtml(row.unitWork || row.estimateType || "");
   const bid = estimateRequestHtml(row.bid || "");
-  const companyHistory = estimateRequestGetCompanyHistory(row.company || "");
   w.document.open();
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>견적 의뢰 메모</title><style>
     *{box-sizing:border-box} body{margin:0;background:#f4f7fb;color:#0f172a;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif}
@@ -4218,7 +4169,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     textarea{width:100%;min-height:430px;resize:vertical;border:1px solid #cbd5e1;border-radius:14px;padding:16px;font-size:15px;line-height:1.75;color:#111827;background:#fff;white-space:pre-wrap;outline:none} textarea:focus,.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(255,107,0,.16);border-color:#ff8a3d}.hint{font-size:12px;color:#64748b;font-weight:700}.field-guide{display:block;margin-top:2px;font-size:11px;color:#ea580c;font-weight:900;line-height:1.3}
   </style></head><body><div class="bar"><div class="brand"><b>CON-COST</b><span>견적 의뢰 메모</span></div><div class="actions"><button class="btn" onclick="window.close()">닫기</button><button class="btn primary" onclick="saveMemo()">저장</button></div></div><main>
   <div class="grid">
-    <label class="field linked-command"><span>업체명 <small>히스토리</small></span><input id="company" data-command-field="company" value="${company}" placeholder="예: (주)xx건설"></label>
+    <label class="field"><span>업체명</span><input id="company" value="${company}" placeholder="예: (주)xx건설"></label>
     <label class="field wide"><span>프로젝트명</span><input id="project" value="${project}" placeholder="대략적인 프로젝트명"></label>
     <label class="field"><span>의뢰자</span><input id="client" value="${client}" placeholder="담당자명"></label>
     <label class="field"><span>연락처</span><input id="contact" value="${contact}" placeholder="전화/이메일"></label>
@@ -4237,7 +4188,6 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   const IS_NEW = ${JSON.stringify(!!isNew)};
   document.getElementById('memo').value = ${JSON.stringify(row.memo || row.rawMemo || "")};
   const commandOptions = {
-    company: ${JSON.stringify(companyHistory)},
     scope: ['마감','골조성','구조','토목','조경','기계','전기','인테리어','철거','전공정'],
     usage: ['창고','공장','제약공장','식품공장','반도체공장','물류센터','아파트형공장','공동주택','오피스텔','주상복합','업무시설','오피스','근린생활시설','지식산업센터','기숙사','연수원','학교','교육연구시설','연구소','역사'],
     count: ['1회','2회','3회','1회차','2회차','3회차','변경전','변경후','변경도서','기타'],
@@ -4246,19 +4196,6 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
   };
   let dropdown = null;
   let dropdownOwner = null;
-  function normalizeCommandSearch(value){
-    return String(value || '').toLowerCase().replace(/\s+/g, '').replace(/[()（）㈜주식회사]/g, '').replace(/[^0-9a-z가-힣]/g, '');
-  }
-  function getFilteredCommandOptions(input){
-    const key = input?.dataset?.commandField || '';
-    const currentValues = splitCommandValues(input?.value || '');
-    const base = [...new Set([...(commandOptions[key] || []), ...currentValues].filter(Boolean))];
-    if(key !== 'company') return base;
-    const q = normalizeCommandSearch(input.value || '');
-    if(!q) return base.slice(0, 30);
-    const matched = base.filter(value => normalizeCommandSearch(value).includes(q));
-    return matched.length ? matched.slice(0, 30) : currentValues;
-  }
   function getCommandButtons(){
     return dropdown ? Array.from(dropdown.querySelectorAll('button[data-value]')) : [];
   }
@@ -4325,7 +4262,7 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     const key = input.dataset.commandField;
     const currentValues = splitCommandValues(input.value);
     const current = currentValues.join(', ');
-    const options = getFilteredCommandOptions(input);
+    const options = [...new Set([...(commandOptions[key] || []), ...currentValues].filter(Boolean))];
     dropdown = document.createElement('div');
     dropdownOwner = input;
     dropdown.className = 'memo-dropdown';
@@ -4344,11 +4281,6 @@ function openEstimateRequestMemoWindow(id, isNew = false) {
     });
   }
   document.querySelectorAll('[data-command-field]').forEach(input => {
-    input.addEventListener('input', () => {
-      if(input.dataset.commandField !== 'company') return;
-      if(dropdown && dropdownOwner === input) openCommandDropdown(input);
-      else if(String(input.value || '').trim()) openCommandDropdown(input);
-    });
     input.addEventListener('keydown', event => {
       if((event.ctrlKey || event.metaKey) && String(event.key || '').toLowerCase() === 'b' && input.dataset.commandField === 'scope'){
         event.preventDefault();
