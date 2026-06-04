@@ -121,6 +121,18 @@ function normalizeChecklistGroupName(group) {
   return checklistCategoryAliases[value] || value || firstCategoryName;
 }
 
+function getChecklistProjectLinkKeyFromRow(row = {}) {
+  return String(row.receiveId || row.linkedReceiveId || row.projectLinkKey || row.pjNo || row.projectNo || row.linkedProjectNo || "").replace(/\s+/g, " ").trim();
+}
+
+function isChecklistSharedSeedRow(row = {}) {
+  const group = normalizeChecklistGroupName(row.group);
+  const projectKey = getChecklistProjectLinkKeyFromRow(row);
+  const projectName = String(row.project || "").replace(/\s+/g, " ").trim();
+  const hasDefaultProjectName = !projectName || projectName === "ㅇㅇ시설 신축공사";
+  return !projectKey && hasDefaultProjectName && checklistCategoryOptions.includes(group);
+}
+
 function normalizeChecklistNo(value) {
   const raw = String(value ?? "").trim();
   const digits = raw.match(/\d+/g)?.join("") || "";
@@ -10115,7 +10127,7 @@ function getChecklistFilteredRows() {
   return checklistRows.map((row, realIndex) => ({ row, realIndex })).filter(({ row }) => {
     const targets = getChecklistTargets(row);
     const rowProject = row.project || "ㅇㅇ시설 신축공사";
-    const projectOk = !project || rowProject.includes(project) || project.includes(rowProject);
+    const projectOk = !project || isChecklistSharedSeedRow(row) || rowProject.includes(project) || project.includes(rowProject);
     const group = normalizeChecklistGroupName(row.group);
     const categoryOk = categoryFilter === "전체" || group === categoryFilter;
     const middleOk = isChecklistMiddleFilterEnabled(row.middleCategory);
@@ -14113,7 +14125,7 @@ setTimeout(() => {
       const group = normalizeChecklistGroupName(row.group);
       if (isQuestionBundle && !/질의사항|Z\d+/i.test(group)) return false;
       if (!checklistLinkedProjectNo) return true;
-      if (isQcCommon(row)) return true;
+      if (isChecklistSharedSeedRow(row) || isQcCommon(row)) return true;
       const key = rowKey(row);
       return key === checklistLinkedProjectNo;
     });
