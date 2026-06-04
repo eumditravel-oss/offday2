@@ -3967,6 +3967,114 @@ function estimateDbIndexMap(tab) {
   const columns = getEstimateDbLeafColumns(estimateDbSheets[tab]);
   return Object.fromEntries(columns.map((name, i) => [name, i]));
 }
+function getEstimateDbColumnValue(row, idx, name) {
+  const i = idx?.[name];
+  return i >= 0 ? row?.[i] : "";
+}
+function getEstimateDbProgressGroupColumnIndex(groupKeyword, subLabel) {
+  const sheet = estimateDbSheets.progress;
+  const top = sheet?.headerRows?.[0] || [];
+  const bottom = sheet?.headerRows?.[1] || [];
+  let currentGroup = "";
+  for (let i = 0; i < Math.max(top.length, bottom.length); i += 1) {
+    const main = normalizeEstimateDbText(top[i]);
+    if (main) currentGroup = main;
+    if (currentGroup.includes(groupKeyword) && normalizeEstimateDbText(bottom[i]) === normalizeEstimateDbText(subLabel)) return i;
+  }
+  return -1;
+}
+function getEstimateDbProgressGroupStageIndexes(groupKeyword) {
+  const sheet = estimateDbSheets.progress;
+  const top = sheet?.headerRows?.[0] || [];
+  const bottom = sheet?.headerRows?.[1] || [];
+  const stages = ["계약금", "1차기성", "2차기성", "3차기성", "4차기성", "5차기성"];
+  let currentGroup = "";
+  const indexes = [];
+  for (let i = 0; i < Math.max(top.length, bottom.length); i += 1) {
+    const main = normalizeEstimateDbText(top[i]);
+    if (main) currentGroup = main;
+    const sub = normalizeEstimateDbText(bottom[i]);
+    if (currentGroup.includes(groupKeyword) && stages.includes(sub)) indexes.push({ index: i, label: sub });
+  }
+  return indexes;
+}
+function parseEstimateDbDateInfo(value) {
+  const raw = normalizeEstimateDbText(getEstimateDbRichDisplayValue(value) || value);
+  if (!raw) return { year: "", month: null, text: "" };
+  const full = raw.match(/(20\d{2})\s*년\s*(0?[1-9]|1[0-2])\s*월/);
+  if (full) return { year: full[1], month: Number(full[2]), text: raw };
+  const dashed = raw.match(/(20\d{2})[.\/-](0?[1-9]|1[0-2])(?:[.\/-]\d{1,2})?/);
+  if (dashed) return { year: dashed[1], month: Number(dashed[2]), text: raw };
+  const compact8 = raw.replace(/[^0-9]/g, "").match(/^(20\d{2})(0[1-9]|1[0-2])(?:[0-3]\d)?$/);
+  if (compact8) return { year: compact8[1], month: Number(compact8[2]), text: raw };
+  const compact6 = raw.replace(/[^0-9]/g, "").match(/^(\d{2})(0[1-9]|1[0-2])(?:[0-3]\d)$/);
+  if (compact6) return { year: String(2000 + Number(compact6[1])), month: Number(compact6[2]), text: raw };
+  const month = parseEstimateDbMonth(raw);
+  return { year: parseEstimateDbYear(raw), month, text: raw };
+}
+function isEstimateDbDateLikeValue(value) {
+  const raw = normalizeEstimateDbText(getEstimateDbRichDisplayValue(value) || value);
+  if (!raw) return false;
+  return /(20\d{2}\s*년\s*\d{1,2}\s*월|20\d{2}[.\/-]\d{1,2}|^\d{6}$|^\d{8}$)/.test(raw.replace(/\s+/g, ""));
+}
+function toEstimateDbBusinessAmount(value) {
+  if (isEstimateDbDateLikeValue(value)) return 0;
+  return toEstimateDbNumber(value);
+}
+function getEstimateDbProgressContractAmount(row, idx = estimateDbIndexMap("progress")) {
+  const direct = toEstimateDbNumber(getEstimateDbColumnValue(row, idx, "계약금액"));
+  if (direct) return direct;
+  return getEstimateDbContractAmountBreakdownIndexes().reduce((sum, i) => sum + toEstimateDbNumber(row?.[i]), 0);
+}
+function getEstimateDbProgressOutsourceAmount(row, idx = estimateDbIndexMap("progress")) {
+  const totalIndex = getEstimateDbProgressOutsourceTotalIndex();
+  const direct = totalIndex >= 0 ? toEstimateDbNumber(row?.[totalIndex]) : 0;
+  if (direct) return direct;
+  return getEstimateDbProgressOutsourceIndexes().reduce((sum, i) => {
+    const parsed = parseEstimateDbAmountCellValue(row?.[i]);
+    return sum + toEstimateDbNumber(parsed.amount || row?.[i]);
+  }, 0);
+}
+function getEstimateDbMepPaidAmountByPjNo(pjNo, year = getSelectedEstimateDbYear(), month = null) {
+  const targetPj = normalizeEstimateDbText(pjNo);
+  if (!targetPj) return 0;
+  const idx = estimateDbIndexMap("mep");
+  return (estimateDbSheets.mep?.rows || []).reduce((sum, row) => {
+    if (normalizeEstimateDbText(getEstimateDbColumnValue(row, idx, "PJ NO")) !== targetPj) return sum;
+    for (let i = 1; i <= 6; i += 1) {
+      const amount = toEstimateDbNumber(getEstimateDbColumnValue(row, idx, `지급금액${i}`));
+      const dateInfo = parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, `지급일자${i}`));
+      if (!amount) continue;
+      if (String(dateInfo.year) !== String(year)) continue;
+      if (month && dateInfo.month !== month) continue;
+      sum += amount;
+    }
+    return sum;
+  }, 0);
+}
+function getEstimateDbProgressStageAmount(row, groupKeyword) {
+  const totalIndex = getEstimateDbProgressGroupColumnIndex(groupKeyword, "합계");
+  const total = totalIndex >= 0 ? toEstimateDbBusinessAmount(row?.[totalIndex]) : 0;
+  if (total) return total;
+  return getEstimateDbProgressGroupStageIndexes(groupKeyword).reduce((sum, item) => sum + toEstimateDbBusinessAmount(row?.[item.index]), 0);
+}
+function getEstimateDbProgressFirstStageDate(row, groupKeyword) {
+  const entries = getEstimateDbProgressGroupStageIndexes(groupKeyword);
+  for (const item of entries) {
+    const info = parseEstimateDbDateInfo(row?.[item.index]);
+    if (info.month) return info;
+  }
+  return { year: "", month: null, text: "" };
+}
+function getEstimateDbMonthlyFallbackRows(rows, idx, preferredDateNames, year, month) {
+  return rows.filter(row => {
+    const dateInfo = preferredDateNames.reduce((found, name) => {
+      if (found.month) return found;
+      return parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, name));
+    }, { year: "", month: null });
+    return String(dateInfo.year) === String(year) && dateInfo.month === month;
+  });
+}
 function sumEstimateDbByMonth(rows, monthIndex, amountIndex, year = getSelectedEstimateDbYear()) {
   return rows.reduce((sum, row) => {
     const month = parseEstimateDbMonth(row[monthIndex]);
@@ -3975,50 +4083,109 @@ function sumEstimateDbByMonth(rows, monthIndex, amountIndex, year = getSelectedE
   }, 0);
 }
 function buildOrderRows(year = getSelectedEstimateDbYear()) {
-  const idx = estimateDbIndexMap("pj");
-  const mepIdx = estimateDbIndexMap("mep");
-  const rows = getEstimateDbRowsByYear("pj", year);
-  const mepRows = getEstimateDbRowsByYear("mep", year);
+  const idx = estimateDbIndexMap("progress");
+  const rows = (estimateDbSheets.progress?.rows || []).filter(row => {
+    const info = parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, "수주일자") || getEstimateDbColumnValue(row, idx, "계약일자") || row?.[0]);
+    return String(info.year) === String(year);
+  });
   const monthly = Array.from({ length: 12 }, (_, m) => {
     const month = m + 1;
-    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["수주일자"]]) === month);
-    const outRows = mepRows.filter(row => parseEstimateDbMonth(row[mepIdx["지급일자1"]]) === month || parseEstimateDbMonth(row[mepIdx["지급일자2"]]) === month);
-    const orderAmount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["연면적(평)"]]) * 14000, 0);
-    const outAmount = outRows.reduce((sum, row) => sum + toEstimateDbNumber(row[mepIdx["지급합계"]] || row[mepIdx["계약금액"]]), 0);
+    const monthRows = rows.filter(row => {
+      const info = parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, "수주일자") || getEstimateDbColumnValue(row, idx, "계약일자") || row?.[0]);
+      return info.month === month;
+    });
+    const orderAmount = monthRows.reduce((sum, row) => sum + getEstimateDbProgressContractAmount(row, idx), 0);
+    const outAmount = monthRows.reduce((sum, row) => {
+      const pjNo = getEstimateDbColumnValue(row, idx, "PJ NO");
+      return sum + (getEstimateDbMepPaidAmountByPjNo(pjNo, year, month) || getEstimateDbProgressOutsourceAmount(row, idx));
+    }, 0);
     return [year, `${month}월`, monthRows.length || "", orderAmount, 0, orderAmount, outAmount, Math.max(0, orderAmount - outAmount), ""];
   });
-  const detailHeader = ["NO", "수주월", "거래처명", "프로젝트명", "작업공종", "수주일자", "최종수주액", "기전/외주", "컨코스트", "PM(마감)", "PM(구조)", "PM(토목,조경)"];
+  const detailHeader = ["PJ NO", "수주월", "업체명", "프로젝트명", "작업공종", "수주일자", "최종수주액", "기전/외주", "컨코스트", "총괄PM", "계약일자", "특이사항"];
   const detail = rows.map(row => {
-    const amount = toEstimateDbNumber(row[idx["연면적(평)"]]) * 14000;
-    const month = parseEstimateDbMonth(row[idx["수주일자"]]) || "";
-    return [row[idx["접수번호"]], month ? `${month}월` : "", row[idx["거래처명"]], row[idx["프로젝트명"]], row[idx["작업공종"]], row[idx["수주일자"]], amount, "", amount, row[idx["PM(마감)"]], row[idx["PM(구조)"]], row[idx["PM(토목,조경)"]]];
+    const orderDate = getEstimateDbColumnValue(row, idx, "수주일자") || getEstimateDbColumnValue(row, idx, "계약일자");
+    const month = parseEstimateDbDateInfo(orderDate).month || "";
+    const amount = getEstimateDbProgressContractAmount(row, idx);
+    const outAmount = getEstimateDbMepPaidAmountByPjNo(getEstimateDbColumnValue(row, idx, "PJ NO"), year) || getEstimateDbProgressOutsourceAmount(row, idx);
+    return [getEstimateDbColumnValue(row, idx, "PJ NO"), month ? `${month}월` : "", getEstimateDbColumnValue(row, idx, "업체명"), getEstimateDbColumnValue(row, idx, "PJ명"), "", orderDate, amount, outAmount, Math.max(0, amount - outAmount), getEstimateDbColumnValue(row, idx, "총괄PM"), getEstimateDbColumnValue(row, idx, "계약일자"), getEstimateDbColumnValue(row, idx, "특이사항")];
   });
   return { title: `${year}년 수주`, header: ["년도", "월", "건 수", "수주액", "조정금액", "최종수주액(①)", "기전/외주(②)", "컨코스트(①-②)", "비고"], monthly, detailHeader, detail };
 }
 function buildSalesRows(year = getSelectedEstimateDbYear()) {
   const idx = estimateDbIndexMap("progress");
-  const rows = getEstimateDbRowsByYear("progress", year);
+  const rows = (estimateDbSheets.progress?.rows || []);
   const monthly = Array.from({ length: 12 }, (_, m) => {
     const month = m + 1;
-    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["계약일자"]] || row[idx["수주일자"]]) === month);
-    const amount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["계약금액"]]), 0);
-    const out = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["외주합계"]]), 0);
+    const monthRows = rows.filter(row => {
+      const stageDate = getEstimateDbProgressFirstStageDate(row, "세금계산서");
+      const fallbackDate = parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, "계약일자") || getEstimateDbColumnValue(row, idx, "수주일자") || row?.[0]);
+      const info = stageDate.month ? stageDate : fallbackDate;
+      return String(info.year) === String(year) && info.month === month;
+    });
+    const amount = monthRows.reduce((sum, row) => sum + (toEstimateDbNumber(getEstimateDbColumnValue(row, idx, "발행완료")) || getEstimateDbProgressStageAmount(row, "세금계산서") || getEstimateDbProgressContractAmount(row, idx)), 0);
+    const out = monthRows.reduce((sum, row) => sum + getEstimateDbProgressOutsourceAmount(row, idx), 0);
     return [year, `${month}월`, monthRows.length || "", amount, Math.round(amount * 1.1), out, Math.max(0, amount - out), ""];
   });
-  const detailHeader = ["PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "외주합계", "계약일자", "총괄PM", "납품예정일", "특이사항"];
-  const detail = rows.map(row => [row[idx["PJ NO"]], row[idx["업체명"]], row[idx["PJ명"]], row[idx["계약금액"]], row[idx["수령액"]], row[idx["잔액"]], row[idx["외주합계"]], row[idx["계약일자"]], row[idx["총괄PM"]], row[idx["납품예정일"]], row[idx["특이사항"]]]);
+  const detailHeader = ["PJ NO", "업체명", "PJ명", "계약금액", "발행액", "수령액", "잔액", "외주합계", "계약일자", "총괄PM", "납품예정일", "특이사항"];
+  const detail = rows.filter(row => {
+    const stageDate = getEstimateDbProgressFirstStageDate(row, "세금계산서");
+    const fallbackDate = parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, "계약일자") || getEstimateDbColumnValue(row, idx, "수주일자") || row?.[0]);
+    const info = stageDate.month ? stageDate : fallbackDate;
+    return String(info.year) === String(year);
+  }).map(row => [
+    getEstimateDbColumnValue(row, idx, "PJ NO"),
+    getEstimateDbColumnValue(row, idx, "업체명"),
+    getEstimateDbColumnValue(row, idx, "PJ명"),
+    getEstimateDbProgressContractAmount(row, idx),
+    toEstimateDbNumber(getEstimateDbColumnValue(row, idx, "발행완료")) || getEstimateDbProgressStageAmount(row, "세금계산서") || getEstimateDbProgressContractAmount(row, idx),
+    toEstimateDbNumber(getEstimateDbColumnValue(row, idx, "수령액")),
+    toEstimateDbNumber(getEstimateDbColumnValue(row, idx, "잔액")),
+    getEstimateDbProgressOutsourceAmount(row, idx),
+    getEstimateDbColumnValue(row, idx, "계약일자"),
+    getEstimateDbColumnValue(row, idx, "총괄PM"),
+    getEstimateDbColumnValue(row, idx, "납품예정일"),
+    getEstimateDbColumnValue(row, idx, "특이사항")
+  ]);
   return { title: `${year}년 매출`, header: ["년도", "월", "건 수", "발행액(①)", "발행액(①)VAT포함", "기전/외주(②)", "컨코스트(①-②)", "비고"], monthly, detailHeader, detail };
 }
 function buildDepositRows(year = getSelectedEstimateDbYear()) {
   const idx = estimateDbIndexMap("progress");
-  const rows = getEstimateDbRowsByYear("progress", year);
+  const rows = (estimateDbSheets.progress?.rows || []);
   const detailHeader = ["NO", "업체", "프로젝트명", "기성담당자", "총액", "기수령액", "청구액(별도)", "청구액(포함)", "청구후잔액", "기전/외주", "발행일", "지급예상일", "지급일", "지급액(vat별도)", "지급액(vat포함)", "은행명", "종류", "비고"];
-  const detail = rows.map(row => {
-    const total = toEstimateDbNumber(row[idx["계약금액"]]);
-    const paid = toEstimateDbNumber(row[idx["수령액"]]);
+  const detail = rows.reduce((list, row) => {
+    const total = getEstimateDbProgressContractAmount(row, idx);
+    const paid = toEstimateDbNumber(getEstimateDbColumnValue(row, idx, "수령액"));
+    const out = getEstimateDbProgressOutsourceAmount(row, idx);
+    const issueDate = getEstimateDbProgressFirstStageDate(row, "세금계산서");
+    const expectedDate = getEstimateDbProgressFirstStageDate(row, "입금예정일");
+    const paidDate = getEstimateDbProgressFirstStageDate(row, "입금일");
+    const paidStageAmount = getEstimateDbProgressStageAmount(row, "입금일");
+    const amount = paidStageAmount || paid;
+    const dateInfo = paidDate.month ? paidDate : parseEstimateDbDateInfo(getEstimateDbColumnValue(row, idx, "계약일자") || getEstimateDbColumnValue(row, idx, "수주일자") || row?.[0]);
+    if (String(dateInfo.year) !== String(year)) return list;
     const bill = Math.max(0, total - paid);
-    return [row[idx["PJ NO"]], row[idx["업체명"]], row[idx["PJ명"]], row[idx["기성담당자"]], total, paid, bill, Math.round(bill * 1.1), Math.max(0, total - paid - bill), row[idx["외주합계"]], row[idx["계약금_세금계산서"]], row[idx["납품예정일"]], row[idx["계약금_입금일"]], bill, Math.round(bill * 1.1), "", "", row[idx["특이사항"]]];
-  });
+    list.push([
+      getEstimateDbColumnValue(row, idx, "PJ NO"),
+      getEstimateDbColumnValue(row, idx, "업체명"),
+      getEstimateDbColumnValue(row, idx, "PJ명"),
+      getEstimateDbColumnValue(row, idx, "기성담당자"),
+      total,
+      paid,
+      bill,
+      Math.round(bill * 1.1),
+      Math.max(0, total - paid - bill),
+      out,
+      issueDate.text || "",
+      expectedDate.text || getEstimateDbColumnValue(row, idx, "납품예정일"),
+      dateInfo.text || paidDate.text || "",
+      amount,
+      Math.round(amount * 1.1),
+      "",
+      "",
+      getEstimateDbColumnValue(row, idx, "특이사항")
+    ]);
+    return list;
+  }, []);
   return { title: `${year}년 입금`, detailHeader, detail };
 }
 function buildSummaryRows(year = getSelectedEstimateDbYear()) {
@@ -4026,17 +4193,18 @@ function buildSummaryRows(year = getSelectedEstimateDbYear()) {
   const sales = buildSalesRows(year).monthly;
   const deposit = buildDepositRows(year).detail;
   return Array.from({ length: 12 }, (_, m) => {
+    const month = m + 1;
     const orderAmount = toEstimateDbNumber(order[m][5]);
     const orderOut = toEstimateDbNumber(order[m][6]);
     const salesAmount = toEstimateDbNumber(sales[m][3]);
     const salesOut = toEstimateDbNumber(sales[m][5]);
-    const depRows = deposit.filter(row => parseEstimateDbMonth(row[12]) === m + 1 || parseEstimateDbMonth(row[10]) === m + 1);
+    const depRows = deposit.filter(row => parseEstimateDbDateInfo(row[12]).month === month);
     const depAmount = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[13]), 0);
     const depOut = depRows.reduce((sum, row) => sum + toEstimateDbNumber(row[9]), 0);
-    const orderTarget = getEstimateDbMonthlyTarget("order", year, m + 1);
-    const salesTarget = getEstimateDbMonthlyTarget("sales", year, m + 1);
-    const depositTarget = getEstimateDbMonthlyTarget("deposit", year, m + 1);
-    return [`${m + 1}월`, orderTarget, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, orderTarget), pct(orderAmount, orderTarget), salesTarget, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, salesTarget), pct(salesAmount, salesTarget), depositTarget, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, depositTarget), pct(depAmount, depositTarget), ""];
+    const orderTarget = getEstimateDbMonthlyTarget("order", year, month);
+    const salesTarget = getEstimateDbMonthlyTarget("sales", year, month);
+    const depositTarget = getEstimateDbMonthlyTarget("deposit", year, month);
+    return [`${month}월`, orderTarget, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, orderTarget), pct(orderAmount, orderTarget), salesTarget, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, salesTarget), pct(salesAmount, salesTarget), depositTarget, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, depositTarget), pct(depAmount, depositTarget), ""];
   });
 }
 function pct(value, total) { return total ? Math.round((value / total) * 1000) / 10 + "%" : "0%"; }
