@@ -400,6 +400,46 @@ function estimatePeriodExtractRightHelperPy(state) {
   }
   return "";
 }
+
+function estimatePeriodExtractRightHelperM2(state) {
+  if (!state) return "";
+  const maxRow = Number(state.maxRow || 80);
+  const maxCol = Number(state.maxCol || 30);
+  for (let r = 1; r <= maxRow; r += 1) {
+    for (let c = 8; c < maxCol; c += 1) {
+      const label = estimatePeriodNormalizeText(estimateSheetDisplayValue(state, r, c));
+      if (!["M2", "M²", "㎡", "m2", "m²"].some(token => label.toUpperCase() === String(token).toUpperCase())) continue;
+      const value = estimatePeriodNormalizeText(estimateSheetDisplayValue(state, r, c + 1));
+      if (value && estimatePeriodToNumber(value)) return value;
+    }
+  }
+  return "";
+}
+
+function estimatePeriodExtractSheetAreaM2(state) {
+  if (!state) return "";
+  if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(state);
+  const helperM2 = typeof estimatePeriodExtractRightHelperM2 === "function" ? estimatePeriodExtractRightHelperM2(state) : "";
+  if (helperM2) return helperM2;
+  const candidates = [
+    [13, 10],
+    [13, 9],
+    [13, 3],
+    [14, 3]
+  ];
+  for (const [r, c] of candidates) {
+    const nearby = [
+      estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, Math.max(1, c - 1)) || ""),
+      estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c + 1) || ""),
+      estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || "")
+    ].join(" ").toUpperCase();
+    if (!/(M2|M²|㎡)/.test(nearby)) continue;
+    const value = estimatePeriodNormalizeText(estimateSheetDisplayValue?.(state, r, c) || "");
+    if (value && estimatePeriodToNumber(value)) return value;
+  }
+  return "";
+}
+
 function estimateSheetMergeInfo(spec) {
   const starts = {}; const skips = new Set();
   (spec.merges || []).forEach(([r1, c1, r2, c2]) => {
@@ -1798,6 +1838,7 @@ function estimatePeriodRepairBlankSentRows() {
     if (state) {
       try {
         if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(state);
+        fill(19, typeof estimatePeriodExtractSheetAreaM2 === "function" ? estimatePeriodExtractSheetAreaM2(state) : "");
         fill(5, estimatePeriodExtractSheetAreaPy?.(state) || "");
         fill(6, estimatePeriodExtractSheetUnitPriceSum?.(state) || "");
         fill(7, estimatePeriodExtractSheetTotalAmount?.(state) || "");
@@ -2878,6 +2919,7 @@ function estimatePeriodRowFromValues(values = {}, key = "", source = "template",
     companyRaw: companySource,
     project: values[4] || values.project || "",
     area,
+    areaM2: values.areaM2 || values.m2 || values[19] || "",
     unitPrice,
     amount,
     scope: estimatePeriodDirectValue(values, "scope", 8, source),
@@ -2924,9 +2966,11 @@ function estimatePeriodSentListRows() {
     if (!calcState && item.recordSnapshot?.quoteData && typeof estimateSheetApplyQuoteDataToTemplate === "function") calcState = estimateSheetApplyQuoteDataToTemplate(item.recordSnapshot.quoteData);
     if (calcState) {
       if (typeof estimateSheetEnsureTotalAmountFormula === "function") estimateSheetEnsureTotalAmountFormula(calcState);
+      const calcAreaM2 = typeof estimatePeriodExtractSheetAreaM2 === "function" ? estimatePeriodExtractSheetAreaM2(calcState) : "";
       const calcArea = estimatePeriodExtractSheetAreaPy(calcState);
       const calcUnit = estimatePeriodExtractSheetUnitPriceSum(calcState);
       const calcAmount = estimatePeriodExtractSheetTotalAmount(calcState);
+      if (calcAreaM2 !== "") values[19] = calcAreaM2;
       if (calcArea !== "") values[5] = calcArea;
       if (calcUnit !== "") values[6] = calcUnit;
       if (calcAmount !== "") values[7] = calcAmount;
@@ -3590,6 +3634,7 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
   const recipientRaw = estimateSheetDisplayValue(state, 5, 2) || "";
   const recipient = estimatePeriodExtractCompanyName(recipientRaw) || estimatePeriodExtractCompanyName(record.recipient || "") || recipientRaw;
   const project = estimateSheetDisplayValue(state, 6, 2) || record.title || "";
+  const areaM2 = typeof estimatePeriodExtractSheetAreaM2 === "function" ? estimatePeriodExtractSheetAreaM2(state) : "";
   const areaPy = estimatePeriodExtractSheetAreaPy(state);
   const unitPriceSum = estimatePeriodExtractSheetUnitPriceSum(state);
   const totalAmount = estimatePeriodExtractSheetTotalAmount(state);
@@ -3617,6 +3662,7 @@ function registerEstimatePeriodSentRecord(record, recordIndex) {
       3: recipient,
       4: project,
       5: areaPy,
+      19: areaM2,
       6: unitPriceSum,
       7: totalAmount,
       8: preserveManualValue("scope", ""),
@@ -4628,6 +4674,16 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("휴대폰", row.contact);
       put("작업공종", estimateRequestSanitizeWorkScope(row.scope || row.workType || ""));
       put("건물용도", row.usage || "");
+      const linkedEstimateRecord = Array.isArray(estimateSheetRecords) ? estimateSheetRecords.find(record => record?.id === row.estimateId || record?.requestId === row.id) : null;
+      const linkedEstimateState = linkedEstimateRecord?.quoteData && typeof estimateSheetApplyQuoteDataToTemplate === "function"
+        ? estimateSheetApplyQuoteDataToTemplate(linkedEstimateRecord.quoteData, { readonlySnapshot: true })
+        : (linkedEstimateRecord?.state || null);
+      if (linkedEstimateState) {
+        const linkedM2 = typeof estimatePeriodExtractSheetAreaM2 === "function" ? estimatePeriodExtractSheetAreaM2(linkedEstimateState) : "";
+        const linkedPy = typeof estimatePeriodExtractSheetAreaPy === "function" ? estimatePeriodExtractSheetAreaPy(linkedEstimateState) : "";
+        if (linkedM2) put("연면적(m2)", linkedM2);
+        if (linkedPy) put("연면적(평)", linkedPy);
+      }
       put("업무단계2", row.count || "");
       put("단가작업여부", estimateRequestSanitizeUnitWork(row.unitWork || ""));
       put("작업구분", "");
@@ -4842,6 +4898,7 @@ function estimateCentralRowToDbMap(row = {}) {
     "업무단계2": row.count || "",
     "단가작업여부": estimateRequestSanitizeUnitWork(row.unitWork || ""),
     "건물용도": row.usage || "",
+    "연면적(m2)": row.areaM2 || row.m2 || "",
     "연면적(평)": row.area || "",
     "수주일자": row.status === "수주" || row.status === "실주" ? row.date : "",
     "상담 / 이메일 / 특기사항": row.description || row.memo || "",
@@ -4907,6 +4964,7 @@ function estimateCentralDbRowToPeriodRow(tab, dbRow, rowIndex = 0) {
     companyRaw: company,
     project,
     area: get("연면적(평)"),
+    areaM2: get("연면적(m2)"),
     unitPrice: "",
     amount: get("계약금액"),
     scope: estimateRequestSanitizeWorkScope?.(get("작업공종")) || get("작업공종") || "",
