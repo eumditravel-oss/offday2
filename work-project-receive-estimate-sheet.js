@@ -4688,7 +4688,9 @@ function syncEstimateRequestToDb(id, options = {}) {
       put("단가작업여부", estimateRequestSanitizeUnitWork(row.unitWork || ""));
       put("작업구분", "");
       put("업무성격", row.bid || row.startMode || row.status);
-      put("상담 / 이메일 / 특기사항", row.memo);
+      // 견적 의뢰 메모 본문(row.memo/rawMemo)은 프로젝트 작성의 특기사항/수주시 요청사항과 분리합니다.
+      // 따라서 DB관리의 상담 / 이메일 / 특기사항 컬럼에는 자동 반영하지 않습니다.
+      put("상담 / 이메일 / 특기사항", "");
       put("수주일자", row.orderDate ? estimateRequestDbDateLabel(row.orderDate) : "");
       put("작업착수일자", row.contractDate && row.contractDate !== "대기중" ? estimateRequestDbDateLabel(row.contractDate) : "");
       sheet.rows = sheet.rows || [];
@@ -4901,7 +4903,9 @@ function estimateCentralRowToDbMap(row = {}) {
     "연면적(m2)": row.areaM2 || row.m2 || "",
     "연면적(평)": row.area || "",
     "수주일자": row.status === "수주" || row.status === "실주" ? row.date : "",
-    "상담 / 이메일 / 특기사항": row.description || row.memo || "",
+    // 견적 의뢰 메모(row.memo/rawMemo)는 내부 참고용입니다.
+    // 프로젝트 작성의 특기사항/수주시 요청사항으로 흘러가지 않도록 DB 상담 메모에는 연결하지 않습니다.
+    "상담 / 이메일 / 특기사항": row.description || "",
     "계약금액": row.amount || "",
     "견적서일자": row.date || "",
     "계약업체": row.company || ""
@@ -5691,7 +5695,8 @@ function estimateLinkageRequestToCentralRow(request = {}) {
     usage: req.usage || "",
     count: req.count || "",
     description: req.description || "",
-    memo: req.memo || req.rawMemo,
+    // 견적 의뢰 메모 본문은 프로젝트 작성 특기사항/수주시 요청사항과 분리합니다.
+    memo: "",
     status: req.status,
     unitWork: req.unitWork || req.estimateType,
     bid: req.bid || "",
