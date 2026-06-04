@@ -1091,11 +1091,10 @@ function recalcEstimateDbRow(tab, row) {
     const pyIndex = idx("연면적(평)");
     if (m2Index >= 0 && pyIndex >= 0) {
       const m2Value = toEstimateDbNumber(row[m2Index]);
-      if (m2Value) {
+      const pyText = normalizeEstimateDbText(row[pyIndex]);
+      if (m2Value && !pyText) {
         const pyValue = Math.ceil(m2Value * 0.3025);
         row[pyIndex] = String(pyValue);
-      } else if (!normalizeEstimateDbText(row[m2Index])) {
-        row[pyIndex] = "";
       }
     }
   }
