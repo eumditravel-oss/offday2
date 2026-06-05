@@ -5249,31 +5249,118 @@ if (estimateCentralOriginalCreateEstimateSheetFromRequest) {
 const estimateCentralOriginalSaveEstimateSheetRecord = typeof saveEstimateSheetRecord === "function" ? saveEstimateSheetRecord : null;
 if (estimateCentralOriginalSaveEstimateSheetRecord) {
   window.saveEstimateSheetRecord = function estimateCentralSaveEstimateSheetRecord() {
+    const beforeRec = estimateSheetEditingIndex !== null ? estimateSheetRecords[estimateSheetEditingIndex] : estimateSheetRecords[0];
+    const beforeLink = beforeRec ? {
+      id: beforeRec.id || "",
+      requestId: beforeRec.requestId || "",
+      centralKey: beforeRec.centralKey || "",
+      periodKey: beforeRec.periodKey || "",
+      dbPjNo: beforeRec.dbPjNo || ""
+    } : {};
     const result = estimateCentralOriginalSaveEstimateSheetRecord();
     const rec = estimateSheetEditingIndex !== null ? estimateSheetRecords[estimateSheetEditingIndex] : estimateSheetRecords[0];
     if (rec) {
+      estimateRequestLoadRows?.();
+      const requestIndex = (estimateRequestRows || []).findIndex(item =>
+        (beforeLink.requestId && item.id === beforeLink.requestId) ||
+        (rec.requestId && item.id === rec.requestId) ||
+        (beforeLink.id && item.estimateId === beforeLink.id) ||
+        (rec.id && item.estimateId === rec.id) ||
+        (beforeLink.centralKey && item.centralKey === beforeLink.centralKey) ||
+        (rec.centralKey && item.centralKey === rec.centralKey) ||
+        (beforeLink.periodKey && item.periodKey === beforeLink.periodKey) ||
+        (rec.periodKey && item.periodKey === rec.periodKey)
+      );
+      const linkedRequest = requestIndex >= 0 ? estimateRequestNormalizeRow?.(estimateRequestRows[requestIndex]) || estimateRequestRows[requestIndex] : null;
       const state = rec.state || estimateSheetEditorState;
+      const nextCompany = estimatePeriodExtractCompanyName?.(estimateSheetDisplayValue(state, 5, 2)) || estimateSheetDisplayValue(state, 5, 2);
+      const nextProject = estimateSheetDisplayValue(state, 6, 2) || rec.title;
+      const stableCentralKey = linkedRequest?.centralKey || beforeLink.centralKey || rec.centralKey || beforeLink.periodKey || rec.periodKey || beforeLink.requestId || rec.requestId || beforeLink.id || rec.id || "";
+      const stablePeriodKey = linkedRequest?.periodKey || beforeLink.periodKey || rec.periodKey || stableCentralKey;
+      const stableRequestId = linkedRequest?.id || beforeLink.requestId || rec.requestId || "";
+      const stableDbPjNo = linkedRequest?.dbPjNo || beforeLink.dbPjNo || rec.dbPjNo || "";
+      rec.centralKey = stableCentralKey || rec.centralKey;
+      rec.periodKey = stablePeriodKey || rec.periodKey;
+      rec.requestId = stableRequestId || rec.requestId;
+      rec.dbPjNo = stableDbPjNo || rec.dbPjNo;
+      rec.company = nextCompany || rec.company || linkedRequest?.company || "";
+      rec.project = nextProject || rec.project || linkedRequest?.project || "";
+      rec.title = estimateLinkageDisplayTitle?.(nextProject || rec.title || "견적") || (nextProject || rec.title || "견적");
       const row = {
-        id: rec.periodKey || rec.id,
-        date: estimatePeriodTodayCode?.() || "",
-        company: estimatePeriodExtractCompanyName?.(estimateSheetDisplayValue(state, 5, 2)) || estimateSheetDisplayValue(state, 5, 2),
-        project: estimateSheetDisplayValue(state, 6, 2) || rec.title,
-        scope: estimateSheetDisplayValue(state, 7, 2) || "",
+        id: stablePeriodKey || stableCentralKey || rec.id,
+        date: linkedRequest?.date || estimatePeriodTodayCode?.() || "",
+        company: nextCompany || linkedRequest?.company || "",
+        project: nextProject || linkedRequest?.project || rec.title,
+        scope: estimateSheetDisplayValue(state, 7, 2) || linkedRequest?.scope || "",
         description: estimateSheetDisplayValue(state, 7, 2) || "",
         amount: estimateSheetDisplayValue(state, 20, 6) || "",
-        status: rec.status || "대기중",
+        status: linkedRequest?.status || rec.status || "대기중",
         unitWork: rec.type,
-        dbPjNo: rec.dbPjNo || ""
+        estimateType: rec.type,
+        dbPjNo: stableDbPjNo,
+        requestId: stableRequestId,
+        estimateId: rec.id,
+        centralKey: stableCentralKey
       };
-      row.centralKey = rec.centralKey || estimateCentralMakeKey(row);
+      row.centralKey = row.centralKey || estimateCentralMakeKey(row);
       row.dbPjNo = row.dbPjNo || estimateCentralDbPjNo(row);
       estimateCentralPeriodRowToRequestDb(row);
+      if (requestIndex >= 0) {
+        const updatedRequest = estimateRequestNormalizeRow?.({
+          ...linkedRequest,
+          id: stableRequestId || linkedRequest.id,
+          estimateId: rec.id,
+          periodKey: row.id,
+          centralKey: row.centralKey,
+          dbPjNo: row.dbPjNo,
+          company: row.company,
+          client: row.company,
+          project: row.project,
+          estimateType: rec.type,
+          status: row.status
+        }) || linkedRequest;
+        estimateRequestRows[requestIndex] = updatedRequest;
+        estimateRequestSaveRows?.();
+      }
       estimateRequestApplyEstimateSavedDateToProgress(rec, { date: row.date });
+      estimateCentralRemoveDuplicateLinkedRows?.(row);
       renderEstimateRequestManage?.();
+      renderEstimatePeriodManage?.();
       renderEstimateDbManage?.();
     }
     return result;
   };
+}
+
+function estimateCentralRemoveDuplicateLinkedRows(row = {}) {
+  const centralKey = row.centralKey || "";
+  const estimateId = row.estimateId || "";
+  const requestId = row.requestId || "";
+  const periodId = row.id || "";
+  const same = item => !!item && (
+    (centralKey && item.centralKey === centralKey) ||
+    (estimateId && (item.sourceEstimateId === estimateId || item.estimateId === estimateId)) ||
+    (requestId && (item.requestId === requestId || item.id === requestId)) ||
+    (periodId && item.id === periodId)
+  );
+  if (Array.isArray(estimatePeriodEditRows)) {
+    const seen = new Set();
+    estimatePeriodEditRows = estimatePeriodEditRows.filter(item => {
+      if (!same(item)) return true;
+      const key = centralKey || estimateId || requestId || periodId;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      item.centralKey = centralKey || item.centralKey;
+      item.id = periodId || item.id;
+      item.company = row.company || item.company;
+      item.project = row.project || item.project;
+      item.unitWork = row.unitWork || item.unitWork;
+      item.estimateType = row.estimateType || item.estimateType;
+      item.dbPjNo = row.dbPjNo || item.dbPjNo;
+      return true;
+    });
+    estimatePeriodSaveEdits?.();
+  }
 }
 const estimateCentralOriginalSyncEstimateRequestToDb = typeof syncEstimateRequestToDb === "function" ? syncEstimateRequestToDb : null;
 if (estimateCentralOriginalSyncEstimateRequestToDb) {
