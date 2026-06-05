@@ -4429,8 +4429,16 @@ function runEstimateRequestAction(id) {
         showToast?.(`${status} 실행 완료. 견적열기 버튼이 활성화되었습니다.`);
         return;
       }
+      const typeChanged = estimateRequestApplyEstimateTypeToLinkedSheet(id, { row, silent: true });
       renderEstimateRequestManage();
-      showToast?.(`${status} 상태로 변경되었습니다.`);
+      if (typeChanged) {
+        renderEstimateSheetManage?.();
+        renderEstimatePeriodManage?.();
+        renderEstimateDbManage?.();
+        showToast?.(`${status} 실행 완료. 견적서 형식을 ${row.estimateType || "개산견적"}(으)로 변경했습니다.`);
+      } else {
+        showToast?.(`${status} 상태로 변경되었습니다.`);
+      }
     }
   }
 }
@@ -4554,6 +4562,45 @@ function createEstimateSheetFromRequest(id, options = {}) {
   renderEstimateRequestManage();
   if (!options.silent) showToast?.("견적서 종류별 관리로 대기중 견적서를 연결 등록했습니다.");
   if (options.open !== false) openEstimateSheetById(row.estimateId);
+}
+function estimateRequestApplyEstimateTypeToLinkedSheet(id, options = {}) {
+  estimateRequestLoadRows();
+  const requestIndex = estimateRequestRows.findIndex(r => r.id === id);
+  if (requestIndex < 0) return false;
+  const row = estimateRequestNormalizeRow(options.row || estimateRequestRows[requestIndex]);
+  const nextType = ESTIMATE_SHEET_TYPE_ORDER.includes(row.estimateType) ? row.estimateType : "개산견적";
+  const recordIndex = estimateSheetRecords.findIndex(r => r.id === row.estimateId || r.requestId === id);
+  if (recordIndex < 0) {
+    createEstimateSheetFromRequest(id, { open: false, silent: true });
+    return true;
+  }
+  const prevRecord = estimateSheetRecords[recordIndex] || {};
+  if (prevRecord.type === nextType) return false;
+
+  const nextState = estimateSheetCreateState(nextType);
+  estimateRequestSetCell(nextState, 5, 2, row.company || row.client || "");
+  estimateRequestSetCell(nextState, 6, 2, row.project || "");
+
+  const nextRecord = {
+    ...prevRecord,
+    requestId: row.id,
+    type: nextType,
+    title: `${row.project || row.company || "견적"}_${nextType}`,
+    updatedAt: estimateSheetNow(),
+    state: nextState,
+    quoteData: typeof estimateSheetExtractQuoteDataFromState === "function" ? estimateSheetExtractQuoteDataFromState(nextState) : null,
+    dataMode: typeof ESTIMATE_TEMPLATE_DATA_MODE !== "undefined" ? ESTIMATE_TEMPLATE_DATA_MODE : "template-value-only"
+  };
+  estimateSheetRecords[recordIndex] = nextRecord;
+  row.estimateId = nextRecord.id;
+  row.estimateType = nextType;
+  estimateRequestAddHistory(row, `견적서 형식 변경: ${prevRecord.type || "-"} → ${nextType}`);
+  estimateRequestRows[requestIndex] = row;
+  estimateRequestSaveRows();
+  syncEstimateRequestToDb(row.id, { silent: true });
+  estimateSheetActiveType = nextType;
+  if (!options.silent) showToast?.(`견적서 형식을 ${nextType}(으)로 변경했습니다.`);
+  return true;
 }
 function openEstimateSheetById(estimateId) {
   const index = estimateSheetRecords.findIndex(r => r.id === estimateId);
