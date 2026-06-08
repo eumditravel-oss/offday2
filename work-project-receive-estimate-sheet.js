@@ -5700,7 +5700,14 @@ if (typeof estimateCentralEnsureSheetRecord === "function") {
     const id = (typeof estimateCentralEstimateId === "function" ? estimateCentralEstimateId(src) : `central-estimate-${src.centralKey}`);
     const existingIndex = (estimateSheetRecords || []).findIndex(item => item.id === id || item.centralKey === src.centralKey || (estimateLinkageText(item.requestId) && estimateLinkageText(item.requestId) === estimateLinkageText(src.id)));
     const old = existingIndex >= 0 ? estimateSheetRecords[existingIndex] : null;
-    const state = old?.state || (typeof estimatePeriodCreateDemoStateFromRow === "function" ? estimatePeriodCreateDemoStateFromRow(src) : estimateSheetCreateState(type));
+    const isTypeChanged = !!old && old.type !== type;
+    const state = isTypeChanged
+      ? estimateSheetCreateState(type)
+      : (old?.state || (typeof estimatePeriodCreateDemoStateFromRow === "function" ? estimatePeriodCreateDemoStateFromRow(src) : estimateSheetCreateState(type)));
+    if (isTypeChanged) {
+      estimateRequestSetCell?.(state, 5, 2, src.company || src.client || "");
+      estimateRequestSetCell?.(state, 6, 2, src.project || "");
+    }
     const record = {
       ...(old || {}),
       id: old?.id || id,
