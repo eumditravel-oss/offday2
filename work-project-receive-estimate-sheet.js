@@ -4402,6 +4402,7 @@ function saveEstimateRequestMemoFromWindow(id, payload = {}) {
   else estimateRequestRows.unshift(row);
   estimateRequestSaveRows();
   syncEstimateRequestToDb(id, { silent: true });
+  syncProjectReceiveFromEstimateRequestRow?.(row);
   renderEstimateRequestManage();
   showToast?.("견적 의뢰 메모를 저장했습니다.");
 }
@@ -5480,6 +5481,9 @@ if (estimateCentralOriginalSaveProjectReceiveDraft) {
     }
     const result = estimateCentralOriginalSaveProjectReceiveDraft();
     if (typeof projectReceiveState !== "undefined") {
+      const receiveLinkedBusiness = typeof projectReceiveLinkedValuesFromBusinessTypes === "function"
+        ? projectReceiveLinkedValuesFromBusinessTypes(projectReceiveState)
+        : { unitWork: projectReceiveState.unitPrice || "", bid: "" };
       const row = {
         id: `project-receive-${projectReceiveState.projectNo}`,
         date: estimatePeriodTodayCode?.() || "",
@@ -5488,6 +5492,8 @@ if (estimateCentralOriginalSaveProjectReceiveDraft) {
         area: projectReceiveState.area || "",
         scope: getProjectReceiveListScopeText?.(projectReceiveState) || "",
         usage: projectReceiveState.usage || "",
+        unitWork: projectReceiveState.unitPrice || receiveLinkedBusiness.unitWork || "",
+        bid: receiveLinkedBusiness.bid || "",
         description: projectReceiveState.workContent || "",
         memo: projectReceiveState.notes || projectReceiveState.request || "",
         status: "대기중",
@@ -5614,7 +5620,10 @@ function estimateLinkageCanonicalRow(row = {}) {
     client: row.client || company,
     project,
     estimateType: type,
-    unitWork: row.unitWork || type,
+    unitWork: row.unitWork || row.linkedUnitWork || type,
+    bid: row.bid || row.linkedBid || row.businessNature || "",
+    count: row.count || row.workCount || "",
+    usage: row.usage || row.buildingUsage || "",
     status: row.status || "대기중",
     memo: row.memo || "",
     description: row.description || row.scope || "",
@@ -5749,6 +5758,11 @@ if (typeof estimateCentralEnsureRequestRow === "function") {
       project: src.project || old.project || "",
       contact: old.contact || src.contact || "",
       estimateType: src.estimateType || old.estimateType || "개산견적",
+      scope: src.scope || old.scope || "",
+      usage: src.usage || old.usage || "",
+      count: src.count || old.count || "",
+      unitWork: src.unitWork || old.unitWork || src.estimateType || "",
+      bid: src.bid || old.bid || "",
       memo: old.memo || [src.scope, src.description, src.memo].filter(Boolean).join(" / "),
       rawMemo: old.rawMemo || src.memo || src.description || "",
       status: estimateLinkageStatusForRequest(src.status || old.status),
@@ -6877,7 +6891,31 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
     projectReceiveActivateProjectNoIfNeeded(projectReceiveState);
     const input = document.getElementById('receiveProjectNo');
     if (input) input.value = projectReceiveState.projectNo || '';
+    const receiveLinkedBusiness = typeof projectReceiveLinkedValuesFromBusinessTypes === 'function'
+      ? projectReceiveLinkedValuesFromBusinessTypes(projectReceiveState)
+      : { unitWork: projectReceiveState.unitPrice || '', bid: '' };
+    projectReceiveState.linkedUnitWork = projectReceiveState.unitPrice || receiveLinkedBusiness.unitWork || '';
+    projectReceiveState.linkedBid = receiveLinkedBusiness.bid || '';
     projectReceiveUpsertCompleted(projectReceiveState, { sourceFile: '프로젝트 접수 저장' });
+    if (typeof estimateCentralPeriodRowToRequestDb === 'function') {
+      const centralRow = {
+        id: `project-receive-${projectReceiveState.projectNo || projectReceiveState.receiveId || ''}`,
+        date: estimatePeriodTodayCode?.() || '',
+        company: projectReceiveState.client || '',
+        project: projectReceiveState.projectName || '',
+        area: projectReceiveState.area || '',
+        scope: getProjectReceiveListScopeText?.(projectReceiveState) || '',
+        usage: projectReceiveState.usage || '',
+        unitWork: projectReceiveState.linkedUnitWork || '',
+        bid: projectReceiveState.linkedBid || '',
+        description: projectReceiveState.workContent || '',
+        memo: projectReceiveState.notes || projectReceiveState.request || '',
+        status: '대기중',
+        dbPjNo: projectReceiveState.projectNo || ''
+      };
+      centralRow.centralKey = estimateCentralMakeKey?.(centralRow) || '';
+      estimateCentralPeriodRowToRequestDb(centralRow);
+    }
     renderProjectReceiveStatus?.();
     if (typeof registerPmScheduleProjectFromReceive === 'function') registerPmScheduleProjectFromReceive(projectReceiveState);
     if (document.getElementById('projectReceiveListBody')) renderProjectReceiveListView?.();
@@ -7169,6 +7207,44 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
     }, 120);
   });
 })();
+
+function syncProjectReceiveFromEstimateRequestRow(row = {}) {
+  if (!row) return;
+  const normalize = value => String(value || "").replace(/\s+/g, "").trim();
+  const rowProject = normalize(row.project);
+  const rowCompany = normalize(row.company);
+  const rowNo = normalize(row.dbPjNo || row.projectNo);
+  const matches = data => {
+    if (!data) return false;
+    const dataNo = normalize(data.projectNo || data.dbPjNo || data.pjNo);
+    if (rowNo && dataNo && rowNo === dataNo) return true;
+    return rowProject && rowCompany
+      && normalize(data.projectName) === rowProject
+      && normalize(data.client || data.company) === rowCompany;
+  };
+  const apply = data => {
+    if (!matches(data)) return false;
+    if (typeof projectReceiveApplyEstimateRequestLink === "function") {
+      projectReceiveApplyEstimateRequestLink(data, row);
+    } else {
+      if (row.unitWork) data.unitPrice = row.unitWork;
+      if (row.scope && typeof projectReceiveApplyLabelChecks === "function" && typeof projectReceiveDefaultData !== "undefined") {
+        data.scopes = projectReceiveApplyLabelChecks(row.scope, projectReceiveDefaultData.scopes);
+      }
+    }
+    return true;
+  };
+  let touched = false;
+  if (typeof projectReceiveState !== "undefined") touched = apply(projectReceiveState) || touched;
+  if (Array.isArray(projectReceiveCompletedProjects)) {
+    projectReceiveCompletedProjects.forEach(item => { touched = apply(item.data || item) || touched; });
+  }
+  if (touched) {
+    renderProjectReceiveDashboard?.();
+    renderProjectReceiveListView?.();
+  }
+}
+window.syncProjectReceiveFromEstimateRequestRow = syncProjectReceiveFromEstimateRequestRow;
 
 /* ========================================================================
    2026-06-01 견적서 4종 합계/금액 수식 재연결 패치
