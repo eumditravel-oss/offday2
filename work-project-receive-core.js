@@ -324,6 +324,76 @@ function ensureProjectReceiveScopeOptions() {
   });
 }
 
+
+function projectReceiveNormalizeLinkedValue(value) {
+  return String(value || "").replace(/\s+/g, "").trim();
+}
+
+function projectReceiveLinkedValuesFromBusinessTypes(data = {}) {
+  const selected = (Array.isArray(data.businessTypes) ? data.businessTypes : [])
+    .filter(item => typeof item === "string" ? item : item?.checked)
+    .map(item => typeof item === "string" ? item : item.label);
+  const text = selected.join(" ");
+  let unitWork = String(data.unitPrice || "").trim();
+  let bid = String(data.bid || data.businessNature || "").trim();
+
+  if (!unitWork) {
+    if (/설계가|설계예가|설계변경/.test(text)) unitWork = "설계예가";
+    else if (/정미견적/.test(text)) unitWork = "공내역서";
+    else if (/개산견적/.test(text)) unitWork = "개산견적";
+    else if (/기타/.test(text)) unitWork = "기타";
+  }
+
+  if (!bid) {
+    if (/본사\s*입찰|입찰/.test(text)) bid = "입찰";
+    else if (/본사\s*실행|현장\s*실행|실행/.test(text)) bid = "실행";
+    else if (/공사비\s*검증|검증/.test(text)) bid = "공사비검증";
+    else if (/클레임/.test(text)) bid = "클레임";
+    else if (/개산견적/.test(text)) bid = "개산견적";
+  }
+
+  return { unitWork, bid };
+}
+
+function projectReceiveBusinessTypesFromLinkedValues(unitWork = "", bid = "", fallbackText = "") {
+  const source = [unitWork, bid, fallbackText].filter(Boolean).join(" ");
+  return projectReceiveDefaultData.businessTypes.map(option => {
+    const label = option.label;
+    const normalized = projectReceiveNormalizeLinkedValue(source);
+    const checked = (label === "개산견적" && /개산견적/.test(source))
+      || (label === "정미견적" && /(정미견적|공내역서|비교내역서)/.test(source))
+      || (label === "설계가" && /(설계가|설계예가)/.test(source))
+      || (label === "설계변경" && /설계변경/.test(source))
+      || (label === "공사비 검증" && /(공사비\s*검증|공사비검증|검증)/.test(source))
+      || (label === "클레임" && /클레임/.test(source))
+      || (label === "본사 입찰" && /입찰/.test(source))
+      || (label === "본사 실행" && /실행/.test(source))
+      || (label === "현장 실행" && /현장실행/.test(normalized))
+      || (label === "기타" && /(기타|턴키)/.test(source));
+    return { ...option, checked: !!checked };
+  });
+}
+
+function projectReceiveApplyEstimateRequestLink(data = {}, row = {}) {
+  if (!data || !row) return data;
+  if (row.project) data.projectName = row.project;
+  if (row.company) data.client = row.company;
+  if (row.usage) data.usage = row.usage;
+  const unitWork = String(row.unitWork || row.estimateType || data.unitPrice || "").trim();
+  const bid = String(row.bid || row.startMode || "").trim();
+  data.unitPrice = unitWork || data.unitPrice || "";
+  data.businessTypes = projectReceiveBusinessTypesFromLinkedValues(unitWork, bid, [data.projectName, data.workContent, data.request].filter(Boolean).join(" "));
+  if (row.scope || row.workType) {
+    const linkedScope = typeof estimateRequestSanitizeWorkScope === "function"
+      ? estimateRequestSanitizeWorkScope(row.scope || row.workType || "")
+      : (row.scope || row.workType || "");
+    data.scopes = projectReceiveApplyLabelChecks(linkedScope, projectReceiveDefaultData.scopes);
+  }
+  data.linkedUnitWork = unitWork;
+  data.linkedBid = bid;
+  return data;
+}
+
 function getProjectReceiveScopeDisplayText(scope) {
   if (!scope?.checked) return "";
   const selectedChildren = (scope.children || []).filter(child => child.checked).map(child => child.label);
@@ -719,6 +789,9 @@ function syncProjectReceiveInputsToState() {
   projectReceiveState.floors = composeProjectReceiveFloors(projectReceiveState.basementFloors, projectReceiveState.groundFloors);
   projectReceiveState.bidDate = getProjectReceiveValue("receiveBidDate");
   projectReceiveState.unitPrice = getProjectReceiveValue("receiveUnitPrice");
+  const linkedProjectReceiveBusiness = projectReceiveLinkedValuesFromBusinessTypes(projectReceiveState);
+  projectReceiveState.linkedUnitWork = projectReceiveState.unitPrice || linkedProjectReceiveBusiness.unitWork || "";
+  projectReceiveState.linkedBid = linkedProjectReceiveBusiness.bid || "";
   projectReceiveState.pmTotal = getProjectReceiveValue("receivePmTotal");
   projectReceiveState.pmFinish = getProjectReceiveValue("receivePmFinish");
   projectReceiveState.pmStructure = getProjectReceiveValue("receivePmStructure");
@@ -924,8 +997,12 @@ function projectReceiveDataFromDbPjRow(row, sourceIndex = -1) {
   data.basementFloors = parsedFloors.basementFloors || "";
   data.groundFloors = parsedFloors.groundFloors || "";
   data.bidDate = projectReceiveFormatDbDate(projectReceiveDbCell(row, "입찰일") || projectReceiveDbCell(row, "입찰월"));
-  data.unitPrice = projectReceiveDbCell(row, "단가작업여부") || projectReceiveDbCell(row, "작업구분");
-  data.businessTypes = projectReceiveApplyLabelChecks(businessType || projectName, projectReceiveDefaultData.businessTypes);
+  const linkedUnitWork = projectReceiveDbCell(row, "단가작업여부") || projectReceiveDbCell(row, "작업구분");
+  const linkedBid = projectReceiveDbCell(row, "업무성격");
+  data.unitPrice = linkedUnitWork;
+  data.linkedUnitWork = linkedUnitWork;
+  data.linkedBid = linkedBid;
+  data.businessTypes = projectReceiveBusinessTypesFromLinkedValues(linkedUnitWork, linkedBid, businessType || projectName);
   data.scopes = projectReceiveApplyLabelChecks(`${workType} ${projectName}`, projectReceiveDefaultData.scopes);
   data.contacts = projectReceiveBuildContactsFromDbRow(row);
   data.webhardUrl = projectReceiveDbCell(row, "웹하드");
