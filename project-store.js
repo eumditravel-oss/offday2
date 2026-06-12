@@ -383,12 +383,12 @@
   function mergeEstimateConditions(projectUid){
     const p = state.projects[projectUid]; if(!p) return null;
     const ec = p.qaQc?.estimateConditions||{};
-    const parts = [ec.pm&&"[PM 작성]
-"+ec.pm, ec.worker&&"[작업자 작성]
-"+ec.worker].filter(Boolean);
-    ec.merged = parts.join("
-
-"); ec.mergedAt = now();
+    const parts = [
+      ec.pm && `[PM 작성]\n${ec.pm}`,
+      ec.worker && `[작업자 작성]\n${ec.worker}`
+    ].filter(Boolean);
+    ec.merged = parts.join("\n\n");
+    ec.mergedAt = now();
     addHistory(p,"견적조건 결합완료",""); save();emit();return clone(ec);
   }
 

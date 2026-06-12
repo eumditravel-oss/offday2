@@ -916,6 +916,11 @@ function selectPermissionRole(role) {
   if (button) button.setAttribute("aria-expanded", "false");
   showToast(`현재 권한 등급이 '${role}'로 설정되었습니다.`);
   if (typeof renderPmScheduleDashboard === "function") renderPmScheduleDashboard();
+  window.dispatchEvent(new CustomEvent("permissionRole:changed", { detail: { role } }));
+  if (typeof profitAnalysisModule !== "undefined") {
+    profitAnalysisModule.setRoleFromPermission?.(role);
+    if (document.getElementById("profitAnalysis")?.classList.contains("active")) profitAnalysisModule.render?.();
+  }
 }
 
 document.addEventListener("click", event => {

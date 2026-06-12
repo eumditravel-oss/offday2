@@ -425,7 +425,7 @@ window.pmRefreshLinkedEstimateProjects = pmRefreshLinkedEstimateProjects;
     if(!reason) return;
     centralProjectStore.escalateToVP(centralUid,{type:'납품일정변경',reason,requester:pm||'PM'});
     if(typeof showToast==='function') showToast('완료일정 변경 사유서가 부사장 결재 요청으로 등록되었습니다.');
-  }
+  };
 
 /* =========================================================
    2026-05-28 프로젝트 관리 상세 이력 보존 패치

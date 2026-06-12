@@ -46,6 +46,60 @@
     currentUserRole: '경영지원',
   };
 
+  function clone(data) {
+    try { return JSON.parse(JSON.stringify(data || {})); } catch (_) { return {}; }
+  }
+
+  function txt(value) {
+    return String(value ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  function toNumber(value) {
+    if (value && typeof value === 'object') value = value.amount ?? value.value ?? '';
+    const rich = parseRichValue(value);
+    if (rich) value = rich.amount ?? rich.value ?? '';
+    const normalized = String(value ?? '').replace(/[^0-9.-]/g, '');
+    const num = Number(normalized);
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  function parseRichValue(value) {
+    const raw = String(value ?? '');
+    if (!raw.startsWith('__ESTIMATE_DB_RICH__')) return null;
+    try { return JSON.parse(raw.replace(/^__ESTIMATE_DB_RICH__/, '')); } catch (_) { return null; }
+  }
+
+  function getTopbarPermissionRole() {
+    const label = document.getElementById('currentPermissionRole')?.textContent || '';
+    return label.replace(/^권한:\s*/, '').trim();
+  }
+
+  function mapPermissionRole(roleText = '') {
+    const role = txt(roleText);
+    if (!role) return _state.currentUserRole || 'Staff';
+    if (/CEO|COO|경영지원|본부장/i.test(role)) return '경영지원';
+    if (/QC/i.test(role)) return 'QC';
+    if (/실장|팀장/i.test(role)) return '실장';
+    if (/PM/i.test(role)) return 'PM';
+    return 'Staff';
+  }
+
+  function syncRoleFromPermission(roleText = getTopbarPermissionRole()) {
+    const mapped = mapPermissionRole(roleText);
+    if (ROLE_LEVEL[mapped]) _state.currentUserRole = mapped;
+    return _state.currentUserRole;
+  }
+
+  function getRolePermissions(role = _state.currentUserRole) {
+    return {
+      role,
+      canEdit: ['경영지원', '실장', 'PM'].includes(role),
+      canViewFull: ROLE_LEVEL[role] >= ROLE_LEVEL['실장'],
+      canViewUnitPrice: ['경영지원', '실장'].includes(role),
+      canManageUnitPrice: role === '경영지원',
+    };
+  }
+
   function getProjects() {
     return (window.centralProjectStore?.getProjects() || []);
   }
@@ -53,9 +107,8 @@
   function getAnalysis(projectUid) {
     const project = window.centralProjectStore?.getProject(projectUid);
     if (!project) return null;
-    return project.profitAnalysis
-      ? JSON.parse(JSON.stringify(project.profitAnalysis))
-      : createEmptyAnalysis(projectUid);
+    const analysis = project.profitAnalysis ? clone(project.profitAnalysis) : createEmptyAnalysis(projectUid);
+    return hydrateAnalysisFromProject(project, analysis);
   }
 
   function createEmptyAnalysis(projectUid) {
@@ -69,7 +122,160 @@
         members: [],
         otherCosts: Object.fromEntries(OTHER_CATEGORIES.map(c => [c, 0])),
       })),
+      sourceLinks: {},
       updatedAt: '',
+    };
+  }
+
+  function ensureAnalysisShape(analysis, projectUid) {
+    const next = analysis || createEmptyAnalysis(projectUid);
+    next.projectUid = next.projectUid || projectUid;
+    next.contractAmounts = { ...Object.fromEntries(ALL_CATEGORIES.map(c => [c, 0])), ...(next.contractAmounts || {}) };
+    next.rounds = Array.isArray(next.rounds) ? next.rounds : [];
+    for (let i = 0; i < 3; i += 1) {
+      next.rounds[i] = {
+        roundNo: i + 1,
+        startDate: '',
+        endDate: '',
+        members: [],
+        otherCosts: Object.fromEntries(OTHER_CATEGORIES.map(c => [c, 0])),
+        ...(next.rounds[i] || {})
+      };
+      next.rounds[i].members = Array.isArray(next.rounds[i].members) ? next.rounds[i].members : [];
+      next.rounds[i].otherCosts = { ...Object.fromEntries(OTHER_CATEGORIES.map(c => [c, 0])), ...(next.rounds[i].otherCosts || {}) };
+    }
+    next.sourceLinks = next.sourceLinks || {};
+    return next;
+  }
+
+  function hydrateAnalysisFromProject(project, analysis) {
+    const next = ensureAnalysisShape(analysis, project?.projectUid);
+    const db = getProjectDbSnapshot(project);
+    if (db.matched) {
+      const hasContract = Object.values(next.contractAmounts || {}).some(v => toNumber(v) > 0);
+      if (!hasContract && db.contractAmount > 0) {
+        next.contractAmounts[db.primaryCategory] = db.contractAmount;
+      }
+      const round = next.rounds[0];
+      const hasOtherCost = Object.values(round.otherCosts || {}).some(v => toNumber(v) > 0);
+      if (!hasOtherCost) {
+        Object.entries(db.otherCosts || {}).forEach(([key, value]) => {
+          if (OTHER_CATEGORIES.includes(key) && value > 0) round.otherCosts[key] = value;
+        });
+      }
+      next.sourceLinks.db = {
+        matched: true,
+        tab: 'DB관리 > PJ기성',
+        contractAmount: db.contractAmount,
+        primaryCategory: db.primaryCategory
+      };
+    }
+    seedMembersFromSchedule(project, next);
+    return next;
+  }
+
+  function getDbColumn(tab, row, names = []) {
+    if (!row || typeof getEstimateDbColumnIndexByHeader !== 'function') return '';
+    for (const name of names) {
+      const idx = getEstimateDbColumnIndexByHeader(tab, name);
+      if (idx >= 0 && txt(row[idx])) return row[idx];
+    }
+    return '';
+  }
+
+  function getProjectDbSnapshot(project = {}) {
+    const rows = window.estimateDbSheets?.progress?.rows || (typeof estimateDbSheets !== 'undefined' ? estimateDbSheets?.progress?.rows : []) || [];
+    const projectNo = txt(project.projectNo || project.receive?.projectNo || project.receive?.pjNo);
+    const projectName = txt(project.projectName || project.receive?.projectName || project.receive?.name);
+    const clientName = txt(project.clientName || project.receive?.client || project.receive?.clientName);
+    const matchedRow = rows.find(row => {
+      const rowNo = txt(getDbColumn('progress', row, ['PJ NO']));
+      const rowName = txt(getDbColumn('progress', row, ['PJ명', '프로젝트명']));
+      const rowClient = txt(getDbColumn('progress', row, ['업체명', '거래처명']));
+      return (projectNo && rowNo && rowNo === projectNo)
+        || (projectName && rowName && rowName === projectName)
+        || (projectName && clientName && rowName === projectName && rowClient === clientName);
+    });
+    if (!matchedRow) return { matched: false };
+    const primaryCategory = inferLaborCategory([
+      project.receive?.workType,
+      project.receive?.workScope,
+      project.receive?.category,
+      getDbColumn('progress', matchedRow, ['작업공종']),
+      project.projectName
+    ].join(' '));
+    return {
+      matched: true,
+      contractAmount: toNumber(getDbColumn('progress', matchedRow, ['계약금액'])),
+      primaryCategory,
+      otherCosts: {
+        '기계공사': toNumber(getDbColumn('progress', matchedRow, ['기계'])),
+        '전기공사': toNumber(getDbColumn('progress', matchedRow, ['전기'])),
+        '외주': toNumber(getDbColumn('progress', matchedRow, ['외주'])) + toNumber(getDbColumn('progress', matchedRow, ['송무', '기타'])),
+        'AS': 0
+      }
+    };
+  }
+
+  function inferLaborCategory(value) {
+    const raw = txt(value);
+    if (/마감|인테리어|철거|finish/i.test(raw)) return '마감/인테리어공사';
+    if (/토목|조경|civil/i.test(raw)) return '토목/조경공사';
+    return '구조공사';
+  }
+
+  function findEmployeeGrade(name) {
+    const target = txt(name);
+    const employee = (window.employees || []).find(emp => txt(emp.name) === target || txt(emp.koreanName) === target);
+    return GRADE_KEYS.includes(employee?.grade) ? employee.grade : '수석';
+  }
+
+  function normalizeDate(value) {
+    const raw = txt(value).replace(/[.]/g, '-');
+    const match = raw.match(/(20\d{2})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (!match) return '';
+    return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
+  }
+
+  function addDays(dateText, days) {
+    const d = new Date(`${dateText}T00:00:00`);
+    if (!Number.isFinite(d.getTime())) return dateText;
+    d.setDate(d.getDate() + Number(days || 0));
+    return d.toISOString().slice(0, 10);
+  }
+
+  function buildWorkDays(startDate, plannedDays) {
+    const days = {};
+    const count = Math.max(1, Math.min(62, Number(plannedDays) || 1));
+    for (let i = 0; i < count; i += 1) days[addDays(startDate, i)] = true;
+    return days;
+  }
+
+  function seedMembersFromSchedule(project, analysis) {
+    const round = analysis.rounds?.[0];
+    if (!round || (round.members || []).length) return;
+    const tasks = (project?.pmSchedule?.tasks || []).filter(task => txt(task.personName || task.assignee));
+    if (!tasks.length) return;
+    const starts = tasks.map(task => normalizeDate(task.startDate || task.plannedStartDate)).filter(Boolean);
+    const ends = tasks.map(task => normalizeDate(task.plannedEndDate)).filter(Boolean);
+    round.startDate = round.startDate || starts.sort()[0] || normalizeDate(project.pmSchedule?.startDate || project.receive?.startDate);
+    round.endDate = round.endDate || ends.sort().at(-1) || (round.startDate ? addDays(round.startDate, Math.max(...tasks.map(t => Number(t.plannedDays || t.days || 1))) - 1) : '');
+    round.members = tasks.map(task => {
+      const start = normalizeDate(task.startDate || task.plannedStartDate) || round.startDate;
+      const plannedDays = Math.max(1, Number(task.plannedDays || task.days || 1));
+      return {
+        memberUid: task.taskUid || `PM-${txt(task.personName)}-${start}`,
+        category: inferLaborCategory(task.category || task.dept || task.title),
+        grade: findEmployeeGrade(task.personName || task.assignee),
+        name: txt(task.personName || task.assignee),
+        workDays: start ? buildWorkDays(start, plannedDays) : {},
+        source: 'pmSchedule'
+      };
+    });
+    analysis.sourceLinks.pmSchedule = {
+      matched: true,
+      count: round.members.length,
+      tab: 'PM 배정 / 일정'
     };
   }
 
@@ -144,6 +350,7 @@
 .pa-badge { background:#1e3a5f; color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:.5px; }
 .pa-project-select { border:1px solid #d1d5db; border-radius:6px; padding:5px 10px; font-size:13px; background:#fff; min-width:220px; }
 .pa-header-actions { display:flex; gap:8px; }
+.pa-sync-chip { border:1px solid #bfdbfe; background:#eff6ff; color:#1e40af; border-radius:999px; padding:3px 9px; font-size:11px; font-weight:700; }
 .pa-btn { cursor:pointer; border:none; border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600; background:#1e3a5f; color:#fff; transition:.15s; }
 .pa-btn:hover { background:#2d5080; }
 .pa-btn-sm { padding:4px 10px; font-size:11px; }
@@ -226,6 +433,7 @@
   }
   function render(containerId) {
     injectStyles();
+    syncRoleFromPermission();
     const container = document.getElementById(containerId || 'profit-analysis-root');
     if (!container) return;
     const projects = getProjects();
@@ -240,36 +448,46 @@
     const unitPrices = getUnitPrices();
     const summary   = calcSummary(analysis, unitPrices);
     const currentProject = projects.find(p => p.projectUid === _state.currentProjectUid);
-    const canEdit = ROLE_LEVEL[_state.currentUserRole] >= ROLE_LEVEL['PM'];
-    const canViewFull = ROLE_LEVEL[_state.currentUserRole] >= ROLE_LEVEL['실장'];
+    const permissions = getRolePermissions();
     container.innerHTML = `
       ${renderRoleBar()}
       <div class="pa-wrap">
-        ${renderHeader(projects, currentProject)}
-        ${renderSummarySection(analysis, summary, unitPrices, canEdit)}
-        ${renderRoundSection(analysis, unitPrices, canEdit)}
+        ${renderHeader(projects, currentProject, analysis, permissions)}
+        ${renderSummarySection(analysis, summary, unitPrices, permissions)}
+        ${renderRoundSection(analysis, unitPrices, permissions)}
       </div>
     `;
-    _bindEvents(analysis, unitPrices, canEdit);
+    _bindEvents(analysis, unitPrices, permissions);
   }
 
   function renderRoleBar() {
     const role = _state.currentUserRole;
+    const rawRole = getTopbarPermissionRole() || role;
+    const permissions = getRolePermissions(role);
+    const mode = permissions.canManageUnitPrice
+      ? '전체 편집 · 단가 관리'
+      : permissions.canEdit
+        ? '프로젝트 편집'
+        : permissions.canViewFull
+          ? '전체 조회'
+          : '제한 조회';
     return `
       <div class="pa-role-bar">
-        <span>현재 권한:</span>
+        <span>상단 권한:</span>
+        <span class="pa-role-pill pa-role-${role}">${rawRole}</span>
+        <span>수지 권한:</span>
         <span class="pa-role-pill pa-role-${role}">${role}</span>
-        <span style="color:#92400e;">| 수지분석은 PM 이상 편집 가능 · 경영지원/실장은 전체 조회 가능</span>
-        <select id="pa-role-selector" style="margin-left:auto;font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid #fcd34d;">
-          ${Object.keys(ROLE_LEVEL).map(r =>
-            `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`
-          ).join('')}
-        </select>
+        <span style="color:#92400e;">| ${mode}</span>
       </div>
     `;
   }
 
-  function renderHeader(projects, currentProject) {
+  function renderHeader(projects, currentProject, analysis, permissions) {
+    const sync = analysis.sourceLinks || {};
+    const syncText = [
+      sync.db?.matched ? `DB 계약금액 ${fmtMoney(sync.db.contractAmount)}` : '',
+      sync.pmSchedule?.matched ? `PM일정 ${sync.pmSchedule.count}명` : ''
+    ].filter(Boolean).join(' · ');
     return `
       <div class="pa-header">
         <div class="pa-header-left">
@@ -281,16 +499,22 @@
                </option>`
             ).join('')}
           </select>
+          ${syncText ? `<span class="pa-sync-chip">${syncText}</span>` : ''}
         </div>
         <div class="pa-header-actions">
-          <button id="pa-unit-price-btn" class="pa-btn pa-btn-ghost pa-btn-sm">📋 직급단가 설정</button>
+          ${permissions.canViewUnitPrice ? `<button id="pa-unit-price-btn" class="pa-btn pa-btn-ghost pa-btn-sm">${permissions.canManageUnitPrice ? '직급단가 설정' : '직급단가 보기'}</button>` : ''}
         </div>
       </div>
     `;
   }
 
-  function renderSummarySection(analysis, summary, unitPrices, canEdit) {
-    const fmt = n => (n || n === 0) ? '₩ ' + Math.round(n).toLocaleString() : '-';
+  function fmtMoney(n) {
+    return (n || n === 0) ? '₩ ' + Math.round(n).toLocaleString() : '-';
+  }
+
+  function renderSummarySection(analysis, summary, unitPrices, permissions) {
+    const canEdit = permissions.canEdit;
+    const fmt = fmtMoney;
     const diff = summary.result;
     const resClass = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'zero';
     return `
@@ -338,13 +562,15 @@
             </tfoot>
           </table>
         </div>
-        ${renderUnitPriceBox(unitPrices)}
+        ${renderUnitPriceBox(unitPrices, permissions)}
       </div>
     `;
   }
 
-  function renderUnitPriceBox(unitPrices) {
+  function renderUnitPriceBox(unitPrices, permissions) {
+    if (!permissions.canViewUnitPrice) return '';
     const display = _state.unitPricesVisible ? 'block' : 'none';
+    const disabled = permissions.canManageUnitPrice ? '' : 'disabled';
     return `
       <div id="pa-unit-price-box" class="pa-unit-price-box" style="display:${display}">
         <div class="pa-unit-price-title">📋 직급별 일일 단가 (일일표시트 기준)</div>
@@ -355,18 +581,19 @@
               <input type="number" class="pa-unit-price-input"
                 data-grade="${g.key}"
                 value="${unitPrices[g.key] || ''}"
-                placeholder="₩ 단가 입력">
+                placeholder="₩ 단가 입력" ${disabled}>
             </div>
           `).join('')}
         </div>
         <div class="pa-unit-price-actions">
-          <button id="pa-save-unit-price" class="pa-btn">저장</button>
+          ${permissions.canManageUnitPrice ? '<button id="pa-save-unit-price" class="pa-btn">저장</button>' : ''}
           <button id="pa-close-unit-price" class="pa-btn pa-btn-ghost">닫기</button>
         </div>
       </div>
     `;
   }
-  function renderRoundSection(analysis, unitPrices, canEdit) {
+  function renderRoundSection(analysis, unitPrices, permissions) {
+    const canEdit = permissions.canEdit;
     const round = (analysis.rounds || [])[_state.currentRound - 1] || {};
     const { byCat } = calcRound(round, unitPrices);
     return `
@@ -447,11 +674,8 @@
     bodyHtml += `<tr class="total-row"><td colspan="4"><strong>${_state.currentRound}차 TOTAL</strong></td><td class="pa-amount-cell" id="pa-round-total"><strong>${fmt(total)}</strong></td><td colspan="${2 + dates.length + 1}"></td></tr>`;
     return `<div class="pa-calendar-wrap"><table class="pa-calendar-table"><thead><tr><th>NO</th><th class="pa-col-grade">직책</th><th class="pa-col-name">이름</th><th class="pa-col-price">단가</th><th class="pa-col-cost">비용</th><th class="pa-col-days">DAYS<br><small>직책</small></th><th class="pa-col-days">DAYS<br><small>개별</small></th>${dateHeaders}<th></th></tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
   }
-  function _bindEvents(analysis, unitPrices, canEdit) {
-    const roleSelector = document.getElementById('pa-role-selector');
-    if (roleSelector) {
-      roleSelector.addEventListener('change', e => { _state.currentUserRole = e.target.value; render(); });
-    }
+  function _bindEvents(analysis, unitPrices, permissions) {
+    const canEdit = permissions.canEdit;
     const projectSelect = document.getElementById('pa-project-select');
     if (projectSelect) {
       projectSelect.addEventListener('change', e => { _state.currentProjectUid = e.target.value; render(); });
@@ -472,7 +696,7 @@
       });
     }
     const saveUP = document.getElementById('pa-save-unit-price');
-    if (saveUP) {
+    if (saveUP && permissions.canManageUnitPrice) {
       saveUP.addEventListener('click', () => {
         const prices = {};
         document.querySelectorAll('.pa-unit-price-input').forEach(inp => {
@@ -650,6 +874,7 @@
     render,
     setProject: uid => { _state.currentProjectUid = uid; },
     setRole:    role => { _state.currentUserRole = role; },
+    setRoleFromPermission: role => { syncRoleFromPermission(role); },
     getState:   () => Object.assign({}, _state),
   };
 
@@ -664,5 +889,11 @@
   } else {
     _autoMount();
   }
+
+  window.addEventListener('permissionRole:changed', event => {
+    syncRoleFromPermission(event.detail?.role);
+    const el = document.getElementById('profit-analysis-root');
+    if (el) render('profit-analysis-root');
+  });
 
 })();

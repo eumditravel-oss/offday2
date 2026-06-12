@@ -2187,6 +2187,7 @@ function injectPmGanttCss() {
 window.togglePmGanttView = togglePmGanttView;
 window.pmGanttNav = pmGanttNav;
 window.renderPmGanttCalendar = renderPmGanttCalendar;
+window.injectPmGanttToggleButton = injectPmGanttToggleButton;
 // ─── End Gantt Calendar ───────────────────────────────────────────────────────
 
 })();
