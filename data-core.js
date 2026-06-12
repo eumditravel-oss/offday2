@@ -1,41 +1,41 @@
 const gradeOrder = {
-  "대표": 1,
-  "부사장": 2,
-  "상무": 3,
-  "센터장": 4,
-  "본부장": 5,
-  "실장": 6,
-  "팀장": 3,
-  "수석": 8,
-  "매니저": 9,
-  "사원": 10,
-  "입사예정": 99
+  "ëí": 1,
+  "ë¶ì¬ì¥": 2,
+  "ìë¬´": 3,
+  "ì¼í°ì¥": 4,
+  "ë³¸ë¶ì¥": 5,
+  "ì¤ì¥": 6,
+  "íì¥": 3,
+  "ìì": 8,
+  "ë§¤ëì ": 9,
+  "ì¬ì": 10,
+  "ìì¬ìì ": 99
 };
 
 const pageMeta = {
-  ledger: ["조직관리 · 사원대장", "조직관리 내 사원대장 화면입니다. 직원 목록, 회사, 부서, 재직상태, 직급순 정렬을 관리합니다."],
-  card: ["조직관리 · 인사카드", "경영지원에서 직원 상세 인사정보, 인사변동, 반복정보, 자산, 증명서를 관리합니다."],
-  analysis: ["조직관리 · 직원증감분석", "입사, 퇴사, 계약만료, 근속연수, 총 경력을 분석합니다."],
-  approval: ["조직관리 · 승인관리", "증명서, 첨부파일, 인사정보 변경 승인 요청을 관리합니다."],
-  orgEdit: ["조직관리 · 조직도관리", "CON-COST와 Viet QS 조직도, 직원 연결, 표시순서, 상위/하위 조직을 관리합니다."],
-  cost: ["비용보고", "비용보고 대분류 화면입니다. 현재는 메뉴 구조 우선 구성 상태입니다."],
-  asset: ["자산대장", "자산대장 대분류 화면입니다. 자산 등록, 배정, 반납 상태를 관리합니다."],
-  admin: ["관리자 설정", "권한, 정책, 표시 순서, 캘린더 연동 기준을 관리합니다."],
-  code: ["관리자 설정 · 코드관리", "관리자 설정 하위 메뉴로 코드값과 표시 순서를 관리합니다."]
+  ledger: ["ì¡°ì§ê´ë¦¬ Â· ì¬ìëì¥", "ì¡°ì§ê´ë¦¬ ë´ ì¬ìëì¥ íë©´ìëë¤. ì§ì ëª©ë¡, íì¬, ë¶ì, ì¬ì§ìí, ì§ê¸ì ì ë ¬ì ê´ë¦¬í©ëë¤."],
+  card: ["ì¡°ì§ê´ë¦¬ Â· ì¸ì¬ì¹´ë", "ê²½ìì§ììì ì§ì ìì¸ ì¸ì¬ì ë³´, ì¸ì¬ë³ë, ë°ë³µì ë³´, ìì°, ì¦ëªìë¥¼ ê´ë¦¬í©ëë¤."],
+  analysis: ["ì¡°ì§ê´ë¦¬ Â· ì§ìì¦ê°ë¶ì", "ìì¬, í´ì¬, ê³ì½ë§ë£, ê·¼ìì°ì, ì´ ê²½ë ¥ì ë¶ìí©ëë¤."],
+  approval: ["ì¡°ì§ê´ë¦¬ Â· ì¹ì¸ê´ë¦¬", "ì¦ëªì, ì²¨ë¶íì¼, ì¸ì¬ì ë³´ ë³ê²½ ì¹ì¸ ìì²­ì ê´ë¦¬í©ëë¤."],
+  orgEdit: ["ì¡°ì§ê´ë¦¬ Â· ì¡°ì§ëê´ë¦¬", "CON-COSTì Viet QS ì¡°ì§ë, ì§ì ì°ê²°, íììì, ìì/íì ì¡°ì§ì ê´ë¦¬í©ëë¤."],
+  cost: ["ë¹ì©ë³´ê³ ", "ë¹ì©ë³´ê³  ëë¶ë¥ íë©´ìëë¤. íì¬ë ë©ë´ êµ¬ì¡° ì°ì  êµ¬ì± ìíìëë¤."],
+  asset: ["ìì°ëì¥", "ìì°ëì¥ ëë¶ë¥ íë©´ìëë¤. ìì° ë±ë¡, ë°°ì , ë°ë© ìíë¥¼ ê´ë¦¬í©ëë¤."],
+  admin: ["ê´ë¦¬ì ì¤ì ", "ê¶í, ì ì±, íì ìì, ìºë¦°ë ì°ë ê¸°ì¤ì ê´ë¦¬í©ëë¤."],
+  code: ["ê´ë¦¬ì ì¤ì  Â· ì½ëê´ë¦¬", "ê´ë¦¬ì ì¤ì  íì ë©ë´ë¡ ì½ëê°ê³¼ íì ììë¥¼ ê´ë¦¬í©ëë¤."]
 };
 
 const employees = [
   {
     empNo: "EMP-2018-001",
-    name: "박용진",
+    name: "ë°ì©ì§",
     localName: "",
     koreanName: "",
     id: "yjpark",
     company: "CON-COST",
-    dept: "BIM파트",
-    grade: "수석",
-    position: "파트 담당",
-    status: "재직",
+    dept: "BIMíí¸",
+    grade: "ìì",
+    position: "íí¸ ë´ë¹",
+    status: "ì¬ì§",
     join: "2018-04-01",
     endDate: "",
     eval: "A",
@@ -47,39 +47,39 @@ const employees = [
     nationalId: "990301-1111111",
     birthday: "1992-02-23",
     wedding: "",
-    nationality: "대한민국",
-    workplace: "서울 본사",
-    address: "서울특별시 강북구",
+    nationality: "ëíë¯¼êµ­",
+    workplace: "ìì¸ ë³¸ì¬",
+    address: "ìì¸í¹ë³ì ê°ë¶êµ¬",
     emergency: "010-0000-0000",
     externalCareerMonths: 24,
-    usedLeave: "7일",
-    otTotal: "18시간",
-    mainOtProject: "A-101 BIM 검토",
-    orgPath: "경영지원 > BIM파트",
-    reportLine: "PM → GM → 본부장",
-    pmRole: "사용",
-    multiDept: "개발지원 TF",
+    usedLeave: "7ì¼",
+    otTotal: "18ìê°",
+    mainOtProject: "A-101 BIM ê²í ",
+    orgPath: "ê²½ìì§ì > BIMíí¸",
+    reportLine: "PM â GM â ë³¸ë¶ì¥",
+    pmRole: "ì¬ì©",
+    multiDept: "ê°ë°ì§ì TF",
     audit: {
-      basic: "등록자: 경영지원 / 최종수정자: 박용진 / 최종수정일: 2026-04-28 / 수정항목: 휴대폰",
-      detail: "등록자: 경영지원 / 최종수정자: 경영지원 / 최종수정일: 2026-04-20 / 수정항목: 신분증번호"
+      basic: "ë±ë¡ì: ê²½ìì§ì / ìµì¢ìì ì: ë°ì©ì§ / ìµì¢ìì ì¼: 2026-04-28 / ìì í­ëª©: í´ëí°",
+      detail: "ë±ë¡ì: ê²½ìì§ì / ìµì¢ìì ì: ê²½ìì§ì / ìµì¢ìì ì¼: 2026-04-20 / ìì í­ëª©: ì ë¶ì¦ë²í¸"
     },
     histories: {
-      join: [{ type: "입사", before: "-", after: "재직", date: "2018-04-01", reason: "신규 입사", manager: "경영지원" }],
+      join: [{ type: "ìì¬", before: "-", after: "ì¬ì§", date: "2018-04-01", reason: "ì ê· ìì¬", manager: "ê²½ìì§ì" }],
       org: [
-        { type: "부서", before: "구조팀", after: "BIM파트", date: "2026-04-01", reason: "조직개편", manager: "경영지원" },
-        { type: "직급", before: "선임", after: "수석", date: "2025-01-01", reason: "정기승급", manager: "경영지원" }
+        { type: "ë¶ì", before: "êµ¬ì¡°í", after: "BIMíí¸", date: "2026-04-01", reason: "ì¡°ì§ê°í¸", manager: "ê²½ìì§ì" },
+        { type: "ì§ê¸", before: "ì ì", after: "ìì", date: "2025-01-01", reason: "ì ê¸°ì¹ê¸", manager: "ê²½ìì§ì" }
       ],
-      leave: [{ type: "병가", before: "정상근무", after: "병가 3일", date: "2024-06-10", reason: "진단서 제출", manager: "경영지원" }]
+      leave: [{ type: "ë³ê°", before: "ì ìê·¼ë¬´", after: "ë³ê° 3ì¼", date: "2024-06-10", reason: "ì§ë¨ì ì ì¶", manager: "ê²½ìì§ì" }]
     },
     repeat: [
-      { type: "학력", content: "대학교 / 전공명", start: "2011-03-01", end: "2015-02-28", period: "4년", file: "졸업증명서.pdf", note: "졸업" },
-      { type: "경력", content: "이전 회사 구조팀", start: "2015-03-01", end: "2017-02-28", period: "2년", file: "-", note: "외부경력" }
+      { type: "íë ¥", content: "ëíêµ / ì ê³µëª", start: "2011-03-01", end: "2015-02-28", period: "4ë", file: "ì¡¸ìì¦ëªì.pdf", note: "ì¡¸ì" },
+      { type: "ê²½ë ¥", content: "ì´ì  íì¬ êµ¬ì¡°í", start: "2015-03-01", end: "2017-02-28", period: "2ë", file: "-", note: "ì¸ë¶ê²½ë ¥" }
     ],
     worklogs: [
-      { date: "2026-04-10", type: "야근", project: "A-101 BIM 검토", time: "3시간", reason: "납품 전 QC", approver: "PM" }
+      { date: "2026-04-10", type: "ì¼ê·¼", project: "A-101 BIM ê²í ", time: "3ìê°", reason: "ë©í ì  QC", approver: "PM" }
     ],
     files: [
-      { type: "근로계약서", name: "contract_park.pdf", date: "2026-01-01", status: "승인완료" }
+      { type: "ê·¼ë¡ê³ì½ì", name: "contract_park.pdf", date: "2026-01-01", status: "ì¹ì¸ìë£" }
     ]
   }
 ];
@@ -90,31 +90,31 @@ function createOrgEmployee(empNo, name, company, dept, grade, position, koreanNa
     empNo, name, localName, koreanName,
     id: empNo.toLowerCase().replaceAll("-", "_"),
     company, dept, grade, position: position || grade,
-    status: "재직", join: "2026-04-01", endDate: "", eval: "-", project: 0,
+    status: "ì¬ì§", join: "2026-04-01", endDate: "", eval: "-", project: 0,
     email: `${empNo.toLowerCase().replaceAll("-", "_")}@${company === "Viet QS" ? "vietqs.local" : "con-cost.local"}`,
     phoneCountry: company === "Viet QS" ? "VN" : "KR",
     phone: company === "Viet QS" ? "0900-000-000" : "010-0000-0000",
     idCountry: company === "Viet QS" ? "VN" : "KR",
     nationalId: "", birthday: "", wedding: "",
-    nationality: company === "Viet QS" ? "베트남" : "대한민국",
-    workplace: company === "Viet QS" ? "베트남 지사" : "서울 본사",
+    nationality: company === "Viet QS" ? "ë² í¸ë¨" : "ëíë¯¼êµ­",
+    workplace: company === "Viet QS" ? "ë² í¸ë¨ ì§ì¬" : "ìì¸ ë³¸ì¬",
     address: "", emergency: "", externalCareerMonths: 0, usedLeave: "-", otTotal: "-", mainOtProject: "-",
-    orgPath: `${company} > ${dept}`, reportLine: "조직도 기준", pmRole: "미사용", multiDept: "-",
-    audit: { basic: "더미 인사카드 / 조직도 초기 세팅", detail: "더미 인사카드 / 상세정보 미입력" },
-    histories: { join: [{ type: "초기등록", before: "-", after: "재직", date: "2026-04-28", reason: "조직도 일괄 반영", manager: "경영지원" }], org: [], leave: [] },
+    orgPath: `${company} > ${dept}`, reportLine: "ì¡°ì§ë ê¸°ì¤", pmRole: "ë¯¸ì¬ì©", multiDept: "-",
+    audit: { basic: "ëë¯¸ ì¸ì¬ì¹´ë / ì¡°ì§ë ì´ê¸° ì¸í", detail: "ëë¯¸ ì¸ì¬ì¹´ë / ìì¸ì ë³´ ë¯¸ìë ¥" },
+    histories: { join: [{ type: "ì´ê¸°ë±ë¡", before: "-", after: "ì¬ì§", date: "2026-04-28", reason: "ì¡°ì§ë ì¼ê´ ë°ì", manager: "ê²½ìì§ì" }], org: [], leave: [] },
     repeat: [], worklogs: [], files: []
   };
 }
 
-const orgEmployeeSeed = [["CC-001", "이서진", "CON-COST", "경영지원본부", "상무", "상무", "", ""], ["CC-002", "강동균", "CON-COST", "경영지원본부", "실장", "실장", "", ""], ["CC-003", "김영은", "CON-COST", "경영지원본부", "책임", "책임", "", ""], ["CC-004", "김태영", "CON-COST", "경영지원본부", "선임", "선임", "", ""], ["CC-005", "현예은", "CON-COST", "경영지원본부", "선임", "선임", "", ""], ["CC-008", "장범선", "CON-COST", "QC", "실장", "실장", "", ""], ["CC-009", "조한빈", "CON-COST", "QC", "실장", "실장", "", ""], ["CC-010", "최영배", "CON-COST", "기술본부", "본부장", "본부장", "", ""], ["CC-011", "김재현", "CON-COST", "마감", "수석", "수석", "", ""], ["CC-012", "성대용", "CON-COST", "마감", "수석", "수석", "", ""], ["CC-013", "양한규", "CON-COST", "마감", "수석", "수석", "", ""], ["CC-014", "원종수", "CON-COST", "마감", "수석", "수석", "", ""], ["CC-015", "송영길", "CON-COST", "마감", "수석", "수석", "", ""], ["CC-016", "이은지", "CON-COST", "마감", "책임", "책임", "", ""], ["CC-017", "남은주", "CON-COST", "마감", "책임", "책임", "", ""], ["CC-018", "송치영", "CON-COST", "마감", "책임", "책임", "", ""], ["CC-019", "임승주", "CON-COST", "마감", "선임", "선임", "", ""], ["CC-020", "박가림", "CON-COST", "마감", "선임", "선임", "", ""], ["CC-021", "임창열", "CON-COST", "마감", "선임", "선임", "", ""], ["CC-022", "김수겸", "CON-COST", "마감", "프로", "프로", "", ""], ["CC-023", "신동현", "CON-COST", "구조/토목 조경", "팀장", "팀장", "", ""], ["CC-024", "김채원", "CON-COST", "구조/토목 조경", "수석", "수석", "", ""], ["CC-025", "이정철", "CON-COST", "구조/토목 조경", "수석", "수석", "", ""], ["CC-026", "박소현", "CON-COST", "구조/토목 조경", "책임", "책임", "", ""], ["CC-027", "서화원", "CON-COST", "구조/토목 조경", "책임", "책임", "", ""], ["CC-028", "양진혁", "CON-COST", "구조/토목 조경", "프로", "프로", "", ""], ["CC-029", "이성희", "CON-COST", "BIM파트", "파트장", "파트장", "", ""], ["CC-030", "오승균", "CON-COST", "토목·조경파트", "파트장", "파트장", "", ""], ["CC-031", "이경훈", "CON-COST", "클레임센터", "센터장", "센터장", "", ""], ["CC-032", "김현수", "CON-COST", "클레임센터", "기술이사", "기술이사", "", ""], ["CC-033", "우상진", "CON-COST", "클레임센터", "기술이사", "기술이사", "", ""], ["VQS-001", "Hyun Dong Myung", "Viet QS", "경영진", "CEO", "CEO", "현동명", "Hyun Dong Myung"], ["VQS-002", "Lee Won Hee", "Viet QS", "경영진", "Executive Vice President", "Executive Vice President", "이원희", "Lee Won Hee"], ["VQS-003", "Lan Phuong", "Viet QS", "Management Support", "General Manager", "General Manager", "프엉", "Lan Phuong"], ["VQS-004", "Thanh Tuyen", "Viet QS", "Management Support", "Staff", "Staff", "뚜엔", "Thanh Tuyen"], ["VQS-005", "Yen Phuong", "Viet QS", "Management Support", "Staff", "Staff", "프엉", "Yen Phuong"], ["VQS-006", "Van Dung", "Viet QS", "Internal 1", "Team Leader", "Team Leader", "융", "Van Dung"], ["VQS-007", "Huyen Thu", "Viet QS", "Internal 1", "Team Leader", "Team Leader", "투", "Huyen Thu"], ["VQS-009", "Dong Phuong", "Viet QS", "Internal 1", "Staff", "Staff", "동 프엉", "Dong Phuong"], ["VQS-010", "Quang Truong", "Viet QS", "Internal 1", "Staff", "Staff", "쯔엉", "Quang Truong"], ["VQS-012", "Thanh Xuan", "Viet QS", "Internal 2", "Asst. Team Leader", "Asst. Team Leader", "수언", "Thanh Xuan"], ["VQS-013", "Kha Ai", "Viet QS", "Internal 2", "Staff", "Staff", "카 아이", "Kha Ai"], ["VQS-014", "Van Da", "Viet QS", "Internal 2", "Staff", "Staff", "따", "Van Da"], ["VQS-015", "Kim Tuyen", "Viet QS", "Internal 2", "Staff", "Staff", "김 뚜엔", "Kim Tuyen"], ["VQS-016", "Phuoc Nguyen", "Viet QS", "Internal 2", "Staff", "Staff", "응우옌", "Phuoc Nguyen"], ["VQS-017", "Dinh Phi", "Viet QS", "Internal 3", "Team Leader", "Team Leader", "피", "Dinh Phi"], ["VQS-018", "Minh Triet", "Viet QS", "Internal 3", "Asst. Team Leader", "Asst. Team Leader", "찌앳", "Minh Triet"], ["VQS-019", "Doan Nhut", "Viet QS", "Internal 3", "Staff", "Staff", "민느엇", "Doan Nhut"], ["VQS-020", "Minh Hai", "Viet QS", "Internal 3", "Staff", "Staff", "하이", "Minh Hai"], ["VQS-021", "Minh Kiet", "Viet QS", "Internal 3", "Staff", "Staff", "끼엣", "Minh Kiet"], ["VQS-022", "Van Tung", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "뚱", "Van Tung"], ["VQS-023", "Minh Luan", "Viet QS", "Partition&Opening", "Asst. Team Leader", "Asst. Team Leader", "루언", "Minh Luan"], ["VQS-024", "Tan Phat", "Viet QS", "Partition&Opening", "Staff", "Staff", "팓", "Tan Phat"], ["VQS-025", "Kim Thoa", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "김 톼", "Kim Thoa"], ["VQS-026", "Thi Thao", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "타오", "Thi Thao"], ["VQS-027", "Nhut Duy", "Viet QS", "External", "Team Leader", "Team Leader", "유이", "Nhut Duy"], ["VQS-028", "Kieu Duyen", "Viet QS", "External", "Asst. Team Leader", "Asst. Team Leader", "유엔", "Kieu Duyen"], ["VQS-029", "Quoc Bao", "Viet QS", "External", "Staff", "Staff", "빠오", "Quoc Bao"], ["VQS-030", "Ngoc Anh", "Viet QS", "External", "Staff", "Staff", "응옥 안", "Ngoc Anh"], ["VQS-032", "Anh Tuan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "뚜언", "Anh Tuan"], ["VQS-033", "Danh Xuan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "짠 수언", "Danh Xuan"], ["VQS-034", "Van Toan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "또안", "Van Toan"], ["VQS-035", "Thien Ngan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "티엔 응언", "Thien Ngan"], ["VQS-036", "Huu Chau", "Viet QS", "Vertical", "Asst. Team Leader", "Asst. Team Leader", "쩌우", "Huu Chau"], ["VQS-037", "Minh Tu", "Viet QS", "Vertical", "Asst. Team Leader", "Asst. Team Leader", "뚜", "Minh Tu"], ["VQS-038", "Thanh Phong", "Viet QS", "Vertical", "Team Leader", "Team Leader", "퐁", "Thanh Phong"], ["VQS-039", "Dinh Nam", "Viet QS", "Vertical", "Asst. Team Leader", "Asst. Team Leader", "남", "Dinh Nam"], ["VQS-040", "Cam Tu", "Viet QS", "Vertical", "Staff", "Staff", "깜 뚜", "Cam Tu"], ["VQS-042", "Quoc Hung", "Viet QS", "Vertical", "Staff", "Staff", "흥", "Quoc Hung"], ["VQS-043", "Khanh Duy", "Viet QS", "Vertical", "Staff", "Staff", "칸 유이", "Khanh Duy"], ["VQS-044", "Ngoc Thoa", "Viet QS", "Vertical", "Staff", "Staff", "옥 톼", "Ngoc Thoa"], ["VQS-045", "Thu Thuy", "Viet QS", "Vertical", "Staff", "Staff", "투 튀", "Thu Thuy"], ["VQS-046", "Quoc Huy", "Viet QS", "Vertical", "Staff", "Staff", "휘", "Quoc Huy"], ["VQS-047", "Ngoc Mai", "Viet QS", "Vertical", "Staff", "Staff", "마이", "Ngoc Mai"], ["VQS-049", "Huu Thai", "Viet QS", "Horizon / Foundation", "Team Leader", "Team Leader", "휴 타이", "Huu Thai"], ["VQS-050", "Nhut Cuong", "Viet QS", "Horizon / Foundation", "Asst. Team Leader", "Asst. Team Leader", "늣끄엉", "Nhut Cuong"], ["VQS-051", "Sy Dan", "Viet QS", "Horizon / Foundation", "Team Leader", "Team Leader", "단", "Sy Dan"], ["VQS-052", "Thanh Phuong", "Viet QS", "Development", "Team Leader", "Team Leader", "탄 프엉", "Thanh Phuong"], ["VQS-053", "Dinh Van", "Viet QS", "External", "Staff", "Staff", "딘 반", "Dinh Van"], ["VQS-054", "Manh Cuong", "Viet QS", "Development", "Staff", "Staff", "끄엉", "Manh Cuong"], ["VQS-055", "Phuong Loan", "Viet QS", "Internal 1", "Asst. Team Leader", "Asst. Team Leader", "로안", "Phuong Loan"], ["VQS-056", "Thi Anh", "Viet QS", "Partition&Opening", "Staff", "Staff", "티 안", "Thi Anh"], ["VQS-057", "Thuy Tram", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "짬", "Thuy Tram"], ["VQS-058", "Trong Nguyen", "Viet QS", "Partition&Opening", "Staff", "Staff", "응우옌", "Trong Nguyen"], ["VQS-059", "Hong Ngan", "Viet QS", "Partition&Opening", "Staff", "Staff", "홍 응언", "Hong Ngan"], ["VQS-060", "Minh Chau", "Viet QS", "Partition&Opening", "Staff", "Staff", "민 쩌우", "Minh Chau"], ["VQS-061", "Quynh Giao", "Viet QS", "External", "Staff", "Staff", "자오", "Quynh Giao"], ["VQS-062", "Minh Tuyen", "Viet QS", "External", "Staff", "Staff", "민 뚜엔", "Minh Tuyen"], ["VQS-063", "Quang Tri", "Viet QS", "Civil", "Staff", "Staff", "찌", "Quang Tri"], ["VQS-064", "Trung Dan", "Viet QS", "Civil", "Staff", "Staff", "쫑 단", "Trung Dan"], ["VQS-065", "Ngoc Bich", "Viet QS", "Horizon / Foundation", "Staff", "Staff", "빗", "Ngoc Bich"]];
+const orgEmployeeSeed = [["CC-001", "ì´ìì§", "CON-COST", "ê²½ìì§ìë³¸ë¶", "ìë¬´", "ìë¬´", "", ""], ["CC-002", "ê°ëê· ", "CON-COST", "ê²½ìì§ìë³¸ë¶", "ì¤ì¥", "ì¤ì¥", "", ""], ["CC-003", "ê¹ìì", "CON-COST", "ê²½ìì§ìë³¸ë¶", "ì±ì", "ì±ì", "", ""], ["CC-004", "ê¹íì", "CON-COST", "ê²½ìì§ìë³¸ë¶", "ì ì", "ì ì", "", ""], ["CC-005", "íìì", "CON-COST", "ê²½ìì§ìë³¸ë¶", "ì ì", "ì ì", "", ""], ["CC-008", "ì¥ë²ì ", "CON-COST", "QC", "ì¤ì¥", "ì¤ì¥", "", ""], ["CC-009", "ì¡°íë¹", "CON-COST", "QC", "ì¤ì¥", "ì¤ì¥", "", ""], ["CC-010", "ìµìë°°", "CON-COST", "ê¸°ì ë³¸ë¶", "ë³¸ë¶ì¥", "ë³¸ë¶ì¥", "", ""], ["CC-011", "ê¹ì¬í", "CON-COST", "ë§ê°", "ìì", "ìì", "", ""], ["CC-012", "ì±ëì©", "CON-COST", "ë§ê°", "ìì", "ìì", "", ""], ["CC-013", "ìíê·", "CON-COST", "ë§ê°", "ìì", "ìì", "", ""], ["CC-014", "ìì¢ì", "CON-COST", "ë§ê°", "ìì", "ìì", "", ""], ["CC-015", "ì¡ìê¸¸", "CON-COST", "ë§ê°", "ìì", "ìì", "", ""], ["CC-016", "ì´ìì§", "CON-COST", "ë§ê°", "ì±ì", "ì±ì", "", ""], ["CC-017", "ë¨ìì£¼", "CON-COST", "ë§ê°", "ì±ì", "ì±ì", "", ""], ["CC-018", "ì¡ì¹ì", "CON-COST", "ë§ê°", "ì±ì", "ì±ì", "", ""], ["CC-019", "ìì¹ì£¼", "CON-COST", "ë§ê°", "ì ì", "ì ì", "", ""], ["CC-020", "ë°ê°ë¦¼", "CON-COST", "ë§ê°", "ì ì", "ì ì", "", ""], ["CC-021", "ìì°½ì´", "CON-COST", "ë§ê°", "ì ì", "ì ì", "", ""], ["CC-022", "ê¹ìê²¸", "CON-COST", "ë§ê°", "íë¡", "íë¡", "", ""], ["CC-023", "ì ëí", "CON-COST", "êµ¬ì¡°/í ëª© ì¡°ê²½", "íì¥", "íì¥", "", ""], ["CC-024", "ê¹ì±ì", "CON-COST", "êµ¬ì¡°/í ëª© ì¡°ê²½", "ìì", "ìì", "", ""], ["CC-025", "ì´ì ì² ", "CON-COST", "êµ¬ì¡°/í ëª© ì¡°ê²½", "ìì", "ìì", "", ""], ["CC-026", "ë°ìí", "CON-COST", "êµ¬ì¡°/í ëª© ì¡°ê²½", "ì±ì", "ì±ì", "", ""], ["CC-027", "ìíì", "CON-COST", "êµ¬ì¡°/í ëª© ì¡°ê²½", "ì±ì", "ì±ì", "", ""], ["CC-028", "ìì§í", "CON-COST", "êµ¬ì¡°/í ëª© ì¡°ê²½", "íë¡", "íë¡", "", ""], ["CC-029", "ì´ì±í¬", "CON-COST", "BIMíí¸", "íí¸ì¥", "íí¸ì¥", "", ""], ["CC-030", "ì¤ì¹ê· ", "CON-COST", "í ëª©Â·ì¡°ê²½íí¸", "íí¸ì¥", "íí¸ì¥", "", ""], ["CC-031", "ì´ê²½í", "CON-COST", "í´ë ìì¼í°", "ì¼í°ì¥", "ì¼í°ì¥", "", ""], ["CC-032", "ê¹íì", "CON-COST", "í´ë ìì¼í°", "ê¸°ì ì´ì¬", "ê¸°ì ì´ì¬", "", ""], ["CC-033", "ì°ìì§", "CON-COST", "í´ë ìì¼í°", "ê¸°ì ì´ì¬", "ê¸°ì ì´ì¬", "", ""], ["VQS-001", "Hyun Dong Myung", "Viet QS", "ê²½ìì§", "CEO", "CEO", "íëëª", "Hyun Dong Myung"], ["VQS-002", "Lee Won Hee", "Viet QS", "ê²½ìì§", "Executive Vice President", "Executive Vice President", "ì´ìí¬", "Lee Won Hee"], ["VQS-003", "Lan Phuong", "Viet QS", "Management Support", "General Manager", "General Manager", "íì", "Lan Phuong"], ["VQS-004", "Thanh Tuyen", "Viet QS", "Management Support", "Staff", "Staff", "ëì", "Thanh Tuyen"], ["VQS-005", "Yen Phuong", "Viet QS", "Management Support", "Staff", "Staff", "íì", "Yen Phuong"], ["VQS-006", "Van Dung", "Viet QS", "Internal 1", "Team Leader", "Team Leader", "ìµ", "Van Dung"], ["VQS-007", "Huyen Thu", "Viet QS", "Internal 1", "Team Leader", "Team Leader", "í¬", "Huyen Thu"], ["VQS-009", "Dong Phuong", "Viet QS", "Internal 1", "Staff", "Staff", "ë íì", "Dong Phuong"], ["VQS-010", "Quang Truong", "Viet QS", "Internal 1", "Staff", "Staff", "ì¯ì", "Quang Truong"], ["VQS-012", "Thanh Xuan", "Viet QS", "Internal 2", "Asst. Team Leader", "Asst. Team Leader", "ìì¸", "Thanh Xuan"], ["VQS-013", "Kha Ai", "Viet QS", "Internal 2", "Staff", "Staff", "ì¹´ ìì´", "Kha Ai"], ["VQS-014", "Van Da", "Viet QS", "Internal 2", "Staff", "Staff", "ë°", "Van Da"], ["VQS-015", "Kim Tuyen", "Viet QS", "Internal 2", "Staff", "Staff", "ê¹ ëì", "Kim Tuyen"], ["VQS-016", "Phuoc Nguyen", "Viet QS", "Internal 2", "Staff", "Staff", "ìì°ì", "Phuoc Nguyen"], ["VQS-017", "Dinh Phi", "Viet QS", "Internal 3", "Team Leader", "Team Leader", "í¼", "Dinh Phi"], ["VQS-018", "Minh Triet", "Viet QS", "Internal 3", "Asst. Team Leader", "Asst. Team Leader", "ì°ì³", "Minh Triet"], ["VQS-019", "Doan Nhut", "Viet QS", "Internal 3", "Staff", "Staff", "ë¯¼ëì", "Doan Nhut"], ["VQS-020", "Minh Hai", "Viet QS", "Internal 3", "Staff", "Staff", "íì´", "Minh Hai"], ["VQS-021", "Minh Kiet", "Viet QS", "Internal 3", "Staff", "Staff", "ë¼ì£", "Minh Kiet"], ["VQS-022", "Van Tung", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "ë±", "Van Tung"], ["VQS-023", "Minh Luan", "Viet QS", "Partition&Opening", "Asst. Team Leader", "Asst. Team Leader", "ë£¨ì¸", "Minh Luan"], ["VQS-024", "Tan Phat", "Viet QS", "Partition&Opening", "Staff", "Staff", "í", "Tan Phat"], ["VQS-025", "Kim Thoa", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "ê¹ í¼", "Kim Thoa"], ["VQS-026", "Thi Thao", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "íì¤", "Thi Thao"], ["VQS-027", "Nhut Duy", "Viet QS", "External", "Team Leader", "Team Leader", "ì ì´", "Nhut Duy"], ["VQS-028", "Kieu Duyen", "Viet QS", "External", "Asst. Team Leader", "Asst. Team Leader", "ì ì", "Kieu Duyen"], ["VQS-029", "Quoc Bao", "Viet QS", "External", "Staff", "Staff", "ë¹ ì¤", "Quoc Bao"], ["VQS-030", "Ngoc Anh", "Viet QS", "External", "Staff", "Staff", "ìì¥ ì", "Ngoc Anh"], ["VQS-032", "Anh Tuan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "ëì¸", "Anh Tuan"], ["VQS-033", "Danh Xuan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "ì§  ìì¸", "Danh Xuan"], ["VQS-034", "Van Toan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "ëì", "Van Toan"], ["VQS-035", "Thien Ngan", "Viet QS", "Vertical", "Team Leader", "Team Leader", "í°ì ìì¸", "Thien Ngan"], ["VQS-036", "Huu Chau", "Viet QS", "Vertical", "Asst. Team Leader", "Asst. Team Leader", "ì©ì°", "Huu Chau"], ["VQS-037", "Minh Tu", "Viet QS", "Vertical", "Asst. Team Leader", "Asst. Team Leader", "ë", "Minh Tu"], ["VQS-038", "Thanh Phong", "Viet QS", "Vertical", "Team Leader", "Team Leader", "í", "Thanh Phong"], ["VQS-039", "Dinh Nam", "Viet QS", "Vertical", "Asst. Team Leader", "Asst. Team Leader", "ë¨", "Dinh Nam"], ["VQS-040", "Cam Tu", "Viet QS", "Vertical", "Staff", "Staff", "ê¹ ë", "Cam Tu"], ["VQS-042", "Quoc Hung", "Viet QS", "Vertical", "Staff", "Staff", "í¥", "Quoc Hung"], ["VQS-043", "Khanh Duy", "Viet QS", "Vertical", "Staff", "Staff", "ì¹¸ ì ì´", "Khanh Duy"], ["VQS-044", "Ngoc Thoa", "Viet QS", "Vertical", "Staff", "Staff", "ì¥ í¼", "Ngoc Thoa"], ["VQS-045", "Thu Thuy", "Viet QS", "Vertical", "Staff", "Staff", "í¬ í", "Thu Thuy"], ["VQS-046", "Quoc Huy", "Viet QS", "Vertical", "Staff", "Staff", "í", "Quoc Huy"], ["VQS-047", "Ngoc Mai", "Viet QS", "Vertical", "Staff", "Staff", "ë§ì´", "Ngoc Mai"], ["VQS-049", "Huu Thai", "Viet QS", "Horizon / Foundation", "Team Leader", "Team Leader", "í´ íì´", "Huu Thai"], ["VQS-050", "Nhut Cuong", "Viet QS", "Horizon / Foundation", "Asst. Team Leader", "Asst. Team Leader", "ë£ëì", "Nhut Cuong"], ["VQS-051", "Sy Dan", "Viet QS", "Horizon / Foundation", "Team Leader", "Team Leader", "ë¨", "Sy Dan"], ["VQS-052", "Thanh Phuong", "Viet QS", "Development", "Team Leader", "Team Leader", "í íì", "Thanh Phuong"], ["VQS-053", "Dinh Van", "Viet QS", "External", "Staff", "Staff", "ë ë°", "Dinh Van"], ["VQS-054", "Manh Cuong", "Viet QS", "Development", "Staff", "Staff", "ëì", "Manh Cuong"], ["VQS-055", "Phuong Loan", "Viet QS", "Internal 1", "Asst. Team Leader", "Asst. Team Leader", "ë¡ì", "Phuong Loan"], ["VQS-056", "Thi Anh", "Viet QS", "Partition&Opening", "Staff", "Staff", "í° ì", "Thi Anh"], ["VQS-057", "Thuy Tram", "Viet QS", "Partition&Opening", "Team Leader", "Team Leader", "ì§¬", "Thuy Tram"], ["VQS-058", "Trong Nguyen", "Viet QS", "Partition&Opening", "Staff", "Staff", "ìì°ì", "Trong Nguyen"], ["VQS-059", "Hong Ngan", "Viet QS", "Partition&Opening", "Staff", "Staff", "í ìì¸", "Hong Ngan"], ["VQS-060", "Minh Chau", "Viet QS", "Partition&Opening", "Staff", "Staff", "ë¯¼ ì©ì°", "Minh Chau"], ["VQS-061", "Quynh Giao", "Viet QS", "External", "Staff", "Staff", "ìì¤", "Quynh Giao"], ["VQS-062", "Minh Tuyen", "Viet QS", "External", "Staff", "Staff", "ë¯¼ ëì", "Minh Tuyen"], ["VQS-063", "Quang Tri", "Viet QS", "Civil", "Staff", "Staff", "ì°", "Quang Tri"], ["VQS-064", "Trung Dan", "Viet QS", "Civil", "Staff", "Staff", "ì« ë¨", "Trung Dan"], ["VQS-065", "Ngoc Bich", "Viet QS", "Horizon / Foundation", "Staff", "Staff", "ë¹", "Ngoc Bich"]];
 
 orgEmployeeSeed.forEach(row => {
   if (!employees.some(emp => emp.empNo === row[0])) employees.push(createOrgEmployee(...row));
 });
 
 const vietQsOrgDeptCorrections = {
-  "VQS-001": "경영진",
-  "VQS-002": "경영진",
+  "VQS-001": "ê²½ìì§",
+  "VQS-002": "ê²½ìì§",
   "VQS-003": "Management Support",
   "VQS-004": "Management Support",
   "VQS-005": "Management Support",
@@ -183,196 +183,196 @@ employees.forEach(emp => {
 
 
 const assetLedger = [
-  { category: "노트북", name: "LG Gram", code: "AS-2026-001", owner: "박용진", date: "2026-01-05", status: "사용중" },
-  { category: "라이선스", name: "AutoCAD", code: "LIC-2026-018", owner: "박용진", date: "2026-01-01", status: "사용중" },
-  { category: "모니터", name: "Dell 27", code: "MN-2025-012", owner: "Nguyen Van An", date: "2025-03-02", status: "사용중" },
-  { category: "노트북", name: "Lenovo ThinkPad", code: "AS-2024-021", owner: "Tran Thi Mai", date: "2024-01-10", status: "반납대기" }
+  { category: "ë¸í¸ë¶", name: "LG Gram", code: "AS-2026-001", owner: "ë°ì©ì§", date: "2026-01-05", status: "ì¬ì©ì¤" },
+  { category: "ë¼ì´ì ì¤", name: "AutoCAD", code: "LIC-2026-018", owner: "ë°ì©ì§", date: "2026-01-01", status: "ì¬ì©ì¤" },
+  { category: "ëª¨ëí°", name: "Dell 27", code: "MN-2025-012", owner: "Nguyen Van An", date: "2025-03-02", status: "ì¬ì©ì¤" },
+  { category: "ë¸í¸ë¶", name: "Lenovo ThinkPad", code: "AS-2024-021", owner: "Tran Thi Mai", date: "2024-01-10", status: "ë°ë©ëê¸°" }
 ];
 
 
 const orgStructures = {
   "CON-COST": {
-    "title": "㈜컨코스트 조직도",
+    "title": "ãì»¨ì½ì¤í¸ ì¡°ì§ë",
     "date": "2026. 05.12",
     "root": {
-      "title": "대표이사",
+      "title": "ëíì´ì¬",
       "memberColumns": 1,
       "children": [
         {
-          "title": "부사장",
+          "title": "ë¶ì¬ì¥",
           "memberColumns": 6,
           "children": [
             {
-              "title": "경영지원본부",
+              "title": "ê²½ìì§ìë³¸ë¶",
               "memberColumns": 1,
               "children": [
                 {
-                  "title": "상무",
+                  "title": "ìë¬´",
                   "memberColumns": 1,
                   "children": [],
                   "employeeId": "CC-001"
                 },
                 {
-                  "title": "실장",
+                  "title": "ì¤ì¥",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-002"
                 },
                 {
-                  "title": "책임",
+                  "title": "ì±ì",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-003"
                 },
                 {
-                  "title": "선임",
+                  "title": "ì ì",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-004"
                 },
                 {
-                  "title": "선임",
+                  "title": "ì ì",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-005"
                 }
               ],
-              "displayName": "경영지원본부",
+              "displayName": "ê²½ìì§ìë³¸ë¶",
               "nodeType": "department",
               "className": "secondary"
             },
             {
-              "title": "개발 T/F",
+              "title": "ê°ë° T/F",
               "memberColumns": 1,
               "children": [
                 {
-                  "title": "개발",
+                  "title": "ê°ë°",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "EMP-2018-001"
                 },
                 {
-                  "title": "개발",
+                  "title": "ê°ë°",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "VQS-052"
                 },
                 {
-                  "title": "개발",
+                  "title": "ê°ë°",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "VQS-054"
                 }
               ],
-              "displayName": "개발 T/F",
+              "displayName": "ê°ë° T/F",
               "nodeType": "department",
               "className": "secondary"
             },
             {
-              "title": "QC팀",
+              "title": "QCí",
               "memberColumns": 1,
               "children": [
                 {
-                  "title": "실장",
+                  "title": "ì¤ì¥",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-008"
                 },
                 {
-                  "title": "실장",
+                  "title": "ì¤ì¥",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-009"
                 }
               ],
-              "displayName": "QC팀",
+              "displayName": "QCí",
               "nodeType": "department",
               "className": "secondary"
             },
             {
-              "title": "기술본부",
+              "title": "ê¸°ì ë³¸ë¶",
               "memberColumns": 1,
               "children": [
                 {
-                  "title": "본부장",
+                  "title": "ë³¸ë¶ì¥",
                   "memberColumns": 2,
                   "children": [
                     {
-                      "title": "마감팀",
+                      "title": "ë§ê°í",
                       "memberColumns": 3,
                       "children": [
                         {
-                          "title": "팀장",
+                          "title": "íì¥",
                           "memberColumns": 3,
                           "children": [
                             {
-                              "title": "수석",
+                              "title": "ìì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-011"
                             },
                             {
-                              "title": "수석",
+                              "title": "ìì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-012"
                             },
                             {
-                              "title": "수석",
+                              "title": "ìì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-013"
                             },
                             {
-                              "title": "수석",
+                              "title": "ìì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-014"
                             },
                             {
-                              "title": "수석",
+                              "title": "ìì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-015"
                             },
                             {
-                              "title": "책임",
+                              "title": "ì±ì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-016"
                             },
                             {
-                              "title": "책임",
+                              "title": "ì±ì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-017"
                             },
                             {
-                              "title": "책임",
+                              "title": "ì±ì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-018"
                             },
                             {
-                              "title": "선임",
+                              "title": "ì ì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-019"
                             },
                             {
-                              "title": "선임",
+                              "title": "ì ì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-020"
                             },
                             {
-                              "title": "선임",
+                              "title": "ì ì",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-021"
                             },
                             {
-                              "title": "프로",
+                              "title": "íë¡",
                               "memberColumns": 3,
                               "children": [],
                               "employeeId": "CC-022"
@@ -381,25 +381,25 @@ const orgStructures = {
                           "employeeId": "CC-009"
                         }
                       ],
-                      "displayName": "마감팀",
+                      "displayName": "ë§ê°í",
                       "nodeType": "department",
                       "className": "secondary"
                     },
                     {
-                      "title": "구조/토목ㆍ조경파트",
+                      "title": "êµ¬ì¡°/í ëª©ãì¡°ê²½íí¸",
                       "memberColumns": 3,
                       "children": [
                         {
-                          "title": "구조/토목 조정",
+                          "title": "êµ¬ì¡°/í ëª© ì¡°ì ",
                           "memberColumns": 3,
                           "children": [
                             {
-                              "title": "BIM파트",
-                              "displayName": "BIM파트",
+                              "title": "BIMíí¸",
+                              "displayName": "BIMíí¸",
                               "memberColumns": 1,
                               "children": [
                                 {
-                                  "title": "파트장",
+                                  "title": "íí¸ì¥",
                                   "memberColumns": 1,
                                   "children": [],
                                   "employeeId": "CC-029"
@@ -409,38 +409,38 @@ const orgStructures = {
                               "className": "secondary"
                             },
                             {
-                              "title": "구조팀",
-                              "displayName": "구조팀",
+                              "title": "êµ¬ì¡°í",
+                              "displayName": "êµ¬ì¡°í",
                               "memberColumns": 1,
                               "children": [
                                 {
-                                  "title": "구조 팀장",
+                                  "title": "êµ¬ì¡° íì¥",
                                   "memberColumns": 1,
                                   "children": [
                                     {
-                                      "title": "수석",
+                                      "title": "ìì",
                                       "memberColumns": 1,
                                       "children": [],
                                       "employeeId": "CC-024"
                                     },
                                     {
-                                      "title": "수석",
+                                      "title": "ìì",
                                       "memberColumns": 1,
                                       "children": [
                                         {
-                                          "title": "책임",
+                                          "title": "ì±ì",
                                           "memberColumns": 1,
                                           "children": [],
                                           "employeeId": "CC-026"
                                         },
                                         {
-                                          "title": "책임",
+                                          "title": "ì±ì",
                                           "memberColumns": 1,
                                           "children": [],
                                           "employeeId": "CC-027"
                                         },
                                         {
-                                          "title": "프로",
+                                          "title": "íë¡",
                                           "memberColumns": 1,
                                           "children": [],
                                           "employeeId": "CC-028"
@@ -456,12 +456,12 @@ const orgStructures = {
                               "className": "secondary"
                             },
                             {
-                              "title": "토목ㆍ조경파트",
-                              "displayName": "토목ㆍ조경파트",
+                              "title": "í ëª©ãì¡°ê²½íí¸",
+                              "displayName": "í ëª©ãì¡°ê²½íí¸",
                               "memberColumns": 1,
                               "children": [
                                 {
-                                  "title": "파트장",
+                                  "title": "íí¸ì¥",
                                   "memberColumns": 1,
                                   "children": [],
                                   "employeeId": "CC-030"
@@ -474,7 +474,7 @@ const orgStructures = {
                           "employeeId": "CC-008"
                         }
                       ],
-                      "displayName": "구조/토목ㆍ조경파트",
+                      "displayName": "êµ¬ì¡°/í ëª©ãì¡°ê²½íí¸",
                       "nodeType": "department",
                       "className": "secondary"
                     }
@@ -482,54 +482,54 @@ const orgStructures = {
                   "employeeId": "CC-010"
                 }
               ],
-              "displayName": "기술본부",
+              "displayName": "ê¸°ì ë³¸ë¶",
               "nodeType": "department",
               "className": "secondary"
             },
             {
-              "title": "클레임센터",
+              "title": "í´ë ìì¼í°",
               "memberColumns": 1,
               "children": [
                 {
-                  "title": "센터장",
+                  "title": "ì¼í°ì¥",
                   "memberColumns": 1,
                   "children": [],
                   "employeeId": "CC-031"
                 },
                 {
-                  "title": "본부장",
+                  "title": "ë³¸ë¶ì¥",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-010"
                 },
                 {
-                  "title": "실장",
+                  "title": "ì¤ì¥",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-008"
                 },
                 {
-                  "title": "기술이사",
+                  "title": "ê¸°ì ì´ì¬",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-032"
                 },
                 {
-                  "title": "기술이사",
+                  "title": "ê¸°ì ì´ì¬",
                   "memberColumns": 3,
                   "children": [],
                   "employeeId": "CC-033"
                 }
               ],
-              "displayName": "클레임센터",
+              "displayName": "í´ë ìì¼í°",
               "nodeType": "department",
               "className": "secondary"
             },
             {
-              "title": "공사비닷컴",
+              "title": "ê³µì¬ë¹ë·ì»´",
               "memberColumns": 3,
               "children": [],
-              "displayName": "공사비닷컴",
+              "displayName": "ê³µì¬ë¹ë·ì»´",
               "nodeType": "department",
               "className": "secondary"
             }
@@ -554,7 +554,7 @@ const orgStructures = {
         "memberColumns": 6,
         "children": [
           {
-            "title": "부서명",
+            "title": "ë¶ìëª",
             "memberColumns": 1,
             "children": [
               {
@@ -586,7 +586,7 @@ const orgStructures = {
             "memberColumns": 3,
             "children": [
               {
-                "title": "부서명",
+                "title": "ë¶ìëª",
                 "memberColumns": 1,
                 "children": [
                   {
@@ -594,7 +594,7 @@ const orgStructures = {
                     "memberColumns": 5,
                     "children": [
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 1,
                         "children": [
                           {
@@ -627,7 +627,7 @@ const orgStructures = {
                         "className": "secondary"
                       },
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 1,
                         "children": [
                           {
@@ -666,7 +666,7 @@ const orgStructures = {
                         "className": "secondary"
                       },
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 1,
                         "children": [
                           {
@@ -705,7 +705,7 @@ const orgStructures = {
                         "className": "secondary"
                       },
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 2,
                         "children": [
                           {
@@ -768,7 +768,7 @@ const orgStructures = {
                         "className": "secondary"
                       },
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 1,
                         "children": [
                           {
@@ -827,7 +827,7 @@ const orgStructures = {
                 "className": "secondary"
               },
               {
-                "title": "부서명",
+                "title": "ë¶ìëª",
                 "memberColumns": 1,
                 "children": [
                   {
@@ -835,7 +835,7 @@ const orgStructures = {
                     "memberColumns": 3,
                     "children": [
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 3,
                         "children": [
                           {
@@ -904,7 +904,7 @@ const orgStructures = {
                         "className": "secondary"
                       },
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 3,
                         "children": [
                           {
@@ -956,7 +956,7 @@ const orgStructures = {
                             "employeeId": "VQS-065"
                           },
                           {
-                            "title": "신규 조직",
+                            "title": "ì ê· ì¡°ì§",
                             "memberColumns": 3,
                             "children": [],
                             "employeeId": "VQS-047"
@@ -979,7 +979,7 @@ const orgStructures = {
                         "className": "secondary"
                       },
                       {
-                        "title": "부서명",
+                        "title": "ë¶ìëª",
                         "memberColumns": 1,
                         "children": [
                           {
@@ -1003,7 +1003,7 @@ const orgStructures = {
                     "employeeId": "CC-008"
                   }
                 ],
-                "displayName": "StructureㆍCivil",
+                "displayName": "StructureãCivil",
                 "nodeType": "department",
                 "className": "secondary"
               }
@@ -1011,7 +1011,7 @@ const orgStructures = {
             "employeeId": "CC-010"
           },
           {
-            "title": "부서명",
+            "title": "ë¶ìëª",
             "memberColumns": 1,
             "children": [
               {
@@ -1047,26 +1047,26 @@ let currentOrgEditorCompany = "CON-COST";
 let selectedOrgNodePath = "0";
 
 const permissionRows = [
-  ["기본정보", "보기/수정", "보기/수정", "보기", "본인 수정", "일부 공개"],
-  ["상세정보", "보기/수정", "보기/수정", "일부 보기", "본인 수정", "비공개"],
-  ["평가/연봉", "보기", "보기", "비공개", "비공개", "비공개"],
-  ["주민등록번호/신분증", "보기", "보기/수정", "비공개", "비공개", "비공개"],
-  ["계좌정보", "보기", "보기/수정", "비공개", "비공개", "비공개"],
-  ["인사변동이력", "보기", "보기/수정", "보기", "일부 보기", "비공개"],
-  ["자산관리", "보기", "보기/수정", "보기", "본인 보기", "비공개"]
+  ["ê¸°ë³¸ì ë³´", "ë³´ê¸°/ìì ", "ë³´ê¸°/ìì ", "ë³´ê¸°", "ë³¸ì¸ ìì ", "ì¼ë¶ ê³µê°"],
+  ["ìì¸ì ë³´", "ë³´ê¸°/ìì ", "ë³´ê¸°/ìì ", "ì¼ë¶ ë³´ê¸°", "ë³¸ì¸ ìì ", "ë¹ê³µê°"],
+  ["íê°/ì°ë´", "ë³´ê¸°", "ë³´ê¸°", "ë¹ê³µê°", "ë¹ê³µê°", "ë¹ê³µê°"],
+  ["ì£¼ë¯¼ë±ë¡ë²í¸/ì ë¶ì¦", "ë³´ê¸°", "ë³´ê¸°/ìì ", "ë¹ê³µê°", "ë¹ê³µê°", "ë¹ê³µê°"],
+  ["ê³ì¢ì ë³´", "ë³´ê¸°", "ë³´ê¸°/ìì ", "ë¹ê³µê°", "ë¹ê³µê°", "ë¹ê³µê°"],
+  ["ì¸ì¬ë³ëì´ë ¥", "ë³´ê¸°", "ë³´ê¸°/ìì ", "ë³´ê¸°", "ì¼ë¶ ë³´ê¸°", "ë¹ê³µê°"],
+  ["ìì°ê´ë¦¬", "ë³´ê¸°", "ë³´ê¸°/ìì ", "ë³´ê¸°", "ë³¸ì¸ ë³´ê¸°", "ë¹ê³µê°"]
 ];
 
 const orderRows = [
-  ["직급", "G001", "대표", 1, "사용"],
-  ["직급", "G002", "부사장", 2, "사용"],
-  ["직급", "G003", "상무", 3, "사용"],
-  ["직급", "G004", "센터장", 4, "사용"],
-  ["직급", "G005", "본부장", 5, "사용"],
-  ["직급", "G006", "실장", 6, "사용"],
-  ["직급", "G007", "팀장", 7, "사용"],
-  ["직급", "G008", "수석", 8, "사용"],
-  ["직책", "R001", "PM", 20, "사용"],
-  ["직책", "R002", "파트장", 21, "사용"]
+  ["ì§ê¸", "G001", "ëí", 1, "ì¬ì©"],
+  ["ì§ê¸", "G002", "ë¶ì¬ì¥", 2, "ì¬ì©"],
+  ["ì§ê¸", "G003", "ìë¬´", 3, "ì¬ì©"],
+  ["ì§ê¸", "G004", "ì¼í°ì¥", 4, "ì¬ì©"],
+  ["ì§ê¸", "G005", "ë³¸ë¶ì¥", 5, "ì¬ì©"],
+  ["ì§ê¸", "G006", "ì¤ì¥", 6, "ì¬ì©"],
+  ["ì§ê¸", "G007", "íì¥", 7, "ì¬ì©"],
+  ["ì§ê¸", "G008", "ìì", 8, "ì¬ì©"],
+  ["ì§ì±", "R001", "PM", 20, "ì¬ì©"],
+  ["ì§ì±", "R002", "íí¸ì¥", 21, "ì¬ì©"]
 ];
 
 let selectedEmployeeId = employees[0].empNo;
@@ -1092,13 +1092,13 @@ function displayName(emp) {
 
 function statusBadge(status) {
   const map = {
-    "입사예정": "blue",
-    "재직": "green",
-    "휴직": "yellow",
-    "퇴사예정": "yellow",
-    "퇴사": "gray",
-    "계약만료": "gray",
-    "입사취소": "red"
+    "ìì¬ìì ": "blue",
+    "ì¬ì§": "green",
+    "í´ì§": "yellow",
+    "í´ì¬ìì ": "yellow",
+    "í´ì¬": "gray",
+    "ê³ì½ë§ë£": "gray",
+    "ìì¬ì·¨ì": "red"
   };
   return `<span class="badge ${map[status] || "gray"}">${status}</span>`;
 }
@@ -1118,7 +1118,23 @@ function monthDiff(start, end = new Date()) {
 function formatMonths(months) {
   const y = Math.floor(months / 12);
   const m = months % 12;
-  if (y === 0) return `${m}개월`;
-  if (m === 0) return `${y}년`;
-  return `${y}년 ${m}개월`;
+  if (y === 0) return `${m}ê°ì`;
+  if (m === 0) return `${y}ë`;
+  return `${y}ë ${m}ê°ì`;
 }
+
+
+// 전역 저장/반영 확인 팝업
+window.showToast = function(message, type) {
+  var el = document.getElementById('toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+  var icon = (type === 'error') ? '\u2715' : '\u2713';
+  var color = (type === 'error') ? '#ef4444' : '#10b981';
+  el.innerHTML = '<div style="font-size:32px;margin-bottom:10px;color:'+color+'">'+icon+'<\/div><div>'+message+'<\/div>';
+  el.className = 'toast active' + (type === 'error' ? ' toast-error' : '');
+  var bd = document.getElementById('toast-backdrop');
+  if (!bd) { bd = document.createElement('div'); bd.id = 'toast-backdrop'; bd.className = 'toast-backdrop'; document.body.insertBefore(bd, el); }
+  bd.style.display = 'block';
+  clearTimeout(el._tt);
+  el._tt = setTimeout(function() { el.classList.remove('active'); bd.style.display = 'none'; }, 2000);
+};
