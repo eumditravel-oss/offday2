@@ -16,16 +16,16 @@ function ensureEstimateDbPjDeliveryPlanColumnsOnce() {
   const sheet = estimateDbSheets.pj;
   if (!sheet?.headerRows?.[0]) return;
   const cols = getEstimateDbLeafColumns(sheet);
-  const hasFirstPlan = cols.some(v => normalizeEstimateDbText(v) === "1차납품예정일");
+  const hasFirstPlan = cols.some(v => normalizeEstimateDbText(v) === "1ì°¨ë©íìì ì¼");
   if (!hasFirstPlan) {
-    const firstActualIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "1차납품일자");
-    if (firstActualIndex >= 0) insertEstimateDbColumn(sheet, firstActualIndex, "1차납품예정일", "", "1차 납품 예정일 입력란");
+    const firstActualIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "1ì°¨ë©íì¼ì");
+    if (firstActualIndex >= 0) insertEstimateDbColumn(sheet, firstActualIndex, "1ì°¨ë©íìì ì¼", "", "1ì°¨ ë©í ìì ì¼ ìë ¥ë");
   }
   const colsAfterFirst = getEstimateDbLeafColumns(sheet);
-  const hasSecondPlan = colsAfterFirst.some(v => normalizeEstimateDbText(v) === "2차납품예정일");
+  const hasSecondPlan = colsAfterFirst.some(v => normalizeEstimateDbText(v) === "2ì°¨ë©íìì ì¼");
   if (!hasSecondPlan) {
-    const secondActualIndex = colsAfterFirst.findIndex(v => normalizeEstimateDbText(v) === "2차납품일자");
-    if (secondActualIndex >= 0) insertEstimateDbColumn(sheet, secondActualIndex, "2차납품예정일", "", "2차 납품 예정일 입력란");
+    const secondActualIndex = colsAfterFirst.findIndex(v => normalizeEstimateDbText(v) === "2ì°¨ë©íì¼ì");
+    if (secondActualIndex >= 0) insertEstimateDbColumn(sheet, secondActualIndex, "2ì°¨ë©íìì ì¼", "", "2ì°¨ ë©í ìì ì¼ ìë ¥ë");
   }
 }
 
@@ -35,8 +35,8 @@ function ensureEstimateDbProgressActualDeliveryColumnsOnce() {
   if (!sheet?.headerRows?.length) return;
   const topRow = sheet.headerRows[0] || [];
   const leafCols = getEstimateDbLeafColumns(sheet);
-  const desiredLeaves = ["1차납품", "2차납품", "3차납품"];
-  const requestText = "실제 납품일 입력란: 260601 입력 시 26년6월1일 형식으로 저장";
+  const desiredLeaves = ["1ì°¨ë©í", "2ì°¨ë©í", "3ì°¨ë©í"];
+  const requestText = "ì¤ì  ë©íì¼ ìë ¥ë: 260601 ìë ¥ ì 26ë6ì1ì¼ íìì¼ë¡ ì ì¥";
 
   const groupAt = (index) => {
     let current = "";
@@ -46,18 +46,18 @@ function ensureEstimateDbProgressActualDeliveryColumnsOnce() {
     }
     return current;
   };
-  const hasActualLeaf = (leaf) => leafCols.some((col, index) => normalizeEstimateDbText(col) === leaf && normalizeEstimateDbText(groupAt(index)).includes("실제납품일"));
+  const hasActualLeaf = (leaf) => leafCols.some((col, index) => normalizeEstimateDbText(col) === leaf && normalizeEstimateDbText(groupAt(index)).includes("ì¤ì ë©íì¼"));
   if (desiredLeaves.every(hasActualLeaf)) return;
 
   let targetIndex = -1;
   for (let i = 0; i < leafCols.length; i += 1) {
-    if (normalizeEstimateDbText(groupAt(i)).includes("납품예정일") && normalizeEstimateDbText(leafCols[i]) === "3차납품") {
+    if (normalizeEstimateDbText(groupAt(i)).includes("ë©íìì ì¼") && normalizeEstimateDbText(leafCols[i]) === "3ì°¨ë©í") {
       targetIndex = i + 1;
       break;
     }
   }
   if (targetIndex < 0) {
-    targetIndex = leafCols.findIndex(col => normalizeEstimateDbText(col).includes("세금계산서"));
+    targetIndex = leafCols.findIndex(col => normalizeEstimateDbText(col).includes("ì¸ê¸ê³ì°ì"));
     if (targetIndex < 0) targetIndex = leafCols.length;
   }
 
@@ -66,7 +66,7 @@ function ensureEstimateDbProgressActualDeliveryColumnsOnce() {
     const insertAt = targetIndex + offset;
     (sheet.headerRows || []).forEach((row, headerRowIndex) => {
       if (!Array.isArray(row)) return;
-      row.splice(insertAt, 0, headerRowIndex === 0 ? (offset === 0 ? "실제납품일" : "") : leaf);
+      row.splice(insertAt, 0, headerRowIndex === 0 ? (offset === 0 ? "ì¤ì ë©íì¼" : "") : leaf);
     });
     if (Array.isArray(sheet.requestRow)) sheet.requestRow.splice(insertAt, 0, requestText);
     (sheet.rows || []).forEach(row => {
@@ -79,20 +79,20 @@ function ensureEstimateDbProgressAccountInfoColumnOnce() {
   const sheet = estimateDbSheets?.progress;
   if (!sheet?.headerRows?.length) return;
   const cols = getEstimateDbLeafColumns(sheet);
-  const currentIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "계좌정보");
-  const conditionIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "기성조건");
-  const estimateDateIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "견적서일자");
+  const currentIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "ê³ì¢ì ë³´");
+  const conditionIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "ê¸°ì±ì¡°ê±´");
+  const estimateDateIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "ê²¬ì ìì¼ì");
   const targetIndex = conditionIndex >= 0 ? conditionIndex + 1 : (estimateDateIndex >= 0 ? estimateDateIndex : cols.length);
 
   if (currentIndex >= 0) {
     if (currentIndex !== targetIndex) {
       (sheet.headerRows || []).forEach(row => {
         const [cell] = row.splice(currentIndex, 1);
-        row.splice(targetIndex, 0, cell || "계좌정보");
+        row.splice(targetIndex, 0, cell || "ê³ì¢ì ë³´");
       });
       if (Array.isArray(sheet.requestRow)) {
         const [cell] = sheet.requestRow.splice(currentIndex, 1);
-        sheet.requestRow.splice(targetIndex, 0, cell || "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리");
+        sheet.requestRow.splice(targetIndex, 0, cell || "Enter í¤ë¡ ê³ì¢ì ë³´ ìë ¥ì°½ì ì´ì´ ìíëª/ê³ì¢ë²í¸ë¥¼ ì¬ë¬ ê° ê´ë¦¬");
       }
       (sheet.rows || []).forEach(row => {
         const [cell] = row.splice(currentIndex, 1);
@@ -100,24 +100,24 @@ function ensureEstimateDbProgressAccountInfoColumnOnce() {
       });
     }
     (sheet.headerRows || []).forEach((row, headerRowIndex) => {
-      if (Array.isArray(row)) row[targetIndex] = headerRowIndex === 0 ? "계좌정보" : "";
+      if (Array.isArray(row)) row[targetIndex] = headerRowIndex === 0 ? "ê³ì¢ì ë³´" : "";
     });
-    if (Array.isArray(sheet.requestRow)) sheet.requestRow[targetIndex] = "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리";
+    if (Array.isArray(sheet.requestRow)) sheet.requestRow[targetIndex] = "Enter í¤ë¡ ê³ì¢ì ë³´ ìë ¥ì°½ì ì´ì´ ìíëª/ê³ì¢ë²í¸ë¥¼ ì¬ë¬ ê° ê´ë¦¬";
     return;
   }
 
-  insertEstimateDbColumn(sheet, targetIndex, "계좌정보", "", "Enter 키로 계좌정보 입력창을 열어 은행명/계좌번호를 여러 개 관리");
+  insertEstimateDbColumn(sheet, targetIndex, "ê³ì¢ì ë³´", "", "Enter í¤ë¡ ê³ì¢ì ë³´ ìë ¥ì°½ì ì´ì´ ìíëª/ê³ì¢ë²í¸ë¥¼ ì¬ë¬ ê° ê´ë¦¬");
 }
 
 function ensureEstimateDbProgressBillingEmailColumnOnce() {
   const sheet = estimateDbSheets?.progress;
   if (!sheet?.headerRows?.length) return;
   const cols = getEstimateDbLeafColumns(sheet);
-  const existingIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "발행메일주소");
-  const clientIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "거래처기성담당자");
-  const managerIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "기성담당자");
+  const existingIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "ë°íë©ì¼ì£¼ì");
+  const clientIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "ê±°ëì²ê¸°ì±ë´ë¹ì");
+  const managerIndex = cols.findIndex(v => normalizeEstimateDbText(v) === "ê¸°ì±ë´ë¹ì");
   const targetIndex = clientIndex >= 0 ? clientIndex + 1 : (managerIndex >= 0 ? managerIndex : cols.length);
-  const requestText = "세금계산서/기성 관련 발행 메일주소 입력란";
+  const requestText = "ì¸ê¸ê³ì°ì/ê¸°ì± ê´ë ¨ ë°í ë©ì¼ì£¼ì ìë ¥ë";
   if (existingIndex >= 0) {
     let finalIndex = existingIndex;
     if (existingIndex !== targetIndex) {
@@ -125,7 +125,7 @@ function ensureEstimateDbProgressBillingEmailColumnOnce() {
       (sheet.headerRows || []).forEach((row, headerRowIndex) => {
         if (!Array.isArray(row)) return;
         const [cell] = row.splice(existingIndex, 1);
-        row.splice(toIndex, 0, headerRowIndex === 0 ? "발행메일주소" : (cell || ""));
+        row.splice(toIndex, 0, headerRowIndex === 0 ? "ë°íë©ì¼ì£¼ì" : (cell || ""));
       });
       if (Array.isArray(sheet.requestRow)) {
         const [cell] = sheet.requestRow.splice(existingIndex, 1);
@@ -139,12 +139,12 @@ function ensureEstimateDbProgressBillingEmailColumnOnce() {
       finalIndex = toIndex;
     }
     (sheet.headerRows || []).forEach((row, headerRowIndex) => {
-      if (Array.isArray(row)) row[finalIndex] = headerRowIndex === 0 ? "발행메일주소" : "";
+      if (Array.isArray(row)) row[finalIndex] = headerRowIndex === 0 ? "ë°íë©ì¼ì£¼ì" : "";
     });
     if (Array.isArray(sheet.requestRow)) sheet.requestRow[finalIndex] = requestText;
     return;
   }
-  insertEstimateDbColumn(sheet, targetIndex, "발행메일주소", "", requestText);
+  insertEstimateDbColumn(sheet, targetIndex, "ë°íë©ì¼ì£¼ì", "", requestText);
 }
 
 function migrateEstimateDbCreatedDateHeaders() {
@@ -154,11 +154,11 @@ function migrateEstimateDbCreatedDateHeaders() {
     (sheet.headerRows || []).forEach(headerRow => {
       if (!Array.isArray(headerRow)) return;
       headerRow.forEach((value, index) => {
-        if (normalizeEstimateDbText(value) === "년도") headerRow[index] = "최초생성날짜";
+        if (normalizeEstimateDbText(value) === "ëë") headerRow[index] = "ìµì´ìì±ë ì§";
       });
     });
     const cols = getEstimateDbLeafColumns(sheet);
-    const createdIndex = cols.findIndex(col => normalizeEstimateDbText(col) === "최초생성날짜");
+    const createdIndex = cols.findIndex(col => normalizeEstimateDbText(col) === "ìµì´ìì±ë ì§");
     if (createdIndex < 0) return;
     (sheet.rows || []).forEach(row => {
       if (!Array.isArray(row)) return;
@@ -181,7 +181,7 @@ function toEstimateDbNumber(value) {
   const rich = parseEstimateDbRichCellValue(value);
   if (rich && rich.type === "stageFormula") value = rich.amount || 0;
   if (rich && rich.type === "contractAmount") value = rich.amount || 0;
-  const raw = normalizeEstimateDbText(value).replace(/,/g, "").replace(/원/g, "");
+  const raw = normalizeEstimateDbText(value).replace(/,/g, "").replace(/ì/g, "");
   const num = Number(raw);
   return Number.isFinite(num) ? num : 0;
 }
@@ -191,7 +191,7 @@ function parseEstimateDbYear(value) {
 }
 function parseEstimateDbMonth(value) {
   const raw = normalizeEstimateDbText(value);
-  const direct = raw.match(/(?:^|[^0-9])(1[0-2]|0?[1-9])\s*월/);
+  const direct = raw.match(/(?:^|[^0-9])(1[0-2]|0?[1-9])\s*ì/);
   if (direct) return Number(direct[1]);
   const compact = raw.match(/^(?:\d{2})?(0[1-9]|1[0-2])\d{2}$/);
   if (compact) return Number(compact[1]);
@@ -200,32 +200,32 @@ function parseEstimateDbMonth(value) {
   return null;
 }
 
-const ESTIMATE_DB_CREATED_DATE_HEADER = "최초생성날짜";
+const ESTIMATE_DB_CREATED_DATE_HEADER = "ìµì´ìì±ë ì§";
 
 function formatEstimateDbKoreanDate(date = new Date()) {
   const pad = value => String(value).padStart(2, "0");
-  return `${date.getFullYear()}년 ${pad(date.getMonth() + 1)}월 ${pad(date.getDate())}일`;
+  return `${date.getFullYear()}ë ${pad(date.getMonth() + 1)}ì ${pad(date.getDate())}ì¼`;
 }
 
 function normalizeEstimateDbCreatedDate(value, fallbackDate = null) {
   const raw = normalizeEstimateDbText(value);
-  if (/^20\d{2}년\s*\d{1,2}월\s*\d{1,2}일$/.test(raw)) return raw.replace(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/, (_m, y, mo, d) => `${y}년 ${String(mo).padStart(2, "0")}월 ${String(d).padStart(2, "0")}일`);
+  if (/^20\d{2}ë\s*\d{1,2}ì\s*\d{1,2}ì¼$/.test(raw)) return raw.replace(/(\d{4})ë\s*(\d{1,2})ì\s*(\d{1,2})ì¼/, (_m, y, mo, d) => `${y}ë ${String(mo).padStart(2, "0")}ì ${String(d).padStart(2, "0")}ì¼`);
   const ymd = raw.match(/^(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
-  if (ymd) return `${ymd[1]}년 ${String(ymd[2]).padStart(2, "0")}월 ${String(ymd[3]).padStart(2, "0")}일`;
+  if (ymd) return `${ymd[1]}ë ${String(ymd[2]).padStart(2, "0")}ì ${String(ymd[3]).padStart(2, "0")}ì¼`;
   const digits = raw.replace(/[^0-9]/g, "");
   const compact = digits.match(/^(20\d{2})(\d{2})(\d{2})$/);
-  if (compact) return `${compact[1]}년 ${compact[2]}월 ${compact[3]}일`;
+  if (compact) return `${compact[1]}ë ${compact[2]}ì ${compact[3]}ì¼`;
   const shortCompact = digits.match(/^(\d{2})(\d{2})(\d{2})$/);
   if (shortCompact) {
     const year = 2000 + Number(shortCompact[1]);
     const month = Number(shortCompact[2]);
     const day = Number(shortCompact[3]);
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return `${year}년 ${String(month).padStart(2, "0")}월 ${String(day).padStart(2, "0")}일`;
+      return `${year}ë ${String(month).padStart(2, "0")}ì ${String(day).padStart(2, "0")}ì¼`;
     }
   }
   const yearOnly = raw.match(/(20\d{2})/);
-  if (yearOnly) return `${yearOnly[1]}년 00월 00일`;
+  if (yearOnly) return `${yearOnly[1]}ë 00ì 00ì¼`;
   return fallbackDate || formatEstimateDbKoreanDate();
 }
 
@@ -244,7 +244,7 @@ function getEstimateDbNextPjNoForYear(year, excludeRowIndex = -1) {
   const sheet = estimateDbSheets?.pj;
   const header = sheet?.headerRows?.[0] || [];
   const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
-  const createdIndex = findEstimateDbColumnIndexByAnyName(header, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
+  const createdIndex = findEstimateDbColumnIndexByAnyName(header, [ESTIMATE_DB_CREATED_DATE_HEADER, "ëë"]);
   let maxSeq = 0;
   (sheet?.rows || []).forEach((row, rowIndex) => {
     if (rowIndex === excludeRowIndex) return;
@@ -261,7 +261,7 @@ function ensureEstimateDbPjIdentityColumnsOnce(options = {}) {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const header = sheet.headerRows[0];
-  const legacyYearIndex = header.findIndex(col => normalizeEstimateDbText(col) === "년도");
+  const legacyYearIndex = header.findIndex(col => normalizeEstimateDbText(col) === "ëë");
   if (legacyYearIndex >= 0) header[legacyYearIndex] = ESTIMATE_DB_CREATED_DATE_HEADER;
   const createdIndex = header.findIndex(col => normalizeEstimateDbText(col) === ESTIMATE_DB_CREATED_DATE_HEADER);
   const pjNoIndex = header.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
@@ -328,7 +328,7 @@ ${sub}`;
 }
 
 
-/* === 2026-05-28 DB관리 렌더링 경량화/컬럼 정합성 보강 === */
+/* === 2026-05-28 DBê´ë¦¬ ë ëë§ ê²½ëí/ì»¬ë¼ ì í©ì± ë³´ê° === */
 let estimateDbInitialSanitizeDone = false;
 const estimateDbNormalizedTabSet = new Set();
 function normalizeEstimateDbSheetColumnLengths(sheet = getEstimateDbSheet()) {
@@ -376,7 +376,7 @@ function syncEstimateDbYearOptions() {
   if (!select) return;
   const current = select.value;
   const years = getEstimateDbYears();
-  select.innerHTML = years.map(y => `<option value="${escapeEstimateDbHtml(y)}">${escapeEstimateDbHtml(y)}년</option>`).join("");
+  select.innerHTML = years.map(y => `<option value="${escapeEstimateDbHtml(y)}">${escapeEstimateDbHtml(y)}ë</option>`).join("");
   select.value = years.includes(current) ? current : (years[0] || String(new Date().getFullYear()));
 }
 function setEstimateDbTab(tab) {
@@ -396,12 +396,12 @@ function estimateDbDisplayLength(value) {
 }
 function getEstimateDbColumnWidthMeasureValue(value, tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet(tab)) {
   const rich = parseEstimateDbRichCellValue(value);
-  if (rich?.type === "progressDone") return rich.history || "기성청구완료";
+  if (rich?.type === "progressDone") return rich.history || "ê¸°ì±ì²­êµ¬ìë£";
   if (rich?.type === "stageFormula") {
     const displayAmount = rich.amount ? formatEstimateDbCommaNumber(rich.amount) : "";
     return displayAmount || "0";
   }
-  if (rich?.type === "progressStory") return rich.summary || "기성스토리";
+  if (rich?.type === "progressStory") return rich.summary || "ê¸°ì±ì¤í ë¦¬";
   const display = getEstimateDbRichDisplayValue(value);
   if (isEstimateDbDateInputColumn(tab, colIndex)) return formatEstimateDbCompactDate(display);
   if (isEstimateDbMoneyLikeColumn(tab, colIndex, sheet) && isEstimateDbPureNumber(display)) return formatEstimateDbCommaNumber(display);
@@ -413,20 +413,20 @@ function getEstimateDbColumnWidth(colIndex, sheet = getEstimateDbSheet(), tab = 
   const topHeaderName = normalizeEstimateDbText(sheet?.headerRows?.[0]?.[colIndex] || "");
   if (headerName === "PJ NO") return 94;
   if (tab === "progress") {
-    if (headerName === "계약금액(VAT포함)" || topHeaderName === "계약금액(VAT포함)") return 170;
-    if (headerName === "계약금액" || topHeaderName === "계약금액") return 140;
+    if (headerName === "ê³ì½ê¸ì¡(VATí¬í¨)" || topHeaderName === "ê³ì½ê¸ì¡(VATí¬í¨)") return 170;
+    if (headerName === "ê³ì½ê¸ì¡" || topHeaderName === "ê³ì½ê¸ì¡") return 140;
     if (/^A-\d+$/.test(headerName)) return 150;
   }
   if (tab === "pj") {
-    // PJ관리 고정 가독성 폭: 기존 localStorage 열 너비 조절값보다 우선 적용합니다.
-    // - 국내/해외는 절반 수준으로 축소
-    // - 거래처명은 현재 기준 1.3배 수준으로 확대하고 2줄 표시 가능하게 확보
-    // - 프로젝트명은 기존 강제 확장 폭(1040px)의 1/2 수준으로 축소
-    if (headerName === "국내/해외") return 58;
-    if (headerName === "거래처명") return 304;
-    if (headerName === "프로젝트명") return 520;
-    if (headerName === "건물용도") return 90;
-    // 프로젝트 연결은 Enter 명령 셀이므로 최소 폭만 확보합니다.
+    // PJê´ë¦¬ ê³ ì  ê°ëì± í­: ê¸°ì¡´ localStorage ì´ ëë¹ ì¡°ì ê°ë³´ë¤ ì°ì  ì ì©í©ëë¤.
+    // - êµ­ë´/í´ì¸ë ì ë° ìì¤ì¼ë¡ ì¶ì
+    // - ê±°ëì²ëªì íì¬ ê¸°ì¤ 1.3ë°° ìì¤ì¼ë¡ íëíê³  2ì¤ íì ê°ë¥íê² íë³´
+    // - íë¡ì í¸ëªì ê¸°ì¡´ ê°ì  íì¥ í­(1040px)ì 1/2 ìì¤ì¼ë¡ ì¶ì
+    if (headerName === "êµ­ë´/í´ì¸") return 58;
+    if (headerName === "ê±°ëì²ëª") return 304;
+    if (headerName === "íë¡ì í¸ëª") return 520;
+    if (headerName === "ê±´ë¬¼ì©ë") return 90;
+    // íë¡ì í¸ ì°ê²°ì Enter ëªë ¹ ìì´ë¯ë¡ ìµì í­ë§ íë³´í©ëë¤.
     if (headerName === ESTIMATE_DB_PROJECT_LINK_HEADER) return 130;
   }
 
@@ -451,25 +451,25 @@ function makeEstimateDbCellStyle(colIndex, sheet = getEstimateDbSheet()) {
 
 function openEstimateDbRowHeightPrompt() {
   const current = Number(estimateDbRowHeightPx) || 44;
-  const input = prompt("DB관리 행 세로길이를 px 단위로 입력하세요.\n예: 44, 52, 60", String(current));
+  const input = prompt("DBê´ë¦¬ í ì¸ë¡ê¸¸ì´ë¥¼ px ë¨ìë¡ ìë ¥íì¸ì.\nì: 44, 52, 60", String(current));
   if (input == null) return;
   const next = Math.round(Number(String(input).replace(/[^0-9.]/g, "")));
   if (!Number.isFinite(next) || next < 28 || next > 120) {
-    if (typeof showToast === "function") showToast("행 세로길이는 28~120px 사이로 입력해 주세요.");
+    if (typeof showToast === "function") showToast("í ì¸ë¡ê¸¸ì´ë 28~120px ì¬ì´ë¡ ìë ¥í´ ì£¼ì¸ì.");
     return;
   }
   estimateDbRowHeightPx = next;
   localStorage.setItem("estimateDbRowHeightPx", String(next));
   renderEstimateDbManage();
-  if (typeof showToast === "function") showToast(`DB관리 행 세로길이를 ${next}px로 변경했습니다.`);
+  if (typeof showToast === "function") showToast(`DBê´ë¦¬ í ì¸ë¡ê¸¸ì´ë¥¼ ${next}pxë¡ ë³ê²½íìµëë¤.`);
 }
 function toggleEstimateDbColumnResizeMode() {
   estimateDbColumnResizeMode = !estimateDbColumnResizeMode;
   renderEstimateDbManage();
-  if (typeof showToast === "function") showToast(estimateDbColumnResizeMode ? "열 너비 조절 모드를 켰습니다. 헤더 오른쪽 선을 드래그하세요." : "열 너비 조절 모드를 껐습니다.");
+  if (typeof showToast === "function") showToast(estimateDbColumnResizeMode ? "ì´ ëë¹ ì¡°ì  ëª¨ëë¥¼ ì¼°ìµëë¤. í¤ë ì¤ë¥¸ìª½ ì ì ëëê·¸íì¸ì." : "ì´ ëë¹ ì¡°ì  ëª¨ëë¥¼ ê»ìµëë¤.");
 }
 function renderEstimateDbColumnResizeHandle(colIndex) {
-  return estimateDbColumnResizeMode ? `<span class="quote-db-col-resize-handle" title="드래그해서 열 너비 조절" onmousedown="startEstimateDbColumnResize(event, ${colIndex})"></span>` : "";
+  return estimateDbColumnResizeMode ? `<span class="quote-db-col-resize-handle" title="ëëê·¸í´ì ì´ ëë¹ ì¡°ì " onmousedown="startEstimateDbColumnResize(event, ${colIndex})"></span>` : "";
 }
 function startEstimateDbColumnResize(event, colIndex) {
   event.preventDefault();
@@ -516,7 +516,7 @@ function isEstimateDbEmbeddedTotalRow(sheet, row) {
   const firstText = normalizeEstimateDbText(row[0]);
   const firstFourBlank = [0, 1, 2, 3].every(i => !normalizeEstimateDbText(row[i]));
   const hasNumericAfter = row.slice(4).some(v => toEstimateDbNumber(v) !== 0);
-  return firstText === "합계" || (firstFourBlank && hasNumericAfter);
+  return firstText === "í©ê³" || (firstFourBlank && hasNumericAfter);
 }
 function sanitizeEstimateDbSheetRows(sheet) {
   if (!sheet?.rows || !isEstimateDbTotalEnabled(sheet)) return;
@@ -563,7 +563,7 @@ function getEstimateDbRichDisplayValue(value) {
   return value;
 }
 function getEstimateDbStoryColumnIndex() {
-  return getEstimateDbColumnIndexByHeader("progress", "기성스토리");
+  return getEstimateDbColumnIndexByHeader("progress", "ê¸°ì±ì¤í ë¦¬");
 }
 function isEstimateDbContractAmountBreakdownColumn(tab = estimateDbActiveTab, colIndex = 0) {
   if (tab !== "progress") return false;
@@ -579,10 +579,10 @@ function getEstimateDbContractAmountBreakdownIndexes() {
     .map(item => item.index);
 }
 function getEstimateDbContractAmountColumnIndex() {
-  return getEstimateDbColumnIndexByHeader("progress", "계약금액");
+  return getEstimateDbColumnIndexByHeader("progress", "ê³ì½ê¸ì¡");
 }
 function getEstimateDbContractVatColumnIndex() {
-  return getEstimateDbColumnIndexByHeader("progress", "계약금액(VAT포함)");
+  return getEstimateDbColumnIndexByHeader("progress", "ê³ì½ê¸ì¡(VATí¬í¨)");
 }
 function parseEstimateDbContractAmountValue(value) {
   const rich = parseEstimateDbRichCellValue(value);
@@ -611,9 +611,9 @@ function isEstimateDbStageEntryCell(tab = estimateDbActiveTab, colIndex = 0) {
   const sheet = estimateDbSheets.progress;
   const bottom = sheet?.headerRows?.[1] || [];
   const label = normalizeEstimateDbText(bottom[colIndex]);
-  if (!/^\d+차기성$/.test(label)) return false;
+  if (!/^\d+ì°¨ê¸°ì±$/.test(label)) return false;
   const group = getEstimateDbProgressGroupNameByColumn(colIndex);
-  return /세금계산서|입금예정일|입금일/.test(group);
+  return /ì¸ê¸ê³ì°ì|ìê¸ìì ì¼|ìê¸ì¼/.test(group);
 }
 function pruneEstimateDbProgressInitialStageColumns() {
   const sheet = estimateDbSheets.progress;
@@ -631,7 +631,7 @@ function pruneEstimateDbProgressInitialStageColumns() {
     const main = normalizeEstimateDbText(cell);
     if (main) group = main;
     const sub = normalizeEstimateDbText(bottom[i]);
-    if (/세금계산서|입금예정일|입금일/.test(group) && /^[45]차기성$/.test(sub)) removeIndexes.push(i);
+    if (/ì¸ê¸ê³ì°ì|ìê¸ìì ì¼|ìê¸ì¼/.test(group) && /^[45]ì°¨ê¸°ì±$/.test(sub)) removeIndexes.push(i);
   });
   removeIndexes.reverse().forEach(i => {
     top.splice(i, 1);
@@ -644,9 +644,9 @@ function pruneEstimateDbProgressInitialStageColumns() {
 function evaluateEstimateDbFormulaExpression(expr) {
   const raw = String(expr || "").replace(/,/g, "").trim();
   if (!raw) return 0;
-  if (!/^[0-9+\-*/().\s]+$/.test(raw)) throw new Error("허용되지 않는 문자가 포함되어 있습니다.");
+  if (!/^[0-9+\-*/().\s]+$/.test(raw)) throw new Error("íì©ëì§ ìë ë¬¸ìê° í¬í¨ëì´ ììµëë¤.");
   const result = Function(`"use strict"; return (${raw});`)();
-  if (!Number.isFinite(result)) throw new Error("계산 결과가 올바르지 않습니다.");
+  if (!Number.isFinite(result)) throw new Error("ê³ì° ê²°ê³¼ê° ì¬ë°ë¥´ì§ ììµëë¤.");
   return Math.round(result);
 }
 function ensureEstimateDbStoryModal() {
@@ -657,12 +657,12 @@ function ensureEstimateDbStoryModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-story-box" role="dialog" aria-modal="true" style="max-width:820px;">
-      <div class="estimate-db-dropdown-title">기성스토리 상세 입력</div>
-      <label class="estimate-db-amount-label">요약본<input id="estimateDbStorySummary" class="estimate-db-dropdown-search" placeholder="표 셀에 보일 간략 내용을 입력" /></label>
-      <label class="estimate-db-amount-label">풀 스토리<textarea id="estimateDbStoryFull" class="estimate-db-dropdown-search" style="min-height:220px;resize:vertical;" placeholder="상세 내용을 입력합니다. 줄바꿈은 Shift+Enter"></textarea></label>
+      <div class="estimate-db-dropdown-title">ê¸°ì±ì¤í ë¦¬ ìì¸ ìë ¥</div>
+      <label class="estimate-db-amount-label">ìì½ë³¸<input id="estimateDbStorySummary" class="estimate-db-dropdown-search" placeholder="í ìì ë³´ì¼ ê°ëµ ë´ì©ì ìë ¥" /></label>
+      <label class="estimate-db-amount-label">í ì¤í ë¦¬<textarea id="estimateDbStoryFull" class="estimate-db-dropdown-search" style="min-height:220px;resize:vertical;" placeholder="ìì¸ ë´ì©ì ìë ¥í©ëë¤. ì¤ë°ê¿ì Shift+Enter"></textarea></label>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbStoryModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbStoryModal()">저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbStoryModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbStoryModal()">ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -709,12 +709,12 @@ function ensureEstimateDbStageFormulaModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-stage-formula-box" role="dialog" aria-modal="true" style="max-width:760px;">
-      <div class="estimate-db-dropdown-title">N차 기성 계산 입력</div>
-      <label class="estimate-db-amount-label">계산식<input id="estimateDbStageFormulaExpr" class="estimate-db-dropdown-search" placeholder="예: 100000+200000*0.5" /></label>
-      <label class="estimate-db-amount-label">비고<textarea id="estimateDbStageFormulaNote" class="estimate-db-dropdown-search" style="min-height:150px;resize:vertical;" placeholder="기성 상세 스토리 또는 비고를 입력합니다."></textarea></label>
+      <div class="estimate-db-dropdown-title">Nì°¨ ê¸°ì± ê³ì° ìë ¥</div>
+      <label class="estimate-db-amount-label">ê³ì°ì<input id="estimateDbStageFormulaExpr" class="estimate-db-dropdown-search" placeholder="ì: 100000+200000*0.5" /></label>
+      <label class="estimate-db-amount-label">ë¹ê³ <textarea id="estimateDbStageFormulaNote" class="estimate-db-dropdown-search" style="min-height:150px;resize:vertical;" placeholder="ê¸°ì± ìì¸ ì¤í ë¦¬ ëë ë¹ê³ ë¥¼ ìë ¥í©ëë¤."></textarea></label>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbStageFormulaModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbStageFormulaModal()">계산 반영</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbStageFormulaModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbStageFormulaModal()">ê³ì° ë°ì</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -751,7 +751,7 @@ function saveEstimateDbStageFormulaModal() {
   const note = document.getElementById("estimateDbStageFormulaNote")?.value || "";
   let amount = 0;
   try { amount = evaluateEstimateDbFormulaExpression(expr); }
-  catch (error) { if (typeof showToast === "function") showToast(error.message || "계산식을 확인해주세요."); return; }
+  catch (error) { if (typeof showToast === "function") showToast(error.message || "ê³ì°ìì íì¸í´ì£¼ì¸ì."); return; }
   const value = stringifyEstimateDbRichCellValue({ type: "stageFormula", formula: expr, note, amount: String(amount) });
   updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
   closeEstimateDbStageFormulaModal();
@@ -768,12 +768,12 @@ function ensureEstimateDbContractAmountModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-contract-amount-box" role="dialog" aria-modal="true" style="max-width:620px;">
-      <div class="estimate-db-dropdown-title" id="estimateDbContractAmountTitle">계약금액 분할 입력</div>
-      <label class="estimate-db-amount-label">금액<input id="estimateDbContractAmountValue" class="estimate-db-dropdown-search" placeholder="예: 272250000" inputmode="numeric" /></label>
-      <label class="estimate-db-amount-label">날짜<input id="estimateDbContractAmountDate" class="estimate-db-dropdown-search" placeholder="예: 260529 또는 2026-05-29" /></label>
+      <div class="estimate-db-dropdown-title" id="estimateDbContractAmountTitle">ê³ì½ê¸ì¡ ë¶í  ìë ¥</div>
+      <label class="estimate-db-amount-label">ê¸ì¡<input id="estimateDbContractAmountValue" class="estimate-db-dropdown-search" placeholder="ì: 272250000" inputmode="numeric" /></label>
+      <label class="estimate-db-amount-label">ë ì§<input id="estimateDbContractAmountDate" class="estimate-db-dropdown-search" placeholder="ì: 260529 ëë 2026-05-29" /></label>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContractAmountModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContractAmountModal()">저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContractAmountModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContractAmountModal()">ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -803,7 +803,7 @@ function openEstimateDbContractAmountModal(rowIndex = estimateDbSelectedCell?.ro
   const parsed = parseEstimateDbContractAmountValue(row?.[colIndex] || "");
   estimateDbContractAmountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
   const modal = ensureEstimateDbContractAmountModal();
-  modal.querySelector("#estimateDbContractAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 금액/날짜 입력`;
+  modal.querySelector("#estimateDbContractAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} ê¸ì¡/ë ì§ ìë ¥`;
   modal.querySelector("#estimateDbContractAmountValue").value = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
   modal.querySelector("#estimateDbContractAmountDate").value = parsed.date ? formatEstimateDbFullKoreanDate(parsed.date) : "";
   modal.classList.remove("hidden");
@@ -831,10 +831,10 @@ function saveEstimateDbContractAmountModal() {
 function ensureEstimateDbProgressDoneColumn() {
   const sheet = estimateDbSheets.progress;
   if (!sheet?.headerRows?.length) return;
-  const idx = getEstimateDbColumnIndexByHeader("progress", "기성청구완료");
+  const idx = getEstimateDbColumnIndexByHeader("progress", "ê¸°ì±ì²­êµ¬ìë£");
   if (idx >= 0) return;
-  sheet.headerRows.forEach((row, rowIndex) => row.push(rowIndex === 0 ? "기성청구완료" : ""));
-  if (Array.isArray(sheet.requestRow)) sheet.requestRow.push("기성청구가 완료되어 더 이상 확인이 필요 없는 행을 체크합니다.");
+  sheet.headerRows.forEach((row, rowIndex) => row.push(rowIndex === 0 ? "ê¸°ì±ì²­êµ¬ìë£" : ""));
+  if (Array.isArray(sheet.requestRow)) sheet.requestRow.push("ê¸°ì±ì²­êµ¬ê° ìë£ëì´ ë ì´ì íì¸ì´ íì ìë íì ì²´í¬í©ëë¤.");
   (sheet.rows || []).forEach(row => row.push(""));
 }
 
@@ -869,22 +869,22 @@ function ensureEstimateDbProgressContractAmountColumns() {
   const top = sheet.headerRows[0];
   const bottom = sheet.headerRows[1];
   const leaf = getEstimateDbLeafColumns(sheet);
-  let contractIndex = leaf.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
-  if (contractIndex < 0) contractIndex = top.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
+  let contractIndex = leaf.findIndex(v => normalizeEstimateDbText(v) === "ê³ì½ê¸ì¡");
+  if (contractIndex < 0) contractIndex = top.findIndex(v => normalizeEstimateDbText(v) === "ê³ì½ê¸ì¡");
   if (contractIndex < 0) return;
 
-  const hasVat = leaf.some(v => normalizeEstimateDbText(v) === "계약금액(VAT포함)") || top.some(v => normalizeEstimateDbText(v) === "계약금액(VAT포함)");
+  const hasVat = leaf.some(v => normalizeEstimateDbText(v) === "ê³ì½ê¸ì¡(VATí¬í¨)") || top.some(v => normalizeEstimateDbText(v) === "ê³ì½ê¸ì¡(VATí¬í¨)");
   if (!hasVat) {
-    top.splice(contractIndex, 0, "계약금액(VAT포함)");
+    top.splice(contractIndex, 0, "ê³ì½ê¸ì¡(VATí¬í¨)");
     bottom.splice(contractIndex, 0, "");
-    if (sheet.requestRow) sheet.requestRow.splice(contractIndex, 0, "계약금액A × 1.1 자동 계산");
+    if (sheet.requestRow) sheet.requestRow.splice(contractIndex, 0, "ê³ì½ê¸ì¡A Ã 1.1 ìë ê³ì°");
     (sheet.rows || []).forEach(row => row.splice(contractIndex, 0, ""));
     contractIndex += 1;
   }
 
   const currentLeaf = getEstimateDbLeafColumns(sheet);
-  contractIndex = currentLeaf.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
-  if (contractIndex < 0) contractIndex = top.findIndex(v => normalizeEstimateDbText(v) === "계약금액");
+  contractIndex = currentLeaf.findIndex(v => normalizeEstimateDbText(v) === "ê³ì½ê¸ì¡");
+  if (contractIndex < 0) contractIndex = top.findIndex(v => normalizeEstimateDbText(v) === "ê³ì½ê¸ì¡");
   const existingBreakdowns = getEstimateDbLeafColumns(sheet).filter(v => /^A-\d+$/.test(normalizeEstimateDbText(v)));
   if (!existingBreakdowns.length) {
     const existingAmounts = (sheet.rows || []).map(row => row?.[contractIndex] || "");
@@ -892,7 +892,7 @@ function ensureEstimateDbProgressContractAmountColumns() {
       const insertAt = contractIndex + n;
       top.splice(insertAt, 0, "");
       bottom.splice(insertAt, 0, `A-${n}`);
-      if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "계약금액 분할 입력: Enter로 금액/날짜 입력");
+      if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "ê³ì½ê¸ì¡ ë¶í  ìë ¥: Enterë¡ ê¸ì¡/ë ì§ ìë ¥");
       (sheet.rows || []).forEach((row, rowIndex) => row.splice(insertAt, 0, n === 1 ? existingAmounts[rowIndex] || "" : ""));
     }
   } else {
@@ -903,7 +903,7 @@ function ensureEstimateDbProgressContractAmountColumns() {
       const insertAt = indexes.length ? Math.max(...indexes) + 1 : contractIndex + 1;
       top.splice(insertAt, 0, "");
       bottom.splice(insertAt, 0, `A-${n}`);
-      if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "계약금액 분할 입력: Enter로 금액/날짜 입력");
+      if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "ê³ì½ê¸ì¡ ë¶í  ìë ¥: Enterë¡ ê¸ì¡/ë ì§ ìë ¥");
       (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
     }
   }
@@ -918,12 +918,12 @@ function addEstimateDbProgressContractAmountColumn() {
   const insertAt = indexes.length ? Math.max(...indexes) + 1 : getEstimateDbContractAmountColumnIndex() + 1;
   sheet.headerRows[0].splice(insertAt, 0, "");
   sheet.headerRows[1].splice(insertAt, 0, `A-${next}`);
-  if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "추가 계약금액 분할 입력: Enter로 금액/날짜 입력");
+  if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "ì¶ê° ê³ì½ê¸ì¡ ë¶í  ìë ¥: Enterë¡ ê¸ì¡/ë ì§ ìë ¥");
   (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
   estimateDbSelectedCell = { tab: "progress", sectionIndex: null, rowIndex: estimateDbSelectedCell?.rowIndex || 0, colIndex: insertAt };
   renderEstimateDbManage({ forceRecalc: true });
   requestAnimationFrame(() => focusEstimateDbCell(estimateDbSelectedCell.rowIndex || 0, insertAt));
-  if (typeof showToast === "function") showToast(`계약금액A-${next} 열을 추가했습니다.`);
+  if (typeof showToast === "function") showToast(`ê³ì½ê¸ì¡A-${next} ì´ì ì¶ê°íìµëë¤.`);
 }
 
 function ensureEstimateDbProgressStageTotalColumns() {
@@ -931,15 +931,15 @@ function ensureEstimateDbProgressStageTotalColumns() {
   if (!sheet?.headerRows || sheet.headerRows.length < 2) return;
   const top = sheet.headerRows[0];
   const bottom = sheet.headerRows[1];
-  ["세금계산서", "입금예정일", "입금일"].forEach(group => {
+  ["ì¸ê¸ê³ì°ì", "ìê¸ìì ì¼", "ìê¸ì¼"].forEach(group => {
     const indexes = getEstimateDbProgressGroupIndexes(group);
     if (!indexes.length) return;
     const last = Math.max(...indexes);
-    if (normalizeEstimateDbText(bottom[last]) === "합계") return;
+    if (normalizeEstimateDbText(bottom[last]) === "í©ê³") return;
     const insertAt = last + 1;
     top.splice(insertAt, 0, "");
-    bottom.splice(insertAt, 0, "합계");
-    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "계약금부터 마지막 기성 차수까지 자동 합계");
+    bottom.splice(insertAt, 0, "í©ê³");
+    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "ê³ì½ê¸ë¶í° ë§ì§ë§ ê¸°ì± ì°¨ìê¹ì§ ìë í©ê³");
     (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
   });
 }
@@ -947,12 +947,12 @@ function getEstimateDbProgressOutsourceIndexes() {
   const sheet = estimateDbSheets.progress;
   const top = sheet?.headerRows?.[0] || [];
   const leaf = getEstimateDbLeafColumns(sheet);
-  const targets = ["기계", "전기", "외주", "송무", "기타"];
+  const targets = ["ê¸°ê³", "ì ê¸°", "ì¸ì£¼", "ì¡ë¬´", "ê¸°í"];
   let activeGroup = "";
   return leaf.reduce((list, label, index) => {
     const topLabel = normalizeEstimateDbText(top[index]);
     if (topLabel) activeGroup = topLabel.replace(/\s+/g, "");
-    if (activeGroup.includes("외주금액") && targets.includes(normalizeEstimateDbText(label))) list.push(index);
+    if (activeGroup.includes("ì¸ì£¼ê¸ì¡") && targets.includes(normalizeEstimateDbText(label))) list.push(index);
     return list;
   }, []);
 }
@@ -964,7 +964,7 @@ function getEstimateDbProgressOutsourceTotalIndex() {
   for (let i = 0; i < leaf.length; i += 1) {
     const topLabel = normalizeEstimateDbText(top[i]);
     if (topLabel) activeGroup = topLabel.replace(/\s+/g, "");
-    if (activeGroup.includes("외주금액") && normalizeEstimateDbText(leaf[i]) === "합계") return i;
+    if (activeGroup.includes("ì¸ì£¼ê¸ì¡") && normalizeEstimateDbText(leaf[i]) === "í©ê³") return i;
   }
   return -1;
 }
@@ -993,10 +993,10 @@ function buildEstimateDbMepOutsourceSummaryByPjNo() {
   const sheet = estimateDbSheets?.mep;
   const rows = Array.isArray(sheet?.rows) ? sheet.rows : [];
   const pjNoIndex = getEstimateDbColumnIndexByHeader("mep", "PJ NO");
-  const companyIndex = getEstimateDbColumnIndexByHeader("mep", "계약업체");
-  const amountIndex = getEstimateDbColumnIndexByHeader("mep", "계약금액");
-  const altAmountIndex = getEstimateDbColumnIndexByHeader("mep", "컨코스트계약금");
-  const validTrades = ["기계", "전기", "외주", "송무", "기타"];
+  const companyIndex = getEstimateDbColumnIndexByHeader("mep", "ê³ì½ìì²´");
+  const amountIndex = getEstimateDbColumnIndexByHeader("mep", "ê³ì½ê¸ì¡");
+  const altAmountIndex = getEstimateDbColumnIndexByHeader("mep", "ì»¨ì½ì¤í¸ê³ì½ê¸");
+  const validTrades = ["ê¸°ê³", "ì ê¸°", "ì¸ì£¼", "ì¡ë¬´", "ê¸°í"];
   const summary = {};
   if (pjNoIndex < 0 || companyIndex < 0) return summary;
   rows.forEach(row => {
@@ -1019,7 +1019,7 @@ function stringifyEstimateDbMepOutsourceSummaryCell(summaryCell) {
   const total = Number(summaryCell.total) || 0;
   const companies = Array.isArray(summaryCell.companies) ? summaryCell.companies.filter(Boolean) : [];
   if (!companies.length && !total) return "";
-  const companyLabel = companies.length > 1 ? `${companies[0]} 외 ${companies.length - 1}` : (companies[0] || "");
+  const companyLabel = companies.length > 1 ? `${companies[0]} ì¸ ${companies.length - 1}` : (companies[0] || "");
   if (companyLabel && total) return `${companyLabel}
 ${total}`;
   if (companyLabel) return companyLabel;
@@ -1060,22 +1060,22 @@ function recalcEstimateDbProgressOutsourceTotal(row) {
     const parsed = parseEstimateDbAmountCellValue(row[i]);
     return acc + toEstimateDbNumber(parsed.amount || row[i]);
   }, 0);
-  // 외주금액 기계/전기/외주/송무/기타의 합산값은 항상 외주금액 합계에 반영합니다.
+  // ì¸ì£¼ê¸ì¡ ê¸°ê³/ì ê¸°/ì¸ì£¼/ì¡ë¬´/ê¸°íì í©ì°ê°ì í­ì ì¸ì£¼ê¸ì¡ í©ê³ì ë°ìí©ëë¤.
   row[totalIndex] = sum ? String(sum) : "";
 }
 function recalcEstimateDbProgressStageTotals(row) {
   if (!row) return;
   const sheet = estimateDbSheets.progress;
   const bottom = sheet?.headerRows?.[1] || [];
-  ["세금계산서", "입금예정일", "입금일"].forEach(group => {
+  ["ì¸ê¸ê³ì°ì", "ìê¸ìì ì¼", "ìê¸ì¼"].forEach(group => {
     const indexes = getEstimateDbProgressGroupIndexes(group);
     if (!indexes.length) return;
-    const totalIndex = indexes.find(i => normalizeEstimateDbText(bottom[i]) === "합계");
+    const totalIndex = indexes.find(i => normalizeEstimateDbText(bottom[i]) === "í©ê³");
     if (totalIndex < 0) return;
     const sum = indexes.reduce((acc, i) => {
       const label = normalizeEstimateDbText(bottom[i]);
-      if (i === totalIndex || label === "합계") return acc;
-      if (label === "계약금" || /^\d+차기성$/.test(label)) return acc + toEstimateDbNumber(row[i]);
+      if (i === totalIndex || label === "í©ê³") return acc;
+      if (label === "ê³ì½ê¸" || /^\d+ì°¨ê¸°ì±$/.test(label)) return acc + toEstimateDbNumber(row[i]);
       return acc;
     }, 0);
     row[totalIndex] = sum ? String(sum) : "";
@@ -1087,8 +1087,8 @@ function recalcEstimateDbRow(tab, row) {
   const get = name => idx(name) >= 0 ? toEstimateDbNumber(row[idx(name)]) : 0;
   const set = (name, value) => { const i = idx(name); if (i >= 0) row[i] = value ? String(value) : ""; };
   if (tab === "pj") {
-    const m2Index = idx("연면적(m2)");
-    const pyIndex = idx("연면적(평)");
+    const m2Index = idx("ì°ë©´ì (m2)");
+    const pyIndex = idx("ì°ë©´ì (í)");
     if (m2Index >= 0 && pyIndex >= 0) {
       const m2Value = toEstimateDbNumber(row[m2Index]);
       const pyText = normalizeEstimateDbText(row[pyIndex]);
@@ -1104,18 +1104,18 @@ function recalcEstimateDbRow(tab, row) {
     const vatIndex = getEstimateDbContractVatColumnIndex();
     if (contractIndex >= 0) row[contractIndex] = contractBreakdownSum ? String(contractBreakdownSum) : "";
     if (vatIndex >= 0) row[vatIndex] = contractBreakdownSum ? String(Math.round(contractBreakdownSum * 1.1)) : "";
-    const balance = contractBreakdownSum - get("수령액");
-    set("잔액", balance);
+    const balance = contractBreakdownSum - get("ìë ¹ì¡");
+    set("ìì¡", balance);
     recalcEstimateDbProgressOutsourceTotal(row);
-    const waiting = balance - get("발행완료") - get("납품완료") - get("작업진행중") - get("작업취소");
-    set("작업대기중", waiting);
+    const waiting = balance - get("ë°íìë£") - get("ë©íìë£") - get("ììì§íì¤") - get("ììì·¨ì");
+    set("ììëê¸°ì¤", waiting);
     recalcEstimateDbProgressStageTotals(row);
   }
   if (tab === "mep") {
-    const balance = get("계약금액") - get("수령액");
-    set("잔액", balance);
-    const waiting = balance - get("발행완료") - get("납품완료") - get("작업진행중") - get("작업취소");
-    set("작업대기중", waiting);
+    const balance = get("ê³ì½ê¸ì¡") - get("ìë ¹ì¡");
+    set("ìì¡", balance);
+    const waiting = balance - get("ë°íìë£") - get("ë©íìë£") - get("ììì§íì¤") - get("ììì·¨ì");
+    set("ììëê¸°ì¤", waiting);
   }
 }
 function recalcAllEstimateDbRows() {
@@ -1124,9 +1124,9 @@ function recalcAllEstimateDbRows() {
 }
 
 /* =========================================================
-   DB관리 성능 구조 변경
-   - 전체 탭 재계산 대신 현재 탭만 재계산
-   - 대량 행은 50개 단위 페이지 렌더링
+   DBê´ë¦¬ ì±ë¥ êµ¬ì¡° ë³ê²½
+   - ì ì²´ í­ ì¬ê³ì° ëì  íì¬ í­ë§ ì¬ê³ì°
+   - ëë íì 50ê° ë¨ì íì´ì§ ë ëë§
    ========================================================= */
 const ESTIMATE_DB_RENDER_PAGE_SIZE = 50;
 let estimateDbPageState = { pj: 0, progress: 0, mep: 0 };
@@ -1136,7 +1136,7 @@ function getEstimateDbMepVendorHeaders() {
   const sheet = estimateDbSheets?.mep || {};
   return Array.isArray(sheet.vendorHeaders) && sheet.vendorHeaders.length
     ? sheet.vendorHeaders
-    : ["NO", "업체명", "공종", "대표이사", "일반전화", "휴대폰", "직통전화", "EMAIL (대표)", "대표번호", "EMAIL", "EMAIL1", "연락처(경지)", "연락처(기술)", "계좌", "은행", "주소", "웹하드", "기타"];
+    : ["NO", "ìì²´ëª", "ê³µì¢", "ëíì´ì¬", "ì¼ë°ì í", "í´ëí°", "ì§íµì í", "EMAIL (ëí)", "ëíë²í¸", "EMAIL", "EMAIL1", "ì°ë½ì²(ê²½ì§)", "ì°ë½ì²(ê¸°ì )", "ê³ì¢", "ìí", "ì£¼ì", "ì¹íë", "ê¸°í"];
 }
 
 function ensureEstimateDbMepVendorRows() {
@@ -1145,7 +1145,7 @@ function ensureEstimateDbMepVendorRows() {
   const headers = getEstimateDbMepVendorHeaders();
   if (!Array.isArray(sheet.vendorRows)) sheet.vendorRows = [];
   if (!sheet.vendorRows.length) {
-    const companyIdx = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+    const companyIdx = getEstimateDbColumnIndexByHeader("mep", "ê³ì½ìì²´");
     const rows = Array.isArray(sheet.rows) ? sheet.rows : [];
     const names = [...new Set(rows.map(row => normalizeEstimateDbText(row?.[companyIdx])).filter(Boolean))];
     sheet.vendorRows = names.map((name, index) => {
@@ -1229,7 +1229,7 @@ function getEstimateDbMepDetailRowsForVendor(vendorName) {
   const sheet = estimateDbSheets?.mep;
   const rows = Array.isArray(sheet?.rows) ? sheet.rows : [];
   if (!vendorName) return [];
-  const companyIdx = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+  const companyIdx = getEstimateDbColumnIndexByHeader("mep", "ê³ì½ìì²´");
   if (companyIdx < 0) return rows.map((row, sourceIndex) => ({ row, sourceIndex }));
   const matched = rows
     .map((row, sourceIndex) => ({ row, sourceIndex }))
@@ -1242,13 +1242,13 @@ function addEstimateDbMepRowForSelectedVendor(options = {}) {
   const vendor = getEstimateDbMepSelectedVendor();
   const vendorName = getEstimateDbMepVendorName(vendor);
   if (!sheet || !vendorName) {
-    if (typeof showToast === "function") showToast("업체 리스트에서 업체를 먼저 선택해 주세요.");
-    return { ok: false, message: "업체 리스트에서 업체를 먼저 선택해 주세요." };
+    if (typeof showToast === "function") showToast("ìì²´ ë¦¬ì¤í¸ìì ìì²´ë¥¼ ë¨¼ì  ì íí´ ì£¼ì¸ì.");
+    return { ok: false, message: "ìì²´ ë¦¬ì¤í¸ìì ìì²´ë¥¼ ë¨¼ì  ì íí´ ì£¼ì¸ì." };
   }
   const columns = getEstimateDbLeafColumns(sheet);
   const next = Array(columns.length).fill("");
-  const createdIdx = getEstimateDbColumnIndexByHeader("mep", "최초생성날짜");
-  const companyIdx = getEstimateDbColumnIndexByHeader("mep", "계약업체");
+  const createdIdx = getEstimateDbColumnIndexByHeader("mep", "ìµì´ìì±ë ì§");
+  const companyIdx = getEstimateDbColumnIndexByHeader("mep", "ê³ì½ìì²´");
   if (createdIdx >= 0) next[createdIdx] = formatEstimateDbKoreanDate?.() || "";
   if (companyIdx >= 0) next[companyIdx] = vendorName;
   if (!Array.isArray(sheet.rows)) sheet.rows = [];
@@ -1265,7 +1265,7 @@ function addEstimateDbMepRowForVendorIndex(vendorIndex) {
   const rows = ensureEstimateDbMepVendorRows();
   const index = Number(vendorIndex);
   if (!Number.isFinite(index) || !rows[index]) {
-    return { ok: false, message: "선택한 업체 정보를 찾을 수 없습니다. 창을 닫고 다시 열어 주세요." };
+    return { ok: false, message: "ì íí ìì²´ ì ë³´ë¥¼ ì°¾ì ì ììµëë¤. ì°½ì ë«ê³  ë¤ì ì´ì´ ì£¼ì¸ì." };
   }
   estimateDbMepSelectedVendorIndex = index;
   return addEstimateDbMepRowForSelectedVendor({ skipRender: true });
@@ -1301,7 +1301,7 @@ function buildEstimateDbMepVendorDetailRowsHtml(vendorIndex) {
   const leafColumns = getEstimateDbLeafColumns(sheet);
   const detailRows = getEstimateDbMepDetailRowsForVendor(vendorName);
   if (!detailRows.length) {
-    return `<tr><td class="empty" colspan="${leafColumns.length + 1}">선택한 업체와 연결된 계약/지급 내역이 없습니다. 우측 상단의 [+ 계약행 추가] 버튼을 눌러 새 행을 추가하세요.</td></tr>`;
+    return `<tr><td class="empty" colspan="${leafColumns.length + 1}">ì íí ìì²´ì ì°ê²°ë ê³ì½/ì§ê¸ ë´ì­ì´ ììµëë¤. ì°ì¸¡ ìë¨ì [+ ê³ì½í ì¶ê°] ë²í¼ì ëë¬ ì íì ì¶ê°íì¸ì.</td></tr>`;
   }
   return detailRows.map(({ row, sourceIndex }) => `
       <tr data-source-index="${sourceIndex}">
@@ -1310,7 +1310,7 @@ function buildEstimateDbMepVendorDetailRowsHtml(vendorIndex) {
           const value = formatEstimateDbMoneyDisplay(getEstimateDbCellDisplayValue("mep", sourceIndex, colIndex, raw), "mep", colIndex, sheet);
           return `<td><input value="${escapeEstimateDbHtml(value)}" data-row-index="${sourceIndex}" data-col-index="${colIndex}" oninput="markDirty(this)" onchange="saveCell(this)" onkeydown="moveCell(event,this)" /></td>`;
         }).join("")}
-        <td class="manage"><button type="button" onclick="deleteRow(${sourceIndex})">삭제</button></td>
+        <td class="manage"><button type="button" onclick="deleteRow(${sourceIndex})">ì­ì </button></td>
       </tr>`).join("");
 }
 
@@ -1320,7 +1320,7 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
   const vendor = vendorRows[Number(vendorIndex)] || null;
   const vendorName = getEstimateDbMepVendorName(vendor);
   const leafColumns = getEstimateDbLeafColumns(sheet);
-  const title = vendorName ? `${vendorName} 기전업체 계약/지급 내역` : "기전업체 계약/지급 내역";
+  const title = vendorName ? `${vendorName} ê¸°ì ìì²´ ê³ì½/ì§ê¸ ë´ì­` : "ê¸°ì ìì²´ ê³ì½/ì§ê¸ ë´ì­";
   const rowsHtml = buildEstimateDbMepVendorDetailRowsHtml(vendorIndex);
   return `<!doctype html>
 <html lang="ko">
@@ -1333,13 +1333,13 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
 </head>
 <body>
   <div class="top">
-    <div><h1>${escapeEstimateDbHtml(title)}</h1><div class="sub">업체 리스트를 더블클릭해 열린 계약/지급 내역 새 창입니다. 입력값 변경 후 저장 버튼을 누르세요.</div></div>
-    <div class="btns"><button type="button" onclick="refreshRows()">새로고침</button><button type="button" class="primary" onclick="addRow()">+ 계약행 추가</button><button type="button" onclick="window.close()">닫기</button></div>
+    <div><h1>${escapeEstimateDbHtml(title)}</h1><div class="sub">ìì²´ ë¦¬ì¤í¸ë¥¼ ëë¸í´ë¦­í´ ì´ë¦° ê³ì½/ì§ê¸ ë´ì­ ì ì°½ìëë¤. ìë ¥ê° ë³ê²½ í ì ì¥ ë²í¼ì ëë¥´ì¸ì.</div></div>
+    <div class="btns"><button type="button" onclick="refreshRows()">ìë¡ê³ ì¹¨</button><button type="button" class="primary" onclick="addRow()">+ ê³ì½í ì¶ê°</button><button type="button" onclick="window.close()">ë«ê¸°</button></div>
   </div>
   <div class="wrap">
-    <p class="notice">선택 업체: ${escapeEstimateDbHtml(vendorName || "-")}</p>
+    <p class="notice">ì í ìì²´: ${escapeEstimateDbHtml(vendorName || "-")}</p>
     <div class="card"><div class="table-wrap"><table>
-      <thead><tr>${leafColumns.map(col => `<th>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}<th class="manage">관리</th></tr></thead>
+      <thead><tr>${leafColumns.map(col => `<th>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}<th class="manage">ê´ë¦¬</th></tr></thead>
       <tbody id="mepDetailBody">${rowsHtml}</tbody>
     </table></div></div>
   </div>
@@ -1362,17 +1362,17 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
     try {
       if(window.opener && typeof window.opener.addEstimateDbMepRowForVendorIndex === 'function'){
         var result = window.opener.addEstimateDbMepRowForVendorIndex(window.__CONCOST_MEP_VENDOR_INDEX__);
-        if(result && result.ok === false){ alert(result.message || '계약행을 추가하지 못했습니다.'); return; }
+        if(result && result.ok === false){ alert(result.message || 'ê³ì½íì ì¶ê°íì§ ëª»íìµëë¤.'); return; }
         refreshRows();
         return;
       }
-      alert('원본 DB관리 화면과 연결이 끊겼습니다. 이 창을 닫고 업체 리스트에서 다시 열어 주세요.');
+      alert('ìë³¸ DBê´ë¦¬ íë©´ê³¼ ì°ê²°ì´ ëê²¼ìµëë¤. ì´ ì°½ì ë«ê³  ìì²´ ë¦¬ì¤í¸ìì ë¤ì ì´ì´ ì£¼ì¸ì.');
     } catch (error) {
-      alert('계약행 추가 중 오류가 발생했습니다: ' + (error && error.message ? error.message : error));
+      alert('ê³ì½í ì¶ê° ì¤ ì¤ë¥ê° ë°ìíìµëë¤: ' + (error && error.message ? error.message : error));
     }
   }
   function deleteRow(sourceIndex){
-    if(!confirm('해당 계약/지급 내역 행을 삭제할까요?')) return;
+    if(!confirm('í´ë¹ ê³ì½/ì§ê¸ ë´ì­ íì ì­ì í ê¹ì?')) return;
     if(window.opener && window.opener.removeEstimateDbMepDetailRowFromPopup){
       window.opener.removeEstimateDbMepDetailRowFromPopup(sourceIndex);
       refreshRows();
@@ -1404,11 +1404,11 @@ function buildEstimateDbMepVendorDetailWindowHtml(vendorIndex) {
 function openEstimateDbMepVendorDetailWindow(vendorIndex) {
   estimateDbMepSelectedVendorIndex = Number(vendorIndex);
   const vendor = ensureEstimateDbMepVendorRows()[Number(vendorIndex)] || null;
-  const vendorName = getEstimateDbMepVendorName(vendor) || "기전업체";
-  const safeName = String(vendorName).replace(/[^a-zA-Z0-9가-힣_-]/g, "_").slice(0, 40) || "mep_vendor";
+  const vendorName = getEstimateDbMepVendorName(vendor) || "ê¸°ì ìì²´";
+  const safeName = String(vendorName).replace(/[^a-zA-Z0-9ê°-í£_-]/g, "_").slice(0, 40) || "mep_vendor";
   const win = window.open("", `CONCOST_MEP_VENDOR_${safeName}`, "width=1500,height=900,left=60,top=40,resizable=yes,scrollbars=yes");
   if (!win) {
-    if (typeof showToast === "function") showToast("팝업 차단을 해제해 주세요.");
+    if (typeof showToast === "function") showToast("íì ì°¨ë¨ì í´ì í´ ì£¼ì¸ì.");
     return;
   }
   win.document.open();
@@ -1452,8 +1452,8 @@ function renderEstimateDbMepManage(options = {}) {
         <div class="quote-db-mep-panel">
           <div class="quote-db-mep-section-head quote-db-mep-vendor-head">
             <div>
-              <strong>업체 리스트</strong>
-              <span>상단은 업체 기본정보 입력 영역입니다. 업체 행을 더블클릭하면 계약/지급내역을 큰 새 창으로 확인·수정할 수 있습니다.</span>
+              <strong>ìì²´ ë¦¬ì¤í¸</strong>
+              <span>ìë¨ì ìì²´ ê¸°ë³¸ì ë³´ ìë ¥ ìì­ìëë¤. ìì²´ íì ëë¸í´ë¦­íë©´ ê³ì½/ì§ê¸ë´ì­ì í° ì ì°½ì¼ë¡ íì¸Â·ìì í  ì ììµëë¤.</span>
             </div>
 
           </div>
@@ -1464,7 +1464,7 @@ function renderEstimateDbMepManage(options = {}) {
               </thead>
               <tbody>
                 ${vendorRows.map((row, rowIndex) => `
-                  <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})" ondblclick="openEstimateDbMepVendorDetailWindow(${rowIndex})" title="더블클릭하면 계약/지급 내역을 새 창으로 엽니다.">
+                  <tr class="quote-db-mep-vendor-row${rowIndex === estimateDbMepSelectedVendorIndex ? " active" : ""}" onclick="selectEstimateDbMepVendor(${rowIndex})" ondblclick="openEstimateDbMepVendorDetailWindow(${rowIndex})" title="ëë¸í´ë¦­íë©´ ê³ì½/ì§ê¸ ë´ì­ì ì ì°½ì¼ë¡ ì½ëë¤.">
                     ${vendorHeaders.map((_, colIndex) => `<td><input class="quote-db-mep-vendor-input" value="${escapeEstimateDbHtml(row?.[colIndex] || "")}" data-row-index="${rowIndex}" data-col-index="${colIndex}" onclick="event.stopPropagation()" ondblclick="event.stopPropagation(); openEstimateDbMepVendorDetailWindow(${rowIndex})" onfocus="focusEstimateDbMepVendor(${rowIndex})" oninput="updateEstimateDbMepVendorCell(${rowIndex}, ${colIndex}, this.value)" onkeydown="handleEstimateDbMepVendorKeydown(event, ${rowIndex}, ${colIndex})" /></td>`).join("")}
                   </tr>`).join("")}
               </tbody>
@@ -1472,8 +1472,8 @@ function renderEstimateDbMepManage(options = {}) {
           </div>
           <div class="quote-db-mep-open-panel">
             <div>
-              <strong>${selectedVendorName ? escapeEstimateDbHtml(selectedVendorName) : "업체를 선택하세요"}</strong>
-              <span>${selectedVendorName ? "선택된 업체입니다. 계약/지급내역은 업체 행을 더블클릭하면 새 창으로 열립니다." : "업체 행을 클릭해 선택하고, 더블클릭하면 계약/지급내역을 큰 화면으로 볼 수 있습니다."}</span>
+              <strong>${selectedVendorName ? escapeEstimateDbHtml(selectedVendorName) : "ìì²´ë¥¼ ì ííì¸ì"}</strong>
+              <span>${selectedVendorName ? "ì íë ìì²´ìëë¤. ê³ì½/ì§ê¸ë´ì­ì ìì²´ íì ëë¸í´ë¦­íë©´ ì ì°½ì¼ë¡ ì´ë¦½ëë¤." : "ìì²´ íì í´ë¦­í´ ì ííê³ , ëë¸í´ë¦­íë©´ ê³ì½/ì§ê¸ë´ì­ì í° íë©´ì¼ë¡ ë³¼ ì ììµëë¤."}</span>
             </div>
 
           </div>
@@ -1489,12 +1489,12 @@ function renderEstimateDbMepManage(options = {}) {
 
 function renderEstimateDbMepDetailTable(detailRows, leafColumns, sheet) {
   if (!detailRows.length) {
-    return `<div class="quote-db-mep-empty">선택한 업체와 연결된 계약/지급 내역이 없습니다. <button type="button" class="btn btn-primary btn-xs" onclick="addEstimateDbMepRowForSelectedVendor()">계약행 추가</button></div>`;
+    return `<div class="quote-db-mep-empty">ì íí ìì²´ì ì°ê²°ë ê³ì½/ì§ê¸ ë´ì­ì´ ììµëë¤. <button type="button" class="btn btn-primary btn-xs" onclick="addEstimateDbMepRowForSelectedVendor()">ê³ì½í ì¶ê°</button></div>`;
   }
   return `
     <table class="quote-db-mep-detail-table">
       <thead>
-        <tr>${leafColumns.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}<th class="quote-db-manage-col">관리</th></tr>
+        <tr>${leafColumns.map((col, colIndex) => `<th ${makeEstimateDbCellStyle(colIndex, sheet)}>${escapeEstimateDbHtml(col || "").replace(/\n/g, "<br>")}</th>`).join("")}<th class="quote-db-manage-col">ê´ë¦¬</th></tr>
       </thead>
       <tbody>
         ${detailRows.map(({ row, sourceIndex }) => `
@@ -1504,7 +1504,7 @@ function renderEstimateDbMepDetailTable(detailRows, leafColumns, sheet) {
               const dirtyClass = getEstimateDbPendingEdit("mep", sourceIndex, colIndex) ? " quote-db-cell-dirty" : "";
               return `<td ${makeEstimateDbCellStyle(colIndex, sheet)}><input class="quote-db-cell-input${dirtyClass}" value="${escapeEstimateDbHtml(displayValue)}" data-row-index="${sourceIndex}" data-col-index="${colIndex}" onfocus="estimateDbSelectedCell={tab:'mep',sectionIndex:null,rowIndex:${sourceIndex},colIndex:${colIndex}}" oninput="handleEstimateDbCellInput(event, ${sourceIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" /></td>`;
             }).join("")}
-            <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${sourceIndex})">삭제</button></td>
+            <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${sourceIndex})">ì­ì </button></td>
           </tr>`).join("")}
       </tbody>
     </table>`;
@@ -1527,9 +1527,9 @@ function addEstimateDbMepVendorRow() {
 function recalcEstimateDbRowsByTab(tab = estimateDbActiveTab, options = {}) {
   const sheet = estimateDbSheets?.[tab];
   if (!sheet || !Array.isArray(sheet.rows)) return;
-  // 기성관리/기전업체는 컬럼 수가 많으므로 탭 진입 시 전체 행을 재계산하지 않습니다.
-  // 셀 수정/저장 시 변경 행만 recalcEstimateDbRow()로 계산하고,
-  // 전체 재계산이 꼭 필요한 경우에만 force 옵션을 사용합니다.
+  // ê¸°ì±ê´ë¦¬/ê¸°ì ìì²´ë ì»¬ë¼ ìê° ë§ì¼ë¯ë¡ í­ ì§ì ì ì ì²´ íì ì¬ê³ì°íì§ ììµëë¤.
+  // ì ìì /ì ì¥ ì ë³ê²½ íë§ recalcEstimateDbRow()ë¡ ê³ì°íê³ ,
+  // ì ì²´ ì¬ê³ì°ì´ ê¼­ íìí ê²½ì°ìë§ force ìµìì ì¬ì©í©ëë¤.
   if ((tab === "progress" || tab === "mep") && !options.force) return;
   sheet.rows.forEach(row => recalcEstimateDbRow(tab, row));
 }
@@ -1563,11 +1563,11 @@ function renderEstimateDbPager(paged) {
   const disabledPrev = paged.page <= 0 ? 'disabled' : '';
   const disabledNext = paged.page >= paged.maxPage ? 'disabled' : '';
   pager.innerHTML = `
-    <div class="quote-db-pager-info">표시 ${paged.total ? (paged.start + 1).toLocaleString('ko-KR') : 0}~${paged.end.toLocaleString('ko-KR')} / 전체 ${paged.total.toLocaleString('ko-KR')}행</div>
+    <div class="quote-db-pager-info">íì ${paged.total ? (paged.start + 1).toLocaleString('ko-KR') : 0}~${paged.end.toLocaleString('ko-KR')} / ì ì²´ ${paged.total.toLocaleString('ko-KR')}í</div>
     <div class="quote-db-pager-actions">
-      <button class="btn btn-line btn-sm" type="button" ${disabledPrev} onclick="moveEstimateDbPage(-1)">이전</button>
+      <button class="btn btn-line btn-sm" type="button" ${disabledPrev} onclick="moveEstimateDbPage(-1)">ì´ì </button>
       <span>${(paged.page + 1).toLocaleString('ko-KR')} / ${(paged.maxPage + 1).toLocaleString('ko-KR')}</span>
-      <button class="btn btn-line btn-sm" type="button" ${disabledNext} onclick="moveEstimateDbPage(1)">다음</button>
+      <button class="btn btn-line btn-sm" type="button" ${disabledNext} onclick="moveEstimateDbPage(1)">ë¤ì</button>
     </div>`;
 }
 function moveEstimateDbPage(delta = 0) {
@@ -1577,7 +1577,7 @@ function moveEstimateDbPage(delta = 0) {
   renderEstimateDbManage();
 }
 function getEstimateDbStageGroups() {
-  return ["세금계산서", "입금예정일", "입금일"];
+  return ["ì¸ê¸ê³ì°ì", "ìê¸ìì ì¼", "ìê¸ì¼"];
 }
 function getEstimateDbProgressGroupNameByColumn(colIndex) {
   const sheet = estimateDbSheets.progress;
@@ -1601,35 +1601,35 @@ function addEstimateDbProgressStageColumns() {
   const top = sheet.headerRows[0];
   const bottom = sheet.headerRows[1];
   const cols = getEstimateDbLeafColumns(sheet);
-  const stageNumbers = cols.map(c => (normalizeEstimateDbText(c).match(/^(\d+)차기성$/) || [])[1]).filter(Boolean).map(Number);
+  const stageNumbers = cols.map(c => (normalizeEstimateDbText(c).match(/^(\d+)ì°¨ê¸°ì±$/) || [])[1]).filter(Boolean).map(Number);
   const next = (stageNumbers.length ? Math.max(...stageNumbers) : 5) + 1;
   const insertedIndexes = {};
 
   getEstimateDbStageGroups().forEach(group => {
     const groupIndexes = getEstimateDbProgressGroupIndexes(group);
-    const totalIndex = groupIndexes.find(i => normalizeEstimateDbText(bottom[i]) === "합계");
+    const totalIndex = groupIndexes.find(i => normalizeEstimateDbText(bottom[i]) === "í©ê³");
     const insertAt = totalIndex >= 0 ? totalIndex : (groupIndexes.length ? Math.max(...groupIndexes) + 1 : bottom.length);
     top.splice(insertAt, 0, "");
-    bottom.splice(insertAt, 0, `${next}차기성`);
-    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "추가된 기성 차수 입력란");
+    bottom.splice(insertAt, 0, `${next}ì°¨ê¸°ì±`);
+    if (sheet.requestRow) sheet.requestRow.splice(insertAt, 0, "ì¶ê°ë ê¸°ì± ì°¨ì ìë ¥ë");
     (sheet.rows || []).forEach(row => row.splice(insertAt, 0, ""));
     insertedIndexes[group] = insertAt;
   });
 
-  const focusGroup = getEstimateDbStageGroups().includes(selectedGroup) ? selectedGroup : "세금계산서";
+  const focusGroup = getEstimateDbStageGroups().includes(selectedGroup) ? selectedGroup : "ì¸ê¸ê³ì°ì";
   const focusCol = insertedIndexes[focusGroup] ?? Object.values(insertedIndexes)[0] ?? 0;
   estimateDbSelectedCell = { tab: "progress", sectionIndex: null, rowIndex: selected.rowIndex || 0, colIndex: focusCol };
   recalcAllEstimateDbRows();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(estimateDbSelectedCell.rowIndex || 0, focusCol));
-  if (typeof showToast === "function") showToast(`${next}차기성 열을 추가했습니다.`);
+  if (typeof showToast === "function") showToast(`${next}ì°¨ê¸°ì± ì´ì ì¶ê°íìµëë¤.`);
 }
 
 
 function normalizeEstimateDbSortValue(value) {
   const text = normalizeEstimateDbText(value);
-  const numeric = Number(String(text).replace(/[,원\s]/g, ""));
-  if (text && !Number.isNaN(numeric) && /^-?[0-9,\.]+원?$/.test(text)) return { type: "number", value: numeric };
+  const numeric = Number(String(text).replace(/[,ì\s]/g, ""));
+  if (text && !Number.isNaN(numeric) && /^-?[0-9,\.]+ì?$/.test(text)) return { type: "number", value: numeric };
   return { type: "text", value: text.toLowerCase() };
 }
 
@@ -1647,9 +1647,9 @@ function getEstimateDbDefaultSortState(tab = estimateDbActiveTab) {
   const cols = getEstimateDbLeafColumns(sheet);
   const pjIndex = cols.findIndex(col => normalizeEstimateDbText(col) === "PJ NO");
 
-  // PJ관리, 기성관리, 기전업체 모두 기본 정렬은 PJ NO 내림차순입니다.
-  // 사용자가 다른 헤더를 클릭하면 해당 정렬을 우선 적용하지만,
-  // 탭 최초 진입/저장/Enter 확정 시에는 다시 PJ NO 기준으로 정렬됩니다.
+  // PJê´ë¦¬, ê¸°ì±ê´ë¦¬, ê¸°ì ìì²´ ëª¨ë ê¸°ë³¸ ì ë ¬ì PJ NO ë´ë¦¼ì°¨ììëë¤.
+  // ì¬ì©ìê° ë¤ë¥¸ í¤ëë¥¼ í´ë¦­íë©´ í´ë¹ ì ë ¬ì ì°ì  ì ì©íì§ë§,
+  // í­ ìµì´ ì§ì/ì ì¥/Enter íì  ììë ë¤ì PJ NO ê¸°ì¤ì¼ë¡ ì ë ¬ë©ëë¤.
   if (pjIndex >= 0) return { tab, colIndex: pjIndex, direction: "desc" };
 
   return { tab, colIndex: 0, direction: "asc" };
@@ -1713,21 +1713,21 @@ function getEstimateDbDisplayRowEntries(sheet = getEstimateDbSheet(), tab = esti
 
 function getEstimateDbColumnVisualClass(tab = estimateDbActiveTab, colIndex = 0) {
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
-  // PJ관리 / 기성관리 / 기전업체 공통: PJ NO 열은 기존 저장 열폭보다 고정폭을 우선 적용합니다.
+  // PJê´ë¦¬ / ê¸°ì±ê´ë¦¬ / ê¸°ì ìì²´ ê³µíµ: PJ NO ì´ì ê¸°ì¡´ ì ì¥ ì´í­ë³´ë¤ ê³ ì í­ì ì°ì  ì ì©í©ëë¤.
   if (header === "PJ NO") return " quote-db-col-pj-no";
   if (tab !== "pj") return "";
-  if (header === "국내/해외") return " quote-db-col-domestic";
-  if (header === "거래처명") return " quote-db-col-client-name";
-  if (header === "프로젝트명") return " quote-db-col-project-name";
+  if (header === "êµ­ë´/í´ì¸") return " quote-db-col-domestic";
+  if (header === "ê±°ëì²ëª") return " quote-db-col-client-name";
+  if (header === "íë¡ì í¸ëª") return " quote-db-col-project-name";
   return "";
 }
 
 function getEstimateDbGroupBoundaryClass(tab = estimateDbActiveTab, colIndex = 0, sheet = getEstimateDbSheet()) {
   const header = normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex));
   const boundaryHeadersByTab = {
-    pj: ["프로젝트명", "작업공종", "세대수"],
-    progress: ["작업취소", "외주금액합계", "2차납품공종"],
-    mep: ["작업취소", "외주금액합계", "2차납품공종"]
+    pj: ["íë¡ì í¸ëª", "ììê³µì¢", "ì¸ëì"],
+    progress: ["ììì·¨ì", "ì¸ì£¼ê¸ì¡í©ê³", "2ì°¨ë©íê³µì¢"],
+    mep: ["ììì·¨ì", "ì¸ì£¼ê¸ì¡í©ê³", "2ì°¨ë©íê³µì¢"]
   };
   const boundaryHeaders = boundaryHeadersByTab[tab] || [];
   return boundaryHeaders.includes(header) ? " quote-db-group-boundary" : "";
@@ -1737,7 +1737,7 @@ function renderEstimateDbSearchBox() {
   const box = document.getElementById("estimateDbSearchBox");
   if (!box) return;
   box.value = estimateDbSearchKeyword || "";
-  box.placeholder = `${getEstimateDbSheet().title || "DB"} 검색`;
+  box.placeholder = `${getEstimateDbSheet().title || "DB"} ê²ì`;
 }
 
 function ensureEstimateDbManualSaveButton() {
@@ -1745,15 +1745,15 @@ function ensureEstimateDbManualSaveButton() {
   const reorderBtn = document.getElementById("estimateDbColumnReorderBtn");
   const reorderOkBtn = document.getElementById("estimateDbColumnReorderOkBtn");
   if (reorderBtn) {
-    reorderBtn.textContent = estimateDbColumnReorderMode ? "열 위치 변경 중" : "열 위치 변경";
+    reorderBtn.textContent = estimateDbColumnReorderMode ? "ì´ ìì¹ ë³ê²½ ì¤" : "ì´ ìì¹ ë³ê²½";
     reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
   }
   if (reorderOkBtn) reorderOkBtn.style.setProperty("display", estimateDbColumnReorderMode ? "inline-flex" : "none", "important");
   bindEstimateDbColumnReorderOkButton();
   const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
-  if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
+  if (rowHeightBtn) rowHeightBtn.textContent = `í ëì´ ${estimateDbRowHeightPx}px`;
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
-  const exportBtn = Array.from(document.querySelectorAll("button")).find(btn => normalizeEstimateDbText(btn.textContent).includes("엑셀 내보내기"));
+  const exportBtn = Array.from(document.querySelectorAll("button")).find(btn => normalizeEstimateDbText(btn.textContent).includes("ìì ë´ë³´ë´ê¸°"));
   const anchor = stageBtn || exportBtn;
   if (!anchor?.parentElement) return;
   const btn = document.createElement("button");
@@ -1769,12 +1769,12 @@ function migrateEstimateDbPjColumns() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const desired = [
-    "최초생성날짜","접수번호","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항"
+    "ìµì´ìì±ë ì§","ì ìë²í¸","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"êµ­ë´/í´ì¸","ê±°ëì²ëª","íë¡ì í¸ëª","ê±°ëì²","ê±°ëì²ë´ë¹ì","ì§ê¸","ì¼ë°ì í","í´ëí°","ì§íµì í","EMAIL","EMAIL2","ì¹íë","ID","PW","ê¸°í","ììê³µì¢","í´ëëª / ìë£ìì¹","PM(ë§ê°)","PM(êµ¬ì¡°)","PM(í ëª©,ì¡°ê²½)","PM(ê¸°ê³)","PM(ì ê¸°)","PM(ì¸íë¦¬ì´)","PM(ì² ê±°)","ììêµ¬ë¶","ìë¬´ì±ê²©","ìë¬´ë¨ê³2","ë¨ê°ììì¬ë¶","ê±´ë¬¼ì©ë","ì°ë©´ì (m2)","ì°ë©´ì (í)","ì¸µì","ëì","íìì","ì¸ëì","ìì£¼ì¼ì","ììì°©ìì¼ì","1ì°¨ë©íìì ì¼","1ì°¨ë©íì¼ì","1ì°¨ë©íê³µì¢","2ì°¨ë©íìì ì¼","2ì°¨ë©íì¼ì","2ì°¨ë©íê³µì¢","ìë´ / ì´ë©ì¼ / í¹ê¸°ì¬í­"
   ];
   const current = sheet.headerRows[0];
   if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
   const oldIndex = new Map(current.map((h, i) => [h, i]));
-  const aliases = { "거래처": ["거래처", "부서명"] };
+  const aliases = { "ê±°ëì²": ["ê±°ëì²", "ë¶ìëª"] };
   const remap = row => desired.map(h => {
     const names = aliases[h] || [h];
     const key = names.find(name => oldIndex.has(name));
@@ -1786,17 +1786,17 @@ function migrateEstimateDbPjColumns() {
   sheet.rows = (sheet.rows || []).map(remap);
 }
 function toggleEstimateDbColumnReorderMode() {
-  // "열 위치 변경 중" 버튼은 편집모드 재진입/상태표시 용도로만 사용합니다.
-  // 편집모드 종료와 저장은 반드시 "확인" 버튼에서만 처리합니다.
+  // "ì´ ìì¹ ë³ê²½ ì¤" ë²í¼ì í¸ì§ëª¨ë ì¬ì§ì/ìííì ì©ëë¡ë§ ì¬ì©í©ëë¤.
+  // í¸ì§ëª¨ë ì¢ë£ì ì ì¥ì ë°ëì "íì¸" ë²í¼ììë§ ì²ë¦¬í©ëë¤.
   if (estimateDbColumnReorderMode) {
     estimateDbColumnReorderSource = null;
-    if (typeof showToast === "function") showToast("열 위치 변경 모드입니다. 종료하려면 확인 버튼을 누르세요.");
+    if (typeof showToast === "function") showToast("ì´ ìì¹ ë³ê²½ ëª¨ëìëë¤. ì¢ë£íë ¤ë©´ íì¸ ë²í¼ì ëë¥´ì¸ì.");
     renderEstimateDbManage();
     return;
   }
   estimateDbColumnReorderMode = true;
   estimateDbColumnReorderSource = null;
-  if (typeof showToast === "function") showToast("열 위치 변경 모드입니다. 이동할 헤더를 드래그해 바꿀 위치에 놓고 확인을 누르세요.");
+  if (typeof showToast === "function") showToast("ì´ ìì¹ ë³ê²½ ëª¨ëìëë¤. ì´ëí  í¤ëë¥¼ ëëê·¸í´ ë°ê¿ ìì¹ì ëê³  íì¸ì ëë¥´ì¸ì.");
   renderEstimateDbManage();
 }
 function confirmEstimateDbColumnReorder() {
@@ -1805,7 +1805,7 @@ function confirmEstimateDbColumnReorder() {
   estimateDbColumnReorderPointerState = null;
   document.removeEventListener("mouseup", finishEstimateDbColumnReorderPointer, true);
   saveEstimateDbToStorage?.();
-  if (typeof showToast === "function") showToast("열 위치 변경을 저장했습니다.");
+  if (typeof showToast === "function") showToast("ì´ ìì¹ ë³ê²½ì ì ì¥íìµëë¤.");
   renderEstimateDbManage();
 }
 
@@ -1974,23 +1974,23 @@ function renderEstimateDbManage(options = {}) {
   updateEstimateDbSaveButtonState();
   const resizeBtn = document.getElementById("estimateDbColumnResizeBtn");
   if (resizeBtn) {
-    resizeBtn.textContent = estimateDbColumnResizeMode ? "열 조절 종료" : "열 너비 조절하기";
+    resizeBtn.textContent = estimateDbColumnResizeMode ? "ì´ ì¡°ì  ì¢ë£" : "ì´ ëë¹ ì¡°ì íê¸°";
     resizeBtn.classList.toggle("active", estimateDbColumnResizeMode);
   }
   const reorderBtn = document.getElementById("estimateDbColumnReorderBtn");
   const reorderOkBtn = document.getElementById("estimateDbColumnReorderOkBtn");
   if (reorderBtn) {
-    reorderBtn.textContent = estimateDbColumnReorderMode ? "열 위치 변경 중" : "열 위치 변경";
+    reorderBtn.textContent = estimateDbColumnReorderMode ? "ì´ ìì¹ ë³ê²½ ì¤" : "ì´ ìì¹ ë³ê²½";
     reorderBtn.classList.toggle("active", estimateDbColumnReorderMode);
   }
   if (reorderOkBtn) reorderOkBtn.style.setProperty("display", estimateDbColumnReorderMode ? "inline-flex" : "none", "important");
   bindEstimateDbColumnReorderOkButton();
   const rowHeightBtn = document.getElementById("estimateDbRowHeightBtn");
-  if (rowHeightBtn) rowHeightBtn.textContent = `행 높이 ${estimateDbRowHeightPx}px`;
+  if (rowHeightBtn) rowHeightBtn.textContent = `í ëì´ ${estimateDbRowHeightPx}px`;
   const contractBtn = document.getElementById("estimateDbAddContractAmountBtn");
   if (contractBtn) contractBtn.style.display = estimateDbActiveTab === "progress" ? "inline-flex" : "none";
   const stageBtn = document.getElementById("estimateDbAddStageBtn");
-  if (stageBtn) stageBtn.textContent = `+차수 추가(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
+  if (stageBtn) stageBtn.textContent = `+ì°¨ì ì¶ê°(${ESTIMATE_DB_STAGE_ADD_SHORTCUT_LABEL})`;
   if (estimateDbActiveTab === "mep") {
     renderEstimateDbMepManage(options);
     return;
@@ -2003,14 +2003,14 @@ function renderEstimateDbManage(options = {}) {
   head.innerHTML = `
     <tr class="quote-db-head-row quote-db-head-row-1 quote-db-head-row-merged">
       ${displayColumns.map((col, colIndex) => {
-        const sortMark = sort.colIndex === colIndex ? (sort.direction === "asc" ? " ▲" : " ▼") : "";
+        const sortMark = sort.colIndex === colIndex ? (sort.direction === "asc" ? " â²" : " â¼") : "";
         const reorderClass = estimateDbColumnReorderMode ? " reorder-mode" : "";
         const reorderAttrs = estimateDbColumnReorderMode
-          ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="헤더를 좌클릭 드래그해서 바꿀 열 위치에 놓으면 두 열이 서로 바뀝니다."`
-          : `onclick="toggleEstimateDbSort(${colIndex})" title="클릭하면 오름차순/내림차순 정렬됩니다."`;
+          ? `draggable="true" onmousedown="startEstimateDbColumnReorderPointer(event, ${colIndex})" ondragstart="startEstimateDbColumnReorder(event, ${colIndex})" ondragend="endEstimateDbColumnReorder(event)" ondragover="allowEstimateDbColumnDrop(event)" ondrop="dropEstimateDbColumn(event, ${colIndex})" onclick="event.preventDefault(); event.stopPropagation();" title="í¤ëë¥¼ ì¢í´ë¦­ ëëê·¸í´ì ë°ê¿ ì´ ìì¹ì ëì¼ë©´ ë ì´ì´ ìë¡ ë°ëëë¤."`
+          : `onclick="toggleEstimateDbSort(${colIndex})" title="í´ë¦­íë©´ ì¤ë¦ì°¨ì/ë´ë¦¼ì°¨ì ì ë ¬ë©ëë¤."`;
         return `<th ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" data-col-index="${colIndex}" class="quote-db-sortable-head ${estimateDbColumnResizeMode ? "resize-mode" : ""}${reorderClass}${getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex)}${getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex)}${getEstimateDbColumnVisualClass(estimateDbActiveTab, colIndex)}${getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet)}" ${reorderAttrs}><span class="quote-db-head-label">${escapeEstimateDbHtml((col || "") + sortMark).replace(/\n/g, "<br>")}</span>${renderEstimateDbColumnResizeHandle(colIndex)}</th>`;
       }).join("")}
-      <th class="quote-db-manage-col">관리</th>
+      <th class="quote-db-manage-col">ê´ë¦¬</th>
     </tr>
   `;
   const allEntries = getEstimateDbDisplayRowEntries(sheet, estimateDbActiveTab);
@@ -2018,7 +2018,7 @@ function renderEstimateDbManage(options = {}) {
   const entries = paged.entries;
   recalcEstimateDbVisibleRows(estimateDbActiveTab, entries);
   const totalRow = renderEstimateDbTotalRow(sheet, colCount);
-  body.innerHTML = totalRow + (entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">검색 조건에 맞는 DB 행이 없습니다.</td></tr>`);
+  body.innerHTML = totalRow + (entries.map(({ row, sourceIndex }) => renderEstimateDbRow(row, sourceIndex, colCount)).join("") || `<tr><td colspan="${colCount + 1}" class="empty-cell">ê²ì ì¡°ê±´ì ë§ë DB íì´ ììµëë¤.</td></tr>`);
   renderEstimateDbPager(paged);
   applyEstimateDbCommaFormatToRenderedInputs();
   if (options.renderReportsNow) renderEstimateDbReports();
@@ -2036,7 +2036,7 @@ function renderEstimateDbTotalRow(sheet, colCount) {
   const formatTotal = (value, colIndex) => value ? formatEstimateDbMoneyDisplay(value, sheet === estimateDbSheets.progress ? "progress" : sheet === estimateDbSheets.mep ? "mep" : estimateDbActiveTab, colIndex, sheet) : "";
   return `
     <tr class="quote-db-total-row" style="height:${estimateDbRowHeightPx}px;">
-      <td class="quote-db-total-label" colspan="4">합계</td>
+      <td class="quote-db-total-label" colspan="4">í©ê³</td>
       ${Array.from({ length: Math.max(0, colCount - 4) }, (_, offset) => {
         const colIndex = offset + 4;
         return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${(getEstimateDbColumnVisualClass(tabName, colIndex) + getEstimateDbGroupBoundaryClass(tabName, colIndex, sheet)).trim()}"><input class="quote-db-cell-input quote-db-total-input" value="${escapeEstimateDbHtml(formatTotal(totals[colIndex], colIndex))}" readonly tabindex="-1" /></td>`;
@@ -2047,13 +2047,13 @@ function renderEstimateDbTotalRow(sheet, colCount) {
 function isEstimateDbOutsourceAmountCell(tab = estimateDbActiveTab, colIndex = 0) {
   if (tab !== "progress") return false;
   const header = getEstimateDbColumnName(tab, colIndex);
-  return ["기계", "전기", "외주", "송무", "기타"].includes(header);
+  return ["ê¸°ê³", "ì ê¸°", "ì¸ì£¼", "ì¡ë¬´", "ê¸°í"].includes(header);
 }
 function formatEstimateDbAmountCellDisplay(value) {
   const parsed = parseEstimateDbAmountCellValue(value);
   const amount = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
   if (parsed.company && amount) return `${parsed.company}
-${amount}원`;
+${amount}ì`;
   if (amount) return amount;
   return String(value || "");
 }
@@ -2089,18 +2089,18 @@ function refreshEstimateDbCalculatedCells(rowIndex) {
   if (!sheet || !row) return;
   const cols = getEstimateDbLeafColumns(sheet);
   const calculatedHeaders = estimateDbActiveTab === "progress"
-    ? ["잔액", "작업대기중", "합계", "세금계산서", "입금예정일", "입금일"]
+    ? ["ìì¡", "ììëê¸°ì¤", "í©ê³", "ì¸ê¸ê³ì°ì", "ìê¸ìì ì¼", "ìê¸ì¼"]
     : estimateDbActiveTab === "mep"
-      ? ["잔액", "작업대기중"]
+      ? ["ìì¡", "ììëê¸°ì¤"]
       : estimateDbActiveTab === "pj"
-        ? ["연면적(평)"]
+        ? ["ì°ë©´ì (í)"]
         : [];
   if (!calculatedHeaders.length) return;
   cols.forEach((header, colIndex) => {
     const topHeader = sheet.headerRows?.[0]?.[colIndex] || "";
     const topText = normalizeEstimateDbText(topHeader).replace(/\s+/g, "");
-    const isStageTotal = normalizeEstimateDbText(header) === "합계" && /세금계산서|입금예정일|입금일/.test(String(topHeader));
-    const isOutsourceTotal = estimateDbActiveTab === "progress" && normalizeEstimateDbText(header) === "합계" && topText.includes("외주금액");
+    const isStageTotal = normalizeEstimateDbText(header) === "í©ê³" && /ì¸ê¸ê³ì°ì|ìê¸ìì ì¼|ìê¸ì¼/.test(String(topHeader));
+    const isOutsourceTotal = estimateDbActiveTab === "progress" && normalizeEstimateDbText(header) === "í©ê³" && topText.includes("ì¸ì£¼ê¸ì¡");
     const isCalculated = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, calculatedHeaders);
     if (!isCalculated && !isStageTotal && !isOutsourceTotal) return;
     const input = document.querySelector(`.quote-db-cell-input[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`);
@@ -2114,8 +2114,8 @@ function handleEstimateDbCellInput(event, rowIndex, colIndex, amountCell = false
   let value = input.value;
   const sheet = getEstimateDbSheet();
 
-  // DB관리 내 금액성 컬럼은 입력 중에도 3자리 콤마를 즉시 반영합니다.
-  // 예: 400000 -> 400,000 / 100000 -> 100,000
+  // DBê´ë¦¬ ë´ ê¸ì¡ì± ì»¬ë¼ì ìë ¥ ì¤ìë 3ìë¦¬ ì½¤ë§ë¥¼ ì¦ì ë°ìí©ëë¤.
+  // ì: 400000 -> 400,000 / 100000 -> 100,000
   if (!amountCell && isEstimateDbMoneyLikeColumn(estimateDbActiveTab, colIndex, sheet)) {
     const selectionFromEnd = String(input.value || "").length - (input.selectionStart || 0);
     value = formatEstimateDbCommaNumber(String(value || "").replace(/,/g, ""));
@@ -2152,10 +2152,10 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         const dirtyClass = getEstimateDbPendingEdit(estimateDbActiveTab, rowIndex, colIndex) ? " quote-db-cell-dirty" : "";
         const cellExtraClass = getEstimateDbContactDetailClass(estimateDbActiveTab, colIndex) + getEstimateDbScreenHiddenClass(estimateDbActiveTab, colIndex) + getEstimateDbColumnVisualClass(estimateDbActiveTab, colIndex) + (projectLinkCell ? " quote-db-project-link-td" : "");
         const boundaryClass = getEstimateDbGroupBoundaryClass(estimateDbActiveTab, colIndex, sheet);
-        const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["프로젝트명", "거래처명"]);
+        const wrapTextCell = isEstimateDbColumnHeaderMatch(estimateDbActiveTab, colIndex, ["íë¡ì í¸ëª", "ê±°ëì²ëª"]);
         if (isEstimateDbProgressDoneColumn(estimateDbActiveTab, colIndex)) {
           const done = parseEstimateDbProgressDoneValue(value);
-          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}${boundaryClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>완료</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
+          return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="quote-db-done-cell${cellExtraClass}${boundaryClass}"><label class="quote-db-done-box"><input type="checkbox" ${done.checked ? "checked" : ""} onchange="toggleEstimateDbProgressDone(event, ${rowIndex}, ${colIndex})" onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" /><span>ìë£</span></label><div class="quote-db-done-history">${escapeEstimateDbHtml(done.history || "")}</div></td>`;
         }
         if (amountCell || isEstimateDbContractAmountBreakdownColumn(estimateDbActiveTab, colIndex)) {
           const opener = commandCell ? renderEstimateDbCommandOpenButton(rowIndex, colIndex) : "";
@@ -2167,7 +2167,7 @@ function renderEstimateDbRow(row, rowIndex, colCount) {
         }
         return `<td ${makeEstimateDbCellStyle(colIndex, sheet)} data-resize-col="${colIndex}" class="${commandCell ? "quote-db-command-td" : ""}${cellExtraClass}${boundaryClass}"><div class="quote-db-command-wrap"><input class="${cls}${dirtyClass}" value="${escapeEstimateDbHtml(formattedDisplayValue)}" data-row-index="${rowIndex}" data-col-index="${colIndex}"${title} onfocus="selectEstimateDbCell(${rowIndex}, ${colIndex})" oninput="handleEstimateDbCellInput(event, ${rowIndex}, ${colIndex}, false)" onkeydown="handleEstimateDbKeydown(event)" ondblclick="${dbl}" />${opener}</div></td>`;
       }).join("")}
-      <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">삭제</button></td>
+      <td class="quote-db-manage-col"><button class="btn btn-line btn-xs" type="button" onclick="removeEstimateDbRow(${rowIndex})">ì­ì </button></td>
     </tr>
   `;
 }
@@ -2189,10 +2189,10 @@ function toggleEstimateDbProgressDone(event, rowIndex, colIndex) {
   const current = parseEstimateDbProgressDoneValue(row?.[colIndex]);
   const history = checked ? (current.history || getEstimateDbProgressDoneHistory()) : "";
 
-  // 기성청구완료 체크박스는 계산/정렬/연계 대상이 아닌 상태값입니다.
-  // 기존처럼 renderEstimateDbManage()를 다시 호출하면 60개 이상 컬럼의 기성관리 전체 표,
-  // 합계행, 리포트가 모두 재생성되어 체크 한 번에도 로딩이 발생합니다.
-  // 따라서 해당 셀 값과 현재 행의 완료 표시만 즉시 갱신합니다.
+  // ê¸°ì±ì²­êµ¬ìë£ ì²´í¬ë°ì¤ë ê³ì°/ì ë ¬/ì°ê³ ëìì´ ìë ìíê°ìëë¤.
+  // ê¸°ì¡´ì²ë¼ renderEstimateDbManage()ë¥¼ ë¤ì í¸ì¶íë©´ 60ê° ì´ì ì»¬ë¼ì ê¸°ì±ê´ë¦¬ ì ì²´ í,
+  // í©ê³í, ë¦¬í¬í¸ê° ëª¨ë ì¬ìì±ëì´ ì²´í¬ í ë²ìë ë¡ë©ì´ ë°ìí©ëë¤.
+  // ë°ë¼ì í´ë¹ ì ê°ê³¼ íì¬ íì ìë£ íìë§ ì¦ì ê°±ì í©ëë¤.
   row[colIndex] = stringifyEstimateDbProgressDoneValue(checked, history);
   refreshEstimateDbProgressDoneCellOnly(rowIndex, colIndex, checked, history);
   setEstimateDbPendingEdit?.(estimateDbActiveTab, rowIndex, colIndex, row[colIndex]);
@@ -2291,8 +2291,8 @@ function getEstimateDbProjectLinkOptions(rowIndex = -1) {
   const sheet = estimateDbSheets.pj;
   const columns = getEstimateDbLeafColumns(sheet);
   const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
-  const clientIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "거래처명");
-  const projectNameIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "프로젝트명");
+  const clientIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "ê±°ëì²ëª");
+  const projectNameIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "íë¡ì í¸ëª");
   return (sheet.rows || [])
     .map((row, sourceIndex) => {
       const pjNo = normalizeEstimateDbText(row?.[pjNoIndex]);
@@ -2317,9 +2317,9 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
   const target = rows[rowIndex];
   if (!target) return false;
 
-  // 프로젝트 연결은 기존 프로젝트와 현재 추가계약/후속계약 행을 묶는 참조값입니다.
-  // 수주금액, 작업일자, 담당자 등 현재 행의 계약 정보는 추가계약 시점 기준으로 별도 관리해야 하므로
-  // 기존 프로젝트 행의 값을 복사하지 않고 연결 PJ NO만 저장합니다.
+  // íë¡ì í¸ ì°ê²°ì ê¸°ì¡´ íë¡ì í¸ì íì¬ ì¶ê°ê³ì½/íìê³ì½ íì ë¬¶ë ì°¸ì¡°ê°ìëë¤.
+  // ìì£¼ê¸ì¡, ììì¼ì, ë´ë¹ì ë± íì¬ íì ê³ì½ ì ë³´ë ì¶ê°ê³ì½ ìì  ê¸°ì¤ì¼ë¡ ë³ë ê´ë¦¬í´ì¼ íë¯ë¡
+  // ê¸°ì¡´ íë¡ì í¸ íì ê°ì ë³µì¬íì§ ìê³  ì°ê²° PJ NOë§ ì ì¥í©ëë¤.
   const linkValue = selected ? selected.pjNo : normalizeEstimateDbText(selectedLabel);
   if (linkIndex >= 0) {
     while (target.length <= linkIndex) target.push("");
@@ -2331,9 +2331,9 @@ function applyEstimateDbProjectLink(rowIndex, selectedLabel) {
 
 let estimateDbContactDetailsCollapsed = false;
 
-const ESTIMATE_DB_CONTACT_VISIBLE_HEADER = "거래처";
-const ESTIMATE_DB_CONTACT_HIDDEN_HEADERS = ["거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타"];
-const ESTIMATE_DB_PJ_SCREEN_HIDDEN_HEADERS = ["접수번호"];
+const ESTIMATE_DB_CONTACT_VISIBLE_HEADER = "ê±°ëì²";
+const ESTIMATE_DB_CONTACT_HIDDEN_HEADERS = ["ê±°ëì²ë´ë¹ì", "ì§ê¸", "ì¼ë°ì í", "í´ëí°", "ì§íµì í", "EMAIL", "EMAIL2", "ì¹íë", "ID", "PW", "ê¸°í"];
+const ESTIMATE_DB_PJ_SCREEN_HIDDEN_HEADERS = ["ì ìë²í¸"];
 
 function isEstimateDbPjScreenHiddenColumn(tab = estimateDbActiveTab, colIndex = 0) {
   if (tab !== "pj") return false;
@@ -2360,12 +2360,12 @@ function getEstimateDbContactDetailClass(tab = estimateDbActiveTab, colIndex = 0
 }
 
 function toggleEstimateDbContactDetailColumns() {
-  // 거래처 세부정보는 화면에서는 숨기고, 거래처 셀 Enter 팝업과 엑셀 내보내기에서만 사용합니다.
+  // ê±°ëì² ì¸ë¶ì ë³´ë íë©´ììë ì¨ê¸°ê³ , ê±°ëì² ì Enter íìê³¼ ìì ë´ë³´ë´ê¸°ììë§ ì¬ì©í©ëë¤.
   estimateDbContactDetailsCollapsed = true;
   renderEstimateDbManage();
 }
 
-const ESTIMATE_DB_CONTACT_HEADERS = ["거래처", "거래처담당자", "직급", "일반전화", "휴대폰", "직통전화", "EMAIL", "EMAIL2", "웹하드", "ID", "PW", "기타"];
+const ESTIMATE_DB_CONTACT_HEADERS = ["ê±°ëì²", "ê±°ëì²ë´ë¹ì", "ì§ê¸", "ì¼ë°ì í", "í´ëí°", "ì§íµì í", "EMAIL", "EMAIL2", "ì¹íë", "ID", "PW", "ê¸°í"];
 const ESTIMATE_DB_CONTACT_FIELDS = ["dept", "name", "role", "tel", "mobile", "direct", "email", "email2", "webhard", "id", "pw", "etc", "note"];
 
 function isEstimateDbContactColumn(tab = estimateDbActiveTab, colIndex = 0) {
@@ -2382,18 +2382,18 @@ function getEstimateDbRowContacts(row) {
   if (Array.isArray(row.__contacts) && row.__contacts.length) return row.__contacts;
   const idx = getEstimateDbContactColumnIndexes();
   const first = {
-    dept: idx["거래처"] >= 0 ? row[idx["거래처"]] || "" : "",
-    name: idx["거래처담당자"] >= 0 ? row[idx["거래처담당자"]] || "" : "",
-    role: idx["직급"] >= 0 ? row[idx["직급"]] || "" : "",
-    tel: idx["일반전화"] >= 0 ? row[idx["일반전화"]] || "" : "",
-    mobile: idx["휴대폰"] >= 0 ? row[idx["휴대폰"]] || "" : "",
-    direct: idx["직통전화"] >= 0 ? row[idx["직통전화"]] || "" : "",
+    dept: idx["ê±°ëì²"] >= 0 ? row[idx["ê±°ëì²"]] || "" : "",
+    name: idx["ê±°ëì²ë´ë¹ì"] >= 0 ? row[idx["ê±°ëì²ë´ë¹ì"]] || "" : "",
+    role: idx["ì§ê¸"] >= 0 ? row[idx["ì§ê¸"]] || "" : "",
+    tel: idx["ì¼ë°ì í"] >= 0 ? row[idx["ì¼ë°ì í"]] || "" : "",
+    mobile: idx["í´ëí°"] >= 0 ? row[idx["í´ëí°"]] || "" : "",
+    direct: idx["ì§íµì í"] >= 0 ? row[idx["ì§íµì í"]] || "" : "",
     email: idx["EMAIL"] >= 0 ? row[idx["EMAIL"]] || "" : "",
     email2: idx["EMAIL2"] >= 0 ? row[idx["EMAIL2"]] || "" : "",
-    webhard: idx["웹하드"] >= 0 ? row[idx["웹하드"]] || "" : "",
+    webhard: idx["ì¹íë"] >= 0 ? row[idx["ì¹íë"]] || "" : "",
     id: idx["ID"] >= 0 ? row[idx["ID"]] || "" : "",
     pw: idx["PW"] >= 0 ? row[idx["PW"]] || "" : "",
-    etc: idx["기타"] >= 0 ? row[idx["기타"]] || "" : "",
+    etc: idx["ê¸°í"] >= 0 ? row[idx["ê¸°í"]] || "" : "",
     note: ""
   };
   return Object.values(first).some(value => normalizeEstimateDbText(value)) ? [first] : [];
@@ -2424,18 +2424,18 @@ function setEstimateDbRowContacts(row, contacts) {
   const first = clean[0] || {};
   const idx = getEstimateDbContactColumnIndexes();
   const valueMap = {
-    "거래처": first.dept || "",
-    "거래처담당자": clean.length > 1 && first.name ? `${first.name} 외 ${clean.length - 1}명` : (first.name || ""),
-    "직급": first.role || "",
-    "일반전화": first.tel || "",
-    "휴대폰": first.mobile || "",
-    "직통전화": first.direct || "",
+    "ê±°ëì²": first.dept || "",
+    "ê±°ëì²ë´ë¹ì": clean.length > 1 && first.name ? `${first.name} ì¸ ${clean.length - 1}ëª` : (first.name || ""),
+    "ì§ê¸": first.role || "",
+    "ì¼ë°ì í": first.tel || "",
+    "í´ëí°": first.mobile || "",
+    "ì§íµì í": first.direct || "",
     "EMAIL": first.email || "",
     "EMAIL2": first.email2 || "",
-    "웹하드": first.webhard || "",
+    "ì¹íë": first.webhard || "",
     "ID": first.id || "",
     "PW": first.pw || "",
-    "기타": first.etc || ""
+    "ê¸°í": first.etc || ""
   };
   Object.entries(valueMap).forEach(([name, value]) => {
     if (idx[name] >= 0) row[idx[name]] = value;
@@ -2465,7 +2465,7 @@ function parseEstimateDbAccountCellValue(value) {
 function summarizeEstimateDbAccountInfo(accounts = []) {
   const filled = (accounts || []).filter(item => normalizeEstimateDbText(item.bank) || normalizeEstimateDbText(item.account) || normalizeEstimateDbText(item.holder) || normalizeEstimateDbText(item.memo));
   if (!filled.length) return "";
-  return filled.map(item => [item.bank, item.account].filter(Boolean).join(" ")).filter(Boolean).join(" / ") || `${filled.length}개 계좌`;
+  return filled.map(item => [item.bank, item.account].filter(Boolean).join(" ")).filter(Boolean).join(" / ") || `${filled.length}ê° ê³ì¢`;
 }
 
 function ensureEstimateDbAccountModal() {
@@ -2476,20 +2476,20 @@ function ensureEstimateDbAccountModal() {
   modal.className = "estimate-db-dropdown-modal hidden estimate-db-account-modal";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-account-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title">계좌정보 입력</div>
-      <div class="estimate-db-contact-help">기성관리의 계좌정보 셀에서 Enter를 누르면 열립니다. 여러 계좌를 입력할 수 있으며, 표에는 은행명과 계좌번호 요약이 표시됩니다.</div>
+      <div class="estimate-db-dropdown-title">ê³ì¢ì ë³´ ìë ¥</div>
+      <div class="estimate-db-contact-help">ê¸°ì±ê´ë¦¬ì ê³ì¢ì ë³´ ììì Enterë¥¼ ëë¥´ë©´ ì´ë¦½ëë¤. ì¬ë¬ ê³ì¢ë¥¼ ìë ¥í  ì ìì¼ë©°, íìë ìíëªê³¼ ê³ì¢ë²í¸ ìì½ì´ íìë©ëë¤.</div>
       <div class="estimate-db-contact-grid-wrap">
         <table class="estimate-db-contact-grid estimate-db-account-grid">
           <thead>
-            <tr><th>No</th><th>은행명</th><th>계좌번호</th><th>예금주</th><th>비고</th></tr>
+            <tr><th>No</th><th>ìíëª</th><th>ê³ì¢ë²í¸</th><th>ìê¸ì£¼</th><th>ë¹ê³ </th></tr>
           </thead>
           <tbody id="estimateDbAccountRows"></tbody>
         </table>
       </div>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbAccountModalRow()">+ 계좌 추가</button>
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAccountModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbAccountModal()">계좌정보 저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbAccountModalRow()">+ ê³ì¢ ì¶ê°</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAccountModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbAccountModal()">ê³ì¢ì ë³´ ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -2583,7 +2583,7 @@ function saveEstimateDbAccountModal() {
   const summary = summarizeEstimateDbAccountInfo(accounts);
   const value = stringifyEstimateDbRichCellValue({ type: "accountInfo", summary, accounts });
   updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
-  showToast('계좌 정보가 저장되었습니다.');
+  showToast('ê³ì¢ ì ë³´ê° ì ì¥ëììµëë¤.');
   closeEstimateDbAccountModal();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
@@ -2594,10 +2594,10 @@ let estimateDbBillingClientModalState = null;
 let estimateDbBillingManagerModalState = null;
 
 function isEstimateDbProgressBillingClientColumn(tab = estimateDbActiveTab, colIndex = 0) {
-  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "거래처기성담당자";
+  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "ê±°ëì²ê¸°ì±ë´ë¹ì";
 }
 function isEstimateDbProgressBillingManagerColumn(tab = estimateDbActiveTab, colIndex = 0) {
-  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "기성담당자";
+  return tab === "progress" && normalizeEstimateDbText(getEstimateDbColumnName(tab, colIndex)) === "ê¸°ì±ë´ë¹ì";
 }
 function parseEstimateDbBillingClientContactValue(value) {
   const rich = parseEstimateDbRichCellValue(value);
@@ -2620,18 +2620,18 @@ function ensureEstimateDbBillingClientModal() {
   modal.className = "estimate-db-dropdown-modal hidden estimate-db-billing-client-modal";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-billing-client-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title">거래처 기성담당자 입력</div>
-      <div class="estimate-db-contact-help">이름, 직위, 휴대전화를 입력합니다. 여러 담당자를 입력할 수 있으며, 표에는 3가지 정보가 한 줄 요약으로 표시됩니다.</div>
+      <div class="estimate-db-dropdown-title">ê±°ëì² ê¸°ì±ë´ë¹ì ìë ¥</div>
+      <div class="estimate-db-contact-help">ì´ë¦, ì§ì, í´ëì íë¥¼ ìë ¥í©ëë¤. ì¬ë¬ ë´ë¹ìë¥¼ ìë ¥í  ì ìì¼ë©°, íìë 3ê°ì§ ì ë³´ê° í ì¤ ìì½ì¼ë¡ íìë©ëë¤.</div>
       <div class="estimate-db-contact-grid-wrap">
         <table class="estimate-db-contact-grid estimate-db-billing-client-grid">
-          <thead><tr><th>No</th><th>이름</th><th>직위</th><th>휴대전화</th></tr></thead>
+          <thead><tr><th>No</th><th>ì´ë¦</th><th>ì§ì</th><th>í´ëì í</th></tr></thead>
           <tbody id="estimateDbBillingClientRows"></tbody>
         </table>
       </div>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingClientModalRow()">+ 담당자 추가</button>
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingClientModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingClientModal()">담당자 저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingClientModalRow()">+ ë´ë¹ì ì¶ê°</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingClientModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingClientModal()">ë´ë¹ì ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -2706,15 +2706,15 @@ function saveEstimateDbBillingClientModal() {
   const contacts = collectEstimateDbBillingClientModalRows();
   const summary = summarizeEstimateDbBillingClientContacts(contacts);
   updateEstimateDbCell(state.rowIndex, state.colIndex, stringifyEstimateDbRichCellValue({ type: "progressBillingClientContact", summary, contacts }), { commit: true, silentRender: true });
-  showToast('청구처 정보가 저장되었습니다.');
+  showToast('ì²­êµ¬ì² ì ë³´ê° ì ì¥ëììµëë¤.');
   closeEstimateDbBillingClientModal();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
 }
 function getEstimateDbDefaultBillingManagers() {
-  const fallback = [{ empNo: "CC-002", name: "강동균", position: "실장", label: "강동균실장" }, { empNo: "CC-004", name: "김태영", position: "선임", label: "김태영선임" }];
+  const fallback = [{ empNo: "CC-002", name: "ê°ëê· ", position: "ì¤ì¥", label: "ê°ëê· ì¤ì¥" }, { empNo: "CC-004", name: "ê¹íì", position: "ì ì", label: "ê¹íìì ì" }];
   try {
-    const fromEmployees = ["강동균", "김태영"].map(name => {
+    const fromEmployees = ["ê°ëê· ", "ê¹íì"].map(name => {
       const emp = (typeof employees !== "undefined" && Array.isArray(employees)) ? employees.find(item => String(item?.name || item?.koreanName || "").includes(name)) : null;
       if (!emp) return null;
       const position = String(emp?.grade || emp?.position || "");
@@ -2722,7 +2722,7 @@ function getEstimateDbDefaultBillingManagers() {
     }).filter(Boolean);
     if (fromEmployees.length) return fromEmployees;
     if (typeof orgEmployeeSeed !== "undefined" && Array.isArray(orgEmployeeSeed)) {
-      const mapped = ["강동균", "김태영"].map(name => {
+      const mapped = ["ê°ëê· ", "ê¹íì"].map(name => {
         const emp = orgEmployeeSeed.find(item => String(item?.[1] || "").includes(name));
         if (!emp) return null;
         const position = String(emp?.[4] || emp?.[5] || "");
@@ -2754,13 +2754,13 @@ function ensureEstimateDbBillingManagerModal() {
   modal.className = "estimate-db-dropdown-modal hidden estimate-db-billing-manager-modal";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-billing-manager-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title">기성담당자 선택</div>
-      <div class="estimate-db-contact-help">조직도/인사카드 기준 담당자를 선택합니다. 연락예정일 기준 이메일 알림 연동을 위해 직원번호도 함께 보관합니다.</div>
+      <div class="estimate-db-dropdown-title">ê¸°ì±ë´ë¹ì ì í</div>
+      <div class="estimate-db-contact-help">ì¡°ì§ë/ì¸ì¬ì¹´ë ê¸°ì¤ ë´ë¹ìë¥¼ ì íí©ëë¤. ì°ë½ìì ì¼ ê¸°ì¤ ì´ë©ì¼ ìë¦¼ ì°ëì ìí´ ì§ìë²í¸ë í¨ê» ë³´ê´í©ëë¤.</div>
       <div id="estimateDbBillingManagerOptions" class="estimate-db-manager-option-list"></div>
-      <div class="estimate-db-contact-help">담당자 추가는 이름만 검색한 뒤 검색된 인사카드를 선택해서 추가합니다. 선택한 인사카드의 직원번호/직위/이메일 정보가 함께 연결됩니다.</div>
-      <div class="estimate-db-manager-search-row"><input id="estimateDbBillingManagerSearch" placeholder="이름 검색" autocomplete="off" oninput="renderEstimateDbBillingManagerSearchResults(this.value)" /><button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingManagerSearchActive()">+ 추가</button></div>
-      <div id="estimateDbBillingManagerSearchResults" class="estimate-db-manager-search-results" aria-label="인사카드 검색 결과"></div>
-      <div class="estimate-db-dropdown-actions"><button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingManagerModal()">닫기</button><button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingManagerModal()">담당자 저장</button></div>
+      <div class="estimate-db-contact-help">ë´ë¹ì ì¶ê°ë ì´ë¦ë§ ê²ìí ë¤ ê²ìë ì¸ì¬ì¹´ëë¥¼ ì íí´ì ì¶ê°í©ëë¤. ì íí ì¸ì¬ì¹´ëì ì§ìë²í¸/ì§ì/ì´ë©ì¼ ì ë³´ê° í¨ê» ì°ê²°ë©ëë¤.</div>
+      <div class="estimate-db-manager-search-row"><input id="estimateDbBillingManagerSearch" placeholder="ì´ë¦ ê²ì" autocomplete="off" oninput="renderEstimateDbBillingManagerSearchResults(this.value)" /><button type="button" class="btn btn-line btn-sm" onclick="addEstimateDbBillingManagerSearchActive()">+ ì¶ê°</button></div>
+      <div id="estimateDbBillingManagerSearchResults" class="estimate-db-manager-search-results" aria-label="ì¸ì¬ì¹´ë ê²ì ê²°ê³¼"></div>
+      <div class="estimate-db-dropdown-actions"><button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbBillingManagerModal()">ë«ê¸°</button><button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbBillingManagerModal()">ë´ë¹ì ì ì¥</button></div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener("mousedown", event => { if (event.target === modal) closeEstimateDbBillingManagerModal(); });
@@ -2788,7 +2788,7 @@ function renderEstimateDbBillingManagerOptions(selectedManagers = []) {
     const label = item.label || [item.name, item.position].filter(Boolean).join("");
     const selected = selectedLabels.has(label) || (!selectedLabels.size && index === 0);
     const active = index === estimateDbBillingManagerActiveIndex;
-    return `<button type="button" class="estimate-db-manager-option${selected ? " is-selected" : ""}${active ? " is-active" : ""}" data-manager-option="1" data-manager-index="${index}" data-selected="${selected ? "1" : "0"}" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(item.empNo || "")}" data-name="${escapeEstimateDbHtml(item.name || "")}" data-position="${escapeEstimateDbHtml(item.position || "")}" onclick="selectEstimateDbBillingManagerOption(${index}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${index})"><span class="estimate-db-manager-check">${selected ? "선택" : ""}</span><strong>${escapeEstimateDbHtml(label)}</strong>${item.empNo ? `<em>${escapeEstimateDbHtml(item.empNo)}</em>` : ""}</button>`;
+    return `<button type="button" class="estimate-db-manager-option${selected ? " is-selected" : ""}${active ? " is-active" : ""}" data-manager-option="1" data-manager-index="${index}" data-selected="${selected ? "1" : "0"}" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(item.empNo || "")}" data-name="${escapeEstimateDbHtml(item.name || "")}" data-position="${escapeEstimateDbHtml(item.position || "")}" onclick="selectEstimateDbBillingManagerOption(${index}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${index})"><span class="estimate-db-manager-check">${selected ? "ì í" : ""}</span><strong>${escapeEstimateDbHtml(label)}</strong>${item.empNo ? `<em>${escapeEstimateDbHtml(item.empNo)}</em>` : ""}</button>`;
   }).join("");
   const options = Array.from(body.querySelectorAll('[data-manager-option="1"]'));
   if (options.length) {
@@ -2817,7 +2817,7 @@ function selectEstimateDbBillingManagerOption(index = 0, toggle = false) {
     const nextSelected = option.dataset.selected !== "1";
     option.dataset.selected = nextSelected ? "1" : "0";
     option.classList.toggle("is-selected", nextSelected);
-    option.querySelector(".estimate-db-manager-check").textContent = nextSelected ? "선택" : "";
+    option.querySelector(".estimate-db-manager-check").textContent = nextSelected ? "ì í" : "";
   }
 }
 function confirmEstimateDbBillingManagerOption(index = estimateDbBillingManagerActiveIndex) {
@@ -2828,7 +2828,7 @@ function confirmEstimateDbBillingManagerOption(index = estimateDbBillingManagerA
     const selected = optionIndex === estimateDbBillingManagerActiveIndex;
     option.dataset.selected = selected ? "1" : "0";
     option.classList.toggle("is-selected", selected);
-    option.querySelector(".estimate-db-manager-check").textContent = selected ? "선택" : "";
+    option.querySelector(".estimate-db-manager-check").textContent = selected ? "ì í" : "";
   });
   saveEstimateDbBillingManagerModal();
 }
@@ -2884,16 +2884,16 @@ function renderEstimateDbBillingManagerSearchResults(query = "") {
   const matches = getEstimateDbBillingManagerSearchMatches(query);
   estimateDbBillingManagerSearchActiveIndex = Math.max(0, Math.min(estimateDbBillingManagerSearchActiveIndex, Math.max(matches.length - 1, 0)));
   if (!normalizeEstimateDbText(query)) {
-    box.innerHTML = `<div class="estimate-db-manager-search-empty">이름을 입력하면 조직도/인사카드 검색 결과가 표시됩니다.</div>`;
+    box.innerHTML = `<div class="estimate-db-manager-search-empty">ì´ë¦ì ìë ¥íë©´ ì¡°ì§ë/ì¸ì¬ì¹´ë ê²ì ê²°ê³¼ê° íìë©ëë¤.</div>`;
     return;
   }
   if (!matches.length) {
-    box.innerHTML = `<div class="estimate-db-manager-search-empty">검색된 인사카드가 없습니다.</div>`;
+    box.innerHTML = `<div class="estimate-db-manager-search-empty">ê²ìë ì¸ì¬ì¹´ëê° ììµëë¤.</div>`;
     return;
   }
   box.innerHTML = matches.map((emp, index) => {
     const label = `${emp.name}${emp.position || ""}`;
-    return `<button type="button" class="estimate-db-manager-search-item${index === estimateDbBillingManagerSearchActiveIndex ? " is-active" : ""}" data-manager-search-index="${index}" data-emp-no="${escapeEstimateDbHtml(emp.empNo)}" data-name="${escapeEstimateDbHtml(emp.name)}" data-position="${escapeEstimateDbHtml(emp.position)}" data-email="${escapeEstimateDbHtml(emp.email)}" data-label="${escapeEstimateDbHtml(label)}" onclick="addEstimateDbBillingManagerFromSearch(${index})"><strong>${escapeEstimateDbHtml(emp.name)}</strong><span>${escapeEstimateDbHtml(emp.position || "직위 없음")}</span><em>${escapeEstimateDbHtml(emp.dept || emp.email || emp.empNo || "인사카드")}</em></button>`;
+    return `<button type="button" class="estimate-db-manager-search-item${index === estimateDbBillingManagerSearchActiveIndex ? " is-active" : ""}" data-manager-search-index="${index}" data-emp-no="${escapeEstimateDbHtml(emp.empNo)}" data-name="${escapeEstimateDbHtml(emp.name)}" data-position="${escapeEstimateDbHtml(emp.position)}" data-email="${escapeEstimateDbHtml(emp.email)}" data-label="${escapeEstimateDbHtml(label)}" onclick="addEstimateDbBillingManagerFromSearch(${index})"><strong>${escapeEstimateDbHtml(emp.name)}</strong><span>${escapeEstimateDbHtml(emp.position || "ì§ì ìì")}</span><em>${escapeEstimateDbHtml(emp.dept || emp.email || emp.empNo || "ì¸ì¬ì¹´ë")}</em></button>`;
   }).join("");
 }
 function focusEstimateDbBillingManagerSearchResult(index = 0) {
@@ -2922,11 +2922,11 @@ function addEstimateDbBillingManagerFromSearch(index = 0) {
   if (existing) {
     existing.dataset.selected = "1";
     existing.classList.add("is-selected");
-    existing.querySelector(".estimate-db-manager-check").textContent = "선택";
+    existing.querySelector(".estimate-db-manager-check").textContent = "ì í";
     focusEstimateDbBillingManagerOption(Array.from(body.querySelectorAll('[data-manager-option="1"]')).indexOf(existing));
   } else {
     const optionIndex = body.querySelectorAll('[data-manager-option="1"]').length;
-    body.insertAdjacentHTML("beforeend", `<button type="button" class="estimate-db-manager-option is-selected" data-manager-option="1" data-manager-index="${optionIndex}" data-selected="1" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" onclick="selectEstimateDbBillingManagerOption(${optionIndex}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${optionIndex})"><span class="estimate-db-manager-check">선택</span><strong>${escapeEstimateDbHtml(label)}</strong>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</button>`);
+    body.insertAdjacentHTML("beforeend", `<button type="button" class="estimate-db-manager-option is-selected" data-manager-option="1" data-manager-index="${optionIndex}" data-selected="1" data-value="${escapeEstimateDbHtml(label)}" data-emp-no="${escapeEstimateDbHtml(empNo)}" data-name="${escapeEstimateDbHtml(name)}" data-position="${escapeEstimateDbHtml(position)}" onclick="selectEstimateDbBillingManagerOption(${optionIndex}, true)" ondblclick="confirmEstimateDbBillingManagerOption(${optionIndex})"><span class="estimate-db-manager-check">ì í</span><strong>${escapeEstimateDbHtml(label)}</strong>${empNo ? `<em>${escapeEstimateDbHtml(empNo)}</em>` : ""}</button>`);
     focusEstimateDbBillingManagerOption(optionIndex);
   }
   const searchInput = modal.querySelector("#estimateDbBillingManagerSearch");
@@ -2976,7 +2976,7 @@ function saveEstimateDbBillingManagerModal() {
   const managers = collectEstimateDbBillingManagerModalRows();
   const summary = summarizeEstimateDbBillingManagers(managers);
   updateEstimateDbCell(state.rowIndex, state.colIndex, stringifyEstimateDbRichCellValue({ type: "progressBillingManager", summary, managers }), { commit: true, silentRender: true });
-  showToast('담당 정보가 저장되었습니다.');
+  showToast('ë´ë¹ ì ë³´ê° ì ì¥ëììµëë¤.');
   closeEstimateDbBillingManagerModal();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
@@ -2992,19 +2992,19 @@ function ensureEstimateDbContactModal() {
   modal.className = "estimate-db-dropdown-modal hidden estimate-db-contact-modal";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-contact-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title">거래처 / 담당자 / 웹하드 관리</div>
-      <div class="estimate-db-contact-help">거래처 셀에서 Enter를 누르면 열립니다. 화면에서는 거래처만 표시하고, 담당자·연락처·웹하드·ID·PW·기타는 이 창과 엑셀 내보내기에서 관리합니다.</div>
+      <div class="estimate-db-dropdown-title">ê±°ëì² / ë´ë¹ì / ì¹íë ê´ë¦¬</div>
+      <div class="estimate-db-contact-help">ê±°ëì² ììì Enterë¥¼ ëë¥´ë©´ ì´ë¦½ëë¤. íë©´ììë ê±°ëì²ë§ íìíê³ , ë´ë¹ìÂ·ì°ë½ì²Â·ì¹íëÂ·IDÂ·PWÂ·ê¸°íë ì´ ì°½ê³¼ ìì ë´ë³´ë´ê¸°ìì ê´ë¦¬í©ëë¤.</div>
       <div class="estimate-db-contact-grid-wrap">
         <table class="estimate-db-contact-grid">
           <thead>
-            <tr><th>No</th><th>거래처</th><th>담당자</th><th>직급</th><th>일반전화</th><th>휴대폰</th><th>직통전화</th><th>EMAIL</th><th>EMAIL2</th><th>웹하드</th><th>ID</th><th>PW</th><th>기타</th><th>비고</th></tr>
+            <tr><th>No</th><th>ê±°ëì²</th><th>ë´ë¹ì</th><th>ì§ê¸</th><th>ì¼ë°ì í</th><th>í´ëí°</th><th>ì§íµì í</th><th>EMAIL</th><th>EMAIL2</th><th>ì¹íë</th><th>ID</th><th>PW</th><th>ê¸°í</th><th>ë¹ê³ </th></tr>
           </thead>
           <tbody id="estimateDbContactRows"></tbody>
         </table>
       </div>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContactModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContactModal()">거래처 정보 저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbContactModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbContactModal()">ê±°ëì² ì ë³´ ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -3122,7 +3122,7 @@ function saveEstimateDbContactModal() {
   });
   setEstimateDbRowContacts(row, contacts);
   recalcEstimateDbRow("pj", row);
-  showToast('담당자 정보가 저장되었습니다.');
+  showToast('ë´ë¹ì ì ë³´ê° ì ì¥ëììµëë¤.');
   closeEstimateDbContactModal();
   renderEstimateDbManage();
 }
@@ -3130,20 +3130,20 @@ function saveEstimateDbContactModal() {
 function isEstimateDbDropdownCell(tab, colIndex) {
   const request = getEstimateDbColumnRequest(tab, colIndex);
   const header = getEstimateDbColumnName(tab, colIndex);
-  if (tab === "pj" && header === "PM(철거)") return false;
+  if (tab === "pj" && header === "PM(ì² ê±°)") return false;
   if (isEstimateDbContactColumn(tab, colIndex)) return true;
-  return isEstimateDbProjectLinkColumn(tab, colIndex) || /드롭다운|대분류|소분류|추가 가능|선택/i.test(request) || ["국내/해외", "거래처명", "작업공종", "작업구분", "업무성격", "업무단계2", "단가작업여부", "건물용도"].includes(header);
+  return isEstimateDbProjectLinkColumn(tab, colIndex) || /ëë¡­ë¤ì´|ëë¶ë¥|ìë¶ë¥|ì¶ê° ê°ë¥|ì í/i.test(request) || ["êµ­ë´/í´ì¸", "ê±°ëì²ëª", "ììê³µì¢", "ììêµ¬ë¶", "ìë¬´ì±ê²©", "ìë¬´ë¨ê³2", "ë¨ê°ììì¬ë¶", "ê±´ë¬¼ì©ë"].includes(header);
 }
 function getEstimateDbUniqueColumnValues(tab, colIndex) {
   const sheet = estimateDbSheets[tab] || estimateDbSheets.pj;
   const values = new Set();
   (sheet.rows || []).forEach(row => {
     const value = normalizeEstimateDbText(row?.[colIndex]);
-    if (value && !/^[-–—]$/.test(value)) values.add(value);
+    if (value && !/^[-ââ]$/.test(value)) values.add(value);
   });
   return [...values];
 }
-const estimateDbUnitWorkOptions = ["공내역서", "비교내역서", "설계예가", "단가작업", "기타"];
+const estimateDbUnitWorkOptions = ["ê³µë´ì­ì", "ë¹êµë´ì­ì", "ì¤ê³ìê°", "ë¨ê°ìì", "ê¸°í"];
 function isEstimateDbUnitWorkOnlyValue(value = "") {
   return estimateDbUnitWorkOptions.includes(normalizeEstimateDbText(value));
 }
@@ -3152,12 +3152,12 @@ function sanitizeEstimateDbUnitWorkValue(value = "") {
   return isEstimateDbUnitWorkOnlyValue(clean) ? clean : "";
 }
 const estimateDbDefaultOptions = {
-  "국내/해외": ["국내", "해외"],
-  "작업공종": ["마감", "골조성", "구조", "토목", "조경", "기계", "전기", "인테리어", "철거"],
-  "작업구분": ["실행", "입찰"],
-  "업무성격": ["개산견적", "정미견적", "공사비검증", "클레임", "설계가", "설계변경", "본사 입찰", "본사 실행", "현장 실행", "기타"],
-  "단가작업여부": estimateDbUnitWorkOptions,
-  "건물용도": ["창고", "공장", "제약공장", "식품공장", "반도체공장", "물류센터", "아파트형공장", "공동주택", "오피스텔", "주상복합", "업무시설", "오피스", "근린생활시설", "지식산업센터", "기숙사", "연수원", "학교", "교육연구시설", "연구소", "역사"]
+  "êµ­ë´/í´ì¸": ["êµ­ë´", "í´ì¸"],
+  "ììê³µì¢": ["ë§ê°", "ê³¨ì¡°ì±", "êµ¬ì¡°", "í ëª©", "ì¡°ê²½", "ê¸°ê³", "ì ê¸°", "ì¸íë¦¬ì´", "ì² ê±°"],
+  "ììêµ¬ë¶": ["ì¤í", "ìì°°"],
+  "ìë¬´ì±ê²©": ["ê°ì°ê²¬ì ", "ì ë¯¸ê²¬ì ", "ê³µì¬ë¹ê²ì¦", "í´ë ì", "ì¤ê³ê°", "ì¤ê³ë³ê²½", "ë³¸ì¬ ìì°°", "ë³¸ì¬ ì¤í", "íì¥ ì¤í", "ê¸°í"],
+  "ë¨ê°ììì¬ë¶": estimateDbUnitWorkOptions,
+  "ê±´ë¬¼ì©ë": ["ì°½ê³ ", "ê³µì¥", "ì ì½ê³µì¥", "ìíê³µì¥", "ë°ëì²´ê³µì¥", "ë¬¼ë¥ì¼í°", "ìíí¸íê³µì¥", "ê³µëì£¼í", "ì¤í¼ì¤í", "ì£¼ìë³µí©", "ìë¬´ìì¤", "ì¤í¼ì¤", "ê·¼ë¦°ìíìì¤", "ì§ìì°ìì¼í°", "ê¸°ìì¬", "ì°ìì", "íêµ", "êµì¡ì°êµ¬ìì¤", "ì°êµ¬ì", "ì­ì¬"]
 };
 const estimateDbCustomOptions = {};
 function getEstimateDbCustomOptionKey(tab, colIndex) { return `${tab}::${colIndex}`; }
@@ -3172,27 +3172,27 @@ function addEstimateDbCustomOption(tab, colIndex, value) {
 
 function isEstimateDbWorkScopeOnlyValue(value = "") {
   const clean = normalizeEstimateDbText(value);
-  return ["마감", "골조성", "구조", "토목", "조경", "기계", "전기", "인테리어", "철거", "전공정"].includes(clean);
+  return ["ë§ê°", "ê³¨ì¡°ì±", "êµ¬ì¡°", "í ëª©", "ì¡°ê²½", "ê¸°ê³", "ì ê¸°", "ì¸íë¦¬ì´", "ì² ê±°", "ì ê³µì "].includes(clean);
 }
 function sanitizeEstimateDbWorkScopeValue(value = "") {
   return String(value || "")
-    .split(/[,、，\/]+/)
+    .split(/[,ãï¼\/]+/)
     .map(v => normalizeEstimateDbText(v))
     .filter(v => v && isEstimateDbWorkScopeOnlyValue(v))
     .join(", ");
 }
 
 const estimateDbLinkedStageOptions = {
-  "개산견적": ["1회차", "2회차", "3회차", "기타"],
-  "정미견적": ["선실행", "본실행", "기타"],
-  "공사비검증": ["변경전", "변경후", "변경도서", "기타"],
-  "클레임": ["사감정", "본감정", "재감정", "기타"],
-  "설계가": ["기본", "실시", "원안", "대안", "기타"],
-  "설계변경": ["변경전", "변경후", "변경도서", "기타"],
-  "본사 입찰": ["1회차", "2회차", "기타"],
-  "본사 실행": ["1회차", "2회차", "기타"],
-  "현장 실행": ["1회차", "2회차", "기타"],
-  "기타": ["기타"]
+  "ê°ì°ê²¬ì ": ["1íì°¨", "2íì°¨", "3íì°¨", "ê¸°í"],
+  "ì ë¯¸ê²¬ì ": ["ì ì¤í", "ë³¸ì¤í", "ê¸°í"],
+  "ê³µì¬ë¹ê²ì¦": ["ë³ê²½ì ", "ë³ê²½í", "ë³ê²½ëì", "ê¸°í"],
+  "í´ë ì": ["ì¬ê°ì ", "ë³¸ê°ì ", "ì¬ê°ì ", "ê¸°í"],
+  "ì¤ê³ê°": ["ê¸°ë³¸", "ì¤ì", "ìì", "ëì", "ê¸°í"],
+  "ì¤ê³ë³ê²½": ["ë³ê²½ì ", "ë³ê²½í", "ë³ê²½ëì", "ê¸°í"],
+  "ë³¸ì¬ ìì°°": ["1íì°¨", "2íì°¨", "ê¸°í"],
+  "ë³¸ì¬ ì¤í": ["1íì°¨", "2íì°¨", "ê¸°í"],
+  "íì¥ ì¤í": ["1íì°¨", "2íì°¨", "ê¸°í"],
+  "ê¸°í": ["ê¸°í"]
 };
 function getEstimateDbDropdownOptions(tab, rowIndex, colIndex) {
   const header = getEstimateDbColumnName(tab, colIndex);
@@ -3201,17 +3201,17 @@ function getEstimateDbDropdownOptions(tab, rowIndex, colIndex) {
   let options = [];
   if (tab === "pj" && header === ESTIMATE_DB_PROJECT_LINK_HEADER) {
     options = getEstimateDbProjectLinkOptions(rowIndex).map(item => item.label);
-  } else if (tab === "pj" && header === "업무단계2") {
+  } else if (tab === "pj" && header === "ìë¬´ë¨ê³2") {
     const headers = getEstimateDbLeafColumns(sheet);
-    const parentIndex = headers.indexOf("업무성격");
+    const parentIndex = headers.indexOf("ìë¬´ì±ê²©");
     const parentValue = normalizeEstimateDbText(sheet.rows?.[rowIndex]?.[parentIndex]);
     options = estimateDbLinkedStageOptions[parentValue] || [];
   } else if (estimateDbDefaultOptions[header]) {
     options = [...estimateDbDefaultOptions[header]];
   }
-  let uniqueValues = header === "작업공종" ? [] : getEstimateDbUniqueColumnValues(tab, colIndex);
+  let uniqueValues = header === "ììê³µì¢" ? [] : getEstimateDbUniqueColumnValues(tab, colIndex);
   let customValues = custom;
-  if (header === "단가작업여부") {
+  if (header === "ë¨ê°ììì¬ë¶") {
     uniqueValues = uniqueValues.filter(isEstimateDbUnitWorkOnlyValue);
     customValues = customValues.filter(isEstimateDbUnitWorkOnlyValue);
   }
@@ -3226,13 +3226,13 @@ function ensureEstimateDbDropdownModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title" id="estimateDbDropdownTitle">목록 선택</div>
-      <input id="estimateDbDropdownSearch" class="estimate-db-dropdown-search" placeholder="검색 또는 새 항목 입력" />
-      <div id="estimateDbDropdownMultiHelp" class="estimate-db-dropdown-help hidden">Ctrl+B 단축키로 중복선택이 가능합니다.</div>
+      <div class="estimate-db-dropdown-title" id="estimateDbDropdownTitle">ëª©ë¡ ì í</div>
+      <input id="estimateDbDropdownSearch" class="estimate-db-dropdown-search" placeholder="ê²ì ëë ì í­ëª© ìë ¥" />
+      <div id="estimateDbDropdownMultiHelp" class="estimate-db-dropdown-help hidden">Ctrl+B ë¨ì¶í¤ë¡ ì¤ë³µì íì´ ê°ë¥í©ëë¤.</div>
       <div id="estimateDbDropdownList" class="estimate-db-dropdown-list"></div>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbDropdown()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="addEstimateDbDropdownOptionFromInput()">목록 추가/선택</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbDropdown()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="addEstimateDbDropdownOptionFromInput()">ëª©ë¡ ì¶ê°/ì í</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -3247,11 +3247,11 @@ function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0,
   const modal = ensureEstimateDbDropdownModal();
   const header = getEstimateDbColumnName(estimateDbActiveTab, colIndex);
   const currentRawValue = normalizeEstimateDbText(getEstimateDbRows()[rowIndex]?.[colIndex] || "");
-  const currentDisplayValue = header === "작업공종"
+  const currentDisplayValue = header === "ììê³µì¢"
     ? sanitizeEstimateDbWorkScopeValue(currentRawValue)
-    : (header === "단가작업여부" ? sanitizeEstimateDbUnitWorkValue(currentRawValue) : currentRawValue);
+    : (header === "ë¨ê°ììì¬ë¶" ? sanitizeEstimateDbUnitWorkValue(currentRawValue) : currentRawValue);
   const existingValues = currentDisplayValue
-    .split(/[,、，]+/)
+    .split(/[,ãï¼]+/)
     .map(v => normalizeEstimateDbText(v))
     .filter(Boolean);
   estimateDbDropdownState = {
@@ -3261,15 +3261,15 @@ function openEstimateDbDropdown(rowIndex = estimateDbSelectedCell.rowIndex || 0,
     activeIndex: 0,
     options: getEstimateDbDropdownOptions(estimateDbActiveTab, rowIndex, colIndex),
     fresh: true,
-    multi: header === "작업공종",
-    selectedValues: header === "작업공종" ? existingValues : []
+    multi: header === "ììê³µì¢",
+    selectedValues: header === "ììê³µì¢" ? existingValues : []
   };
   modal.classList.remove("hidden");
-  modal.querySelector("#estimateDbDropdownTitle").textContent = `${header} 선택`;
-  modal.querySelector("#estimateDbDropdownMultiHelp")?.classList.toggle("hidden", header !== "작업공종");
+  modal.querySelector("#estimateDbDropdownTitle").textContent = `${header} ì í`;
+  modal.querySelector("#estimateDbDropdownMultiHelp")?.classList.toggle("hidden", header !== "ììê³µì¢");
   const search = modal.querySelector("#estimateDbDropdownSearch");
   search.value = "";
-  search.placeholder = currentDisplayValue || "검색 또는 새 항목 입력";
+  search.placeholder = currentDisplayValue || "ê²ì ëë ì í­ëª© ìë ¥";
   search.dataset.fresh = "1";
   renderEstimateDbDropdownList();
   setTimeout(() => { search.focus(); }, 0);
@@ -3293,13 +3293,13 @@ function renderEstimateDbDropdownList() {
   state.filtered = filtered;
   state.activeIndex = Math.max(0, Math.min(state.activeIndex || 0, Math.max(0, filtered.length - 1)));
   if (state.noMatch) {
-    list.innerHTML = `<div class="estimate-db-dropdown-empty">${state.tab === "pj" && getEstimateDbColumnName(state.tab, state.colIndex) === ESTIMATE_DB_PROJECT_LINK_HEADER ? "연결할 프로젝트가 없습니다." : "기존 데이터에 작성된 내용이 없습니다.(Enter를 누를 시 해당 목록 추가)"}</div>`;
+    list.innerHTML = `<div class="estimate-db-dropdown-empty">${state.tab === "pj" && getEstimateDbColumnName(state.tab, state.colIndex) === ESTIMATE_DB_PROJECT_LINK_HEADER ? "ì°ê²°í  íë¡ì í¸ê° ììµëë¤." : "ê¸°ì¡´ ë°ì´í°ì ìì±ë ë´ì©ì´ ììµëë¤.(Enterë¥¼ ëë¥¼ ì í´ë¹ ëª©ë¡ ì¶ê°)"}</div>`;
     return;
   }
   list.innerHTML = filtered.map((option, index) => {
     const selected = !!state.multi && (state.selectedValues || []).includes(option);
-    return `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""} ${selected ? "selected" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${selected ? "✓ " : ""}${escapeEstimateDbHtml(option)}</button>`;
-  }).join("") || `<div class="estimate-db-dropdown-empty">목록이 없습니다. 입력 후 Enter를 누르면 해당 목록에 추가됩니다.</div>`;
+    return `<button type="button" class="estimate-db-dropdown-option ${index === state.activeIndex ? "active" : ""} ${selected ? "selected" : ""}" onclick="selectEstimateDbDropdownOption(${index})">${selected ? "â " : ""}${escapeEstimateDbHtml(option)}</button>`;
+  }).join("") || `<div class="estimate-db-dropdown-empty">ëª©ë¡ì´ ììµëë¤. ìë ¥ í Enterë¥¼ ëë¥´ë©´ í´ë¹ ëª©ë¡ì ì¶ê°ë©ëë¤.</div>`;
 }
 function toggleEstimateDbDropdownMultiSelection(index = estimateDbDropdownState?.activeIndex || 0) {
   const state = estimateDbDropdownState;
@@ -3308,8 +3308,8 @@ function toggleEstimateDbDropdownMultiSelection(index = estimateDbDropdownState?
   const typed = normalizeEstimateDbText(search?.value || "");
   const value = state.noMatch ? typed : (state.filtered?.[index] ?? typed);
   if (!value) return;
-  if (getEstimateDbColumnName(state.tab, state.colIndex) === "작업공종" && !isEstimateDbWorkScopeOnlyValue(value)) {
-    alert("작업공종에는 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정만 선택할 수 있습니다.");
+  if (getEstimateDbColumnName(state.tab, state.colIndex) === "ììê³µì¢" && !isEstimateDbWorkScopeOnlyValue(value)) {
+    alert("ììê³µì¢ìë ë§ê°/ê³¨ì¡°ì±/êµ¬ì¡°/í ëª©/ì¡°ê²½/ê¸°ê³/ì ê¸°/ì¸íë¦¬ì´/ì² ê±°/ì ê³µì ë§ ì íí  ì ììµëë¤.");
     return;
   }
   if (state.noMatch || !(state.options || []).includes(value)) {
@@ -3336,15 +3336,15 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
   const value = state.multi && (state.selectedValues || []).length ? state.selectedValues.join(",") : pickedValue;
   if (!value) return;
   const header = getEstimateDbColumnName(state.tab, state.colIndex);
-  if (header === "작업공종") {
+  if (header === "ììê³µì¢") {
     const nextScope = sanitizeEstimateDbWorkScopeValue(value);
     if (!nextScope) {
-      alert("작업공종에는 단가작업 항목을 입력할 수 없습니다. 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정 중에서 선택하세요.");
+      alert("ììê³µì¢ìë ë¨ê°ìì í­ëª©ì ìë ¥í  ì ììµëë¤. ë§ê°/ê³¨ì¡°ì±/êµ¬ì¡°/í ëª©/ì¡°ê²½/ê¸°ê³/ì ê¸°/ì¸íë¦¬ì´/ì² ê±°/ì ê³µì  ì¤ìì ì ííì¸ì.");
       return;
     }
   }
-  if (header === "단가작업여부" && !isEstimateDbUnitWorkOnlyValue(value)) {
-    alert("단가작업여부에는 공내역서/비교내역서/설계예가/단가작업/기타만 선택할 수 있습니다. 개산견적은 견적서 방식 항목이므로 표시하지 않습니다.");
+  if (header === "ë¨ê°ììì¬ë¶" && !isEstimateDbUnitWorkOnlyValue(value)) {
+    alert("ë¨ê°ììì¬ë¶ìë ê³µë´ì­ì/ë¹êµë´ì­ì/ì¤ê³ìê°/ë¨ê°ìì/ê¸°íë§ ì íí  ì ììµëë¤. ê°ì°ê²¬ì ì ê²¬ì ì ë°©ì í­ëª©ì´ë¯ë¡ íìíì§ ììµëë¤.");
     return;
   }
   const row = state.rowIndex;
@@ -3357,7 +3357,7 @@ function selectEstimateDbDropdownOption(index = estimateDbDropdownState?.activeI
   }
   closeEstimateDbDropdown();
   renderEstimateDbManage();
-  if (header === "업무성격" && getEstimateDbColumnName(state.tab, nextCol) === "업무단계2") {
+  if (header === "ìë¬´ì±ê²©" && getEstimateDbColumnName(state.tab, nextCol) === "ìë¬´ë¨ê³2") {
     requestAnimationFrame(() => openEstimateDbDropdown(row, nextCol));
   } else {
     requestAnimationFrame(() => focusEstimateDbCell(row, state.colIndex));
@@ -3368,12 +3368,12 @@ function addEstimateDbDropdownOptionFromInput() {
   const value = normalizeEstimateDbText(search?.value || "");
   if (!value || !estimateDbDropdownState) return;
   const header = getEstimateDbColumnName(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex);
-  if (header === "작업공종" && !isEstimateDbWorkScopeOnlyValue(value)) {
-    alert("작업공종에는 단가작업 항목을 추가할 수 없습니다. 마감/골조성/구조/토목/조경/기계/전기/인테리어/철거/전공정 중에서 선택하세요.");
+  if (header === "ììê³µì¢" && !isEstimateDbWorkScopeOnlyValue(value)) {
+    alert("ììê³µì¢ìë ë¨ê°ìì í­ëª©ì ì¶ê°í  ì ììµëë¤. ë§ê°/ê³¨ì¡°ì±/êµ¬ì¡°/í ëª©/ì¡°ê²½/ê¸°ê³/ì ê¸°/ì¸íë¦¬ì´/ì² ê±°/ì ê³µì  ì¤ìì ì ííì¸ì.");
     return;
   }
-  if (header === "단가작업여부" && !isEstimateDbUnitWorkOnlyValue(value)) {
-    alert("단가작업여부에는 공내역서/비교내역서/설계예가/단가작업/기타만 추가할 수 있습니다. 개산견적은 견적서 방식 항목이므로 추가하지 않습니다.");
+  if (header === "ë¨ê°ììì¬ë¶" && !isEstimateDbUnitWorkOnlyValue(value)) {
+    alert("ë¨ê°ììì¬ë¶ìë ê³µë´ì­ì/ë¹êµë´ì­ì/ì¤ê³ìê°/ë¨ê°ìì/ê¸°íë§ ì¶ê°í  ì ììµëë¤. ê°ì°ê²¬ì ì ê²¬ì ì ë°©ì í­ëª©ì´ë¯ë¡ ì¶ê°íì§ ììµëë¤.");
     return;
   }
   addEstimateDbCustomOption(estimateDbDropdownState.tab, estimateDbDropdownState.colIndex, value);
@@ -3402,7 +3402,7 @@ function parseEstimateDbAmountCellValue(value) {
 
 function getEstimateDbAmountModalTradeFromColumn(colIndex) {
   const trade = normalizeEstimateDbText(getEstimateDbColumnName("progress", colIndex));
-  return ["기계", "전기", "외주", "송무", "기타"].includes(trade) ? trade : "";
+  return ["ê¸°ê³", "ì ê¸°", "ì¸ì£¼", "ì¡ë¬´", "ê¸°í"].includes(trade) ? trade : "";
 }
 function getEstimateDbMepVendorNameOptions() {
   return ensureEstimateDbMepVendorRows()
@@ -3450,10 +3450,10 @@ function upsertEstimateDbMepContractFromProgressAmount(rowIndex, colIndex, compa
   const idx = name => getEstimateDbColumnIndexByHeader("mep", name);
   const pidx = name => getEstimateDbColumnIndexByHeader("progress", name);
   const pjNo = normalizeEstimateDbText(progressRow[pidx("PJ NO")]);
-  const pjName = normalizeEstimateDbText(progressRow[pidx("PJ명")]) || normalizeEstimateDbText(progressRow[pidx("프로젝트명")]);
+  const pjName = normalizeEstimateDbText(progressRow[pidx("PJëª")]) || normalizeEstimateDbText(progressRow[pidx("íë¡ì í¸ëª")]);
   const rows = Array.isArray(sheet.rows) ? sheet.rows : (sheet.rows = []);
   const pjNoIdx = idx("PJ NO");
-  const companyIdx = idx("계약업체");
+  const companyIdx = idx("ê³ì½ìì²´");
   if (pjNoIdx < 0 || companyIdx < 0) return 0;
   const compactCompany = companyName.replace(/\s+/g, "");
   let target = rows.find(row => normalizeEstimateDbText(row?.[pjNoIdx]) === pjNo && normalizeEstimateDbText(row?.[companyIdx]).replace(/\s+/g, "") === compactCompany);
@@ -3465,13 +3465,13 @@ function upsertEstimateDbMepContractFromProgressAmount(rowIndex, colIndex, compa
     const i = idx(name);
     if (i >= 0 && target[i] !== value) target[i] = value;
   };
-  set("최초생성날짜", target[idx("최초생성날짜")] || formatEstimateDbKoreanDate?.() || "");
+  set("ìµì´ìì±ë ì§", target[idx("ìµì´ìì±ë ì§")] || formatEstimateDbKoreanDate?.() || "");
   set("PJ NO", pjNo);
-  set("PJ명", pjName);
-  set("계약업체", companyName);
+  set("PJëª", pjName);
+  set("ê³ì½ìì²´", companyName);
   const normalizedAmount = normalizeEstimateDbText(amount).replace(/,/g, "");
-  set("계약금액", normalizedAmount);
-  set("컨코스트계약금", normalizedAmount);
+  set("ê³ì½ê¸ì¡", normalizedAmount);
+  set("ì»¨ì½ì¤í¸ê³ì½ê¸", normalizedAmount);
   recalcEstimateDbRow("mep", target);
   estimateDbHasUnsavedChanges = true;
   updateEstimateDbSaveButtonState?.();
@@ -3487,12 +3487,12 @@ function ensureEstimateDbAmountModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-amount-box" role="dialog" aria-modal="true">
-      <div class="estimate-db-dropdown-title" id="estimateDbAmountTitle">외주 금액 입력</div>
-      <label class="estimate-db-amount-label">업체명<input id="estimateDbAmountCompany" class="estimate-db-dropdown-search" list="estimateDbAmountCompanyList" placeholder="기전업체 리스트에서 선택하거나 새 업체명을 입력" /></label><datalist id="estimateDbAmountCompanyList"></datalist>
-      <label class="estimate-db-amount-label">금액<input id="estimateDbAmountValue" class="estimate-db-dropdown-search" placeholder="예: 200000" /></label>
+      <div class="estimate-db-dropdown-title" id="estimateDbAmountTitle">ì¸ì£¼ ê¸ì¡ ìë ¥</div>
+      <label class="estimate-db-amount-label">ìì²´ëª<input id="estimateDbAmountCompany" class="estimate-db-dropdown-search" list="estimateDbAmountCompanyList" placeholder="ê¸°ì ìì²´ ë¦¬ì¤í¸ìì ì ííê±°ë ì ìì²´ëªì ìë ¥" /></label><datalist id="estimateDbAmountCompanyList"></datalist>
+      <label class="estimate-db-amount-label">ê¸ì¡<input id="estimateDbAmountValue" class="estimate-db-dropdown-search" placeholder="ì: 200000" /></label>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAmountModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbAmountModal()">저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbAmountModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbAmountModal()">ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -3511,7 +3511,7 @@ function openEstimateDbAmountModal(rowIndex = estimateDbSelectedCell.rowIndex ||
   estimateDbAmountModalState = { tab: estimateDbActiveTab, rowIndex, colIndex };
   modal.classList.remove("hidden");
   updateEstimateDbAmountCompanyDatalist();
-  modal.querySelector("#estimateDbAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} 금액 입력`;
+  modal.querySelector("#estimateDbAmountTitle").textContent = `${getEstimateDbColumnName(estimateDbActiveTab, colIndex)} ê¸ì¡ ìë ¥`;
   modal.querySelector("#estimateDbAmountCompany").value = parsed.company || "";
   modal.querySelector("#estimateDbAmountValue").value = parsed.amount ? formatEstimateDbCommaNumber(parsed.amount) : "";
   setTimeout(() => modal.querySelector("#estimateDbAmountCompany")?.focus(), 0);
@@ -3533,7 +3533,7 @@ function saveEstimateDbAmountModal() {
   if (state.tab === "progress") {
     upsertEstimateDbMepContractFromProgressAmount(state.rowIndex, state.colIndex, company, amount);
   }
-  showToast('금액 정보가 저장되었습니다.');
+  showToast('ê¸ì¡ ì ë³´ê° ì ì¥ëììµëë¤.');
   closeEstimateDbAmountModal();
   renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
 }
@@ -3647,9 +3647,9 @@ function handleEstimateDbKeydown(event) {
     event.preventDefault();
     commitEstimateDbSinglePendingEdit(estimateDbActiveTab, rowIndex, colIndex);
 
-    // 날짜 입력 컬럼은 저장 대기값을 확정한 직후 현재 선택된 입력칸에도
-    // 260105 → 26년1월5일 형식으로 즉시 반영합니다.
-    // 적용 범위: 견적서일자, 수주일자, 계약일자, 납품예정일 1~3차납품.
+    // ë ì§ ìë ¥ ì»¬ë¼ì ì ì¥ ëê¸°ê°ì íì í ì§í íì¬ ì íë ìë ¥ì¹¸ìë
+    // 260105 â 26ë1ì5ì¼ íìì¼ë¡ ì¦ì ë°ìí©ëë¤.
+    // ì ì© ë²ì: ê²¬ì ìì¼ì, ìì£¼ì¼ì, ê³ì½ì¼ì, ë©íìì ì¼ 1~3ì°¨ë©í.
     if (isEstimateDbCreatedDateColumn(estimateDbActiveTab, colIndex)) {
       const storedValue = getEstimateDbRows()?.[rowIndex]?.[colIndex] || "";
       input.value = formatEstimateDbFullKoreanDate(storedValue);
@@ -3710,13 +3710,13 @@ function getEstimateDbNextScreenVisibleCol(colIndex, colDelta, colCount = getEst
 function getEstimateDbNextVisibleCell(rowIndex, colIndex, rowDelta, colDelta, colCount = getEstimateDbLeafColumns().length) {
   const nextCol = getEstimateDbNextScreenVisibleCol(colIndex, colDelta, colCount);
 
-  // 좌우 이동은 같은 데이터 행 안에서만 이동합니다.
+  // ì¢ì° ì´ëì ê°ì ë°ì´í° í ìììë§ ì´ëí©ëë¤.
   if (!rowDelta) {
     return { rowIndex, colIndex: nextCol };
   }
 
-  // PJ NO 기본 내림차순처럼 화면 정렬 순서와 원본 배열 순서가 다를 수 있으므로,
-  // 위/아래 방향키는 현재 DOM에 표시된 행 순서를 기준으로 다음 행을 찾습니다.
+  // PJ NO ê¸°ë³¸ ë´ë¦¼ì°¨ìì²ë¼ íë©´ ì ë ¬ ììì ìë³¸ ë°°ì´ ììê° ë¤ë¥¼ ì ìì¼ë¯ë¡,
+  // ì/ìë ë°©í¥í¤ë íì¬ DOMì íìë í ììë¥¼ ê¸°ì¤ì¼ë¡ ë¤ì íì ì°¾ìµëë¤.
   const visibleRows = Array.from(document.querySelectorAll("#estimateDbBody .quote-db-data-row"));
   if (!visibleRows.length) {
     const rows = getEstimateDbRows();
@@ -3728,7 +3728,7 @@ function getEstimateDbNextVisibleCell(rowIndex, colIndex, rowDelta, colDelta, co
 
   let domIndex = visibleRows.findIndex(row => Number(row.dataset.rowIndex) === Number(rowIndex));
 
-  // 포커스 정보가 정렬 직후 잠깐 어긋난 경우, 현재 활성 input 기준으로 보정합니다.
+  // í¬ì»¤ì¤ ì ë³´ê° ì ë ¬ ì§í ì ê¹ ì´ê¸ë ê²½ì°, íì¬ íì± input ê¸°ì¤ì¼ë¡ ë³´ì í©ëë¤.
   if (domIndex < 0) {
     const activeRow = document.activeElement?.closest?.("#estimateDbBody .quote-db-data-row");
     if (activeRow) domIndex = visibleRows.indexOf(activeRow);
@@ -3751,7 +3751,7 @@ function makeEstimateDbSyncKey(parts) {
   const receiptNo = normalizeEstimateDbText(parts.receiptNo);
   const pjNo = normalizeEstimateDbText(parts.pjNo);
   const pjName = normalizeEstimateDbText(parts.pjName);
-  // 연동 기준은 년도/접수번호/PJ NO 조합이지만, "년도만 있는 빈 행"은 연동 대상으로 보지 않습니다.
+  // ì°ë ê¸°ì¤ì ëë/ì ìë²í¸/PJ NO ì¡°í©ì´ì§ë§, "ëëë§ ìë ë¹ í"ì ì°ë ëìì¼ë¡ ë³´ì§ ììµëë¤.
   if (pjNo || receiptNo) return [year, receiptNo, pjNo].join("::");
   return pjName ? `name::${pjName}` : "";
 }
@@ -3762,24 +3762,24 @@ function getEstimateDbPjSyncPayload(pjRowIndex) {
   if (!row) return null;
   const value = name => row[pjCols.indexOf(name)] || "";
   const payload = {
-    year: value(ESTIMATE_DB_CREATED_DATE_HEADER) || value("년도"),
-    receiptNo: value("접수번호"),
+    year: value(ESTIMATE_DB_CREATED_DATE_HEADER) || value("ëë"),
+    receiptNo: value("ì ìë²í¸"),
     pjNo: value("PJ NO"),
-    pjName: value("프로젝트명"),
-    company: value("거래처명"),
+    pjName: value("íë¡ì í¸ëª"),
+    company: value("ê±°ëì²ëª"),
     sourceIndex: pjRowIndex
   };
   payload.key = makeEstimateDbSyncKey(payload);
-  // PJ NO/접수번호/프로젝트명 중 하나도 없는 단순 빈 행은 연동하지 않습니다.
+  // PJ NO/ì ìë²í¸/íë¡ì í¸ëª ì¤ íëë ìë ë¨ì ë¹ íì ì°ëíì§ ììµëë¤.
   if (!payload.key) return null;
   return payload;
 }
 function estimateDbTargetRowKey(tab, row) {
   return makeEstimateDbSyncKey({
-    year: getEstimateDbRowValueByHeader(tab, row, ESTIMATE_DB_CREATED_DATE_HEADER) || getEstimateDbRowValueByHeader(tab, row, "년도"),
-    receiptNo: getEstimateDbRowValueByHeader(tab, row, "접수번호"),
+    year: getEstimateDbRowValueByHeader(tab, row, ESTIMATE_DB_CREATED_DATE_HEADER) || getEstimateDbRowValueByHeader(tab, row, "ëë"),
+    receiptNo: getEstimateDbRowValueByHeader(tab, row, "ì ìë²í¸"),
     pjNo: getEstimateDbRowValueByHeader(tab, row, "PJ NO"),
-    pjName: getEstimateDbRowValueByHeader(tab, row, "PJ명") || getEstimateDbRowValueByHeader(tab, row, "프로젝트명")
+    pjName: getEstimateDbRowValueByHeader(tab, row, "PJëª") || getEstimateDbRowValueByHeader(tab, row, "íë¡ì í¸ëª")
   });
 }
 function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
@@ -3787,19 +3787,19 @@ function syncEstimateDbLinkedRowsFromPj(pjRowIndex) {
   if (!payload) return 0;
   let changed = 0;
   changed += syncEstimateDbTargetRow("progress", payload.key, {
-    "최초생성날짜": payload.year,
-    "년도": payload.year,
-    "접수번호": payload.receiptNo,
+    "ìµì´ìì±ë ì§": payload.year,
+    "ëë": payload.year,
+    "ì ìë²í¸": payload.receiptNo,
     "PJ NO": payload.pjNo,
-    "업체명": payload.company,
-    "PJ명": payload.pjName
+    "ìì²´ëª": payload.company,
+    "PJëª": payload.pjName
   }, payload.sourceIndex);
   changed += syncEstimateDbTargetRow("mep", payload.key, {
-    "최초생성날짜": payload.year,
-    "년도": payload.year,
-    "접수번호": payload.receiptNo,
+    "ìµì´ìì±ë ì§": payload.year,
+    "ëë": payload.year,
+    "ì ìë²í¸": payload.receiptNo,
     "PJ NO": payload.pjNo,
-    "PJ명": payload.pjName
+    "PJëª": payload.pjName
   }, payload.sourceIndex);
   return changed;
 }
@@ -3809,15 +3809,15 @@ function syncEstimateDbTargetRow(tab, syncKey, values, sourceIndex = null) {
   const cols = getEstimateDbLeafColumns(sheet);
   if (!sheet.rows) sheet.rows = [];
 
-  // 1) 현재 키가 완전히 일치하는 기존 행 우선 탐색
+  // 1) íì¬ í¤ê° ìì í ì¼ì¹íë ê¸°ì¡´ í ì°ì  íì
   let target = sheet.rows.find(row => estimateDbTargetRowKey(tab, row) === syncKey);
 
-  // 2) 같은 PJ관리 행에서 이전에 연동했던 행이면 PJ NO/접수번호가 바뀌어도 같은 행을 갱신
+  // 2) ê°ì PJê´ë¦¬ íìì ì´ì ì ì°ëíë íì´ë©´ PJ NO/ì ìë²í¸ê° ë°ëì´ë ê°ì íì ê°±ì 
   if (!target && sourceIndex !== null && sourceIndex !== undefined) {
     target = sheet.rows.find(row => row && row.__sourcePjRowIndex === sourceIndex);
   }
 
-  // 3) 이전 버전에서 __sourcePjRowIndex가 없던 행 보정: PJ관리의 유효 행 순서와 대상 탭 유효 행 순서를 맞춰 갱신
+  // 3) ì´ì  ë²ì ìì __sourcePjRowIndexê° ìë í ë³´ì : PJê´ë¦¬ì ì í¨ í ììì ëì í­ ì í¨ í ììë¥¼ ë§ì¶° ê°±ì 
   if (!target && sourceIndex !== null && sourceIndex !== undefined) {
     const pjPayloads = (estimateDbSheets.pj.rows || []).map((_, i) => getEstimateDbPjSyncPayload(i)).filter(Boolean);
     const orderIndex = pjPayloads.findIndex(payload => payload.sourceIndex === sourceIndex);
@@ -3845,7 +3845,7 @@ function syncEstimateDbTargetRow(tab, syncKey, values, sourceIndex = null) {
   return changed;
 }
 function syncAllEstimateDbLinkedRows() {
-  // 자동 동기화는 사용하지 않습니다. 사용자가 Ctrl+Enter 또는 버튼으로 명시 실행할 때만 반영합니다.
+  // ìë ëê¸°íë ì¬ì©íì§ ììµëë¤. ì¬ì©ìê° Ctrl+Enter ëë ë²í¼ì¼ë¡ ëªì ì¤íí  ëë§ ë°ìí©ëë¤.
 }
 function updateEstimateDbCell(rowIndex, colIndex, value, options = {}) {
   const rows = getEstimateDbRows();
@@ -3872,7 +3872,7 @@ function addEstimateDbRow(_sectionIndex = null, insertAt = null) {
   const sheet = getEstimateDbSheet();
   const columns = getEstimateDbLeafColumns(sheet);
   const next = Array(columns.length).fill("");
-  const createdDateIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
+  const createdDateIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "ëë"]);
   const pjNoIndex = columns.findIndex(c => normalizeEstimateDbText(c) === "PJ NO");
   if (createdDateIndex >= 0) next[createdDateIndex] = formatEstimateDbKoreanDate();
   if (estimateDbActiveTab === "pj" && pjNoIndex >= 0) {
@@ -3928,8 +3928,8 @@ function syncEstimateDbNewPjRowsToLinkedSheets() {
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(estimateDbSelectedCell.rowIndex, estimateDbSelectedCell.colIndex));
   if (typeof showToast === "function") {
-    if (changed) showToast(`기성관리·기전업체에 ${changed}건을 연동했습니다.`);
-    else showToast(valid ? "기성관리·기전업체가 이미 최신 상태입니다." : "연동할 신규/변경 항목이 없습니다.");
+    if (changed) showToast(`ê¸°ì±ê´ë¦¬Â·ê¸°ì ìì²´ì ${changed}ê±´ì ì°ëíìµëë¤.`);
+    else showToast(valid ? "ê¸°ì±ê´ë¦¬Â·ê¸°ì ìì²´ê° ì´ë¯¸ ìµì  ìíìëë¤." : "ì°ëí  ì ê·/ë³ê²½ í­ëª©ì´ ììµëë¤.");
   }
 }
 function exportEstimateDbJsonForAi() {
@@ -3938,7 +3938,7 @@ function exportEstimateDbJsonForAi() {
   ensureEstimateDbPjIdentityColumnsOnce?.({ assignMissing: true });
   const payload = {
     exportedAt: new Date().toISOString(),
-    note: "DB관리 더미데이터 요청용 JSON입니다. 이 값을 수정/추가해서 다시 전달하면 동일 구조로 반영할 수 있습니다.",
+    note: "DBê´ë¦¬ ëë¯¸ë°ì´í° ìì²­ì© JSONìëë¤. ì´ ê°ì ìì /ì¶ê°í´ì ë¤ì ì ë¬íë©´ ëì¼ êµ¬ì¡°ë¡ ë°ìí  ì ììµëë¤.",
     activeTab: estimateDbActiveTab,
     sheets: Object.fromEntries(Object.entries(estimateDbSheets).map(([key, sheet]) => [key, {
       title: sheet.title,
@@ -3961,7 +3961,7 @@ function exportEstimateDbJsonForAi() {
 function getEstimateDbRowsByYear(tab, year = getSelectedEstimateDbYear()) {
   const sheet = estimateDbSheets[tab];
   const columns = getEstimateDbLeafColumns(sheet);
-  const yearIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "년도"]);
+  const yearIndex = findEstimateDbColumnIndexByAnyName(columns, [ESTIMATE_DB_CREATED_DATE_HEADER, "ëë"]);
   return (sheet.rows || []).filter(row => {
     const val = yearIndex >= 0 ? row[yearIndex] : row[0];
     return parseEstimateDbYear(val) === String(year);
@@ -3985,45 +3985,45 @@ function buildOrderRows(year = getSelectedEstimateDbYear()) {
   const mepRows = getEstimateDbRowsByYear("mep", year);
   const monthly = Array.from({ length: 12 }, (_, m) => {
     const month = m + 1;
-    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["수주일자"]]) === month);
-    const outRows = mepRows.filter(row => parseEstimateDbMonth(row[mepIdx["지급일자1"]]) === month || parseEstimateDbMonth(row[mepIdx["지급일자2"]]) === month);
-    const orderAmount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["연면적(평)"]]) * 14000, 0);
-    const outAmount = outRows.reduce((sum, row) => sum + toEstimateDbNumber(row[mepIdx["지급합계"]] || row[mepIdx["계약금액"]]), 0);
-    return [year, `${month}월`, monthRows.length || "", orderAmount, 0, orderAmount, outAmount, Math.max(0, orderAmount - outAmount), ""];
+    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["ìì£¼ì¼ì"]]) === month);
+    const outRows = mepRows.filter(row => parseEstimateDbMonth(row[mepIdx["ì§ê¸ì¼ì1"]]) === month || parseEstimateDbMonth(row[mepIdx["ì§ê¸ì¼ì2"]]) === month);
+    const orderAmount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["ì°ë©´ì (í)"]]) * 14000, 0);
+    const outAmount = outRows.reduce((sum, row) => sum + toEstimateDbNumber(row[mepIdx["ì§ê¸í©ê³"]] || row[mepIdx["ê³ì½ê¸ì¡"]]), 0);
+    return [year, `${month}ì`, monthRows.length || "", orderAmount, 0, orderAmount, outAmount, Math.max(0, orderAmount - outAmount), ""];
   });
-  const detailHeader = ["NO", "수주월", "거래처명", "프로젝트명", "작업공종", "수주일자", "최종수주액", "기전/외주", "컨코스트", "PM(마감)", "PM(구조)", "PM(토목,조경)"];
+  const detailHeader = ["NO", "ìì£¼ì", "ê±°ëì²ëª", "íë¡ì í¸ëª", "ììê³µì¢", "ìì£¼ì¼ì", "ìµì¢ìì£¼ì¡", "ê¸°ì /ì¸ì£¼", "ì»¨ì½ì¤í¸", "PM(ë§ê°)", "PM(êµ¬ì¡°)", "PM(í ëª©,ì¡°ê²½)"];
   const detail = rows.map(row => {
-    const amount = toEstimateDbNumber(row[idx["연면적(평)"]]) * 14000;
-    const month = parseEstimateDbMonth(row[idx["수주일자"]]) || "";
-    return [row[idx["접수번호"]], month ? `${month}월` : "", row[idx["거래처명"]], row[idx["프로젝트명"]], row[idx["작업공종"]], row[idx["수주일자"]], amount, "", amount, row[idx["PM(마감)"]], row[idx["PM(구조)"]], row[idx["PM(토목,조경)"]]];
+    const amount = toEstimateDbNumber(row[idx["ì°ë©´ì (í)"]]) * 14000;
+    const month = parseEstimateDbMonth(row[idx["ìì£¼ì¼ì"]]) || "";
+    return [row[idx["ì ìë²í¸"]], month ? `${month}ì` : "", row[idx["ê±°ëì²ëª"]], row[idx["íë¡ì í¸ëª"]], row[idx["ììê³µì¢"]], row[idx["ìì£¼ì¼ì"]], amount, "", amount, row[idx["PM(ë§ê°)"]], row[idx["PM(êµ¬ì¡°)"]], row[idx["PM(í ëª©,ì¡°ê²½)"]]];
   });
-  return { title: `${year}년 수주`, header: ["년도", "월", "건 수", "수주액", "조정금액", "최종수주액(①)", "기전/외주(②)", "컨코스트(①-②)", "비고"], monthly, detailHeader, detail };
+  return { title: `${year}ë ìì£¼`, header: ["ëë", "ì", "ê±´ ì", "ìì£¼ì¡", "ì¡°ì ê¸ì¡", "ìµì¢ìì£¼ì¡(â )", "ê¸°ì /ì¸ì£¼(â¡)", "ì»¨ì½ì¤í¸(â -â¡)", "ë¹ê³ "], monthly, detailHeader, detail };
 }
 function buildSalesRows(year = getSelectedEstimateDbYear()) {
   const idx = estimateDbIndexMap("progress");
   const rows = getEstimateDbRowsByYear("progress", year);
   const monthly = Array.from({ length: 12 }, (_, m) => {
     const month = m + 1;
-    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["계약일자"]] || row[idx["수주일자"]]) === month);
-    const amount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["계약금액"]]), 0);
-    const out = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["외주합계"]]), 0);
-    return [year, `${month}월`, monthRows.length || "", amount, Math.round(amount * 1.1), out, Math.max(0, amount - out), ""];
+    const monthRows = rows.filter(row => parseEstimateDbMonth(row[idx["ê³ì½ì¼ì"]] || row[idx["ìì£¼ì¼ì"]]) === month);
+    const amount = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["ê³ì½ê¸ì¡"]]), 0);
+    const out = monthRows.reduce((sum, row) => sum + toEstimateDbNumber(row[idx["ì¸ì£¼í©ê³"]]), 0);
+    return [year, `${month}ì`, monthRows.length || "", amount, Math.round(amount * 1.1), out, Math.max(0, amount - out), ""];
   });
-  const detailHeader = ["PJ NO", "업체명", "PJ명", "계약금액", "수령액", "잔액", "외주합계", "계약일자", "총괄PM", "납품예정일", "특이사항"];
-  const detail = rows.map(row => [row[idx["PJ NO"]], row[idx["업체명"]], row[idx["PJ명"]], row[idx["계약금액"]], row[idx["수령액"]], row[idx["잔액"]], row[idx["외주합계"]], row[idx["계약일자"]], row[idx["총괄PM"]], row[idx["납품예정일"]], row[idx["특이사항"]]]);
-  return { title: `${year}년 매출`, header: ["년도", "월", "건 수", "발행액(①)", "발행액(①)VAT포함", "기전/외주(②)", "컨코스트(①-②)", "비고"], monthly, detailHeader, detail };
+  const detailHeader = ["PJ NO", "ìì²´ëª", "PJëª", "ê³ì½ê¸ì¡", "ìë ¹ì¡", "ìì¡", "ì¸ì£¼í©ê³", "ê³ì½ì¼ì", "ì´ê´PM", "ë©íìì ì¼", "í¹ì´ì¬í­"];
+  const detail = rows.map(row => [row[idx["PJ NO"]], row[idx["ìì²´ëª"]], row[idx["PJëª"]], row[idx["ê³ì½ê¸ì¡"]], row[idx["ìë ¹ì¡"]], row[idx["ìì¡"]], row[idx["ì¸ì£¼í©ê³"]], row[idx["ê³ì½ì¼ì"]], row[idx["ì´ê´PM"]], row[idx["ë©íìì ì¼"]], row[idx["í¹ì´ì¬í­"]]]);
+  return { title: `${year}ë ë§¤ì¶`, header: ["ëë", "ì", "ê±´ ì", "ë°íì¡(â )", "ë°íì¡(â )VATí¬í¨", "ê¸°ì /ì¸ì£¼(â¡)", "ì»¨ì½ì¤í¸(â -â¡)", "ë¹ê³ "], monthly, detailHeader, detail };
 }
 function buildDepositRows(year = getSelectedEstimateDbYear()) {
   const idx = estimateDbIndexMap("progress");
   const rows = getEstimateDbRowsByYear("progress", year);
-  const detailHeader = ["NO", "업체", "프로젝트명", "기성담당자", "총액", "기수령액", "청구액(별도)", "청구액(포함)", "청구후잔액", "기전/외주", "발행일", "지급예상일", "지급일", "지급액(vat별도)", "지급액(vat포함)", "은행명", "종류", "비고"];
+  const detailHeader = ["NO", "ìì²´", "íë¡ì í¸ëª", "ê¸°ì±ë´ë¹ì", "ì´ì¡", "ê¸°ìë ¹ì¡", "ì²­êµ¬ì¡(ë³ë)", "ì²­êµ¬ì¡(í¬í¨)", "ì²­êµ¬íìì¡", "ê¸°ì /ì¸ì£¼", "ë°íì¼", "ì§ê¸ììì¼", "ì§ê¸ì¼", "ì§ê¸ì¡(vatë³ë)", "ì§ê¸ì¡(vatí¬í¨)", "ìíëª", "ì¢ë¥", "ë¹ê³ "];
   const detail = rows.map(row => {
-    const total = toEstimateDbNumber(row[idx["계약금액"]]);
-    const paid = toEstimateDbNumber(row[idx["수령액"]]);
+    const total = toEstimateDbNumber(row[idx["ê³ì½ê¸ì¡"]]);
+    const paid = toEstimateDbNumber(row[idx["ìë ¹ì¡"]]);
     const bill = Math.max(0, total - paid);
-    return [row[idx["PJ NO"]], row[idx["업체명"]], row[idx["PJ명"]], row[idx["기성담당자"]], total, paid, bill, Math.round(bill * 1.1), Math.max(0, total - paid - bill), row[idx["외주합계"]], row[idx["계약금_세금계산서"]], row[idx["납품예정일"]], row[idx["계약금_입금일"]], bill, Math.round(bill * 1.1), "", "", row[idx["특이사항"]]];
+    return [row[idx["PJ NO"]], row[idx["ìì²´ëª"]], row[idx["PJëª"]], row[idx["ê¸°ì±ë´ë¹ì"]], total, paid, bill, Math.round(bill * 1.1), Math.max(0, total - paid - bill), row[idx["ì¸ì£¼í©ê³"]], row[idx["ê³ì½ê¸_ì¸ê¸ê³ì°ì"]], row[idx["ë©íìì ì¼"]], row[idx["ê³ì½ê¸_ìê¸ì¼"]], bill, Math.round(bill * 1.1), "", "", row[idx["í¹ì´ì¬í­"]]];
   });
-  return { title: `${year}년 입금`, detailHeader, detail };
+  return { title: `${year}ë ìê¸`, detailHeader, detail };
 }
 function buildSummaryRows(year = getSelectedEstimateDbYear()) {
   const order = buildOrderRows(year).monthly;
@@ -4040,7 +4040,7 @@ function buildSummaryRows(year = getSelectedEstimateDbYear()) {
     const orderTarget = getEstimateDbMonthlyTarget("order", year, m + 1);
     const salesTarget = getEstimateDbMonthlyTarget("sales", year, m + 1);
     const depositTarget = getEstimateDbMonthlyTarget("deposit", year, m + 1);
-    return [`${m + 1}월`, orderTarget, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, orderTarget), pct(orderAmount, orderTarget), salesTarget, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, salesTarget), pct(salesAmount, salesTarget), depositTarget, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, depositTarget), pct(depAmount, depositTarget), ""];
+    return [`${m + 1}ì`, orderTarget, orderAmount, orderOut, orderAmount - orderOut, pct(orderAmount - orderOut, orderTarget), pct(orderAmount, orderTarget), salesTarget, salesAmount, salesOut, salesAmount - salesOut, pct(salesAmount - salesOut, salesTarget), pct(salesAmount, salesTarget), depositTarget, depAmount, depOut, depAmount - depOut, pct(depAmount - depOut, depositTarget), pct(depAmount, depositTarget), ""];
   });
 }
 function pct(value, total) { return total ? Math.round((value / total) * 1000) / 10 + "%" : "0%"; }
@@ -4053,11 +4053,11 @@ function ensureEstimateDbSalesTargetModal() {
   modal.className = "estimate-db-dropdown-modal hidden";
   modal.innerHTML = `
     <div class="estimate-db-dropdown-box estimate-db-sales-target-box" role="dialog" aria-modal="true" style="max-width:760px;">
-      <div class="estimate-db-dropdown-title">월별 목표 설정</div>
+      <div class="estimate-db-dropdown-title">ìë³ ëª©í ì¤ì </div>
       <div id="estimateDbSalesTargetGrid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0;"></div>
       <div class="estimate-db-dropdown-actions">
-        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbSalesTargetModal()">닫기</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbSalesTargetModal()">저장</button>
+        <button type="button" class="btn btn-line btn-sm" onclick="closeEstimateDbSalesTargetModal()">ë«ê¸°</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEstimateDbSalesTargetModal()">ì ì¥</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -4073,7 +4073,7 @@ function openEstimateDbSalesTargetModal() {
     const month = i + 1;
     return ESTIMATE_DB_TARGET_TYPES.map(type => {
       const value = getEstimateDbMonthlyTarget(type.key, year, month);
-      return `<label class="estimate-db-amount-label">${month}월 ${type.label}<input class="estimate-db-dropdown-search estimate-db-sales-target-input" onkeydown="handleEstimateDbSalesTargetKeydown(event)" data-target-type="${type.key}" data-month="${month}" value="${escapeEstimateDbHtml(formatEstimateDbCommaNumber(value))}" oninput="this.value = formatEstimateDbCommaNumber(this.value.replace(/[^0-9.-]/g, ''))" /></label>`;
+      return `<label class="estimate-db-amount-label">${month}ì ${type.label}<input class="estimate-db-dropdown-search estimate-db-sales-target-input" onkeydown="handleEstimateDbSalesTargetKeydown(event)" data-target-type="${type.key}" data-month="${month}" value="${escapeEstimateDbHtml(formatEstimateDbCommaNumber(value))}" oninput="this.value = formatEstimateDbCommaNumber(this.value.replace(/[^0-9.-]/g, ''))" /></label>`;
     }).join("");
   }).join("");
   modal.classList.remove("hidden");
@@ -4116,7 +4116,7 @@ function saveEstimateDbSalesTargetModal() {
   });
   closeEstimateDbSalesTargetModal();
   renderEstimateDbReports();
-  if (typeof showToast === "function") showToast(`${year}년 월별 목표를 저장했습니다.`);
+  if (typeof showToast === "function") showToast(`${year}ë ìë³ ëª©íë¥¼ ì ì¥íìµëë¤.`);
 }
 
 function ensureEstimateDbReportActionHost() {
@@ -4168,13 +4168,13 @@ function renderEstimateDbReports() {
   let html = "";
   if (estimateDbReportActiveTab === "summary") {
     const rows = buildSummaryRows(year);
-    html = renderReportTable(`${year}년 수주.매출.입금`, [["구분", "수주목표", "수주달성", "기전/외주", "차액", "비율1", "비율2", "매출목표", "매출달성", "기전/외주", "차액", "비율1", "비율2", "입금목표", "입금달성", "기전/외주", "차액", "비율1", "비율2", "비고"]], rows);
+    html = renderReportTable(`${year}ë ìì£¼.ë§¤ì¶.ìê¸`, [["êµ¬ë¶", "ìì£¼ëª©í", "ìì£¼ë¬ì±", "ê¸°ì /ì¸ì£¼", "ì°¨ì¡", "ë¹ì¨1", "ë¹ì¨2", "ë§¤ì¶ëª©í", "ë§¤ì¶ë¬ì±", "ê¸°ì /ì¸ì£¼", "ì°¨ì¡", "ë¹ì¨1", "ë¹ì¨2", "ìê¸ëª©í", "ìê¸ë¬ì±", "ê¸°ì /ì¸ì£¼", "ì°¨ì¡", "ë¹ì¨1", "ë¹ì¨2", "ë¹ê³ "]], rows);
   } else if (estimateDbReportActiveTab === "order") {
     const data = buildOrderRows(year);
-    html = renderReportTable(data.title, [data.header], data.monthly) + renderReportTable("수주 프로젝트 상세", [data.detailHeader], data.detail);
+    html = renderReportTable(data.title, [data.header], data.monthly) + renderReportTable("ìì£¼ íë¡ì í¸ ìì¸", [data.detailHeader], data.detail);
   } else if (estimateDbReportActiveTab === "sales") {
     const data = buildSalesRows(year);
-    html = renderReportTable(data.title, [data.header], data.monthly) + renderReportTable("매출 프로젝트 상세", [data.detailHeader], data.detail);
+    html = renderReportTable(data.title, [data.header], data.monthly) + renderReportTable("ë§¤ì¶ íë¡ì í¸ ìì¸", [data.detailHeader], data.detail);
   } else {
     const data = buildDepositRows(year);
     html = renderReportTable(data.title, [data.detailHeader], data.detail);
@@ -4182,7 +4182,7 @@ function renderEstimateDbReports() {
   target.innerHTML = html;
 }
 function renderReportTable(title, headerRows, rows) {
-  return `<div class="quote-report-table-block" style="overflow-x:auto;overflow-y:visible;max-height:none;"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(formatEstimateDbReportCell(cell))}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">해당 연도 데이터가 없습니다.</td></tr>`}</tbody></table></div>`;
+  return `<div class="quote-report-table-block" style="overflow-x:auto;overflow-y:visible;max-height:none;"><h3>${escapeEstimateDbHtml(title)}</h3><table class="quote-report-table"><thead>${headerRows.map(row => `<tr>${row.map(cell => `<th>${escapeEstimateDbHtml(cell)}</th>`).join("")}</tr>`).join("")}</thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${escapeEstimateDbHtml(formatEstimateDbReportCell(cell))}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headerRows[0]?.length || 1}" class="empty-cell">í´ë¹ ì°ë ë°ì´í°ê° ììµëë¤.</td></tr>`}</tbody></table></div>`;
 }
 
 function ensureEstimateDbReportLayoutStyle() {
@@ -4203,7 +4203,7 @@ function estimateDbXmlCell(value, styleId = "Cell", mergeAcross = 0, mergeDown =
   if (mergeAcross) attrs.push(`ss:MergeAcross="${mergeAcross}"`);
   if (mergeDown) attrs.push(`ss:MergeDown="${mergeDown}"`);
   const raw = value ?? "";
-  const num = typeof raw === "number" ? raw : (String(raw).trim() !== "" && !String(raw).includes("%") && !String(raw).match(/[가-힣A-Za-z/:]/) && !Number.isNaN(Number(String(raw).replace(/,/g, ""))) ? Number(String(raw).replace(/,/g, "")) : null);
+  const num = typeof raw === "number" ? raw : (String(raw).trim() !== "" && !String(raw).includes("%") && !String(raw).match(/[ê°-í£A-Za-z/:]/) && !Number.isNaN(Number(String(raw).replace(/,/g, ""))) ? Number(String(raw).replace(/,/g, "")) : null);
   if (num !== null && Number.isFinite(num)) return `<Cell ${attrs.join(" ")}><Data ss:Type="Number">${num}</Data></Cell>`;
   return `<Cell ${attrs.join(" ")}><Data ss:Type="String">${escapeEstimateDbXml(raw)}</Data></Cell>`;
 }
@@ -4238,7 +4238,7 @@ function buildStyledSummaryData(year = getSelectedEstimateDbYear()) {
   const monthly = buildSummaryRows(year);
   const rowsByMonth = new Map(monthly.map(row => [parseEstimateDbMonth(row[0]), row]));
   const blank = Array(20).fill("");
-  const getMonth = month => rowsByMonth.get(month) || [`${month}월`, 100000000, "-", "-", "-", "0%", "0%", 100000000, "-", "-", "-", "0%", "0%", 100000000, "-", "-", "-", "0%", "0%", ""];
+  const getMonth = month => rowsByMonth.get(month) || [`${month}ì`, 100000000, "-", "-", "-", "0%", "0%", 100000000, "-", "-", "-", "0%", "0%", 100000000, "-", "-", "-", "0%", "0%", ""];
   const sumMonths = (label, months) => {
     const base = Array(20).fill("");
     base[0] = label;
@@ -4254,13 +4254,13 @@ function buildStyledSummaryData(year = getSelectedEstimateDbYear()) {
     base[19] = "";
     return base;
   };
-  const quarter1 = sumMonths("1기예정", [1,2,3]);
-  const quarter1Fix = sumMonths("1기확정", [4,5,6]);
-  const half1 = sumMonths("1기(1~6월)", [1,2,3,4,5,6]);
-  const quarter2 = sumMonths("2기예정", [7,8,9]);
-  const quarter2Fix = sumMonths("2기확정", [10,11,12]);
-  const half2 = sumMonths("2기(7~12월)", [7,8,9,10,11,12]);
-  const total = sumMonths(`${year}년`, [1,2,3,4,5,6,7,8,9,10,11,12]);
+  const quarter1 = sumMonths("1ê¸°ìì ", [1,2,3]);
+  const quarter1Fix = sumMonths("1ê¸°íì ", [4,5,6]);
+  const half1 = sumMonths("1ê¸°(1~6ì)", [1,2,3,4,5,6]);
+  const quarter2 = sumMonths("2ê¸°ìì ", [7,8,9]);
+  const quarter2Fix = sumMonths("2ê¸°íì ", [10,11,12]);
+  const half2 = sumMonths("2ê¸°(7~12ì)", [7,8,9,10,11,12]);
+  const total = sumMonths(`${year}ë`, [1,2,3,4,5,6,7,8,9,10,11,12]);
   return [
     getMonth(1), getMonth(2), getMonth(3), quarter1,
     getMonth(4), getMonth(5), getMonth(6), quarter1Fix, half1,
@@ -4270,19 +4270,19 @@ function buildStyledSummaryData(year = getSelectedEstimateDbYear()) {
   ];
 }
 function summaryStyleForLabel(label) {
-  if (String(label).includes("년")) return "Total";
-  if (String(label).includes("1기(") || String(label).includes("2기(")) return "Half";
-  if (String(label).includes("예정") || String(label).includes("확정")) return "Quarter";
+  if (String(label).includes("ë")) return "Total";
+  if (String(label).includes("1ê¸°(") || String(label).includes("2ê¸°(")) return "Half";
+  if (String(label).includes("ìì ") || String(label).includes("íì ")) return "Quarter";
   return "Body";
 }
 function worksheetXmlStyledSummary(year = getSelectedEstimateDbYear()) {
-  const sub = ["①수주목표", "②수주달성", "③기전/외주", "②-③차액", "비율1", "비율2"];
+  const sub = ["â ìì£¼ëª©í", "â¡ìì£¼ë¬ì±", "â¢ê¸°ì /ì¸ì£¼", "â¡-â¢ì°¨ì¡", "ë¹ì¨1", "ë¹ì¨2"];
   const rows = buildStyledSummaryData(year);
   const cols = [68, 96, 96, 96, 96, 78, 78, 96, 96, 96, 96, 78, 78, 96, 96, 96, 96, 78, 78, 150].map(w => `<Column ss:Width="${w}"/>`).join("");
-  let xml = `<Worksheet ss:Name="0.수주매출입금"><Table>${cols}`;
-  xml += `<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="19"><Data ss:Type="String">${escapeEstimateDbXml(year)}년 수주.매출.입금</Data></Cell></Row>`;
+  let xml = `<Worksheet ss:Name="0.ìì£¼ë§¤ì¶ìê¸"><Table>${cols}`;
+  xml += `<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="19"><Data ss:Type="String">${escapeEstimateDbXml(year)}ë ìì£¼.ë§¤ì¶.ìê¸</Data></Cell></Row>`;
   xml += `<Row ss:Height="12">${Array.from({length:20}, () => estimateDbXmlCell("", "Blank")).join("")}</Row>`;
-  xml += `<Row ss:Height="24">${estimateDbXmlCell("구분", "Group", 0, 1)}${estimateDbXmlCell("수주", "Group", 5)}${estimateDbXmlCell("매출", "Group", 5)}${estimateDbXmlCell("입금", "Group", 5)}${estimateDbXmlCell("비고", "Group", 0, 1)}</Row>`;
+  xml += `<Row ss:Height="24">${estimateDbXmlCell("êµ¬ë¶", "Group", 0, 1)}${estimateDbXmlCell("ìì£¼", "Group", 5)}${estimateDbXmlCell("ë§¤ì¶", "Group", 5)}${estimateDbXmlCell("ìê¸", "Group", 5)}${estimateDbXmlCell("ë¹ê³ ", "Group", 0, 1)}</Row>`;
   xml += `<Row ss:Height="22"><Cell ss:Index="2" ss:StyleID="Header"><Data ss:Type="String">${escapeEstimateDbXml(sub[0])}</Data></Cell>${[...sub.slice(1), ...sub, ...sub].map(v => estimateDbXmlCell(v, "Header")).join("")}</Row>`;
   rows.forEach(row => {
     const style = summaryStyleForLabel(row[0]);
@@ -4314,30 +4314,30 @@ function getEstimateDbReportExportSheets(year = getSelectedEstimateDbYear()) {
   const sales = buildSalesRows(year);
   const deposit = buildDepositRows(year);
   return [
-    { name: "0.수주매출입금", type: "summary", year },
-    { name: "1.수주 프로젝트", type: "report", rows: [[order.title], order.header, ...order.monthly, [], order.detailHeader, ...order.detail] },
-    { name: "2.매출 프로젝트", type: "report", rows: [[sales.title], sales.header, ...sales.monthly, [], sales.detailHeader, ...sales.detail] },
-    { name: "3.입금 프로젝트", type: "report", rows: [[deposit.title], deposit.detailHeader, ...deposit.detail] }
+    { name: "0.ìì£¼ë§¤ì¶ìê¸", type: "summary", year },
+    { name: "1.ìì£¼ íë¡ì í¸", type: "report", rows: [[order.title], order.header, ...order.monthly, [], order.detailHeader, ...order.detail] },
+    { name: "2.ë§¤ì¶ íë¡ì í¸", type: "report", rows: [[sales.title], sales.header, ...sales.monthly, [], sales.detailHeader, ...sales.detail] },
+    { name: "3.ìê¸ íë¡ì í¸", type: "report", rows: [[deposit.title], deposit.detailHeader, ...deposit.detail] }
   ];
 }
 function getEstimateDbWorkbookStylesXml() {
   const border = `<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>`;
   return `<Styles>
-    <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style>
-    <Style ss:ID="Blank"><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style>
-    <Style ss:ID="Title"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="18" ss:Bold="1"/></Style>
-    <Style ss:ID="ReportTitle"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="15" ss:Bold="1"/></Style>
-    <Style ss:ID="Group"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="Header"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="Cell"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9"/>${border}</Style>
-    <Style ss:ID="Body"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9"/>${border}</Style>
-    <Style ss:ID="BodyLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9"/>${border}</Style>
-    <Style ss:ID="Quarter"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="QuarterLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="Half"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="HalfLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="Total"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1" ss:Color="#FF0000"/><Interior ss:Color="#FCE4D6" ss:Pattern="Solid"/>${border}</Style>
-    <Style ss:ID="TotalLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#FCE4D6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="10"/></Style>
+    <Style ss:ID="Blank"><Font ss:FontName="ë§ì ê³ ë" ss:Size="10"/></Style>
+    <Style ss:ID="Title"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="18" ss:Bold="1"/></Style>
+    <Style ss:ID="ReportTitle"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="15" ss:Bold="1"/></Style>
+    <Style ss:ID="Group"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Header"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Cell"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9"/>${border}</Style>
+    <Style ss:ID="Body"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9"/>${border}</Style>
+    <Style ss:ID="BodyLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9"/>${border}</Style>
+    <Style ss:ID="Quarter"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="QuarterLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Half"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="HalfLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="Total"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1" ss:Color="#FF0000"/><Interior ss:Color="#FCE4D6" ss:Pattern="Solid"/>${border}</Style>
+    <Style ss:ID="TotalLabel"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="ë§ì ê³ ë" ss:Size="9" ss:Bold="1"/><Interior ss:Color="#FCE4D6" ss:Pattern="Solid"/>${border}</Style>
   </Styles>`;
 }
 function worksheetXmlBySpec(sheet) {
@@ -4362,23 +4362,23 @@ function exportEstimateDbToExcel() {
   migrateEstimateDbPjColumns();
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const sheets = [
-    { name: "DB_프로젝트", rows: getEstimateDbExportRows("pj") },
-    { name: "DB_기성", rows: getEstimateDbExportRows("progress") },
-    { name: "DB기전외주", rows: getEstimateDbExportRows("mep") }
+    { name: "DB_íë¡ì í¸", rows: getEstimateDbExportRows("pj") },
+    { name: "DB_ê¸°ì±", rows: getEstimateDbExportRows("progress") },
+    { name: "DBê¸°ì ì¸ì£¼", rows: getEstimateDbExportRows("mep") }
   ];
   downloadEstimateDbWorkbook(`CONCOST_DB_${date}.xls`, sheets);
-  showToast("DB 3개 시트를 엑셀 파일로 내보냅니다.");
+  showToast("DB 3ê° ìí¸ë¥¼ ìì íì¼ë¡ ë´ë³´ëëë¤.");
 }
 function exportEstimateDbReportsToExcel() {
   const year = getSelectedEstimateDbYear();
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const sheets = getEstimateDbReportExportSheets(year);
   downloadEstimateDbWorkbook(`CONCOST_0_3_sheets_${year}_${date}.xls`, sheets);
-  showToast(`${year}년 0~3번 시트만 현재 화면 계산값으로 내보냅니다.`);
+  showToast(`${year}ë 0~3ë² ìí¸ë§ íì¬ íë©´ ê³ì°ê°ì¼ë¡ ë´ë³´ëëë¤.`);
 }
 function handleEstimateDbYearChange() { renderEstimateDbReports(); }
 
-/* DB관리/프로젝트 접수 사이드 메뉴 접힘 보정 */
+/* DBê´ë¦¬/íë¡ì í¸ ì ì ì¬ì´ë ë©ë´ ì í ë³´ì  */
 
 document.addEventListener("click", event => {
   const workBtn = event.target?.closest?.("[data-work-main]");
@@ -4386,19 +4386,22 @@ document.addEventListener("click", event => {
   requestAnimationFrame(() => {
     const targetPanelId = workBtn.dataset.workMain;
     if (typeof syncWorkSideAccordion === "function") syncWorkSideAccordion(targetPanelId);
-    if (typeof activateWorkSideSelection === "function") {
-      activateWorkSideSelection(targetPanelId);
-      // 패널 활성화 시 렌더 함수 호출 (납품 데이터/업무일지/수지분석)
-      if (targetPanelId === 'deliveryData' && typeof renderDeliveryData === 'function') renderDeliveryData();
-      else if (targetPanelId === 'dailyReport' && typeof renderDailyReport === 'function') renderDailyReport();
-      else if (targetPanelId === 'profitAnalysis' && typeof profitAnalysisModule !== 'undefined') profitAnalysisModule.render();
-      return;
-    }
-    if (["estimateRequestManage", "estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList", "projectReceive", "projectReceiveList"].includes(targetPanelId)) {
-      const selected = document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`);
-      selected?.classList.add("active", "work-side-selected");
-      selected?.setAttribute("data-work-selected", "true");
-    }
+    // 패널 활성화: .work-panel.active CSS로 표시/숨김
+    document.querySelectorAll('.work-panel').forEach(p => p.classList.remove('active'));
+    const targetPanel = document.getElementById(targetPanelId);
+    if (targetPanel) targetPanel.classList.add('active');
+    // 사이드 아이템 활성화 상태 업데이트
+    document.querySelectorAll('.side-item[data-work-main]').forEach(s => {
+      s.classList.remove('active', 'work-side-selected');
+      s.removeAttribute('data-work-selected');
+    });
+    const selected = document.querySelector(`.side-item[data-work-main="${targetPanelId}"]`);
+    selected?.classList.add("active", "work-side-selected");
+    selected?.setAttribute("data-work-selected", "true");
+    // 렌더 함수 호출
+    if (targetPanelId === 'deliveryData' && typeof renderDeliveryData === 'function') renderDeliveryData();
+    else if (targetPanelId === 'dailyReport' && typeof renderDailyReport === 'function') renderDailyReport();
+    else if (targetPanelId === 'profitAnalysis' && typeof profitAnalysisModule !== 'undefined') profitAnalysisModule.render();
   });
 }, true);
 
@@ -4474,10 +4477,10 @@ document.addEventListener("click", event => {
 
 
 /* =========================================================
-   FIX: DB관리 열 위치 변경 확인 버튼 종료 보정
-   - 열 위치 변경 중 상태는 그대로 유지 버튼 역할만 수행
-   - 실제 종료/저장은 확인 버튼에서만 처리
-   - 다른 요소가 버튼 위를 덮어도 좌표 기준으로 확인 버튼 클릭을 감지
+   FIX: DBê´ë¦¬ ì´ ìì¹ ë³ê²½ íì¸ ë²í¼ ì¢ë£ ë³´ì 
+   - ì´ ìì¹ ë³ê²½ ì¤ ìíë ê·¸ëë¡ ì ì§ ë²í¼ ì­í ë§ ìí
+   - ì¤ì  ì¢ë£/ì ì¥ì íì¸ ë²í¼ììë§ ì²ë¦¬
+   - ë¤ë¥¸ ììê° ë²í¼ ìë¥¼ ë®ì´ë ì¢í ê¸°ì¤ì¼ë¡ íì¸ ë²í¼ í´ë¦­ì ê°ì§
 ========================================================= */
 (function installEstimateDbColumnReorderConfirmFinalPatch(){
   if (window.__estimateDbColumnReorderConfirmFinalPatchInstalled) return;
@@ -4492,7 +4495,7 @@ document.addEventListener("click", event => {
     return Array.from(document.querySelectorAll("#estimateDbColumnReorderOkBtn, button"))
       .filter(btn => {
         const text = (btn.textContent || "").trim();
-        if (btn.id !== "estimateDbColumnReorderOkBtn" && text !== "확인") return false;
+        if (btn.id !== "estimateDbColumnReorderOkBtn" && text !== "íì¸") return false;
         const rect = btn.getBoundingClientRect();
         const style = window.getComputedStyle(btn);
         return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
@@ -4526,7 +4529,7 @@ document.addEventListener("click", event => {
 
     if (typeof saveEstimateDbToStorage === "function") saveEstimateDbToStorage();
     if (typeof updateEstimateDbSaveButtonState === "function") updateEstimateDbSaveButtonState();
-    if (typeof showToast === "function") showToast("열 위치 변경을 저장했습니다.");
+    if (typeof showToast === "function") showToast("ì´ ìì¹ ë³ê²½ì ì ì¥íìµëë¤.");
     if (typeof renderEstimateDbManage === "function") renderEstimateDbManage();
     return true;
   };
@@ -4552,7 +4555,7 @@ document.addEventListener("click", event => {
   const originalToggle = typeof toggleEstimateDbColumnReorderMode === "function" ? toggleEstimateDbColumnReorderMode : null;
   toggleEstimateDbColumnReorderMode = function(){
     if (isReorderModeOn()) {
-      if (typeof showToast === "function") showToast("열 위치 변경 모드입니다. 종료하려면 확인 버튼을 누르세요.");
+      if (typeof showToast === "function") showToast("ì´ ìì¹ ë³ê²½ ëª¨ëìëë¤. ì¢ë£íë ¤ë©´ íì¸ ë²í¼ì ëë¥´ì¸ì.");
       return false;
     }
     return originalToggle ? originalToggle.apply(this, arguments) : false;
@@ -4584,12 +4587,12 @@ document.addEventListener("click", event => {
 })();
 
 
-/* === 견적서 종류별 관리 v1: 업로드 엑셀 양식 4종 웹 작성 화면 === */
+/* === ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ v1: ìë¡ë ìì ìì 4ì¢ ì¹ ìì± íë©´ === */
 
 /* =========================================================
-   2026-05-29 PM배정 → 기성관리 총괄PM 연계 보정
-   - 총괄PM 우선순위: 마감팀 PM → 구조팀 PM → BIM파트 PM → 토목·조경 PM
-   - PJ관리 PM 변경 시 기성관리 총괄PM 즉시 반영
+   2026-05-29 PMë°°ì  â ê¸°ì±ê´ë¦¬ ì´ê´PM ì°ê³ ë³´ì 
+   - ì´ê´PM ì°ì ìì: ë§ê°í PM â êµ¬ì¡°í PM â BIMíí¸ PM â í ëª©Â·ì¡°ê²½ PM
+   - PJê´ë¦¬ PM ë³ê²½ ì ê¸°ì±ê´ë¦¬ ì´ê´PM ì¦ì ë°ì
    ========================================================= */
 (function installEstimateDbTotalPmSyncPatch(){
   function text(value){
@@ -4611,23 +4614,23 @@ document.addEventListener("click", event => {
     return true;
   }
   function selectTotalPm(assignment = {}, pjRow = null){
-    const finish = text(assignment.pmFinish ?? rowValue('pj', pjRow, 'PM(마감)'));
-    const structure = text(assignment.pmStructure ?? rowValue('pj', pjRow, 'PM(구조)'));
+    const finish = text(assignment.pmFinish ?? rowValue('pj', pjRow, 'PM(ë§ê°)'));
+    const structure = text(assignment.pmStructure ?? rowValue('pj', pjRow, 'PM(êµ¬ì¡°)'));
     const bim = text(assignment.pmBim ?? rowValue('pj', pjRow, 'PM(BIM)'));
-    const civil = text(assignment.pmCivil ?? rowValue('pj', pjRow, 'PM(토목,조경)'));
+    const civil = text(assignment.pmCivil ?? rowValue('pj', pjRow, 'PM(í ëª©,ì¡°ê²½)'));
     return finish || structure || bim || civil || '';
   }
   function progressKeyFromPjRow(pjRow){
     if (!pjRow) return '';
     if (typeof makeEstimateDbSyncKey === 'function') {
       return makeEstimateDbSyncKey({
-        year: rowValue('pj', pjRow, '최초생성날짜') || rowValue('pj', pjRow, '년도'),
-        receiptNo: rowValue('pj', pjRow, '접수번호'),
+        year: rowValue('pj', pjRow, 'ìµì´ìì±ë ì§') || rowValue('pj', pjRow, 'ëë'),
+        receiptNo: rowValue('pj', pjRow, 'ì ìë²í¸'),
         pjNo: rowValue('pj', pjRow, 'PJ NO'),
-        pjName: rowValue('pj', pjRow, '프로젝트명') || rowValue('pj', pjRow, 'PJ명')
+        pjName: rowValue('pj', pjRow, 'íë¡ì í¸ëª') || rowValue('pj', pjRow, 'PJëª')
       });
     }
-    return [rowValue('pj', pjRow, 'PJ NO'), rowValue('pj', pjRow, '프로젝트명')].map(text).filter(Boolean).join('::');
+    return [rowValue('pj', pjRow, 'PJ NO'), rowValue('pj', pjRow, 'íë¡ì í¸ëª')].map(text).filter(Boolean).join('::');
   }
   function findProgressRow(pjRowIndex){
     const pjSheet = estimateDbSheets?.pj;
@@ -4656,7 +4659,7 @@ document.addEventListener("click", event => {
     const progressRow = findProgressRow(pjRowIndex);
     if (!pjRow || !progressRow) return false;
     const totalPm = selectTotalPm(assignment, pjRow);
-    const changed = setRowValue('progress', progressRow, '총괄PM', totalPm);
+    const changed = setRowValue('progress', progressRow, 'ì´ê´PM', totalPm);
     if (changed && typeof recalcEstimateDbRow === 'function') recalcEstimateDbRow('progress', progressRow);
     return changed;
   }
@@ -4665,7 +4668,7 @@ document.addEventListener("click", event => {
   window.estimateDbSyncProgressTotalPmByKey = function estimateDbSyncProgressTotalPmByKey(projectKey, assignment = {}){
     if (!estimateDbSheets?.pj?.rows) return false;
     const keyText = text(projectKey);
-    const idxs = ['PJ NO','receiveId','연계ID','DB연계ID'].map(h => headerIndex('pj', h)).filter(i => i >= 0);
+    const idxs = ['PJ NO','receiveId','ì°ê³ID','DBì°ê³ID'].map(h => headerIndex('pj', h)).filter(i => i >= 0);
     let rowIndex = -1;
     if (keyText && idxs.length) {
       rowIndex = estimateDbSheets.pj.rows.findIndex(row => idxs.some(i => text(row?.[i]) === keyText));
