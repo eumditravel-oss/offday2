@@ -585,6 +585,7 @@ function renderPmScheduleDashboard() {
   const editorView = document.getElementById("pmScheduleEditorView");
   const role = getPmScheduleRole();
   syncPmScheduleHeroButtons();
+  injectPmGanttToggleButton();
 
   if (isPmScheduleManagerRole()) {
     if (roleMessage) roleMessage.style.display = "none";
@@ -1963,4 +1964,229 @@ window.initPmScheduleProjects = initPmScheduleProjects;
     renderPmScheduleRequestTargets(item);
   };
   window.updatePmScheduleAssignment = updatePmScheduleAssignment;
+
+// ─── 월간 스케줄표 (Gantt Calendar) ────────────────────────────────────────
+let pmGanttYear = new Date().getFullYear();
+let pmGanttMonth = new Date().getMonth() + 1;
+
+function injectPmGanttToggleButton() {
+  const shell = document.getElementById('pmScheduleShell');
+  if (!shell || document.getElementById('pmGanttToggleBtn')) return;
+  // Inject Gantt toggle button + container into the shell
+  const wrapper = document.createElement('div');
+  wrapper.id = 'pmGanttWrapper';
+  wrapper.style.cssText = 'padding:0 0 8px 0;';
+  wrapper.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 4px;">
+      <button id="pmGanttToggleBtn" onclick="togglePmGanttView()" style="background:#0f172a;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        📅 월간 스케줄표
+      </button>
+      <span id="pmGanttMonthLabel" style="font-size:13px;color:#64748b;display:none;"></span>
+      <button id="pmGanttPrevBtn" onclick="pmGanttNav(-1)" style="display:none;background:#e2e8f0;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">◀</button>
+      <button id="pmGanttNextBtn" onclick="pmGanttNav(1)" style="display:none;background:#e2e8f0;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">▶</button>
+    </div>
+    <div id="pmGanttView" style="display:none;overflow-x:auto;padding:0 16px 16px;"></div>
+  `;
+  shell.prepend(wrapper);
+  injectPmGanttCss();
+}
+
+function togglePmGanttView() {
+  const view = document.getElementById('pmGanttView');
+  const label = document.getElementById('pmGanttMonthLabel');
+  const prev = document.getElementById('pmGanttPrevBtn');
+  const next = document.getElementById('pmGanttNextBtn');
+  if (!view) return;
+  const showing = view.style.display !== 'none';
+  view.style.display = showing ? 'none' : 'block';
+  if (label) label.style.display = showing ? 'none' : '';
+  if (prev) prev.style.display = showing ? 'none' : '';
+  if (next) next.style.display = showing ? 'none' : '';
+  if (!showing) renderPmGanttCalendar(pmGanttYear, pmGanttMonth);
+}
+
+function pmGanttNav(delta) {
+  pmGanttMonth += delta;
+  if (pmGanttMonth > 12) { pmGanttMonth = 1; pmGanttYear++; }
+  if (pmGanttMonth < 1) { pmGanttMonth = 12; pmGanttYear--; }
+  renderPmGanttCalendar(pmGanttYear, pmGanttMonth);
+}
+
+function renderPmGanttCalendar(year, month) {
+  const view = document.getElementById('pmGanttView');
+  const label = document.getElementById('pmGanttMonthLabel');
+  if (!view) return;
+  if (label) label.textContent = year + '년 ' + month + '월';
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const DAY_NAMES = ['일','월','화','수','목','금','토'];
+  const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899'];
+
+  // Build project date coverage per empNo
+  const empProjectDay = {}; // empNo -> { day -> {projName, color, scope} }
+  (pmScheduleProjects || []).forEach((item, idx) => {
+    const p = item?.project || {};
+    const projName = p.projectName || p.projectNo || ('프로젝트' + (idx+1));
+    const color = COLORS[idx % COLORS.length];
+    // Parse date range
+    const startRaw = String(p.startDate || p.firstDelivery || '').trim();
+    const endRaw = String(p.firstDelivery || p.startDate || '').trim();
+    const startD = parsePmScheduleDate(startRaw);
+    const endD = parsePmScheduleDate(endRaw);
+    // Determine which days in this month are covered
+    const activeDays = new Set();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cellDate = new Date(year, month - 1, d);
+      const inRange = (!startD || cellDate >= startD) && (!endD || cellDate <= endD);
+      const sameMonthStart = startD && startD.getFullYear() === year && startD.getMonth() + 1 === month;
+      const sameMonthEnd = endD && endD.getFullYear() === year && endD.getMonth() + 1 === month;
+      if (inRange || sameMonthStart || sameMonthEnd || (!startD && !endD)) activeDays.add(d);
+    }
+    // Get assigned employees
+    const selectedPlan = item.approvedPlan || item.selectedProposal || 'plan1';
+    const rows = item?.proposals?.[selectedPlan]?.rows || [];
+    rows.forEach(row => {
+      if (!row.rc && !row.sc) return;
+      if (!empProjectDay[row.empNo]) empProjectDay[row.empNo] = {};
+      activeDays.forEach(d => {
+        if (!empProjectDay[row.empNo][d]) {
+          empProjectDay[row.empNo][d] = { projName, color, scope: row.scope || '' };
+        }
+      });
+    });
+  });
+
+  // Get employees grouped by dept
+  const allStaff = typeof getPmScheduleVietEmployees === 'function' ? getPmScheduleVietEmployees() : [];
+  const deptGroups = {};
+  allStaff.forEach(emp => {
+    const dept = (typeof normalizePmScheduleVietDeptName === 'function'
+      ? normalizePmScheduleVietDeptName(emp.dept)
+      : (emp.dept || '기타'));
+    if (!deptGroups[dept]) deptGroups[dept] = [];
+    deptGroups[dept].push(emp);
+  });
+
+  // Build table header
+  let html = '<table class="pm-gantt-table"><thead><tr>';
+  html += '<th class="pm-gantt-th-dept" rowspan="2">팀/부서</th>';
+  html += '<th class="pm-gantt-th-grade" rowspan="2">직급</th>';
+  html += '<th class="pm-gantt-th-name" rowspan="2">이름</th>';
+  html += '<th class="pm-gantt-th-type" rowspan="2">구분</th>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(year, month - 1, d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    html += `<th class="pm-gantt-th-day${isWeekend?' pm-gantt-weekend':''}">${d}</th>`;
+  }
+  html += '</tr><tr>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(year, month - 1, d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    html += `<th class="pm-gantt-th-dow${isWeekend?' pm-gantt-weekend':''}">${DAY_NAMES[dow]}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  // Build rows
+  let prevDept = '';
+  allStaff.forEach((emp, empIdx) => {
+    const dept = (typeof normalizePmScheduleVietDeptName === 'function'
+      ? normalizePmScheduleVietDeptName(emp.dept)
+      : (emp.dept || '기타'));
+    const grade = emp.grade || '';
+    const name = emp.combinedName || emp.name || emp.koreanName || '';
+    const empNo = emp.empNo;
+    const dayMap = empProjectDay[empNo] || {};
+    const isDeptFirst = dept !== prevDept;
+    if (isDeptFirst) prevDept = dept;
+
+    const deptInGroup = deptGroups[dept] || [];
+    const deptRowSpan = deptInGroup.length * 2;
+
+    // Row 1: 프로젝트
+    html += '<tr class="pm-gantt-row-proj">';
+    if (isDeptFirst) {
+      html += `<td class="pm-gantt-td-dept" rowspan="${deptRowSpan}">${dept}</td>`;
+    }
+    html += `<td class="pm-gantt-td-grade" rowspan="2">${grade}</td>`;
+    html += `<td class="pm-gantt-td-name" rowspan="2">${name}</td>`;
+    html += '<td class="pm-gantt-td-type">프로젝트</td>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow = new Date(year, month - 1, d).getDay();
+      const isWeekend = dow === 0 || dow === 6;
+      const assignment = dayMap[d];
+      if (assignment) {
+        html += `<td class="pm-gantt-cell${isWeekend?' pm-gantt-weekend':''}" style="background:${assignment.color};color:#fff;" title="${assignment.projName}">${assignment.projName.slice(0,4)}</td>`;
+      } else {
+        html += `<td class="pm-gantt-cell${isWeekend?' pm-gantt-weekend':''}">&nbsp;</td>`;
+      }
+    }
+    html += '</tr>';
+
+    // Row 2: 범위
+    html += '<tr class="pm-gantt-row-scope">';
+    html += '<td class="pm-gantt-td-type">범위</td>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow = new Date(year, month - 1, d).getDay();
+      const isWeekend = dow === 0 || dow === 6;
+      const assignment = dayMap[d];
+      if (assignment && assignment.scope) {
+        html += `<td class="pm-gantt-cell pm-gantt-cell-scope${isWeekend?' pm-gantt-weekend':''}" style="background:${assignment.color}22;border-bottom:2px solid ${assignment.color};" title="${assignment.scope}">${assignment.scope.slice(0,6)}</td>`;
+      } else {
+        html += `<td class="pm-gantt-cell pm-gantt-cell-scope${isWeekend?' pm-gantt-weekend':''}">&nbsp;</td>`;
+      }
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+
+  // Add legend
+  html += '<div class="pm-gantt-legend">';
+  (pmScheduleProjects || []).forEach((item, idx) => {
+    const p = item?.project || {};
+    const name = p.projectName || p.projectNo || ('프로젝트' + (idx+1));
+    html += `<span class="pm-gantt-legend-item"><span style="background:${COLORS[idx % COLORS.length]};display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>${name}</span>`;
+  });
+  html += '</div>';
+
+  if (allStaff.length === 0) {
+    html = '<div style="padding:24px;color:#64748b;text-align:center;">배정된 직원 데이터가 없습니다.<br><small>프로젝트 배정 후 스케줄표가 생성됩니다.</small></div>';
+  }
+
+  view.innerHTML = html;
+}
+
+function injectPmGanttCss() {
+  if (document.getElementById('pmGanttCss')) return;
+  const style = document.createElement('style');
+  style.id = 'pmGanttCss';
+  style.textContent = `
+    .pm-gantt-table { border-collapse:collapse; font-size:11px; white-space:nowrap; min-width:100%; }
+    .pm-gantt-table th, .pm-gantt-table td { border:1px solid #e2e8f0; padding:2px 4px; text-align:center; }
+    .pm-gantt-th-dept { background:#1e293b; color:#fff; min-width:80px; font-size:11px; }
+    .pm-gantt-th-grade { background:#334155; color:#fff; min-width:50px; }
+    .pm-gantt-th-name { background:#334155; color:#fff; min-width:70px; }
+    .pm-gantt-th-type { background:#475569; color:#fff; min-width:52px; }
+    .pm-gantt-th-day { background:#1e293b; color:#e2e8f0; min-width:28px; font-size:10px; }
+    .pm-gantt-th-dow { background:#334155; color:#94a3b8; font-size:10px; }
+    .pm-gantt-weekend { background:#1e3a5f!important; color:#93c5fd!important; }
+    .pm-gantt-td-dept { background:#0f172a; color:#e2e8f0; font-weight:bold; font-size:10px; writing-mode:vertical-rl; text-orientation:mixed; padding:6px 2px; }
+    .pm-gantt-td-grade { background:#f8fafc; font-size:10px; color:#475569; }
+    .pm-gantt-td-name { background:#f8fafc; text-align:left; padding:2px 6px; font-size:11px; }
+    .pm-gantt-td-type { background:#f1f5f9; color:#64748b; font-size:10px; }
+    .pm-gantt-row-proj td { height:20px; }
+    .pm-gantt-row-scope td { height:16px; background:#fafafa; }
+    .pm-gantt-cell { min-width:28px; font-size:9px; overflow:hidden; text-overflow:ellipsis; }
+    .pm-gantt-cell-scope { font-size:9px; }
+    .pm-gantt-legend { display:flex; flex-wrap:wrap; gap:8px; padding:8px 0; font-size:12px; }
+    .pm-gantt-legend-item { display:flex; align-items:center; }
+  `;
+  document.head.appendChild(style);
+}
+
+window.togglePmGanttView = togglePmGanttView;
+window.pmGanttNav = pmGanttNav;
+window.renderPmGanttCalendar = renderPmGanttCalendar;
+// ─── End Gantt Calendar ───────────────────────────────────────────────────────
+
 })();
