@@ -224,10 +224,29 @@
     return '구조공사';
   }
 
+  // 단가표 직급(본부장~베트남)으로 정규화: 한국 직급은 그대로, Viet QS 영문 직급/기타 직급은 매핑
+  function normalizeGradeKey(grade) {
+    const g = txt(grade);
+    if (GRADE_KEYS.includes(g)) return g;
+    if (/Asst\.?\s*Team\s*Leader/i.test(g)) return '파트장';
+    if (/Team\s*Leader/i.test(g))           return '팀장';
+    if (/General\s*Manager/i.test(g))       return '실장';
+    if (/Staff/i.test(g))                   return '베트남';
+    if (/CEO|Executive|상무|센터장|기술이사|본부장/i.test(g)) return '본부장';
+    return ''; // 매칭 불가
+  }
+
   function findEmployeeGrade(name) {
-    const target = txt(name);
-    const employee = (window.employees || []).find(emp => txt(emp.name) === target || txt(emp.koreanName) === target);
-    return GRADE_KEYS.includes(employee?.grade) ? employee.grade : '수석';
+    const target = txt(name).replace(/\(.*?\)/g, '').trim(); // "현지명(한글)" 형태 보정
+    const list = (window.employees || []);
+    const employee = list.find(emp =>
+      txt(emp.name) === target ||
+      txt(emp.koreanName) === target ||
+      txt(emp.localName) === target ||
+      (emp.koreanName && target && target.includes(txt(emp.koreanName))) ||
+      (emp.localName && target && target.includes(txt(emp.localName)))
+    );
+    return normalizeGradeKey(employee?.grade) || '수석';
   }
 
   function normalizeDate(value) {
@@ -896,4 +915,44 @@
     if (el) render('profit-analysis-root');
   });
 
+})();
+
+/* =========================================================
+   수지분석 · 업무관리 네비게이션 통합 보강
+   - 헤더 타이틀(workPageMeta) 주입
+   - "수지분석" 탭 진입 시 중앙저장소 최신화 후 재렌더
+   (사용자 모듈 본체는 수정하지 않고 비침투적으로 연결합니다)
+========================================================= */
+(function () {
+  'use strict';
+  function injectMeta() {
+    var meta = (typeof workPageMeta !== 'undefined') ? workPageMeta : window.workPageMeta;
+    if (meta && !meta.profitAnalysis) {
+      meta.profitAnalysis = ['수지분석', '차수별 투입현황 인건비(발생비용 B)와 수주금액(A)을 대비하여 프로젝트 수지(A−B)를 분석합니다.'];
+    }
+  }
+  function patch() {
+    var original = window.switchWorkPanel || (typeof switchWorkPanel === 'function' ? switchWorkPanel : null);
+    if (typeof original !== 'function' || window.__profitSwitchPatched) return;
+    window.__profitSwitchPatched = true;
+    window.switchWorkPanel = function profitSwitchWorkPanel(panelId) {
+      var result = original.apply(this, arguments);
+      if (panelId === 'profitAnalysis') {
+        try { if (window.refreshCentralProjectStore) window.refreshCentralProjectStore(); } catch (e) {}
+        try {
+          if (window.profitAnalysisModule && typeof window.profitAnalysisModule.render === 'function') {
+            window.profitAnalysisModule.render('profit-analysis-root');
+          }
+        } catch (e) {}
+      }
+      return result;
+    };
+    try { switchWorkPanel = window.switchWorkPanel; } catch (e) {}
+  }
+  function init() { injectMeta(); patch(); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
