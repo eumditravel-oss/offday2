@@ -671,19 +671,11 @@ tr:hover td{background:#fbfdff}
   margin-bottom:18px;
 }
 
-.toast{
-  position:fixed;
-  right:24px;
-  bottom:24px;
-  background:#6b7280;
-  color:#fff;
-  border-radius:16px;
-  padding:14px 18px;
-  font-weight:900;
-  display:none;
-  z-index:80;
-}
-.toast.active{display:block}
+.toast-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9998;display:none}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.85);background:#fff;color:#111827;border-radius:14px;padding:28px 36px;font-weight:700;font-size:15px;display:none;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;min-width:220px;border-top:4px solid #10b981}
+.toast.active{display:block;animation:toastPop .2s ease forwards}
+.toast.toast-error{border-top-color:#ef4444}
+@keyframes toastPop{from{transform:translate(-50%,-50%) scale(0.85);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
 
 @media(max-width:1280px){
   .workspace{grid-template-columns:1fr}
@@ -743,7 +735,7 @@ tr:hover td{background:#fbfdff}
 .org-edit-actions{display:flex;gap:6px}
 @media(max-width:1280px){.org-edit-row{grid-template-columns:repeat(2,1fr)}}
 
-/* 조직도 한눈보기 개선 */
+/* ì¡°ì§ë íëë³´ê¸° ê°ì  */
 .modal-org-wide{
   width:calc(100vw - 28px) !important;
   max-width:1920px !important;
@@ -1009,7 +1001,7 @@ tr:hover td{background:#fbfdff}
 }
 
 
-/* CON-COST 조직도: 중앙 기술본부 + 우측 개발/QC/클레임 배치 */
+/* CON-COST ì¡°ì§ë: ì¤ì ê¸°ì ë³¸ë¶ + ì°ì¸¡ ê°ë°/QC/í´ë ì ë°°ì¹ */
 .concost-fit{min-width:0;}
 .concost-exec{justify-content:center;}
 .concost-org-layout{
@@ -1087,7 +1079,7 @@ tr:hover td{background:#fbfdff}
   .team-major-grid,.team-mid-grid.two-col{grid-template-columns:1fr;}
 }
 
-/* 2026-04-28 조직도 한눈보기 보정: 세로 잘림 방지 + CON-COST 중앙형 배치 압축 */
+/* 2026-04-28 ì¡°ì§ë íëë³´ê¸° ë³´ì : ì¸ë¡ ìë¦¼ ë°©ì§ + CON-COST ì¤ìí ë°°ì¹ ìì¶ */
 .modal-org-wide{
   width:100vw !important;
   max-width:100vw !important;
@@ -1330,7 +1322,7 @@ tr:hover td{background:#fbfdff}
   .org-chart-canvas{overflow:auto !important;}
 }
 
-/* 조직도 세로 배치 보정 - CON-COST */
+/* ì¡°ì§ë ì¸ë¡ ë°°ì¹ ë³´ì  - CON-COST */
 .vertical-org-section .org-overview-members,
 .vertical-members{
   display:grid !important;
@@ -1383,7 +1375,7 @@ tr:hover td{background:#fbfdff}
   .team-mid-grid.three-col{grid-template-columns:1fr;}
 }
 
-/* 업무관리 탭 */
+/* ìë¬´ê´ë¦¬ í­ */
 .module-view{display:none}
 .module-view.active{display:block}
 .work-panel{display:none}
@@ -1412,7 +1404,7 @@ tr:hover td{background:#fbfdff}
 @media(max-width:1280px){.process-grid{grid-template-columns:repeat(2,1fr)}.checklist-toolbar{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.process-grid,.checklist-toolbar{grid-template-columns:1fr}.work-kpi-grid{grid-template-columns:1fr 1fr}}
 
-/* 수량산출 체크리스트 확인 체크/처리 이력 */
+/* ìëì°ì¶ ì²´í¬ë¦¬ì¤í¸ íì¸ ì²´í¬/ì²ë¦¬ ì´ë ¥ */
 .excel-grid th:nth-child(9),
 .excel-grid td:nth-child(9){
   width:92px;
@@ -1491,13 +1483,13 @@ tr:hover td{background:#fbfdff}
 }
 
 
-/* QC 검토/승인 안에 수량산출 체크리스트 포함 */
+/* QC ê²í /ì¹ì¸ ìì ìëì°ì¶ ì²´í¬ë¦¬ì¤í¸ í¬í¨ */
 .qc-review-guide .notice{margin-bottom:0}
 #qcReview .checklist-card{margin-bottom:18px}
 #qcReview .excel-grid-wrap{max-height:560px}
 #qcReview .card-head .subcopy{max-width:900px}
 
-/* 요청 반영: QC 체크리스트 상태 컬럼 제거 / 요청 대상별 체크 / 구분 가로 구분선 / 추가 모달 */
+/* ìì²­ ë°ì: QC ì²´í¬ë¦¬ì¤í¸ ìí ì»¬ë¼ ì ê±° / ìì²­ ëìë³ ì²´í¬ / êµ¬ë¶ ê°ë¡ êµ¬ë¶ì  / ì¶ê° ëª¨ë¬ */
 .excel-grid{min-width:1460px}
 .group-separator-row td{
   background:#f8fafc !important;
@@ -1582,7 +1574,7 @@ tr:hover td{background:#fbfdff}
 }
 
 
-/* 구분 드롭다운 고정 목록 / 질의차수 송부완료 잠금 */
+/* êµ¬ë¶ ëë¡­ë¤ì´ ê³ ì  ëª©ë¡ / ì§ìì°¨ì ì¡ë¶ìë£ ì ê¸ */
 .group-band-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .group-band-inner em{margin-left:8px;font-style:normal;color:#64748b;font-size:12px;font-weight:900}
 .group-band-inner b{display:inline-flex;margin-left:8px;padding:3px 8px;border-radius:999px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:900}
@@ -1594,7 +1586,7 @@ tr:hover td{background:#fbfdff}
 .locked-row .cell,.locked-row .target-chip-list,.locked-row .history-cell{opacity:.78}
 .row-actions .btn:disabled,.group-mini-btn:disabled,.done-check-wrap input:disabled,.excel-grid input:disabled{cursor:not-allowed;opacity:.55}
 
-/* QC 승인 단계 제거 후 리스트 세로 확장 */
+/* QC ì¹ì¸ ë¨ê³ ì ê±° í ë¦¬ì¤í¸ ì¸ë¡ íì¥ */
 .qc-approval-card,
 .qc-approval-stage,
 .qc-stage-panel{
@@ -1627,7 +1619,7 @@ tr:hover td{background:#fbfdff}
   overflow:auto;
 }
 
-/* QC 검토/승인 상단 중복 안내 카드 제거 */
+/* QC ê²í /ì¹ì¸ ìë¨ ì¤ë³µ ìë´ ì¹´ë ì ê±° */
 .qc-intro,
 .qc-summary-card,
 .qc-approval-intro,
@@ -1635,7 +1627,7 @@ tr:hover td{background:#fbfdff}
   display:none !important;
 }
 
-/* 체크리스트 작성자/확인자/이의제기/첨부 반영 */
+/* ì²´í¬ë¦¬ì¤í¸ ìì±ì/íì¸ì/ì´ìì ê¸°/ì²¨ë¶ ë°ì */
 .attach-upload-btn{
   position:relative;
   overflow:hidden;
@@ -1764,10 +1756,10 @@ tr:hover td{background:#fbfdff}
 }
 
 .eliminated-row::after{
-  content:"소거";
+  content:"ìê±°";
 }
 
-/* 체크리스트 테이블 폭 조정 */
+/* ì²´í¬ë¦¬ì¤í¸ íì´ë¸ í­ ì¡°ì  */
 .comment-col{
   min-width:260px;
   width:22%;
@@ -1838,7 +1830,7 @@ table td:nth-child(10){
   word-break:break-all;
 }
 
-/* 첨부자료 칸 복구 및 모달 업로드/제거 */
+/* ì²¨ë¶ìë£ ì¹¸ ë³µêµ¬ ë° ëª¨ë¬ ìë¡ë/ì ê±° */
 .excel-grid .comment-col,
 .excel-grid td:nth-child(8){
   min-width:300px;
@@ -1913,8 +1905,8 @@ table td:nth-child(10){
 }
 
 
-/* === QC 체크리스트 테이블 깨짐 복구 최종 패치 ===
-   기존 nth-child 강제 폭 지정 때문에 공종/일련번호가 세로로 찢어지는 문제를 방지합니다. */
+/* === QC ì²´í¬ë¦¬ì¤í¸ íì´ë¸ ê¹¨ì§ ë³µêµ¬ ìµì¢ í¨ì¹ ===
+   ê¸°ì¡´ nth-child ê°ì  í­ ì§ì  ëë¬¸ì ê³µì¢/ì¼ë ¨ë²í¸ê° ì¸ë¡ë¡ ì°¢ì´ì§ë ë¬¸ì ë¥¼ ë°©ì§í©ëë¤. */
 .excel-grid{
   table-layout:fixed !important;
   width:100% !important;
@@ -1922,7 +1914,7 @@ table td:nth-child(10){
   border-collapse:collapse;
 }
 
-/* colgroup 기준 폭 */
+/* colgroup ê¸°ì¤ í­ */
 .excel-grid col.qc-col-select{width:44px;}
 .excel-grid col.qc-col-trade{width:78px;}
 .excel-grid col.qc-col-no{width:74px;}
@@ -1935,7 +1927,7 @@ table td:nth-child(10){
 .excel-grid col.qc-col-history{width:155px;}
 .excel-grid col.qc-col-manage{width:90px;}
 
-/* 기존 전역 nth-child 폭 강제값 무력화 후 재정렬 */
+/* ê¸°ì¡´ ì ì­ nth-child í­ ê°ì ê° ë¬´ë ¥í í ì¬ì ë ¬ */
 .excel-grid th,
 .excel-grid td{
   box-sizing:border-box;
@@ -1984,7 +1976,7 @@ table td:nth-child(10){
   text-align:center !important;
 }
 
-/* 체크 여부 칸: 한 줄 유지 */
+/* ì²´í¬ ì¬ë¶ ì¹¸: í ì¤ ì ì§ */
 .excel-grid td:nth-child(7){
   text-align:center !important;
   padding:8px 6px !important;
@@ -2036,7 +2028,7 @@ table td:nth-child(10){
   font-size:12px !important;
 }
 
-/* 관리 칸 compact */
+/* ê´ë¦¬ ì¹¸ compact */
 .excel-grid td:nth-child(11) .row-actions,
 .excel-grid td:nth-child(11) .actions{
   display:flex !important;
@@ -2052,7 +2044,7 @@ table td:nth-child(10){
   min-width:44px !important;
 }
 
-/* 기존에 마지막 줄에서 넣은 전역 max-width 해제 */
+/* ê¸°ì¡´ì ë§ì§ë§ ì¤ìì ë£ì ì ì­ max-width í´ì  */
 table th:nth-child(7),
 table td:nth-child(7),
 table th:last-child,
@@ -2060,14 +2052,14 @@ table td:last-child{
   max-width:none !important;
 }
 
-/* 그룹행은 전체 폭 사용 */
+/* ê·¸ë£¹íì ì ì²´ í­ ì¬ì© */
 .excel-grid .group-row td{
   text-align:left !important;
   white-space:nowrap !important;
 }
 
 
-/* 처리이력 형식 수정 */
+/* ì²ë¦¬ì´ë ¥ íì ìì  */
 .history-row{
   display:flex !important;
   flex-direction:column !important;
@@ -2095,8 +2087,8 @@ table td:last-child{
 }
 
 
-/* === QC 체크리스트 한 화면 표시 최종 리사이징 ===
-   목적: 우측 가로 스크롤 없이 '관리' 칸까지 한 화면에 보이도록 조정 */
+/* === QC ì²´í¬ë¦¬ì¤í¸ í íë©´ íì ìµì¢ ë¦¬ì¬ì´ì§ ===
+   ëª©ì : ì°ì¸¡ ê°ë¡ ì¤í¬ë¡¤ ìì´ 'ê´ë¦¬' ì¹¸ê¹ì§ í íë©´ì ë³´ì´ëë¡ ì¡°ì  */
 .work-qc-table-wrap,
 .qc-review-table-wrap,
 #qcReviewTableWrap,
@@ -2107,7 +2099,7 @@ table td:last-child{
   max-width:100% !important;
 }
 
-/* 기존 min-width 누적값 제거 */
+/* ê¸°ì¡´ min-width ëì ê° ì ê±° */
 .excel-grid{
   width:100% !important;
   min-width:0 !important;
@@ -2116,7 +2108,7 @@ table td:last-child{
   border-collapse:collapse !important;
 }
 
-/* colgroup 기준: 전체 합계 100% */
+/* colgroup ê¸°ì¤: ì ì²´ í©ê³ 100% */
 .excel-grid col.qc-col-select{width:3% !important;}
 .excel-grid col.qc-col-trade{width:5% !important;}
 .excel-grid col.qc-col-no{width:5% !important;}
@@ -2129,7 +2121,7 @@ table td:last-child{
 .excel-grid col.qc-col-history{width:8% !important;}
 .excel-grid col.qc-col-manage{width:4% !important;}
 
-/* 모든 셀 폭 강제값 초기화 */
+/* ëª¨ë  ì í­ ê°ì ê° ì´ê¸°í */
 .excel-grid th,
 .excel-grid td{
   min-width:0 !important;
@@ -2143,7 +2135,7 @@ table td:last-child{
   line-height:1.45 !important;
 }
 
-/* 선택 / 공종 / 일련번호 */
+/* ì í / ê³µì¢ / ì¼ë ¨ë²í¸ */
 .excel-grid th:nth-child(1),
 .excel-grid td:nth-child(1){
   text-align:center !important;
@@ -2163,7 +2155,7 @@ table td:last-child{
   padding-right:4px !important;
 }
 
-/* 검토항목 / 검토방법 넓게 */
+/* ê²í í­ëª© / ê²í ë°©ë² ëê² */
 .excel-grid th:nth-child(4),
 .excel-grid td:nth-child(4),
 .excel-grid th:nth-child(5),
@@ -2173,7 +2165,7 @@ table td:last-child{
   word-break:keep-all !important;
 }
 
-/* 요청 대상 */
+/* ìì²­ ëì */
 .excel-grid th:nth-child(6),
 .excel-grid td:nth-child(6){
   text-align:center !important;
@@ -2187,7 +2179,7 @@ table td:last-child{
   font-size:11px !important;
 }
 
-/* 체크 여부: 컴팩트하되 줄 넘어가지 않게 */
+/* ì²´í¬ ì¬ë¶: ì»´í©í¸íë ì¤ ëì´ê°ì§ ìê² */
 .excel-grid th:nth-child(7),
 .excel-grid td:nth-child(7){
   text-align:center !important;
@@ -2249,7 +2241,7 @@ table td:last-child{
   white-space:nowrap !important;
 }
 
-/* 코멘트 */
+/* ì½ë©í¸ */
 .excel-grid th:nth-child(8),
 .excel-grid th.comment-col{
   text-align:center !important;
@@ -2261,7 +2253,7 @@ table td:last-child{
   text-align:left !important;
 }
 
-/* 첨부 */
+/* ì²¨ë¶ */
 .excel-grid th:nth-child(9),
 .excel-grid td:nth-child(9){
   text-align:center !important;
@@ -2278,7 +2270,7 @@ table td:last-child{
   height:26px !important;
 }
 
-/* 처리 이력 */
+/* ì²ë¦¬ ì´ë ¥ */
 .excel-grid th:nth-child(10),
 .excel-grid td:nth-child(10){
   text-align:center !important;
@@ -2315,7 +2307,7 @@ table td:last-child{
   color:#0f766e !important;
 }
 
-/* 관리: 한 화면에 보이도록 가장 컴팩트 */
+/* ê´ë¦¬: í íë©´ì ë³´ì´ëë¡ ê°ì¥ ì»´í©í¸ */
 .excel-grid th:nth-child(11),
 .excel-grid td:nth-child(11){
   text-align:center !important;
@@ -2342,14 +2334,14 @@ table td:last-child{
   border-radius:9px !important;
 }
 
-/* 그룹행은 전체 폭 유지 */
+/* ê·¸ë£¹íì ì ì²´ í­ ì ì§ */
 .excel-grid .group-row td{
   white-space:nowrap !important;
   text-align:left !important;
   padding:10px 8px !important;
 }
 
-/* 이전 전역 nth-child 설정 최종 무효화 */
+/* ì´ì  ì ì­ nth-child ì¤ì  ìµì¢ ë¬´í¨í */
 table th:nth-child(7),
 table td:nth-child(7),
 table th:last-child,
@@ -2360,8 +2352,8 @@ table td:last-child{
 }
 
 
-/* === QC 체크리스트 중앙정렬 보정 ===
-   요청 대상 / 체크 여부 / 코멘트 / 첨부 / 처리 이력 / 관리 칼럼의 시각적 중앙 정렬 */
+/* === QC ì²´í¬ë¦¬ì¤í¸ ì¤ìì ë ¬ ë³´ì  ===
+   ìì²­ ëì / ì²´í¬ ì¬ë¶ / ì½ë©í¸ / ì²¨ë¶ / ì²ë¦¬ ì´ë ¥ / ê´ë¦¬ ì¹¼ë¼ì ìê°ì  ì¤ì ì ë ¬ */
 .excel-grid th:nth-child(6),
 .excel-grid td:nth-child(6),
 .excel-grid th:nth-child(7),
@@ -2378,7 +2370,7 @@ table td:last-child{
   vertical-align:middle !important;
 }
 
-/* 요청 대상 배지 중앙 */
+/* ìì²­ ëì ë°°ì§ ì¤ì */
 .excel-grid td:nth-child(6) .badge{
   display:inline-flex !important;
   align-items:center !important;
@@ -2387,7 +2379,7 @@ table td:last-child{
   text-align:center !important;
 }
 
-/* 체크 여부 칸 내부 중앙 */
+/* ì²´í¬ ì¬ë¶ ì¹¸ ë´ë¶ ì¤ì */
 .excel-grid td:nth-child(7) .done-check-wrap,
 .excel-grid td:nth-child(7) .target-done-wrap{
   display:inline-flex !important;
@@ -2403,7 +2395,7 @@ table td:last-child{
   text-align:center !important;
 }
 
-/* 코멘트 칼럼 헤더는 중앙, 본문은 입력/메모 가독성을 위해 좌측 정렬 */
+/* ì½ë©í¸ ì¹¼ë¼ í¤ëë ì¤ì, ë³¸ë¬¸ì ìë ¥/ë©ëª¨ ê°ëì±ì ìí´ ì¢ì¸¡ ì ë ¬ */
 .excel-grid th:nth-child(8){
   text-align:center !important;
 }
@@ -2413,7 +2405,7 @@ table td:last-child{
   vertical-align:middle !important;
 }
 
-/* 첨부 칸 중앙 */
+/* ì²¨ë¶ ì¹¸ ì¤ì */
 .excel-grid td:nth-child(9) .attachment-cell,
 .excel-grid td:nth-child(9) .readonly-attachment-cell{
   display:flex !important;
@@ -2433,7 +2425,7 @@ table td:last-child{
   margin:0 auto !important;
 }
 
-/* 처리 이력 중앙 */
+/* ì²ë¦¬ ì´ë ¥ ì¤ì */
 .excel-grid td:nth-child(10) .history-cell,
 .excel-grid td:nth-child(10) .history-row{
   display:flex !important;
@@ -2450,7 +2442,7 @@ table td:last-child{
   white-space:nowrap !important;
 }
 
-/* 관리 버튼 중앙 */
+/* ê´ë¦¬ ë²í¼ ì¤ì */
 .excel-grid td:nth-child(11) .row-actions,
 .excel-grid td:nth-child(11) .actions{
   display:flex !important;
@@ -2467,14 +2459,14 @@ table td:last-child{
   margin:0 auto !important;
 }
 
-/* 행 높이 안에서 세로 중앙이 어긋나지 않도록 보정 */
+/* í ëì´ ììì ì¸ë¡ ì¤ìì´ ì´ê¸ëì§ ìëë¡ ë³´ì  */
 .excel-grid tr:not(.group-row) td{
   vertical-align:middle !important;
 }
 
 
-/* === 요청 대상 칼럼 중앙정렬 최종 보정 ===
-   요청 대상 셀 안의 산출 담당자 배지가 칼럼 중앙에 오도록 강제 */
+/* === ìì²­ ëì ì¹¼ë¼ ì¤ìì ë ¬ ìµì¢ ë³´ì  ===
+   ìì²­ ëì ì ìì ì°ì¶ ë´ë¹ì ë°°ì§ê° ì¹¼ë¼ ì¤ìì ì¤ëë¡ ê°ì  */
 .excel-grid th:nth-child(6),
 .excel-grid td:nth-child(6){
   text-align:center !important;
@@ -2483,7 +2475,7 @@ table td:last-child{
   padding-right:4px !important;
 }
 
-/* 요청 대상 셀의 내부 요소를 중앙에 고정 */
+/* ìì²­ ëì ìì ë´ë¶ ììë¥¼ ì¤ìì ê³ ì  */
 .excel-grid td:nth-child(6){
   position:relative !important;
 }
@@ -2493,7 +2485,7 @@ table td:last-child{
   margin-right:auto !important;
 }
 
-/* badge / span / button 형태 모두 대응 */
+/* badge / span / button íí ëª¨ë ëì */
 .excel-grid td:nth-child(6) .badge,
 .excel-grid td:nth-child(6) span,
 .excel-grid td:nth-child(6) button,
@@ -2509,7 +2501,7 @@ table td:last-child{
   float:none !important;
 }
 
-/* 셀 안에 div wrapper가 있을 경우도 중앙 정렬 */
+/* ì ìì div wrapperê° ìì ê²½ì°ë ì¤ì ì ë ¬ */
 .excel-grid td:nth-child(6) div{
   display:flex !important;
   align-items:center !important;
@@ -2518,14 +2510,14 @@ table td:last-child{
   width:100% !important;
 }
 
-/* 요청 대상 배지 자체 폭은 내용 기준, 위치만 중앙 */
+/* ìì²­ ëì ë°°ì§ ìì²´ í­ì ë´ì© ê¸°ì¤, ìì¹ë§ ì¤ì */
 .excel-grid td:nth-child(6) .badge{
   width:auto !important;
   max-width:100% !important;
   white-space:nowrap !important;
 }
 
-/* 체크 여부와 관리도 같은 기준으로 중앙 유지 */
+/* ì²´í¬ ì¬ë¶ì ê´ë¦¬ë ê°ì ê¸°ì¤ì¼ë¡ ì¤ì ì ì§ */
 .excel-grid th:nth-child(7),
 .excel-grid td:nth-child(7),
 .excel-grid th:nth-child(11),
@@ -2534,7 +2526,7 @@ table td:last-child{
   vertical-align:middle !important;
 }
 
-/* 체크 여부 셀 내부 중앙 고정 */
+/* ì²´í¬ ì¬ë¶ ì ë´ë¶ ì¤ì ê³ ì  */
 .excel-grid td:nth-child(7){
   padding-left:4px !important;
   padding-right:4px !important;
@@ -2546,7 +2538,7 @@ table td:last-child{
   margin-right:auto !important;
 }
 
-/* 코멘트 헤더 중앙, 본문은 좌측 유지 */
+/* ì½ë©í¸ í¤ë ì¤ì, ë³¸ë¬¸ì ì¢ì¸¡ ì ì§ */
 .excel-grid th:nth-child(8){
   text-align:center !important;
 }
@@ -2556,7 +2548,7 @@ table td:last-child{
 }
 
 
-/* === 검토항목 + 검토방법 중앙정렬 === */
+/* === ê²í í­ëª© + ê²í ë°©ë² ì¤ìì ë ¬ === */
 .excel-grid th:nth-child(4),
 .excel-grid td:nth-child(4),
 .excel-grid th:nth-child(5),
@@ -2565,7 +2557,7 @@ table td:last-child{
   vertical-align:middle !important;
 }
 
-/* 셀 내부 텍스트 블럭 중앙 정렬 */
+/* ì ë´ë¶ íì¤í¸ ë¸ë­ ì¤ì ì ë ¬ */
 .excel-grid td:nth-child(4),
 .excel-grid td:nth-child(5){
   padding-left:12px !important;
@@ -2579,7 +2571,7 @@ table td:last-child{
   text-align:center !important;
 }
 
-/* 줄바꿈이 있는 텍스트도 가운데 */
+/* ì¤ë°ê¿ì´ ìë íì¤í¸ë ê°ì´ë° */
 .excel-grid td:nth-child(4) div,
 .excel-grid td:nth-child(5) div,
 .excel-grid td:nth-child(4) span,
@@ -2591,7 +2583,7 @@ table td:last-child{
 }
 
 
-/* === 업무관리 상단 헤더 축소 및 불필요 버튼 제거 후 여백 보정 === */
+/* === ìë¬´ê´ë¦¬ ìë¨ í¤ë ì¶ì ë° ë¶íì ë²í¼ ì ê±° í ì¬ë°± ë³´ì  === */
 #workModule .page-head,
 .module-view#workModule .page-head,
 .work-page-head{
@@ -2621,22 +2613,22 @@ table td:last-child{
   margin-bottom:6px !important;
 }
 
-/* 혹시 상단 QC 버튼 영역이 남아 있으면 화면에서 숨김 */
+/* í¹ì ìë¨ QC ë²í¼ ìì­ì´ ë¨ì ìì¼ë©´ íë©´ìì ì¨ê¹ */
 #workModule .page-head > .actions,
 .module-view#workModule .page-head > .actions,
 .work-page-head > .actions{
   display:none !important;
 }
 
-/* 전체 page-head도 과도한 세로 여백 방지 */
+/* ì ì²´ page-headë ê³¼ëí ì¸ë¡ ì¬ë°± ë°©ì§ */
 .page-head{
   padding-top:14px;
   padding-bottom:12px;
 }
 
 
-/* === QC 체크리스트 내부 스크롤 제거 ===
-   내부 테이블/카드 스크롤을 없애고 페이지 전체 스크롤로만 하단 내용을 확인하도록 변경 */
+/* === QC ì²´í¬ë¦¬ì¤í¸ ë´ë¶ ì¤í¬ë¡¤ ì ê±° ===
+   ë´ë¶ íì´ë¸/ì¹´ë ì¤í¬ë¡¤ì ìì ê³  íì´ì§ ì ì²´ ì¤í¬ë¡¤ë¡ë§ íë¨ ë´ì©ì íì¸íëë¡ ë³ê²½ */
 #workModule,
 #workModule .main-area,
 #workModule .panel,
@@ -2666,7 +2658,7 @@ table td:last-child{
   overflow-y:visible !important;
 }
 
-/* 세로 스크롤바가 카드 내부에 생기지 않도록 강제 */
+/* ì¸ë¡ ì¤í¬ë¡¤ë°ê° ì¹´ë ë´ë¶ì ìê¸°ì§ ìëë¡ ê°ì  */
 #workModule .card,
 #workModule .card-body,
 #workModule .table-wrap,
@@ -2680,7 +2672,7 @@ table td:last-child{
   overflow-y:visible !important;
 }
 
-/* 테이블은 한 화면 폭 안에서 유지하고, 행은 전체 페이지 길이만큼 자연스럽게 확장 */
+/* íì´ë¸ì í íë©´ í­ ììì ì ì§íê³ , íì ì ì²´ íì´ì§ ê¸¸ì´ë§í¼ ìì°ì¤ë½ê² íì¥ */
 #workModule .excel-grid,
 .excel-grid{
   width:100% !important;
@@ -2689,7 +2681,7 @@ table td:last-child{
   table-layout:fixed !important;
 }
 
-/* 혹시 tbody 또는 별도 리스트에 높이 제한이 걸린 경우 해제 */
+/* í¹ì tbody ëë ë³ë ë¦¬ì¤í¸ì ëì´ ì íì´ ê±¸ë¦° ê²½ì° í´ì  */
 #workModule tbody,
 #workModule .excel-grid tbody,
 #workModule #checklistBody,
@@ -2702,7 +2694,7 @@ table td:last-child{
   overflow:visible !important;
 }
 
-/* 브라우저 큰 스크롤 사용을 명확히 유지 */
+/* ë¸ë¼ì°ì  í° ì¤í¬ë¡¤ ì¬ì©ì ëªíí ì ì§ */
 html,
 body{
   overflow-y:auto !important;
@@ -2712,7 +2704,7 @@ body{
   min-height:100vh;
 }
 
-/* 내부 스크롤 제거 후 카드 하단 여백 보정 */
+/* ë´ë¶ ì¤í¬ë¡¤ ì ê±° í ì¹´ë íë¨ ì¬ë°± ë³´ì  */
 #workModule .card{
   margin-bottom:28px !important;
 }
@@ -2721,12 +2713,12 @@ body{
   padding-bottom:22px !important;
 }
 
-/* 테이블 하단이 잘리지 않도록 */
+/* íì´ë¸ íë¨ì´ ìë¦¬ì§ ìëë¡ */
 #workModule .excel-grid tr:last-child td{
   border-bottom:1px solid #dbe3ef !important;
 }
 
-/* === 요청 이미지 기준 QC 더미데이터 표시 보정 === */
+/* === ìì²­ ì´ë¯¸ì§ ê¸°ì¤ QC ëë¯¸ë°ì´í° íì ë³´ì  === */
 .excel-grid tr:not(.group-row) td{height:86px;vertical-align:middle !important;}
 .excel-grid .group-row td{height:38px;padding:8px 10px !important;background:#f8fbff !important;font-weight:900;}
 .excel-grid td:nth-child(4),.excel-grid td:nth-child(5){text-align:center !important;line-height:1.5 !important;}
@@ -2736,7 +2728,7 @@ body{
 
 
 
-/* QC 검토/승인 테이블 - 검토항목 / 검토방법 / 코멘트 왼쪽 정렬 */
+/* QC ê²í /ì¹ì¸ íì´ë¸ - ê²í í­ëª© / ê²í ë°©ë² / ì½ë©í¸ ì¼ìª½ ì ë ¬ */
 .checklist-table td:nth-child(4),
 .checklist-table td:nth-child(5),
 .checklist-table td:nth-child(8){
@@ -2766,7 +2758,7 @@ body{
 }
 
 
-/* QC / PM 체크리스트 테이블 좌측 정렬 강제 */
+/* QC / PM ì²´í¬ë¦¬ì¤í¸ íì´ë¸ ì¢ì¸¡ ì ë ¬ ê°ì  */
 .checklist-table td:nth-child(4),
 .checklist-table td:nth-child(5),
 .checklist-table td:nth-child(8) {
@@ -2774,7 +2766,7 @@ body{
   vertical-align: middle !important;
 }
 
-/* 셀 내부 div/span/p 강제 좌측 정렬 */
+/* ì ë´ë¶ div/span/p ê°ì  ì¢ì¸¡ ì ë ¬ */
 .checklist-table td:nth-child(4) > *,
 .checklist-table td:nth-child(5) > *,
 .checklist-table td:nth-child(8) > * {
@@ -2784,14 +2776,14 @@ body{
   margin-left: 0 !important;
 }
 
-/* 중앙정렬 flex 제거 */
+/* ì¤ìì ë ¬ flex ì ê±° */
 .checklist-table td:nth-child(4),
 .checklist-table td:nth-child(5),
 .checklist-table td:nth-child(8) {
   display: table-cell !important;
 }
 
-/* 좌측 여백 */
+/* ì¢ì¸¡ ì¬ë°± */
 .checklist-table td:nth-child(4),
 .checklist-table td:nth-child(5),
 .checklist-table td:nth-child(8) {
@@ -2800,10 +2792,10 @@ body{
 
 
 
-/* === QC 검토/승인 그리드 본문 좌측 정렬 최종 보정 ===
-   - 헤더(th)는 기존 중앙정렬 유지
-   - 본문(td) 중 검토항목(4), 검토방법(5), 코멘트(8) 내용만 왼쪽 정렬
-   - 기존 중앙정렬/inline style/flex 정렬보다 우선 적용 */
+/* === QC ê²í /ì¹ì¸ ê·¸ë¦¬ë ë³¸ë¬¸ ì¢ì¸¡ ì ë ¬ ìµì¢ ë³´ì  ===
+   - í¤ë(th)ë ê¸°ì¡´ ì¤ìì ë ¬ ì ì§
+   - ë³¸ë¬¸(td) ì¤ ê²í í­ëª©(4), ê²í ë°©ë²(5), ì½ë©í¸(8) ë´ì©ë§ ì¼ìª½ ì ë ¬
+   - ê¸°ì¡´ ì¤ìì ë ¬/inline style/flex ì ë ¬ë³´ë¤ ì°ì  ì ì© */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4),
 .excel-grid tbody tr:not(.group-row) td:nth-child(5),
 .excel-grid tbody tr:not(.group-row) td:nth-child(8),
@@ -2818,7 +2810,7 @@ body{
   padding-right:14px !important;
 }
 
-/* 헤더는 중앙정렬 유지 */
+/* í¤ëë ì¤ìì ë ¬ ì ì§ */
 .excel-grid thead th:nth-child(4),
 .excel-grid thead th:nth-child(5),
 .excel-grid thead th:nth-child(8),
@@ -2829,7 +2821,7 @@ body{
   vertical-align:middle !important;
 }
 
-/* JS에서 생성되는 내부 cell/div/span까지 왼쪽 정렬 */
+/* JSìì ìì±ëë ë´ë¶ cell/div/spanê¹ì§ ì¼ìª½ ì ë ¬ */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4) .cell,
 .excel-grid tbody tr:not(.group-row) td:nth-child(5) .cell,
 .excel-grid tbody tr:not(.group-row) td:nth-child(8) .cell,
@@ -2857,7 +2849,7 @@ body{
   margin-right:0 !important;
 }
 
-/* 줄바꿈 텍스트도 왼쪽 기준으로 읽히게 보정 */
+/* ì¤ë°ê¿ íì¤í¸ë ì¼ìª½ ê¸°ì¤ì¼ë¡ ì½íê² ë³´ì  */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4),
 .excel-grid tbody tr:not(.group-row) td:nth-child(5),
 .excel-grid tbody tr:not(.group-row) td:nth-child(8){
@@ -2869,8 +2861,8 @@ body{
 
 
 
-/* === Z1 질의사항 / Z7 견적조건 추가 더미데이터 표시 보정 === */
-/* 헤더는 중앙정렬 유지 */
+/* === Z1 ì§ìì¬í­ / Z7 ê²¬ì ì¡°ê±´ ì¶ê° ëë¯¸ë°ì´í° íì ë³´ì  === */
+/* í¤ëë ì¤ìì ë ¬ ì ì§ */
 .excel-grid thead th:nth-child(4),
 .excel-grid thead th:nth-child(5),
 .excel-grid thead th:nth-child(8),
@@ -2880,7 +2872,7 @@ body{
   text-align:center !important;
 }
 
-/* 본문 검토항목, 검토방법, 코멘트는 왼쪽 기준 */
+/* ë³¸ë¬¸ ê²í í­ëª©, ê²í ë°©ë², ì½ë©í¸ë ì¼ìª½ ê¸°ì¤ */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4),
 .excel-grid tbody tr:not(.group-row) td:nth-child(5),
 .excel-grid tbody tr:not(.group-row) td:nth-child(8),
@@ -2895,7 +2887,7 @@ body{
   line-height:1.5 !important;
 }
 
-/* 내부 래퍼가 있는 경우도 왼쪽 정렬 */
+/* ë´ë¶ ëí¼ê° ìë ê²½ì°ë ì¼ìª½ ì ë ¬ */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4) *,
 .excel-grid tbody tr:not(.group-row) td:nth-child(5) *,
 .excel-grid tbody tr:not(.group-row) td:nth-child(8) *,
@@ -2906,7 +2898,7 @@ body{
   white-space:pre-line !important;
 }
 
-/* 질의사항처럼 내용이 긴 행은 이미지 예시처럼 충분한 높이 확보 */
+/* ì§ìì¬í­ì²ë¼ ë´ì©ì´ ê¸´ íì ì´ë¯¸ì§ ììì²ë¼ ì¶©ë¶í ëì´ íë³´ */
 .excel-grid tbody tr:not(.group-row) td:nth-child(4){
   word-break:keep-all !important;
 }
@@ -2917,7 +2909,7 @@ body{
 
 
 
-/* === 첨부 이미지 새 창 보기 UI === */
+/* === ì²¨ë¶ ì´ë¯¸ì§ ì ì°½ ë³´ê¸° UI === */
 .attachment-cell{
   display:flex !important;
   flex-direction:column !important;
@@ -2982,7 +2974,7 @@ body{
 
 
 
-/* === 첨부 이미지 클릭/새 창 보기 보정 === */
+/* === ì²¨ë¶ ì´ë¯¸ì§ í´ë¦­/ì ì°½ ë³´ê¸° ë³´ì  === */
 .attachment-cell{
   display:flex !important;
   flex-direction:column !important;
@@ -3042,7 +3034,7 @@ body{
 
 
 
-/* === 첨부 이미지 새 창 열기 / 견적조건 엑셀 버튼 보정 === */
+/* === ì²¨ë¶ ì´ë¯¸ì§ ì ì°½ ì´ê¸° / ê²¬ì ì¡°ê±´ ìì ë²í¼ ë³´ì  === */
 .attachment-cell{
   display:flex !important;
   flex-direction:column !important;
@@ -3102,7 +3094,7 @@ body{
 
 
 
-/* === QC 검토 / 승인 상단 필터 재구성 === */
+/* === QC ê²í  / ì¹ì¸ ìë¨ íí° ì¬êµ¬ì± === */
 #qcReview .card-body > .notice{
   display:none !important;
 }
@@ -3327,14 +3319,14 @@ body{
 
 
 
-/* === 구분 필터 버튼: 데이터 없는 구분 숨김 기준 보정 === */
+/* === êµ¬ë¶ íí° ë²í¼: ë°ì´í° ìë êµ¬ë¶ ì¨ê¹ ê¸°ì¤ ë³´ì  === */
 .checklist-category-filter:empty{
   display:none;
 }
 
 
 
-/* === 업무관리: 프로젝트 질의응답 관리 외 화면 준비 영역 === */
+/* === ìë¬´ê´ë¦¬: íë¡ì í¸ ì§ììëµ ê´ë¦¬ ì¸ íë©´ ì¤ë¹ ìì­ === */
 .work-ready-card{
   min-height:220px;
 }
@@ -3356,7 +3348,7 @@ body{
 }
 
 
-/* 조직도 시각 편집 툴 */
+/* ì¡°ì§ë ìê° í¸ì§ í´ */
 .head-sub{
   margin-top:6px;
   color:#64748b;
@@ -3658,7 +3650,7 @@ body{
   .org-inspector{position:static}
 }
 
-/* 조직도관리: 대형 편집창 런처 */
+/* ì¡°ì§ëê´ë¦¬: ëí í¸ì§ì°½ ë°ì² */
 .org-tool-launch-card .head-sub{
   color:var(--muted);
   font-size:13px;
@@ -3721,7 +3713,7 @@ body{
 }
 
 
-/* 조직도 참고 이미지형 레이아웃 보정 */
+/* ì¡°ì§ë ì°¸ê³  ì´ë¯¸ì§í ë ì´ìì ë³´ì  */
 .org-chart-canvas{overflow:auto;}
 .org-overview-fit.reference-layout{position:relative;min-width:1480px;width:100%;padding:18px 28px 42px;background:#fff;transform-origin:top center;}
 .org-chart-title-box{width:620px;margin:0 auto 14px;border:3px solid #6b7280;border-radius:12px;padding:12px 20px;text-align:center;font-size:32px;font-weight:900;letter-spacing:-1.2px;}
@@ -3747,7 +3739,7 @@ body{
 @media(max-width:1280px){.org-overview-fit.reference-layout{min-width:1360px}.org-ref-branch-row{grid-template-columns:230px minmax(620px,1fr) 220px 140px}.org-chart-title-box{width:560px;font-size:28px}}
 
 
-/* === QC 구분 접기/펼치기: 구분 행 클릭 시 세부 항목 표시/숨김 === */
+/* === QC êµ¬ë¶ ì ê¸°/í¼ì¹ê¸°: êµ¬ë¶ í í´ë¦­ ì ì¸ë¶ í­ëª© íì/ì¨ê¹ === */
 .group-separator-row{
   cursor:pointer;
   user-select:none;
@@ -3818,7 +3810,7 @@ body{
 }
 
 
-/* === QC 구분 필터: 접이식 선택 패널 보정 === */
+/* === QC êµ¬ë¶ íí°: ì ì´ì ì í í¨ë ë³´ì  === */
 @media(max-width:760px){
   .checklist-filter-summary{
     align-items:flex-start;
@@ -3838,7 +3830,7 @@ body{
 }
 
 
-/* === 조직도 보기창: 편집 데이터와 동일한 트리 기반 렌더링 보정 === */
+/* === ì¡°ì§ë ë³´ê¸°ì°½: í¸ì§ ë°ì´í°ì ëì¼í í¸ë¦¬ ê¸°ë° ë ëë§ ë³´ì  === */
 .org-chart-canvas{
   overflow:auto;
 }
@@ -4057,9 +4049,9 @@ body{
 
 
 
-/* === 조직도 보기창 100% 화면 맞춤 보정 ===
-   편집창의 트리 구조를 그대로 사용하되, 보기창에서는 전체 조직도가 100% 브라우저 배율에서도
-   한 화면에 들어오도록 내부 스케일을 자동 계산한다. */
+/* === ì¡°ì§ë ë³´ê¸°ì°½ 100% íë©´ ë§ì¶¤ ë³´ì  ===
+   í¸ì§ì°½ì í¸ë¦¬ êµ¬ì¡°ë¥¼ ê·¸ëë¡ ì¬ì©íë, ë³´ê¸°ì°½ììë ì ì²´ ì¡°ì§ëê° 100% ë¸ë¼ì°ì  ë°°ì¨ììë
+   í íë©´ì ë¤ì´ì¤ëë¡ ë´ë¶ ì¤ì¼ì¼ì ìë ê³ì°íë¤. */
 #orgChartModal .modal-org-wide{
   width:min(98vw, 1840px);
   max-height:96vh;
@@ -4183,7 +4175,7 @@ body{
   .actual-org-title-box{font-size:23px;padding:8px 16px;margin-bottom:10px;}
 }
 
-/* === 조직도 보기창 스크롤락 해제 + 확대/축소 보정 === */
+/* === ì¡°ì§ë ë³´ê¸°ì°½ ì¤í¬ë¡¤ë½ í´ì  + íë/ì¶ì ë³´ì  === */
 #orgChartModal{
   align-items:stretch !important;
   justify-content:stretch !important;
@@ -4303,12 +4295,12 @@ body{
 }
 
 
-/* === 조직도 보기창 날짜 제거 + 선 끊김/돌출 보정 === */
+/* === ì¡°ì§ë ë³´ê¸°ì°½ ë ì§ ì ê±° + ì  ëê¹/ëì¶ ë³´ì  === */
 .actual-org-date{
   display:none !important;
 }
 
-/* 트리 선은 자식이 있는 실제 범위에서만 보이도록 재정의 */
+/* í¸ë¦¬ ì ì ììì´ ìë ì¤ì  ë²ìììë§ ë³´ì´ëë¡ ì¬ì ì */
 .actual-org-tree ul{
   position:relative !important;
   display:flex !important;
@@ -4362,7 +4354,7 @@ body{
   border-right:0 !important;
 }
 
-/* 맨 왼쪽/오른쪽 바깥으로 선이 튀어나가는 부분 제거 */
+/* ë§¨ ì¼ìª½/ì¤ë¥¸ìª½ ë°ê¹¥ì¼ë¡ ì ì´ íì´ëê°ë ë¶ë¶ ì ê±° */
 .actual-org-children > .actual-org-li:first-child::before{
   display:none !important;
 }
@@ -4370,7 +4362,7 @@ body{
   display:none !important;
 }
 
-/* 자식이 1개뿐인 경우에는 수평선 없이 세로 연결선만 표시 */
+/* ììì´ 1ê°ë¿ì¸ ê²½ì°ìë ìíì  ìì´ ì¸ë¡ ì°ê²°ì ë§ íì */
 .actual-org-children > .actual-org-li:only-child::before{
   display:block !important;
   left:50% !important;
@@ -4390,7 +4382,7 @@ body{
   display:none !important;
 }
 
-/* 부모에서 자식 묶음으로 내려가는 중앙선 */
+/* ë¶ëª¨ìì ìì ë¬¶ìì¼ë¡ ë´ë ¤ê°ë ì¤ìì  */
 .actual-org-li.has-children > .actual-org-children::before{
   content:"" !important;
   position:absolute !important;
@@ -4404,7 +4396,7 @@ body{
   pointer-events:none !important;
 }
 
-/* 하위 직원 배치가 grid일 때도 빈 칸까지 선이 연장되지 않도록 각 노드 기준 선만 사용 */
+/* íì ì§ì ë°°ì¹ê° gridì¼ ëë ë¹ ì¹¸ê¹ì§ ì ì´ ì°ì¥ëì§ ìëë¡ ê° ë¸ë ê¸°ì¤ ì ë§ ì¬ì© */
 .actual-org-children.leaf-row{
   display:grid !important;
   justify-content:center !important;
@@ -4434,7 +4426,7 @@ body{
   display:none !important;
 }
 
-/* 확대/축소 상태에서도 선 두께와 노드 정렬이 어긋나지 않도록 보정 */
+/* íë/ì¶ì ìíììë ì  ëê»ì ë¸ë ì ë ¬ì´ ì´ê¸ëì§ ìëë¡ ë³´ì  */
 .actual-org-fit{
   transform-origin:top left !important;
 }
@@ -4443,7 +4435,7 @@ body{
 }
 
 
-/* === 실제 조직도 보기창: 편집기와 동일한 분리형 트리 구조 적용 === */
+/* === ì¤ì  ì¡°ì§ë ë³´ê¸°ì°½: í¸ì§ê¸°ì ëì¼í ë¶ë¦¬í í¸ë¦¬ êµ¬ì¡° ì ì© === */
 .actual-view-tree{
   display:flex;
   justify-content:center;
@@ -4592,25 +4584,25 @@ body{
 .actual-view-member-children.cols-3{grid-template-columns:repeat(3,92px)!important;}
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-branch-children.depth-0{display:flex;justify-content:center;}
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-branch-children.depth-0::before{display:none;}
-.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-branch-children.depth-1{grid-auto-flow:column;grid-auto-columns:max-content;gap:30px;align-items:start;}
-.actual-view-tree.concost-tree .actual-view-경영지원본부 > .actual-view-member-children,
-.actual-view-tree.concost-tree .actual-view-개발-t-f > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-ë¶ì¬ì¥ > .actual-view-branch-children.depth-1{grid-auto-flow:column;grid-auto-columns:max-content;gap:30px;align-items:start;}
+.actual-view-tree.concost-tree .actual-view-ê²½ìì§ìë³¸ë¶ > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-ê°ë°-t-f > .actual-view-member-children,
 .actual-view-tree.concost-tree .actual-view-qc > .actual-view-member-children,
-.actual-view-tree.concost-tree .actual-view-클레임센터 > .actual-view-member-children,
-.actual-view-tree.concost-tree .actual-view-구조팀 > .actual-view-member-children,
-.actual-view-tree.concost-tree .actual-view-bim-파트 > .actual-view-member-children,
-.actual-view-tree.concost-tree .actual-view-토목-조경파트 > .actual-view-member-children{grid-template-columns:repeat(1,92px)!important;}
-.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-1{grid-template-columns:repeat(1,92px)!important;}
-.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-2{grid-template-columns:repeat(2,92px)!important;}
-.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-member-children.cols-3{grid-template-columns:repeat(3,92px)!important;}
-.actual-view-tree.concost-tree .actual-view-기술본부 > .actual-view-branch-children{gap:34px;}
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-branch-children,
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경파트 > .actual-view-branch-children{gap:20px;}
+.actual-view-tree.concost-tree .actual-view-í´ë ìì¼í° > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°í > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-bim-íí¸ > .actual-view-member-children,
+.actual-view-tree.concost-tree .actual-view-í ëª©-ì¡°ê²½íí¸ > .actual-view-member-children{grid-template-columns:repeat(1,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-ë§ê° > .actual-view-member-children.cols-1{grid-template-columns:repeat(1,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-ë§ê° > .actual-view-member-children.cols-2{grid-template-columns:repeat(2,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-ë§ê° > .actual-view-member-children.cols-3{grid-template-columns:repeat(3,92px)!important;}
+.actual-view-tree.concost-tree .actual-view-ê¸°ì ë³¸ë¶ > .actual-view-branch-children{gap:34px;}
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°-í ëª©-ì¡°ê²½ > .actual-view-branch-children,
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°-í ëª©-ì¡°ê²½íí¸ > .actual-view-branch-children{gap:20px;}
 .actual-org-title-box{margin-bottom:10px!important;}
 .actual-org-scroll-note{margin-bottom:6px!important;}
 
 
-/* === 실제 조직도 보기창: 하위 인원 1/2/3열 배치 공통 적용 === */
+/* === ì¤ì  ì¡°ì§ë ë³´ê¸°ì°½: íì ì¸ì 1/2/3ì´ ë°°ì¹ ê³µíµ ì ì© === */
 .actual-view-unified-children{
   position:relative;
   display:grid;
@@ -4681,7 +4673,7 @@ body{
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0{display:flex;justify-content:center;}
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0::before{display:none;}
 
-/* 인사카드 직원 목록 상단 간결 리스트 */
+/* ì¸ì¬ì¹´ë ì§ì ëª©ë¡ ìë¨ ê°ê²° ë¦¬ì¤í¸ */
 .card-layout-top{
   display:block;
 }
@@ -4830,7 +4822,7 @@ body{
 }
 
 
-/* 표시순서 관리 - 조직관리 연계형 편집 */
+/* íììì ê´ë¦¬ - ì¡°ì§ê´ë¦¬ ì°ê³í í¸ì§ */
 .order-add-bar{
   display:grid;
   grid-template-columns:160px minmax(260px,1fr) auto;
@@ -4871,7 +4863,7 @@ body{
 }
 
 
-/* 전자메일 · 검토요청 연동 */
+/* ì ìë©ì¼ Â· ê²í ìì²­ ì°ë */
 .bell{
   border:1px solid var(--line2);
   background:#fff;
@@ -4974,7 +4966,7 @@ body{
   .mail-item{align-items:flex-start;flex-direction:column}
 }
 
-/* 전자메일 레이아웃 개선: 보조창 알림 + 실제 메일함형 UI */
+/* ì ìë©ì¼ ë ì´ìì ê°ì : ë³´ì¡°ì°½ ìë¦¼ + ì¤ì  ë©ì¼í¨í UI */
 .mail-page-head{align-items:flex-start}
 .mail-workspace{
   display:grid;
@@ -5176,7 +5168,7 @@ body{
 }
 .bell:not(.has-count)::after{display:none}
 
-/* 2026-05 UI cleanup: 불필요한 상단 설명 영역 제거 + 사원대장 액션 이동 */
+/* 2026-05 UI cleanup: ë¶íìí ìë¨ ì¤ëª ìì­ ì ê±° + ì¬ìëì¥ ì¡ì ì´ë */
 #supportModule > .workspace,
 #workModule > .workspace{
   margin-top:0;
@@ -5197,7 +5189,7 @@ body{
 }
 
 /* =========================
-   업무관리 > 프로젝트 관리 모듈
+   ìë¬´ê´ë¦¬ > íë¡ì í¸ ê´ë¦¬ ëª¨ë
    ========================= */
 .project-manage-card{overflow:visible}
 .project-manage-head{align-items:flex-start}
@@ -5245,7 +5237,7 @@ body{
 @media(max-width:760px){.pm-overview-grid{grid-template-columns:1fr}.pm-card-header{align-items:flex-start;flex-direction:column}.project-manage-head{align-items:flex-start}}
 
 
-/* 업무관리 > 프로젝트 질의응답 관리: 구분별 추가 및 엑셀형 셀 편집 */
+/* ìë¬´ê´ë¦¬ > íë¡ì í¸ ì§ììëµ ê´ë¦¬: êµ¬ë¶ë³ ì¶ê° ë° ììí ì í¸ì§ */
 .group-add-btn{
   background:#fff;
   color:#1d4ed8;
@@ -5283,7 +5275,7 @@ body{
   color:#64748b;
 }
 
-/* QC 체크 여부: 확인 / 해당 없음 버튼 */
+/* QC ì²´í¬ ì¬ë¶: íì¸ / í´ë¹ ìì ë²í¼ */
 .done-check-stack{
   display:flex;
   align-items:center;
@@ -5321,7 +5313,7 @@ body{
   cursor:not-allowed;
 }
 
-/* QC 엑셀형 입력 개선: 요청대상/첨부/행추가 */
+/* QC ììí ìë ¥ ê°ì : ìì²­ëì/ì²¨ë¶/íì¶ê° */
 .target-cell-wrap{
   position:relative;
   display:grid;
@@ -5802,9 +5794,9 @@ body{
 
 /* =========================================================
    QC checklist v7: no horizontal scrollbar + column width rebalance
-   - 하단 횡스크롤 제거
-   - 코멘트 폭을 기존 10%에서 6%로 축소
-   - 줄인 4%를 검토항목/검토방법에 각각 2%씩 배분
+   - íë¨ í¡ì¤í¬ë¡¤ ì ê±°
+   - ì½ë©í¸ í­ì ê¸°ì¡´ 10%ìì 6%ë¡ ì¶ì
+   - ì¤ì¸ 4%ë¥¼ ê²í í­ëª©/ê²í ë°©ë²ì ê°ê° 2%ì© ë°°ë¶
    ========================================================= */
 #workModule .excel-grid-wrap,
 .module-view#workModule .excel-grid-wrap,
@@ -5882,7 +5874,7 @@ body{
 }
 
 
-/* === 조직도 실제 보기: 하위 노드 분리 배치/노란색 단계 표시 제거 === */
+/* === ì¡°ì§ë ì¤ì  ë³´ê¸°: íì ë¸ë ë¶ë¦¬ ë°°ì¹/ë¸ëì ë¨ê³ íì ì ê±° === */
 .actual-view-children{
   position:relative;
   display:grid;
@@ -5934,33 +5926,33 @@ body{
   justify-content:center;
 }
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-children.depth-0::before{display:none;}
-.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-children.depth-1{
+.actual-view-tree.concost-tree .actual-view-ë¶ì¬ì¥ > .actual-view-children.depth-1{
   grid-template-columns:108px 108px 108px max-content 108px 108px!important;
   gap:30px;
   align-items:start;
 }
-.actual-view-tree.concost-tree .actual-view-기술본부 > .actual-view-children{
+.actual-view-tree.concost-tree .actual-view-ê¸°ì ë³¸ë¶ > .actual-view-children{
   grid-template-columns:92px max-content max-content!important;
   gap:34px;
   align-items:start;
 }
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경 > .actual-view-children,
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경파트 > .actual-view-children{
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°-í ëª©-ì¡°ê²½ > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°-í ëª©-ì¡°ê²½íí¸ > .actual-view-children{
   grid-template-columns:92px 92px 92px!important;
   gap:20px;
   align-items:start;
 }
-.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-children{
+.actual-view-tree.concost-tree .actual-view-ë§ê° > .actual-view-children{
   grid-template-columns:repeat(3,92px)!important;
   gap:8px 10px;
 }
-.actual-view-tree.concost-tree .actual-view-경영지원본부 > .actual-view-children,
-.actual-view-tree.concost-tree .actual-view-개발-t-f > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-ê²½ìì§ìë³¸ë¶ > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-ê°ë°-t-f > .actual-view-children,
 .actual-view-tree.concost-tree .actual-view-qc > .actual-view-children,
-.actual-view-tree.concost-tree .actual-view-클레임센터 > .actual-view-children,
-.actual-view-tree.concost-tree .actual-view-구조팀 > .actual-view-children,
-.actual-view-tree.concost-tree .actual-view-bim-파트 > .actual-view-children,
-.actual-view-tree.concost-tree .actual-view-토목-조경파트 > .actual-view-children{
+.actual-view-tree.concost-tree .actual-view-í´ë ìì¼í° > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°í > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-bim-íí¸ > .actual-view-children,
+.actual-view-tree.concost-tree .actual-view-í ëª©-ì¡°ê²½íí¸ > .actual-view-children{
   grid-template-columns:92px!important;
   gap:8px;
 }
@@ -5990,7 +5982,7 @@ body{
 .actual-view-node-wrap.depth-5 > .actual-view-node:not(.primary):not(.secondary):not(.dotted) em{color:#64748b!important;}
 
 
-/* === 조직도 최종 보정: 보기창/관리창 겹침 제거 + 색상 단순화 === */
+/* === ì¡°ì§ë ìµì¢ ë³´ì : ë³´ê¸°ì°½/ê´ë¦¬ì°½ ê²¹ì¹¨ ì ê±° + ìì ë¨ìí === */
 .org-visual-canvas{overflow:auto!important;}
 .org-v-scroll{min-width:max-content!important;width:max-content!important;justify-content:center!important;padding:34px 56px 70px!important;}
 .org-v-tree{width:max-content!important;min-width:max-content!important;justify-content:center!important;align-items:flex-start!important;}
@@ -6054,14 +6046,14 @@ body{
 .actual-view-branch-children,.actual-view-member-children{display:none!important;}
 .actual-view-tree.concost-tree>.actual-view-node-wrap>.actual-view-children.depth-0{gap:56px!important;}
 .actual-view-tree.concost-tree>.actual-view-node-wrap>.actual-view-children.depth-0::before{display:none!important;}
-.actual-view-tree.concost-tree .actual-view-기술본부>.actual-view-children,
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경>.actual-view-children,
-.actual-view-tree.concost-tree .actual-view-구조-토목-조경파트>.actual-view-children{gap:42px!important;}
+.actual-view-tree.concost-tree .actual-view-ê¸°ì ë³¸ë¶>.actual-view-children,
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°-í ëª©-ì¡°ê²½>.actual-view-children,
+.actual-view-tree.concost-tree .actual-view-êµ¬ì¡°-í ëª©-ì¡°ê²½íí¸>.actual-view-children{gap:42px!important;}
 .actual-org-fit{padding:18px 70px 42px!important;}
 .actual-org-viewport{overflow:auto!important;}
 
 
-/* 2026-05-08 조직도 배치 보정: 사용자가 지정한 하위 인원 1/2/3열 배치 유지 */
+/* 2026-05-08 ì¡°ì§ë ë°°ì¹ ë³´ì : ì¬ì©ìê° ì§ì í íì ì¸ì 1/2/3ì´ ë°°ì¹ ì ì§ */
 .org-v-node,
 .actual-view-node{
   width:188px!important;
@@ -6142,15 +6134,15 @@ body{
   gap:72px!important;
 }
 .actual-view-tree.concost-tree > .actual-view-node-wrap > .actual-view-unified-children.depth-0::before{display:none!important;}
-.actual-view-tree.concost-tree .actual-view-기술본부 > .actual-view-unified-children,
-.actual-view-tree.concost-tree .actual-view-클레임센터 > .actual-view-unified-children,
+.actual-view-tree.concost-tree .actual-view-ê¸°ì ë³¸ë¶ > .actual-view-unified-children,
+.actual-view-tree.concost-tree .actual-view-í´ë ìì¼í° > .actual-view-unified-children,
 .actual-view-tree.concost-tree .actual-view-qc > .actual-view-unified-children,
-.actual-view-tree.concost-tree .actual-view-마감 > .actual-view-unified-children{
+.actual-view-tree.concost-tree .actual-view-ë§ê° > .actual-view-unified-children{
   gap:60px 36px!important;
 }
 
 
-/* 2026-05-08: 조직도 하위 인원 배치 1~10열 확장 */
+/* 2026-05-08: ì¡°ì§ë íì ì¸ì ë°°ì¹ 1~10ì´ íì¥ */
 .org-v-children.cols-1, .actual-view-children.cols-1{grid-template-columns:repeat(1,max-content)!important;}
 .org-v-children.cols-2, .actual-view-children.cols-2{grid-template-columns:repeat(2,max-content)!important;}
 .org-v-children.cols-3, .actual-view-children.cols-3{grid-template-columns:repeat(3,max-content)!important;}
@@ -6171,7 +6163,7 @@ body{
 .org-v-children.cols-9::before, .actual-view-children.cols-9::before{left:5.556%!important;right:5.556%!important;}
 .org-v-children.cols-10::before, .actual-view-children.cols-10::before{left:5%!important;right:5%!important;}
 .org-v-children.cols-1::before,.org-v-children.count-1::before,.actual-view-children.cols-1::before,.actual-view-children.count-1::before{display:none!important;}
-.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-unified-children.depth-1,.actual-view-tree.concost-tree .actual-view-부사장 > .actual-view-children.depth-1{grid-template-columns:repeat(6,max-content)!important;}
+.actual-view-tree.concost-tree .actual-view-ë¶ì¬ì¥ > .actual-view-unified-children.depth-1,.actual-view-tree.concost-tree .actual-view-ë¶ì¬ì¥ > .actual-view-children.depth-1{grid-template-columns:repeat(6,max-content)!important;}
 .org-v-node,.actual-view-node{width:196px!important;min-width:196px!important;}
 
 
@@ -7282,7 +7274,7 @@ body{
 
 /* =========================================================
    QC checklist v13: request target cell final center lock
-   - 요청 대상 열/셀/버튼 묶음 전체 중앙정렬 고정
+   - ìì²­ ëì ì´/ì/ë²í¼ ë¬¶ì ì ì²´ ì¤ìì ë ¬ ê³ ì 
    ========================================================= */
 #workModule .excel-grid thead th:nth-child(6),
 .excel-grid thead th:nth-child(6),
@@ -7357,7 +7349,7 @@ body{
 
 /* =========================================================
    QC checklist v12: target route vertical order + muted group/middle/sub colors
-   요청대상 칩은 항상 중분류 지정 버튼 위에 중앙 배치
+   ìì²­ëì ì¹©ì í­ì ì¤ë¶ë¥ ì§ì  ë²í¼ ìì ì¤ì ë°°ì¹
    ========================================================= */
 #workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
 .excel-grid tbody tr.checklist-detail-row td.target-cell{
@@ -7453,7 +7445,7 @@ body{
   color:#2563eb !important;
 }
 
-/* 구분 / 중분류 / 소분류: 과하지 않은 톤 차이 */
+/* êµ¬ë¶ / ì¤ë¶ë¥ / ìë¶ë¥: ê³¼íì§ ìì í¤ ì°¨ì´ */
 .group-band-inner{
   background:#f8fafc !important;
   border-top:1px solid #d8e0ea !important;
@@ -7495,9 +7487,9 @@ body{
 
 /* =========================================================
    QC checklist v14: category band tone hierarchy + target route final alignment
-   - 구분/중분류/소분류 명암 단계 구분
-   - 구분 행 가로선 제거 및 배경 단절 제거
-   - 요청대상 칩을 중분류 지정 버튼 바로 위 중앙 고정
+   - êµ¬ë¶/ì¤ë¶ë¥/ìë¶ë¥ ëªì ë¨ê³ êµ¬ë¶
+   - êµ¬ë¶ í ê°ë¡ì  ì ê±° ë° ë°°ê²½ ë¨ì  ì ê±°
+   - ìì²­ëì ì¹©ì ì¤ë¶ë¥ ì§ì  ë²í¼ ë°ë¡ ì ì¤ì ê³ ì 
    ========================================================= */
 #workModule .excel-grid tbody tr.group-separator-row td,
 .excel-grid tbody tr.group-separator-row td{
@@ -7676,8 +7668,8 @@ body{
 
 /* =========================================================
    QC checklist v15: request target absolute center stack
-   - 요청 대상 셀 내부 도형 전체를 동일한 중심축에 배치
-   - 중분류 지정 / 대상 선택 / 구조·토목 칩 모두 셀 중앙 정렬
+   - ìì²­ ëì ì ë´ë¶ ëí ì ì²´ë¥¼ ëì¼í ì¤ì¬ì¶ì ë°°ì¹
+   - ì¤ë¶ë¥ ì§ì  / ëì ì í / êµ¬ì¡°Â·í ëª© ì¹© ëª¨ë ì ì¤ì ì ë ¬
    ========================================================= */
 #workModule .excel-grid tbody tr.checklist-detail-row td.target-cell,
 .excel-grid tbody tr.checklist-detail-row td.target-cell{
@@ -7762,9 +7754,9 @@ body{
 }
 
 /* =========================================================
-   요청 대상 선택 개선
-   - 중분류 지정은 구조/마감/토목 등 작업 구분 전용
-   - 대상 선택은 조직도/인사카드 기준 부서 또는 개인 지정 전용
+   ìì²­ ëì ì í ê°ì 
+   - ì¤ë¶ë¥ ì§ì ì êµ¬ì¡°/ë§ê°/í ëª© ë± ìì êµ¬ë¶ ì ì©
+   - ëì ì íì ì¡°ì§ë/ì¸ì¬ì¹´ë ê¸°ì¤ ë¶ì ëë ê°ì¸ ì§ì  ì ì©
    ========================================================= */
 #workModule .excel-grid tbody tr.checklist-detail-row td.target-cell .target-assignee-chip,
 .excel-grid tbody tr.checklist-detail-row td.target-cell .target-assignee-chip,
@@ -7986,10 +7978,10 @@ body{
 }
 
 /* =========================================================
-   QC 요청 대상 선택 보정
-   - 대상 선택 모달 인사카드 리스트 깨짐 방지
-   - 프로젝트 초기 발주처 송부 선택지 추가 영역 정렬
-   - 소분류 없는 중분류 지정 모달은 중분류만 표시
+   QC ìì²­ ëì ì í ë³´ì 
+   - ëì ì í ëª¨ë¬ ì¸ì¬ì¹´ë ë¦¬ì¤í¸ ê¹¨ì§ ë°©ì§
+   - íë¡ì í¸ ì´ê¸° ë°ì£¼ì² ì¡ë¶ ì íì§ ì¶ê° ìì­ ì ë ¬
+   - ìë¶ë¥ ìë ì¤ë¶ë¥ ì§ì  ëª¨ë¬ì ì¤ë¶ë¥ë§ íì
    ========================================================= */
 .people-target-modal-card{
   width:min(1040px,calc(100vw - 48px)) !important;
@@ -8115,7 +8107,7 @@ body{
 
 
 /* =========================================================
-   QC 대상 선택 모달 재배치 + 인사카드 검색 + PM 확인 대상 보정
+   QC ëì ì í ëª¨ë¬ ì¬ë°°ì¹ + ì¸ì¬ì¹´ë ê²ì + PM íì¸ ëì ë³´ì 
    ========================================================= */
 .people-target-modal-card{
   width:min(1120px,calc(100vw - 40px)) !important;
@@ -8230,10 +8222,10 @@ body{
 }
 
 /* =========================================================
-   QC 대상 선택 모달 레이어/스크롤 보정
-   - 인사카드 팝업이 대상 선택 모달 위에 표시되도록 z-index 상향
-   - 대상 선택 모달이 열린 동안 백그라운드 스크롤 잠금
-   - 대상 선택 내부 스크롤이 끝났을 때 페이지 스크롤로 전달되지 않도록 차단
+   QC ëì ì í ëª¨ë¬ ë ì´ì´/ì¤í¬ë¡¤ ë³´ì 
+   - ì¸ì¬ì¹´ë íìì´ ëì ì í ëª¨ë¬ ìì íìëëë¡ z-index ìí¥
+   - ëì ì í ëª¨ë¬ì´ ì´ë¦° ëì ë°±ê·¸ë¼ì´ë ì¤í¬ë¡¤ ì ê¸
+   - ëì ì í ë´ë¶ ì¤í¬ë¡¤ì´ ëë¬ì ë íì´ì§ ì¤í¬ë¡¤ë¡ ì ë¬ëì§ ìëë¡ ì°¨ë¨
    ========================================================= */
 body.checklist-target-modal-open{
   overflow:hidden !important;
@@ -8271,9 +8263,9 @@ body.checklist-target-modal-open{
 
 
 /* =========================================================
-   QC 체크리스트 성능 보정
-   - 대량 행 렌더링 시 레이아웃/페인트 범위를 체크리스트 영역으로 제한
-   - 스크롤 중 고정 헤더/행 그림자 계산 부담 완화
+   QC ì²´í¬ë¦¬ì¤í¸ ì±ë¥ ë³´ì 
+   - ëë í ë ëë§ ì ë ì´ìì/íì¸í¸ ë²ìë¥¼ ì²´í¬ë¦¬ì¤í¸ ìì­ì¼ë¡ ì í
+   - ì¤í¬ë¡¤ ì¤ ê³ ì  í¤ë/í ê·¸ë¦¼ì ê³ì° ë¶ë´ ìí
    ========================================================= */
 .checklist-card,
 .excel-grid-wrap{
@@ -8295,7 +8287,7 @@ body.checklist-target-modal-open{
   scroll-behavior:auto !important;
 }
 
-/* 프로젝트 질의응답 관리 성능 개선: 대량 행 렌더링 부하 완화 */
+/* íë¡ì í¸ ì§ììëµ ê´ë¦¬ ì±ë¥ ê°ì : ëë í ë ëë§ ë¶í ìí */
 #qcReview .excel-grid-wrap{
   overscroll-behavior: contain;
   contain: layout paint;
@@ -8333,9 +8325,9 @@ body.checklist-target-modal-open{
 
 
 /* =========================================================
-   프로젝트 질의응답 관리 스크롤 버그 보정
-   - 표 영역에 마우스를 올렸을 때도 브라우저/page 스크롤이 정상 작동하도록 내부 스크롤/overscroll 차단 해제
-   - 성능 보정용 contain이 휠 전파를 막는 브라우저 조합을 방지
+   íë¡ì í¸ ì§ììëµ ê´ë¦¬ ì¤í¬ë¡¤ ë²ê·¸ ë³´ì 
+   - í ìì­ì ë§ì°ì¤ë¥¼ ì¬ë ¸ì ëë ë¸ë¼ì°ì /page ì¤í¬ë¡¤ì´ ì ì ìëíëë¡ ë´ë¶ ì¤í¬ë¡¤/overscroll ì°¨ë¨ í´ì 
+   - ì±ë¥ ë³´ì ì© containì´ í  ì íë¥¼ ë§ë ë¸ë¼ì°ì  ì¡°í©ì ë°©ì§
    ========================================================= */
 #qcReview,
 #qcReview .checklist-card,
@@ -8378,7 +8370,7 @@ body.checklist-target-modal-open{
   overscroll-behavior:none !important;
 }
 
-/* 일련번호 열: 분류별 001, 002 형식 숫자 전용 표시 및 셀 폭 대응 */
+/* ì¼ë ¨ë²í¸ ì´: ë¶ë¥ë³ 001, 002 íì ì«ì ì ì© íì ë° ì í­ ëì */
 .checklist-grid-table td.serial-no-cell,
 .checklist-grid-table th:nth-child(3),
 #checklistGridBody td:nth-child(3) {
@@ -8408,7 +8400,7 @@ body.checklist-target-modal-open{
   box-sizing: border-box;
 }
 
-/* 일련번호 열 최종 보정: 숫자 3자리 표시, 줄바꿈 방지, 좁은 폭 자동 축소 */
+/* ì¼ë ¨ë²í¸ ì´ ìµì¢ ë³´ì : ì«ì 3ìë¦¬ íì, ì¤ë°ê¿ ë°©ì§, ì¢ì í­ ìë ì¶ì */
 #workModule .excel-grid col.qc-col-no,
 .excel-grid col.qc-col-no {
   width: 64px !important;
@@ -8452,7 +8444,7 @@ body.checklist-target-modal-open{
   box-sizing: border-box !important;
 }
 
-/* QC 대상 선택 조직도 선택 UI */
+/* QC ëì ì í ì¡°ì§ë ì í UI */
 .org-target-modal-card {
   width: min(1320px, calc(100vw - 96px));
   max-height: calc(100vh - 96px);
@@ -8653,7 +8645,7 @@ body.checklist-target-modal-open{
   font-weight: 1000;
 }
 
-/* === QC 대상 선택: 조직도형 선택 UI 보정 === */
+/* === QC ëì ì í: ì¡°ì§ëí ì í UI ë³´ì  === */
 .org-target-modal-card{
   width:min(1500px, calc(100vw - 72px));
   max-height:calc(100vh - 72px);
@@ -8818,7 +8810,7 @@ body.checklist-target-modal-open{
   }
 }
 
-/* === QC 대상 선택 조직도: 대형 캔버스 + 확대/축소/휠클릭 이동 === */
+/* === QC ëì ì í ì¡°ì§ë: ëí ìºë²ì¤ + íë/ì¶ì/í í´ë¦­ ì´ë === */
 #checklistTargetModal .org-target-modal-card{
   width:min(1720px, calc(100vw - 36px)) !important;
   max-height:calc(100vh - 34px) !important;
@@ -8885,7 +8877,7 @@ body.checklist-target-modal-open{
   z-index:20 !important;
 }
 #checklistTargetModal .checklist-org-chart-scroll::after{
-  content:"휠: 확대·축소 / 휠 클릭 후 드래그: 시점 이동";
+  content:"í : íëÂ·ì¶ì / í  í´ë¦­ í ëëê·¸: ìì  ì´ë";
   position:sticky;
   left:16px;
   bottom:12px;
@@ -8913,7 +8905,7 @@ body.checklist-target-modal-open{
   }
 }
 
-/* === QC 대상 선택 조직도: 가로 확장 + 클릭 시 현재 시점 유지 최종 보정 === */
+/* === QC ëì ì í ì¡°ì§ë: ê°ë¡ íì¥ + í´ë¦­ ì íì¬ ìì  ì ì§ ìµì¢ ë³´ì  === */
 #checklistTargetModal .org-target-modal-card,
 #checklistTargetModal .target-modal-card.org-target-modal-card {
   width: min(1840px, calc(100vw - 28px)) !important;
@@ -8994,7 +8986,7 @@ body.checklist-target-modal-open{
   }
 }
 
-/* === QC 대상선택 조직도: 부사장 하위조직 드롭다운 + 하단 버튼 노출 보정 === */
+/* === QC ëìì í ì¡°ì§ë: ë¶ì¬ì¥ íìì¡°ì§ ëë¡­ë¤ì´ + íë¨ ë²í¼ ë¸ì¶ ë³´ì  === */
 #checklistTargetModal .org-target-modal-card,
 #checklistTargetModal .target-modal-card.org-target-modal-card{
   display:flex !important;
@@ -9153,11 +9145,11 @@ body.checklist-target-modal-open{
 }
 
 
-/* === 2026-05-14 Viet QS Team Leader 최종 보정 ===
-   - 3열 x 2줄 배치 유지
-   - 이름 1줄 표기
-   - 인원 1명 그룹의 세로 과확장 방지
-   - Partition&Opening 명칭 줄바꿈 표시 */
+/* === 2026-05-14 Viet QS Team Leader ìµì¢ ë³´ì  ===
+   - 3ì´ x 2ì¤ ë°°ì¹ ì ì§
+   - ì´ë¦ 1ì¤ íê¸°
+   - ì¸ì 1ëª ê·¸ë£¹ì ì¸ë¡ ê³¼íì¥ ë°©ì§
+   - Partition&Opening ëªì¹­ ì¤ë°ê¿ íì */
 .pm-teamleader-group-list{
   display:grid !important;
   grid-template-columns:repeat(3,minmax(330px,1fr)) !important;
@@ -9248,7 +9240,7 @@ body.checklist-target-modal-open{
 }
 
 
-/* === QC 대상 선택 모달: 외부 큰 세로 스크롤 제거 최종 보정 === */
+/* === QC ëì ì í ëª¨ë¬: ì¸ë¶ í° ì¸ë¡ ì¤í¬ë¡¤ ì ê±° ìµì¢ ë³´ì  === */
 #checklistTargetModal .org-target-modal-card,
 #checklistTargetModal .target-modal-card.org-target-modal-card{
   display:flex !important;
@@ -9349,7 +9341,7 @@ body.checklist-target-modal-open{
 }
 
 
-/* === QC 대상 선택 조직도: 선명도 보정 및 검색창 제거 === */
+/* === QC ëì ì í ì¡°ì§ë: ì ëªë ë³´ì  ë° ê²ìì°½ ì ê±° === */
 #checklistTargetModal .checklist-org-search{
   display:none !important;
 }
@@ -9404,9 +9396,9 @@ body.checklist-target-modal-open{
 
 
 /* =========================================================
-   QC 체크리스트 컬럼 폭 최종 조정
-   - 코멘트 열을 약 1/3 수준으로 축소
-   - 줄어든 폭을 검토항목/검토방법에 동일하게 재분배
+   QC ì²´í¬ë¦¬ì¤í¸ ì»¬ë¼ í­ ìµì¢ ì¡°ì 
+   - ì½ë©í¸ ì´ì ì½ 1/3 ìì¤ì¼ë¡ ì¶ì
+   - ì¤ì´ë  í­ì ê²í í­ëª©/ê²í ë°©ë²ì ëì¼íê² ì¬ë¶ë°°
    ========================================================= */
 .excel-grid col.qc-col-item{
   width:24% !important;
@@ -9454,10 +9446,10 @@ body.checklist-target-modal-open{
 }
 
 /* =========================================================
-   체크 여부 보기 모달 레이아웃 최종 보정
-   - 체크 여부 칸은 처리 이력처럼 보기 버튼만 표시
-   - 체크 여부 열 1/2 축소, 코멘트 열 확대
-   - 체크 여부 모달 중앙 배치 및 버튼/내용 정렬
+   ì²´í¬ ì¬ë¶ ë³´ê¸° ëª¨ë¬ ë ì´ìì ìµì¢ ë³´ì 
+   - ì²´í¬ ì¬ë¶ ì¹¸ì ì²ë¦¬ ì´ë ¥ì²ë¼ ë³´ê¸° ë²í¼ë§ íì
+   - ì²´í¬ ì¬ë¶ ì´ 1/2 ì¶ì, ì½ë©í¸ ì´ íë
+   - ì²´í¬ ì¬ë¶ ëª¨ë¬ ì¤ì ë°°ì¹ ë° ë²í¼/ë´ì© ì ë ¬
    ========================================================= */
 .excel-grid col.qc-col-check{width:5% !important;}
 .excel-grid col.qc-col-comment{width:15% !important;}
@@ -9747,11 +9739,11 @@ body.checklist-target-modal-open{
 }
 
 /* =========================================================
-   요청 반영 최종 패치: 체크 여부 열 1/2 축소 + 코멘트 열 확대
-   기준 파일: styles_css_FULL_check_modal_layout_fixed(1).md
-   - 기존 체크 여부 10% 기준 → 5%
-   - 줄어든 5%를 코멘트 열에 추가 → 15%
-   - colgroup, th/td, 기존 nth-child 강제 폭을 모두 최종 override
+   ìì²­ ë°ì ìµì¢ í¨ì¹: ì²´í¬ ì¬ë¶ ì´ 1/2 ì¶ì + ì½ë©í¸ ì´ íë
+   ê¸°ì¤ íì¼: styles_css_FULL_check_modal_layout_fixed(1).md
+   - ê¸°ì¡´ ì²´í¬ ì¬ë¶ 10% ê¸°ì¤ â 5%
+   - ì¤ì´ë  5%ë¥¼ ì½ë©í¸ ì´ì ì¶ê° â 15%
+   - colgroup, th/td, ê¸°ì¡´ nth-child ê°ì  í­ì ëª¨ë ìµì¢ override
    ========================================================= */
 #workModule .excel-grid col.qc-col-check,
 .excel-grid col.qc-col-check{
@@ -9789,7 +9781,7 @@ body.checklist-target-modal-open{
   padding-right:12px !important;
 }
 
-/* 체크 여부 셀은 보기 버튼만 중앙 배치 */
+/* ì²´í¬ ì¬ë¶ ìì ë³´ê¸° ë²í¼ë§ ì¤ì ë°°ì¹ */
 #workModule .excel-grid td:nth-child(7) .done-cell-view-only,
 .excel-grid td:nth-child(7) .done-cell-view-only{
   width:100% !important;
@@ -9809,7 +9801,7 @@ body.checklist-target-modal-open{
   white-space:nowrap !important;
 }
 
-/* 코멘트 입력/표시 영역은 늘어난 폭을 전부 사용 */
+/* ì½ë©í¸ ìë ¥/íì ìì­ì ëì´ë í­ì ì ë¶ ì¬ì© */
 #workModule .excel-grid td:nth-child(8) .cell,
 #workModule .excel-grid td:nth-child(8) .comment-cell,
 #workModule .excel-grid td:nth-child(8) [contenteditable="true"],
@@ -9825,17 +9817,17 @@ body.checklist-target-modal-open{
 }
 
 
-/* 내용 셀은 좌측 정렬 유지 */
+/* ë´ì© ìì ì¢ì¸¡ ì ë ¬ ì ì§ */
 .excel-grid tbody td.comment-col,
 .excel-grid tbody td:nth-child(8){
     text-align:left !important;
 }
 
 /* =========================================================
-   코멘트 헤더 셀 최종 중앙 정렬 보정
-   - 기존 하단부 nth-child(8) 좌측정렬 규칙보다 뒤에서 적용
-   - 헤더(th)만 중앙 정렬
-   - 본문(td) 코멘트 내용은 좌측 정렬 유지
+   ì½ë©í¸ í¤ë ì ìµì¢ ì¤ì ì ë ¬ ë³´ì 
+   - ê¸°ì¡´ íë¨ë¶ nth-child(8) ì¢ì¸¡ì ë ¬ ê·ì¹ë³´ë¤ ë¤ìì ì ì©
+   - í¤ë(th)ë§ ì¤ì ì ë ¬
+   - ë³¸ë¬¸(td) ì½ë©í¸ ë´ì©ì ì¢ì¸¡ ì ë ¬ ì ì§
    ========================================================= */
 #workModule table.excel-grid thead tr th.comment-col,
 #workModule table.excel-grid thead tr th:nth-child(8),
@@ -9860,7 +9852,7 @@ table.excel-grid thead tr th:nth-child(8)::before{
   width:0;
 }
 
-/* 코멘트 본문 셀은 좌측 정렬 유지 */
+/* ì½ë©í¸ ë³¸ë¬¸ ìì ì¢ì¸¡ ì ë ¬ ì ì§ */
 #workModule table.excel-grid tbody tr:not(.group-row) td:nth-child(8),
 #workModule table.excel-grid tbody tr:not(.group-row) td.comment-col,
 .module-view#workModule table.excel-grid tbody tr:not(.group-row) td:nth-child(8),
@@ -9873,7 +9865,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   QC팀 전달사항 공통 템플릿 편집 모달
+   QCí ì ë¬ì¬í­ ê³µíµ ííë¦¿ í¸ì§ ëª¨ë¬
    ========================================================= */
 .qc-template-edit-btn{
   min-width:170px;
@@ -10000,7 +9992,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   font-weight:800;
 }
 
-/* QC 체크리스트 셀 번역 버튼 */
+/* QC ì²´í¬ë¦¬ì¤í¸ ì ë²ì­ ë²í¼ */
 .checklist-translate-cell{
   display:flex;
   flex-direction:column;
@@ -10107,7 +10099,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* Papago 번역 전문용어 사전 관리 */
+/* Papago ë²ì­ ì ë¬¸ì©ì´ ì¬ì  ê´ë¦¬ */
 .term-dictionary-open-btn{
   min-width:150px;
   border-color:#93c5fd !important;
@@ -10280,7 +10272,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* Google Translate 스타일 번역 미리보기 템플릿 */
+/* Google Translate ì¤íì¼ ë²ì­ ë¯¸ë¦¬ë³´ê¸° ííë¦¿ */
 .google-style-translate-panel{
   margin:12px 14px 16px;
   border:1px solid #dadce0;
@@ -10508,7 +10500,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === Topbar 권한 등급 드롭다운 === */
+/* === Topbar ê¶í ë±ê¸ ëë¡­ë¤ì´ === */
 .permission-user-wrap{
   position:relative;
   display:flex;
@@ -10616,7 +10608,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   업무관리 > 프로젝트 접수 카드형 화면
+   ìë¬´ê´ë¦¬ > íë¡ì í¸ ì ì ì¹´ëí íë©´
 ========================================================= */
 .project-receive-shell{
   display:grid;
@@ -10984,10 +10976,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   프로젝트 접수 v4: 접수자료/PM 정렬 + 발주처 담당자 가로형 배치
-   - 접수자료 04, 담당 PM/일정 05, 발주처 담당자 06 순서 기준
-   - 발주처 담당자는 수주시 요청사항 바로 위에서 전체 폭 사용
-   - 접수자료와 담당 PM/일정은 동일 행에서 깨짐 없이 정렬
+   íë¡ì í¸ ì ì v4: ì ììë£/PM ì ë ¬ + ë°ì£¼ì² ë´ë¹ì ê°ë¡í ë°°ì¹
+   - ì ììë£ 04, ë´ë¹ PM/ì¼ì  05, ë°ì£¼ì² ë´ë¹ì 06 ìì ê¸°ì¤
+   - ë°ì£¼ì² ë´ë¹ìë ìì£¼ì ìì²­ì¬í­ ë°ë¡ ììì ì ì²´ í­ ì¬ì©
+   - ì ììë£ì ë´ë¹ PM/ì¼ì ì ëì¼ íìì ê¹¨ì§ ìì´ ì ë ¬
    ========================================================= */
 .project-receive-grid-bottom{
   display:grid !important;
@@ -11077,10 +11069,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 
 /* =========================================================
-   프로젝트 접수 v6: 상단 카드 높이 정렬 수정
-   - 프로젝트 기본정보 카드의 실제 세로폭을 기준으로 우측 영역 높이 맞춤
-   - 업무의 성격 / 작업범위는 기본정보 높이를 1/2씩 균등 분배
-   - 헤더는 프로젝트 접수 제목만 남기고 세로폭 축소
+   íë¡ì í¸ ì ì v6: ìë¨ ì¹´ë ëì´ ì ë ¬ ìì 
+   - íë¡ì í¸ ê¸°ë³¸ì ë³´ ì¹´ëì ì¤ì  ì¸ë¡í­ì ê¸°ì¤ì¼ë¡ ì°ì¸¡ ìì­ ëì´ ë§ì¶¤
+   - ìë¬´ì ì±ê²© / ììë²ìë ê¸°ë³¸ì ë³´ ëì´ë¥¼ 1/2ì© ê· ë± ë¶ë°°
+   - í¤ëë íë¡ì í¸ ì ì ì ëª©ë§ ë¨ê¸°ê³  ì¸ë¡í­ ì¶ì
    ========================================================= */
 .project-receive-hero{
   align-items:center !important;
@@ -11151,10 +11143,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   프로젝트 접수 v7: 발주처 담당자 1줄 입력 + 접수자료 확인 이력
-   - 발주처 담당자: 한 담당자당 6개 항목을 1줄로 배치
-   - 담당자 추가 시 아래로 1줄씩 추가
-   - 접수자료: 우측 확인 버튼과 확인자/확인시간 이력 표시
+   íë¡ì í¸ ì ì v7: ë°ì£¼ì² ë´ë¹ì 1ì¤ ìë ¥ + ì ììë£ íì¸ ì´ë ¥
+   - ë°ì£¼ì² ë´ë¹ì: í ë´ë¹ìë¹ 6ê° í­ëª©ì 1ì¤ë¡ ë°°ì¹
+   - ë´ë¹ì ì¶ê° ì ìëë¡ 1ì¤ì© ì¶ê°
+   - ì ììë£: ì°ì¸¡ íì¸ ë²í¼ê³¼ íì¸ì/íì¸ìê° ì´ë ¥ íì
    ========================================================= */
 .project-receive-contact-card-wrap .receive-contact-list{
   display:grid !important;
@@ -11320,11 +11312,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 
 /* =========================================================
-   프로젝트 접수 v8: 요청 반영 폭 조정 + PM 배치 + 확인 이력 정리
-   - 상단: 프로젝트 기본정보 가로폭 확대, 우측 업무/작업범위 가로폭 축소
-   - 하단: 접수자료 가로폭 확대, 담당 PM/일정 가로폭 축소
-   - 담당 PM/일정: 2열 기준으로 작업착수일/1차납품일 → 최종납품일/총괄PM → 마감PM/구조PM 순서
-   - 발주처 담당자: 1280px 초과 화면에서는 담당자 1명당 1줄 유지
+   íë¡ì í¸ ì ì v8: ìì²­ ë°ì í­ ì¡°ì  + PM ë°°ì¹ + íì¸ ì´ë ¥ ì ë¦¬
+   - ìë¨: íë¡ì í¸ ê¸°ë³¸ì ë³´ ê°ë¡í­ íë, ì°ì¸¡ ìë¬´/ììë²ì ê°ë¡í­ ì¶ì
+   - íë¨: ì ììë£ ê°ë¡í­ íë, ë´ë¹ PM/ì¼ì  ê°ë¡í­ ì¶ì
+   - ë´ë¹ PM/ì¼ì : 2ì´ ê¸°ì¤ì¼ë¡ ììì°©ìì¼/1ì°¨ë©íì¼ â ìµì¢ë©íì¼/ì´ê´PM â ë§ê°PM/êµ¬ì¡°PM ìì
+   - ë°ì£¼ì² ë´ë¹ì: 1280px ì´ê³¼ íë©´ììë ë´ë¹ì 1ëªë¹ 1ì¤ ì ì§
    ========================================================= */
 .project-receive-top-grid{
   grid-template-columns:minmax(520px,1.1fr) minmax(0,.9fr) !important;
@@ -11370,9 +11362,9 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   프로젝트 접수 v9: 접수자료 문서명 잘림 방지
-   - 접수자료 행의 첫 번째 문서명 칸을 넓혀 도면/시방서/현장설명서/내역서/기타자료가 잘리지 않게 조정
-   - 확인 이력 영역은 유지하되 문서명과 입력칸이 겹치지 않도록 재배치
+   íë¡ì í¸ ì ì v9: ì ììë£ ë¬¸ìëª ìë¦¼ ë°©ì§
+   - ì ììë£ íì ì²« ë²ì§¸ ë¬¸ìëª ì¹¸ì ëí ëë©´/ìë°©ì/íì¥ì¤ëªì/ë´ì­ì/ê¸°íìë£ê° ìë¦¬ì§ ìê² ì¡°ì 
+   - íì¸ ì´ë ¥ ìì­ì ì ì§íë ë¬¸ìëªê³¼ ìë ¥ì¹¸ì´ ê²¹ì¹ì§ ìëë¡ ì¬ë°°ì¹
    ========================================================= */
 .project-receive-material-card .receive-material-item{
   grid-template-columns:minmax(132px,.72fr) minmax(170px,1fr) 92px minmax(210px,1.12fr) !important;
@@ -11438,9 +11430,9 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   프로젝트 접수: 작성완료 리스트 버튼/모달
-   - 상단 우측 빈 영역에 작성완료 리스트 버튼 추가
-   - 엑셀 기반 작성완료 수주소식 선택 후 수정 화면으로 불러오기
+   íë¡ì í¸ ì ì: ìì±ìë£ ë¦¬ì¤í¸ ë²í¼/ëª¨ë¬
+   - ìë¨ ì°ì¸¡ ë¹ ìì­ì ìì±ìë£ ë¦¬ì¤í¸ ë²í¼ ì¶ê°
+   - ìì ê¸°ë° ìì±ìë£ ìì£¼ìì ì í í ìì  íë©´ì¼ë¡ ë¶ë¬ì¤ê¸°
    ========================================================= */
 .project-receive-actions .btn-completed-list{
   border-color:#93c5fd !important;
@@ -11614,12 +11606,12 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   프로젝트 접수 v11: 접수자료 상태 버튼 + 코멘트 구조
-   - 좌측 체크박스 제거
-   - 도면/시방서 등 자료명은 고정 텍스트로 표시
-   - 접수일/메모 입력칸은 좌측으로 이동하고 폭을 축소
-   - 상태는 확인완료 / 미접수 / 일부접수 3버튼으로 관리
-   - 미접수/일부접수 코멘트 및 확인자/확인시간 이력 표시
+   íë¡ì í¸ ì ì v11: ì ììë£ ìí ë²í¼ + ì½ë©í¸ êµ¬ì¡°
+   - ì¢ì¸¡ ì²´í¬ë°ì¤ ì ê±°
+   - ëë©´/ìë°©ì ë± ìë£ëªì ê³ ì  íì¤í¸ë¡ íì
+   - ì ìì¼/ë©ëª¨ ìë ¥ì¹¸ì ì¢ì¸¡ì¼ë¡ ì´ëíê³  í­ì ì¶ì
+   - ìíë íì¸ìë£ / ë¯¸ì ì / ì¼ë¶ì ì 3ë²í¼ì¼ë¡ ê´ë¦¬
+   - ë¯¸ì ì/ì¼ë¶ì ì ì½ë©í¸ ë° íì¸ì/íì¸ìê° ì´ë ¥ íì
    ========================================================= */
 .project-receive-material-card .receive-material-list{
   gap:10px !important;
@@ -11752,7 +11744,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   box-shadow:0 0 0 3px rgba(37,99,235,.08) !important;
 }
 
-/* 기존 체크박스 기반 스타일 무력화 */
+/* ê¸°ì¡´ ì²´í¬ë°ì¤ ê¸°ë° ì¤íì¼ ë¬´ë ¥í */
 .project-receive-material-card .receive-material-check,
 .project-receive-material-card .receive-material-confirm{
   display:none !important;
@@ -11798,10 +11790,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   프로젝트 접수 v12: 접수자료 행 추가/삭제 + 더미데이터 표시 구조
-   - 접수자료 우측 상단에 행 추가 버튼 배치
-   - 각 접수자료 행 우측에 삭제 버튼 배치
-   - 자료명/접수일/상태/확인이력/삭제/코멘트가 한 카드 안에서 정렬되도록 보정
+   íë¡ì í¸ ì ì v12: ì ììë£ í ì¶ê°/ì­ì  + ëë¯¸ë°ì´í° íì êµ¬ì¡°
+   - ì ììë£ ì°ì¸¡ ìë¨ì í ì¶ê° ë²í¼ ë°°ì¹
+   - ê° ì ììë£ í ì°ì¸¡ì ì­ì  ë²í¼ ë°°ì¹
+   - ìë£ëª/ì ìì¼/ìí/íì¸ì´ë ¥/ì­ì /ì½ë©í¸ê° í ì¹´ë ììì ì ë ¬ëëë¡ ë³´ì 
 ========================================================= */
 .project-receive-material-card .project-receive-card-head{
   margin-bottom:10px !important;
@@ -11909,7 +11901,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   업무관리 > PM 배정 / 일정
+   ìë¬´ê´ë¦¬ > PM ë°°ì  / ì¼ì 
 ========================================================= */
 .pm-schedule-shell{
   display:grid;
@@ -12330,7 +12322,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-summary-grid div:last-child{border-bottom:0}
 }
 
-/* === PM 배정 / 일정 화면 재구성 패치 === */
+/* === PM ë°°ì  / ì¼ì  íë©´ ì¬êµ¬ì± í¨ì¹ === */
 .pm-schedule-hero{
   min-height:48px !important;
   padding:14px 24px !important;
@@ -12499,7 +12491,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-assignment-grid,.pm-editor-project-info{grid-template-columns:1fr !important;}
 }
 
-/* === PM 스케쥴 1·2안 모달형 가로 비교/편집 패치 === */
+/* === PM ì¤ì¼ì¥´ 1Â·2ì ëª¨ë¬í ê°ë¡ ë¹êµ/í¸ì§ í¨ì¹ === */
 .pm-plan-open-card{
   border:1px solid var(--line2);
   background:#fbfdff;
@@ -12737,8 +12729,8 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   background:#cbd5e1 !important;
 }
 
-/* === 2026-05-13 PM 스케쥴 모달/검토 보정 === */
-/* 메인 화면의 반려/승인 영역은 1·2안 한꺼번에 보기 모달 안에서만 사용 */
+/* === 2026-05-13 PM ì¤ì¼ì¥´ ëª¨ë¬/ê²í  ë³´ì  === */
+/* ë©ì¸ íë©´ì ë°ë ¤/ì¹ì¸ ìì­ì 1Â·2ì íêº¼ë²ì ë³´ê¸° ëª¨ë¬ ìììë§ ì¬ì© */
 #pmSchedule .pm-approval-row{
   display:none !important;
 }
@@ -12930,7 +12922,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === PM 배정/일정 추가 보정 2026-05-13 === */
+/* === PM ë°°ì /ì¼ì  ì¶ê° ë³´ì  2026-05-13 === */
 .pm-editor-only-action{display:inline-flex;align-items:center;}
 #pmScheduleManagerView ~ #pmAssignedProjectButtonHolder{display:none;}
 .pm-request-filter-row{margin:0 0 10px;display:flex;justify-content:flex-end;}
@@ -12964,10 +12956,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-modal-approval-choice input[type="checkbox"]{width:15px;height:15px;accent-color:var(--blue);}
 @media(max-width:900px){.pm-teamleader-list-inner{grid-template-columns:1fr}.pm-assigned-project-item{grid-template-columns:1fr}.pm-request-filter-row{justify-content:flex-start}}
 
-/* === 2026-05-13 PM 스케쥴표 스타일/작업범위 표시 최종 보정 ===
-   - Structure일 때만 RC/SC 작업범위 및 우측 작업범위 칸 표시
-   - Finish/Civil 선택 시 작업범위 관련 칼럼 전체 제거
-   - 프로젝트 질의응답 관리 화면과 유사한 부드러운 카드형 표 스타일 적용 */
+/* === 2026-05-13 PM ì¤ì¼ì¥´í ì¤íì¼/ììë²ì íì ìµì¢ ë³´ì  ===
+   - Structureì¼ ëë§ RC/SC ììë²ì ë° ì°ì¸¡ ììë²ì ì¹¸ íì
+   - Finish/Civil ì í ì ììë²ì ê´ë ¨ ì¹¼ë¼ ì ì²´ ì ê±°
+   - íë¡ì í¸ ì§ììëµ ê´ë¦¬ íë©´ê³¼ ì ì¬í ë¶ëë¬ì´ ì¹´ëí í ì¤íì¼ ì ì© */
 .pm-schedule-soft-table-wrap{
   border:1px solid #dbeafe !important;
   border-radius:18px !important;
@@ -13127,10 +13119,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === PM 스케쥴 1ㆍ2안 표 틀고정 / 헤더 간격 보정 ===
-   - 모달 내부에서 표 본문만 세로 스크롤
-   - 구분/성명/작업범위/1안/2안/우측 작업범위 헤더 고정
-   - colspan 작업범위 헤더 폭 강제값 제거로 칸 벌어짐/깨짐 방지 */
+/* === PM ì¤ì¼ì¥´ 1ã2ì í íê³ ì  / í¤ë ê°ê²© ë³´ì  ===
+   - ëª¨ë¬ ë´ë¶ìì í ë³¸ë¬¸ë§ ì¸ë¡ ì¤í¬ë¡¤
+   - êµ¬ë¶/ì±ëª/ììë²ì/1ì/2ì/ì°ì¸¡ ììë²ì í¤ë ê³ ì 
+   - colspan ììë²ì í¤ë í­ ê°ì ê° ì ê±°ë¡ ì¹¸ ë²ì´ì§/ê¹¨ì§ ë°©ì§ */
 .pm-schedule-soft-table-wrap,
 .pm-combined-sheet-wrap{
   max-height:calc(100vh - 270px) !important;
@@ -13190,7 +13182,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   z-index:84 !important;
 }
 
-/* colspan이 적용된 '작업범위' 헤더에는 좁은 폭을 강제하지 않음 */
+/* colspanì´ ì ì©ë 'ììë²ì' í¤ëìë ì¢ì í­ì ê°ì íì§ ìì */
 .pm-schedule-soft-table thead th.pm-scope-header,
 .pm-combined-sheet-table thead th.pm-scope-header{
   width:auto !important;
@@ -13201,7 +13193,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   text-align:center !important;
 }
 
-/* 실제 RC/SC 칸만 좁게 유지 */
+/* ì¤ì  RC/SC ì¹¸ë§ ì¢ê² ì ì§ */
 .pm-schedule-soft-table thead tr:nth-child(2) th.pm-scope-cell,
 .pm-schedule-soft-table tbody td.pm-scope-cell,
 .pm-combined-sheet-table thead tr:nth-child(2) th.pm-scope-cell,
@@ -13229,7 +13221,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   border-spacing:0 !important;
 }
 
-/* === 2026-05-13 Leader 권한 스케쥴 작성 중분류/비고/틀고정 보정 === */
+/* === 2026-05-13 Leader ê¶í ì¤ì¼ì¥´ ìì± ì¤ë¶ë¥/ë¹ê³ /íê³ ì  ë³´ì  === */
 .pm-plan-category-controls{
   display:flex;
   align-items:center;
@@ -13320,9 +13312,9 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === PM 스케쥴 인사카드 기준 정렬/성명 표시 보정 ===
-   - 이름/직급/한국표기명/입사일을 분리 표시
-   - JS에서 인사카드 join 값을 기준으로 즉시 재정렬되도록 구성 */
+/* === PM ì¤ì¼ì¥´ ì¸ì¬ì¹´ë ê¸°ì¤ ì ë ¬/ì±ëª íì ë³´ì  ===
+   - ì´ë¦/ì§ê¸/íêµ­íê¸°ëª/ìì¬ì¼ì ë¶ë¦¬ íì
+   - JSìì ì¸ì¬ì¹´ë join ê°ì ê¸°ì¤ì¼ë¡ ì¦ì ì¬ì ë ¬ëëë¡ êµ¬ì± */
 .pm-schedule-soft-table .pm-sheet-name,
 .pm-combined-sheet-table .pm-sheet-name{
   min-width:190px !important;
@@ -13395,10 +13387,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   width:230px !important;
 }
 
-/* === 2026-05-13 PM 스케쥴 성명 표기 압축 ===
-   - 베트남어 이름과 한국표기명을 한 줄로 통합
-   - 입사일 원문 대신 입사 N년차만 표시
-   - 기존 4줄 구조를 2줄+작은 직급 배지 구조로 줄여 행 높이를 압축 */
+/* === 2026-05-13 PM ì¤ì¼ì¥´ ì±ëª íê¸° ìì¶ ===
+   - ë² í¸ë¨ì´ ì´ë¦ê³¼ íêµ­íê¸°ëªì í ì¤ë¡ íµí©
+   - ìì¬ì¼ ìë¬¸ ëì  ìì¬ Nëì°¨ë§ íì
+   - ê¸°ì¡´ 4ì¤ êµ¬ì¡°ë¥¼ 2ì¤+ìì ì§ê¸ ë°°ì§ êµ¬ì¡°ë¡ ì¤ì¬ í ëì´ë¥¼ ìì¶ */
 .pm-schedule-soft-table .pm-sheet-name,
 .pm-combined-sheet-table .pm-sheet-name{
   min-width:210px !important;
@@ -13484,7 +13476,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   width:240px !important;
 }
 
-/* PM 배정 / 일정: 승인된 1안 기준 작업자별 일정 그래프 */
+/* PM ë°°ì  / ì¼ì : ì¹ì¸ë 1ì ê¸°ì¤ ìììë³ ì¼ì  ê·¸ëí */
 .pm-approved-board{
   margin-top:18px;
   border:1px solid var(--line2);
@@ -13519,7 +13511,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 .pm-staff-schedule-card span{display:block;color:#64748b;font-size:12px;font-weight:800;}
 @media(max-width:900px){.pm-approved-row{grid-template-columns:1fr}.pm-approved-head{flex-direction:column}.pm-approved-history{align-items:flex-start;flex-direction:column}}
 
-/* === 2026-05-14 PM 배정/일정 리스트형/요청대상 보정 === */
+/* === 2026-05-14 PM ë°°ì /ì¼ì  ë¦¬ì¤í¸í/ìì²­ëì ë³´ì  === */
 .pm-schedule-layout{
   grid-template-columns:1fr !important;
 }
@@ -13638,7 +13630,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-teamleader-dept-items{grid-template-columns:1fr;}
 }
 
-/* === 2026-05-14 PM 배정/일정 리스트/조직도 반영 보정 === */
+/* === 2026-05-14 PM ë°°ì /ì¼ì  ë¦¬ì¤í¸/ì¡°ì§ë ë°ì ë³´ì  === */
 .pm-project-list-table{
   max-height:414px !important;
   overflow-y:auto !important;
@@ -13708,7 +13700,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-teamleader-dept-items .pm-check-item{min-width:100% !important;max-width:100% !important;}
 }
 
-/* === 2026-05-14 Team Leader 요청 영역 겹침/이름 표시 오류 보정 === */
+/* === 2026-05-14 Team Leader ìì²­ ìì­ ê²¹ì¹¨/ì´ë¦ íì ì¤ë¥ ë³´ì  === */
 .pm-request-box:nth-child(2){
   min-width:0 !important;
 }
@@ -13775,7 +13767,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-teamleader-dept-items{grid-template-columns:1fr !important;}
 }
 
-/* === 2026-05-14 PM 요청/Team Leader 영역 너비 및 PM 지정 1열 보정 === */
+/* === 2026-05-14 PM ìì²­/Team Leader ìì­ ëë¹ ë° PM ì§ì  1ì´ ë³´ì  === */
 .pm-assignment-grid{
   grid-template-columns:repeat(4,minmax(0,1fr)) !important;
   gap:12px !important;
@@ -13848,7 +13840,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   .pm-teamleader-dept-items{grid-template-columns:1fr !important;}
 }
 
-/* === 2026-05-14 Viet QS Team Leader 전용 리스트 표시 보정 === */
+/* === 2026-05-14 Viet QS Team Leader ì ì© ë¦¬ì¤í¸ íì ë³´ì  === */
 .pm-request-grid{
   grid-template-columns:minmax(300px,.75fr) minmax(0,1.75fr) !important;
 }
@@ -13925,10 +13917,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 
 
-/* === 2026-05-14 Viet QS Team Leader 그룹 배치 형식 깨짐 방지 최종 보정 ===
-   - 그룹은 좌→우 우선 배치
-   - 3번째 그룹은 좌측 다음 줄, 4번째 그룹은 우측 다음 줄
-   - 카드 내부 요소가 옆 카드와 겹치지 않도록 width/overflow를 강제 정리 */
+/* === 2026-05-14 Viet QS Team Leader ê·¸ë£¹ ë°°ì¹ íì ê¹¨ì§ ë°©ì§ ìµì¢ ë³´ì  ===
+   - ê·¸ë£¹ì ì¢âì° ì°ì  ë°°ì¹
+   - 3ë²ì§¸ ê·¸ë£¹ì ì¢ì¸¡ ë¤ì ì¤, 4ë²ì§¸ ê·¸ë£¹ì ì°ì¸¡ ë¤ì ì¤
+   - ì¹´ë ë´ë¶ ììê° ì ì¹´ëì ê²¹ì¹ì§ ìëë¡ width/overflowë¥¼ ê°ì  ì ë¦¬ */
 .pm-teamleader-list,
 .pm-teamleader-list-inner{
   width:100% !important;
@@ -14059,10 +14051,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === 2026-05-14 Viet QS Team Leader 2줄 배치/이름 전체 표시 최종 보정 ===
-   - 5개 이하 그룹은 3열 x 2줄 기준으로 배치
-   - 그룹 내부 세로 과확장 방지
-   - Team Leader 이름이 잘리지 않도록 줄바꿈 허용 */
+/* === 2026-05-14 Viet QS Team Leader 2ì¤ ë°°ì¹/ì´ë¦ ì ì²´ íì ìµì¢ ë³´ì  ===
+   - 5ê° ì´í ê·¸ë£¹ì 3ì´ x 2ì¤ ê¸°ì¤ì¼ë¡ ë°°ì¹
+   - ê·¸ë£¹ ë´ë¶ ì¸ë¡ ê³¼íì¥ ë°©ì§
+   - Team Leader ì´ë¦ì´ ìë¦¬ì§ ìëë¡ ì¤ë°ê¿ íì© */
 .pm-teamleader-list,
 .pm-teamleader-list-inner{
   width:100% !important;
@@ -14205,11 +14197,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === 2026-05-14 Viet QS Team Leader 최종 보정 ===
-   - 3열 x 2줄 배치 유지
-   - 이름 1줄 표기
-   - 인원 1명 그룹의 세로 과확장 방지
-   - Partition&Opening 명칭 줄바꿈 표시 */
+/* === 2026-05-14 Viet QS Team Leader ìµì¢ ë³´ì  ===
+   - 3ì´ x 2ì¤ ë°°ì¹ ì ì§
+   - ì´ë¦ 1ì¤ íê¸°
+   - ì¸ì 1ëª ê·¸ë£¹ì ì¸ë¡ ê³¼íì¥ ë°©ì§
+   - Partition&Opening ëªì¹­ ì¤ë°ê¿ íì */
 .pm-teamleader-group-list{
   display:grid !important;
   grid-template-columns:repeat(3,minmax(330px,1fr)) !important;
@@ -14300,12 +14292,12 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === 2026-05-14 Team Leader 요청 영역 최종 재구성 패치 ===
-   - 직원 이름이 보이지 않는 문제 해결
-   - Structure의 Horizontal/Foundation 구분 복구 대응
-   - Finish에서 External을 Internal 2 바로 아래에 배치
-   - Partition&Opening은 2줄 표기 유지
-   - 그룹 높이는 인원 수 기준으로만 늘어나도록 고정 해제 */
+/* === 2026-05-14 Team Leader ìì²­ ìì­ ìµì¢ ì¬êµ¬ì± í¨ì¹ ===
+   - ì§ì ì´ë¦ì´ ë³´ì´ì§ ìë ë¬¸ì  í´ê²°
+   - Structureì Horizontal/Foundation êµ¬ë¶ ë³µêµ¬ ëì
+   - Finishìì Externalì Internal 2 ë°ë¡ ìëì ë°°ì¹
+   - Partition&Openingì 2ì¤ íê¸° ì ì§
+   - ê·¸ë£¹ ëì´ë ì¸ì ì ê¸°ì¤ì¼ë¡ë§ ëì´ëëë¡ ê³ ì  í´ì  */
 .pm-request-box:first-child{
   position:relative !important;
   padding-top:15px !important;
@@ -14505,7 +14497,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   overflow-wrap:normal !important;
 }
 
-/* Finish 배치: Internal 1 / Internal 2 / Partition&Opening, External은 Internal 2 바로 아래 */
+/* Finish ë°°ì¹: Internal 1 / Internal 2 / Partition&Opening, Externalì Internal 2 ë°ë¡ ìë */
 .pm-teamleader-dept-group:has(.pm-teamleader-dept-title:nth-child(1)){
   min-height:0 !important;
 }
@@ -14568,11 +14560,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* === 2026-05-14 Team Leader 요청 영역 레이아웃 재수정 ===
-   - 직원명 1줄 표시가 가능하도록 카드 내부 폭 확대
-   - Finish: External을 Internal 2 바로 아래 배치
-   - Structure: Vertical / Horizontal/Foundation 정상 2열 배치
-   - 기존 nth-child 강제 배치보다 부서 class 기준 배치를 우선 적용 */
+/* === 2026-05-14 Team Leader ìì²­ ìì­ ë ì´ìì ì¬ìì  ===
+   - ì§ìëª 1ì¤ íìê° ê°ë¥íëë¡ ì¹´ë ë´ë¶ í­ íë
+   - Finish: Externalì Internal 2 ë°ë¡ ìë ë°°ì¹
+   - Structure: Vertical / Horizontal/Foundation ì ì 2ì´ ë°°ì¹
+   - ê¸°ì¡´ nth-child ê°ì  ë°°ì¹ë³´ë¤ ë¶ì class ê¸°ì¤ ë°°ì¹ë¥¼ ì°ì  ì ì© */
 .pm-request-grid{
   grid-template-columns:minmax(360px,.42fr) minmax(0,1fr) !important;
   gap:14px !important;
@@ -14741,11 +14733,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 
 
 
-/* === 2026-05-14 기준파일 재수정: Team Leader 직원명 카드 2배 확장 + Horizontal 줄바꿈 ===
-   - Horizontal/Foundation 표기는 JS에서 Horizontal<br>&Foundation으로 출력
-   - 직원명 카드 가로폭을 기존 대비 약 2배로 확보
-   - 이름은 1줄 유지, 영역 부족 시 말줄임 처리
-   - Structure/Finish 배치 순서는 기존 class 기반 배치 유지 */
+/* === 2026-05-14 ê¸°ì¤íì¼ ì¬ìì : Team Leader ì§ìëª ì¹´ë 2ë°° íì¥ + Horizontal ì¤ë°ê¿ ===
+   - Horizontal/Foundation íê¸°ë JSìì Horizontal<br>&Foundationì¼ë¡ ì¶ë ¥
+   - ì§ìëª ì¹´ë ê°ë¡í­ì ê¸°ì¡´ ëë¹ ì½ 2ë°°ë¡ íë³´
+   - ì´ë¦ì 1ì¤ ì ì§, ìì­ ë¶ì¡± ì ë§ì¤ì ì²ë¦¬
+   - Structure/Finish ë°°ì¹ ììë ê¸°ì¡´ class ê¸°ë° ë°°ì¹ ì ì§ */
 .pm-teamleader-list,
 .pm-teamleader-list-inner{
   overflow:visible !important;
@@ -14847,11 +14839,11 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   }
 }
 
-/* === 2026-05-14 Team Leader Finish 카드 배치 최종 보정 ===
-   - 직원 카드 폭을 넓게 유지하되 부모 카드가 같이 넓어지도록 보정
-   - Finish는 2열 기준으로 줄바꿈하여 우측 잘림 방지
-   - External은 Internal 2 바로 아래 위치
-   - Partition&Opening / Horizontal&Foundation 구분명은 줄바꿈 유지 */
+/* === 2026-05-14 Team Leader Finish ì¹´ë ë°°ì¹ ìµì¢ ë³´ì  ===
+   - ì§ì ì¹´ë í­ì ëê² ì ì§íë ë¶ëª¨ ì¹´ëê° ê°ì´ ëì´ì§ëë¡ ë³´ì 
+   - Finishë 2ì´ ê¸°ì¤ì¼ë¡ ì¤ë°ê¿íì¬ ì°ì¸¡ ìë¦¼ ë°©ì§
+   - Externalì Internal 2 ë°ë¡ ìë ìì¹
+   - Partition&Opening / Horizontal&Foundation êµ¬ë¶ëªì ì¤ë°ê¿ ì ì§ */
 .pm-request-box:nth-child(2){
   overflow:hidden !important;
 }
@@ -15013,7 +15005,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 
-/* 프로젝트 접수: 골조성 세부 카테고리 */
+/* íë¡ì í¸ ì ì: ê³¨ì¡°ì± ì¸ë¶ ì¹´íê³ ë¦¬ */
 .receive-chip-wrap{
   display:inline-flex;
   align-items:center;
@@ -15084,9 +15076,9 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 
 /* =========================================================
-   2026-05-14 디자인 스킨 보정
-   - 현재 화면 구조는 유지
-   - 첨부 스크린샷과 유사한 CON COST 대시보드형 UI 톤 적용
+   2026-05-14 ëìì¸ ì¤í¨ ë³´ì 
+   - íì¬ íë©´ êµ¬ì¡°ë ì ì§
+   - ì²¨ë¶ ì¤í¬ë¦°ì·ê³¼ ì ì¬í CON COST ëìë³´ëí UI í¤ ì ì©
 ========================================================= */
 :root{
   --bg:#f3f6f9;
@@ -15296,7 +15288,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 
-/* === 상단 좌측 로고 PNG 직접 삽입 === */
+/* === ìë¨ ì¢ì¸¡ ë¡ê³  PNG ì§ì  ì½ì === */
 .topbar .brand{
   min-width:300px !important;
   height:64px !important;
@@ -15331,7 +15323,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   }
 }
 
-/* 프로젝트 접수: 지하층수/지상층수 1행 2열 배치 */
+/* íë¡ì í¸ ì ì: ì§íì¸µì/ì§ìì¸µì 1í 2ì´ ë°°ì¹ */
 .receive-floor-pair{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -15351,9 +15343,9 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 
 
 /* =========================================================
-   프로젝트 접수: 접수자료 파일첨부 이력 관리
-   - 각 접수자료 행 우측에 파일첨부 버튼 배치
-   - 업로드 이력은 접수자료(1차), 접수자료(2차) 순서로 누적
+   íë¡ì í¸ ì ì: ì ììë£ íì¼ì²¨ë¶ ì´ë ¥ ê´ë¦¬
+   - ê° ì ììë£ í ì°ì¸¡ì íì¼ì²¨ë¶ ë²í¼ ë°°ì¹
+   - ìë¡ë ì´ë ¥ì ì ììë£(1ì°¨), ì ììë£(2ì°¨) ììë¡ ëì 
 ========================================================= */
 .project-receive-material-card .receive-material-item{
   grid-template-columns:minmax(92px,.42fr) minmax(150px,.78fr) minmax(250px,1.04fr) minmax(230px,1fr) 52px minmax(116px,.54fr) !important;
@@ -15578,7 +15570,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 
-/* === PM 지정 부분 배정 검증/경고 표시 === */
+/* === PM ì§ì  ë¶ë¶ ë°°ì  ê²ì¦/ê²½ê³  íì === */
 .pm-assignment-field{
   position:relative;
   display:grid;
@@ -15619,7 +15611,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   .pm-assignment-confirm-btn{width:auto;}
 }
 
-/* 프로젝트 접수 하위 카테고리: 프로젝트 작성 / 프로젝트 리스트 */
+/* íë¡ì í¸ ì ì íì ì¹´íê³ ë¦¬: íë¡ì í¸ ìì± / íë¡ì í¸ ë¦¬ì¤í¸ */
 .project-receive-side-group .project-receive-sub-menu{
   display:grid;
   gap:7px;
@@ -15771,7 +15763,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 
-/* 프로젝트 접수 하위 카테고리 선택 보정 */
+/* íë¡ì í¸ ì ì íì ì¹´íê³ ë¦¬ ì í ë³´ì  */
 .project-receive-side-group > .side-main.active{
   background:#111827 !important;
   color:#fff !important;
@@ -15786,7 +15778,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   border-color:#111827;
 }
 
-/* 프로젝트 리스트 뷰어 */
+/* íë¡ì í¸ ë¦¬ì¤í¸ ë·°ì´ */
 .project-list-clickable-row{
   cursor:pointer;
 }
@@ -15908,7 +15900,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   .project-viewer-material-list li{grid-template-columns:1fr}
 }
 
-/* 프로젝트 리스트 / 상세 뷰어: 지하·지상층수 분리 및 PM 지정 표시 */
+/* íë¡ì í¸ ë¦¬ì¤í¸ / ìì¸ ë·°ì´: ì§íÂ·ì§ìì¸µì ë¶ë¦¬ ë° PM ì§ì  íì */
 .project-viewer-pm-list{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -15949,7 +15941,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   .project-viewer-pm-list{grid-template-columns:1fr;}
 }
 
-/* PM 권한 수신 표시 */
+/* PM ê¶í ìì  íì */
 .pm-assigned-project-item small{
   display:block;
   margin-top:4px;
@@ -15960,7 +15952,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 /* =========================================================
-   PM 배정 / 일정 세부 카테고리 및 전체 일정 보드
+   PM ë°°ì  / ì¼ì  ì¸ë¶ ì¹´íê³ ë¦¬ ë° ì ì²´ ì¼ì  ë³´ë
 ========================================================= */
 .pm-schedule-sub-menu.active{
   display:grid !important;
@@ -16134,7 +16126,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   }
 }
 
-/* === 2026-05-15 실장 권한 PM배정 화면 단순화 === */
+/* === 2026-05-15 ì¤ì¥ ê¶í PMë°°ì  íë©´ ë¨ìí === */
 .pm-schedule-shell[data-pm-section="assign"] .pm-schedule-layout {
   grid-template-columns: 1fr;
 }
@@ -16186,7 +16178,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 .pm-schedule-detail.pm-assignment-panel-open::before {
-  content: "PM배정";
+  content: "PMë°°ì ";
   display: block;
   margin: 0 0 14px 4px;
   padding-left: 12px;
@@ -16233,7 +16225,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   color: #f97316;
 }
 
-/* PM 배정 / 일정 - 작업일정 결재 리스트 및 요청 확인 모달 */
+/* PM ë°°ì  / ì¼ì  - ììì¼ì  ê²°ì¬ ë¦¬ì¤í¸ ë° ìì²­ íì¸ ëª¨ë¬ */
 .pm-section-approval-only{
   display:none;
 }
@@ -16319,14 +16311,14 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 
-/* === 2026-05-15 프로젝트 리스트 행 높이 축소 + 접수 저장 비활성 표시 === */
+/* === 2026-05-15 íë¡ì í¸ ë¦¬ì¤í¸ í ëì´ ì¶ì + ì ì ì ì¥ ë¹íì± íì === */
 .project-list-table td strong,
 .project-list-name{line-height:1.2 !important;}
 .project-list-status{padding:5px 10px !important;font-size:11px !important;}
 #projectReceiveSaveBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.2);}
 
 
-/* === 프로젝트 관리 카테고리 / 프로젝트 작성 화면 === */
+/* === íë¡ì í¸ ê´ë¦¬ ì¹´íê³ ë¦¬ / íë¡ì í¸ ìì± íë©´ === */
 .estimate-quote-sub-menu,
 .project-receive-sub-menu,
 .pm-schedule-sub-menu {
@@ -16425,7 +16417,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   padding: 28px !important;
 }
 
-/* 프로젝트 리스트 세로 폭 축소 */
+/* íë¡ì í¸ ë¦¬ì¤í¸ ì¸ë¡ í­ ì¶ì */
 .project-list-table th,
 .project-list-table td {
   padding-top: 7px !important;
@@ -16449,7 +16441,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
 }
 
 
-/* === 프로젝트 접수 웹하드 정보 / 견적서 DB관리 v8 === */
+/* === íë¡ì í¸ ì ì ì¹íë ì ë³´ / ê²¬ì ì DBê´ë¦¬ v8 === */
 .receive-webhard-box {
   margin-top: 16px;
   padding: 14px;
@@ -16520,7 +16512,7 @@ tr:hover td,.pm-project-list-row:hover{background:#fff8f1 !important;}
   .receive-webhard-grid { grid-template-columns: 1fr; }
 }
 
-/* === 견적서 DB관리 엑셀 작성란 v10 === */
+/* === ê²¬ì ì DBê´ë¦¬ ìì ìì±ë v10 === */
 .quote-db-grid-wrap {
   max-height: 68vh;
   overflow: auto;
@@ -16605,7 +16597,7 @@ th.quote-db-manage-col {
 }
 
 
-/* === DB관리 연도별 0~3 시트 연결 화면 v12 === */
+/* === DBê´ë¦¬ ì°ëë³ 0~3 ìí¸ ì°ê²° íë©´ v12 === */
 .quote-db-report-card{margin-top:18px;}
 .quote-db-report-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;}
 .quote-db-report-head strong{display:block;font-size:18px;color:#6b7280;margin-bottom:6px;}
@@ -16629,7 +16621,7 @@ th.quote-db-manage-col {
 .quote-db-table th,.quote-db-table td{white-space:nowrap;}
 .quote-db-cell-input{min-width:100%;}
 
-/* DB관리 셀 드롭다운/요청사항 선택 모달 */
+/* DBê´ë¦¬ ì ëë¡­ë¤ì´/ìì²­ì¬í­ ì í ëª¨ë¬ */
 .quote-db-cell-dropdown{background:#fffdf4;border-color:#f8c471!important;}
 .estimate-db-dropdown-modal{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.28);display:flex;align-items:center;justify-content:center;padding:24px;}
 .estimate-db-dropdown-modal.hidden{display:none;}
@@ -16647,7 +16639,7 @@ th.quote-db-manage-col {
 .estimate-db-dropdown-empty{padding:20px 12px;color:#64748b;font-weight:700;text-align:center;}
 .estimate-db-dropdown-actions{display:flex;justify-content:flex-end;gap:8px;}
 
-/* === DB관리 드롭다운/관리열/연동 보정 v20 === */
+/* === DBê´ë¦¬ ëë¡­ë¤ì´/ê´ë¦¬ì´/ì°ë ë³´ì  v20 === */
 .quote-db-table th.quote-db-manage-col,
 .quote-db-table td.quote-db-manage-col{
   min-width:78px !important;
@@ -16673,7 +16665,7 @@ th.quote-db-manage-col {
   line-height:1.35;
 }
 
-/* === DB관리 기성/기전 표 병합형 헤더·합계행·외주금액 입력 v23 === */
+/* === DBê´ë¦¬ ê¸°ì±/ê¸°ì  í ë³í©í í¤ëÂ·í©ê³íÂ·ì¸ì£¼ê¸ì¡ ìë ¥ v23 === */
 .quote-db-table .quote-db-head-row-merged th{
   white-space:pre-line;
   line-height:1.3;
@@ -16709,7 +16701,7 @@ th.quote-db-manage-col {
   box-shadow:none!important;
 }
 
-/* === DB관리 v24: 연동 버튼/외주금액 표시/더미데이터 내보내기 === */
+/* === DBê´ë¦¬ v24: ì°ë ë²í¼/ì¸ì£¼ê¸ì¡ íì/ëë¯¸ë°ì´í° ë´ë³´ë´ê¸° === */
 .quote-db-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .estimate-db-link-btn{
   margin-left:auto;
@@ -16751,7 +16743,7 @@ th.quote-db-manage-col {
   box-shadow:0 0 0 2px rgba(37,99,235,.14);
 }
 
-/* === DB관리 v25: 키보드 스크롤·수식셀·차수추가 버튼 === */
+/* === DBê´ë¦¬ v25: í¤ë³´ë ì¤í¬ë¡¤Â·ìììÂ·ì°¨ìì¶ê° ë²í¼ === */
 .quote-db-cell-input.quote-db-formula-cell,
 .quote-db-total-input {
   background: #f8fafc;
@@ -16768,7 +16760,7 @@ th.quote-db-manage-col {
   background: #fef3c7;
 }
 
-/* DB관리 검색/정렬 보강 */
+/* DBê´ë¦¬ ê²ì/ì ë ¬ ë³´ê° */
 .quote-db-search-row{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:10px 0 12px;flex-wrap:wrap;}
 .quote-db-mep-quick-actions{align-items:center;gap:8px;margin-right:auto;}
 .quote-db-search-input{width:min(420px,100%);height:42px;border:1px solid #d8e2ef;border-radius:14px;padding:0 14px;font-weight:700;background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
@@ -16777,7 +16769,7 @@ th.quote-db-manage-col {
 .quote-db-sortable-head:hover{background:#eef4ff;}
 
 
-/* === DB관리 v26: 열 너비 조절 버튼/핸들 + 매출목표 버튼 위치 보정 === */
+/* === DBê´ë¦¬ v26: ì´ ëë¹ ì¡°ì  ë²í¼/í¸ë¤ + ë§¤ì¶ëª©í ë²í¼ ìì¹ ë³´ì  === */
 .estimate-db-resize-btn{
   margin-left:auto;
   border-color:#d8e2ef;
@@ -16839,7 +16831,7 @@ body.estimate-db-resizing{
   margin:0!important;
 }
 
-/* DB관리 거래처 담당자 다중 입력 모달 */
+/* DBê´ë¦¬ ê±°ëì² ë´ë¹ì ë¤ì¤ ìë ¥ ëª¨ë¬ */
 .estimate-db-contact-box{width:min(1180px,calc(100vw - 48px));max-height:min(720px,calc(100vh - 48px));}
 .estimate-db-contact-help{font-size:13px;font-weight:700;color:#64748b;line-height:1.5;background:#f8fafc;border:1px solid #e5edf6;border-radius:12px;padding:10px 12px;}
 .estimate-db-contact-grid-wrap{overflow:auto;border:1px solid #dbe5f0;border-radius:14px;background:#fff;}
@@ -16850,7 +16842,7 @@ body.estimate-db-resizing{
 .estimate-db-contact-grid input{width:100%;height:34px;border:1px solid #cfdbe8;border-radius:9px;padding:0 9px;font-weight:800;outline:none;}
 .estimate-db-contact-grid input:focus{border-color:#ff9f2e;box-shadow:0 0 0 3px rgba(255,159,46,.14);}
 
-/* === DB관리 v31: Enter 특수셀 표시 / 행 높이 고정 / 날짜합계 제외 보정 === */
+/* === DBê´ë¦¬ v31: Enter í¹ìì íì / í ëì´ ê³ ì  / ë ì§í©ê³ ì ì¸ ë³´ì  === */
 .quote-db-table td{
   height:42px;
   max-height:42px;
@@ -16875,7 +16867,7 @@ body.estimate-db-resizing{
   line-height:1.45;
 }
 
-/* === DB관리 v32: 기성청구 완료 체크/이력 표시 === */
+/* === DBê´ë¦¬ v32: ê¸°ì±ì²­êµ¬ ìë£ ì²´í¬/ì´ë ¥ íì === */
 .quote-db-table tr.quote-db-row-complete td{
   background:#e5e7eb!important;
   color:#475569;
@@ -16925,7 +16917,7 @@ body.estimate-db-resizing{
 }
 
 
-/* === DB관리 v33: 월별 목표 모달 스크롤/입력 정렬 보정 === */
+/* === DBê´ë¦¬ v33: ìë³ ëª©í ëª¨ë¬ ì¤í¬ë¡¤/ìë ¥ ì ë ¬ ë³´ì  === */
 .estimate-db-sales-target-box{
   width:min(760px,calc(100vw - 40px));
   max-height:min(82vh,760px);
@@ -16955,11 +16947,11 @@ body.estimate-db-resizing{
   #estimateDbSalesTargetGrid{grid-template-columns:1fr!important;}
 }
 
-/* === 프로젝트 접수 하위 카테고리 접힘 최종 보정 ===
-   - 기존 .project-receive-side-group .project-receive-sub-menu { display:grid; } 규칙의
-     높은 우선순위 때문에 다른 대분류 선택 시에도 프로젝트 작성/프로젝트 리스트가
-     계속 노출되는 현상을 차단합니다.
-   - .active가 붙은 경우에만 펼쳐지고, 그 외에는 반드시 접히도록 합니다.
+/* === íë¡ì í¸ ì ì íì ì¹´íê³ ë¦¬ ì í ìµì¢ ë³´ì  ===
+   - ê¸°ì¡´ .project-receive-side-group .project-receive-sub-menu { display:grid; } ê·ì¹ì
+     ëì ì°ì ìì ëë¬¸ì ë¤ë¥¸ ëë¶ë¥ ì í ììë íë¡ì í¸ ìì±/íë¡ì í¸ ë¦¬ì¤í¸ê°
+     ê³ì ë¸ì¶ëë íìì ì°¨ë¨í©ëë¤.
+   - .activeê° ë¶ì ê²½ì°ìë§ í¼ì³ì§ê³ , ê·¸ ì¸ìë ë°ëì ì íëë¡ í©ëë¤.
 */
 .project-receive-side-group .project-receive-sub-menu:not(.active) {
   display: none !important;
@@ -16971,7 +16963,7 @@ body.estimate-db-resizing{
   padding: 8px 0 0 10px;
 }
 
-/* === 프로젝트 작성: DB관리 PJ행 불러오기 모달 === */
+/* === íë¡ì í¸ ìì±: DBê´ë¦¬ PJí ë¶ë¬ì¤ê¸° ëª¨ë¬ === */
 .quote-db-import-backdrop {
   position: fixed;
   inset: 0;
@@ -17100,7 +17092,7 @@ body.estimate-db-resizing{
 }
 
 
-/* DB관리 > 상담/이메일/특기사항 모달 */
+/* DBê´ë¦¬ > ìë´/ì´ë©ì¼/í¹ê¸°ì¬í­ ëª¨ë¬ */
 body.quote-db-modal-open {
   overflow: hidden;
 }
@@ -17144,7 +17136,7 @@ body.quote-db-modal-open {
   margin-top: 16px;
 }
 
-/* DB관리 Enter 명령 셀: 클릭형 열기 삼각 표시 */
+/* DBê´ë¦¬ Enter ëªë ¹ ì: í´ë¦­í ì´ê¸° ì¼ê° íì */
 .quote-db-command-td {
   position: relative;
   overflow: hidden;
@@ -17197,7 +17189,7 @@ body.quote-db-modal-open {
 }
 
 
-/* === DB관리 열 위치 변경 / 행 높이 조절 보정 === */
+/* === DBê´ë¦¬ ì´ ìì¹ ë³ê²½ / í ëì´ ì¡°ì  ë³´ì  === */
 .quote-db-table {
   --estimate-db-row-height: 44px;
 }
@@ -17232,9 +17224,9 @@ body.quote-db-modal-open {
   min-width: 96px;
 }
 
-/* === DB관리 v35: 엑셀형 전체 셀 입력 영역 보정 ===
-   - td 안쪽에 별도 입력칸이 떠 보이지 않도록 입력 영역을 셀 전체로 확장
-   - Enter 특수옵션 셀은 셀 전체 주황 테두리 + 내부 삼각 버튼으로 표시
+/* === DBê´ë¦¬ v35: ììí ì ì²´ ì ìë ¥ ìì­ ë³´ì  ===
+   - td ììª½ì ë³ë ìë ¥ì¹¸ì´ ë  ë³´ì´ì§ ìëë¡ ìë ¥ ìì­ì ì ì ì²´ë¡ íì¥
+   - Enter í¹ììµì ìì ì ì ì²´ ì£¼í© íëë¦¬ + ë´ë¶ ì¼ê° ë²í¼ì¼ë¡ íì
 */
 .quote-db-table .quote-db-data-row td,
 .quote-db-table .quote-db-total-row td{
@@ -17329,7 +17321,7 @@ body.quote-db-modal-open {
 
 
 
-/* === DB관리 v36: Enter 특수옵션 표시를 삼각형에서 주황색 띠지로 변경 === */
+/* === DBê´ë¦¬ v36: Enter í¹ììµì íìë¥¼ ì¼ê°íìì ì£¼í©ì ë ì§ë¡ ë³ê²½ === */
 .quote-db-command-open-btn{
   width:14px !important;
   right:0 !important;
@@ -17377,9 +17369,9 @@ body.quote-db-modal-open {
 .quote-db-table .quote-db-wrap-text-td{vertical-align:top;}
 
 
-/* === DB관리 그룹 구분선 보강 ===
-   PJ관리 기준: 프로젝트명 | 작업공종 | PM(철거) | 세대수 뒤에 진한 구분선을 표시합니다.
-   기성관리/기전업체 기준: 작업취소 | 외주금액합계 | 2차납품공종 뒤에 진한 구분선을 표시합니다. */
+/* === DBê´ë¦¬ ê·¸ë£¹ êµ¬ë¶ì  ë³´ê° ===
+   PJê´ë¦¬ ê¸°ì¤: íë¡ì í¸ëª | ììê³µì¢ | PM(ì² ê±°) | ì¸ëì ë¤ì ì§í êµ¬ë¶ì ì íìí©ëë¤.
+   ê¸°ì±ê´ë¦¬/ê¸°ì ìì²´ ê¸°ì¤: ììì·¨ì | ì¸ì£¼ê¸ì¡í©ê³ | 2ì°¨ë©íê³µì¢ ë¤ì ì§í êµ¬ë¶ì ì íìí©ëë¤. */
 .quote-db-table th.quote-db-group-boundary,
 .quote-db-table td.quote-db-group-boundary{
   border-right:6px solid #cbd5e1!important;
@@ -17403,7 +17395,7 @@ body.quote-db-modal-open {
 }
 
 
-/* === DB관리 영역 구분선 톤 다운 (진한 회색) === */
+/* === DBê´ë¦¬ ìì­ êµ¬ë¶ì  í¤ ë¤ì´ (ì§í íì) === */
 .db-section-divider,
 .db-group-divider,
 .db-vertical-divider{
@@ -17432,7 +17424,7 @@ body.quote-db-modal-open {
 }
 
 
-/* === DB관리 영역 구분선 회색 보정 === */
+/* === DBê´ë¦¬ ìì­ êµ¬ë¶ì  íì ë³´ì  === */
 .quote-db-section-divider,
 .quote-db-group-divider,
 .quote-db-vertical-divider,
@@ -17468,7 +17460,7 @@ body.quote-db-modal-open {
 }
 
 
-/* ===== DB관리 영역 구분선 밝은 회색 변경 ===== */
+/* ===== DBê´ë¦¬ ìì­ êµ¬ë¶ì  ë°ì íì ë³ê²½ ===== */
 
 .db-divider,
 .db-section-divider,
@@ -17478,34 +17470,34 @@ th.divider-cell{
   border-color:#9ca3af !important;
 }
 
-/* PJ관리 프로젝트명 ↔ 부서명 구분선 */
+/* PJê´ë¦¬ íë¡ì í¸ëª â ë¶ìëª êµ¬ë¶ì  */
 .pj-table td:nth-child(7),
 .pj-table th:nth-child(7){
   border-left:6px solid #9ca3af !important;
 }
 
-/* 기성관리 작업공종 구분선 */
+/* ê¸°ì±ê´ë¦¬ ììê³µì¢ êµ¬ë¶ì  */
 .gisung-table td:nth-child(6),
 .gisung-table th:nth-child(6){
   border-left:6px solid #9ca3af !important;
 }
 
-/* 기전업체 작업구분 구분선 */
+/* ê¸°ì ìì²´ ììêµ¬ë¶ êµ¬ë¶ì  */
 .machine-table td:nth-child(5),
 .machine-table th:nth-child(5){
   border-left:6px solid #9ca3af !important;
 }
 
-/* 연도별 수주 데이터 구분선 */
+/* ì°ëë³ ìì£¼ ë°ì´í° êµ¬ë¶ì  */
 .sales-table td:nth-child(7),
 .sales-table th:nth-child(7){
   border-left:6px solid #9ca3af !important;
 }
 
 
-/* === DB관리 v34: 열 너비 조절 구분선 색상 보정 ===
-   - DB관리 표에서 열 너비 조절 모드 시 보이는 세로 구분선을
-     검정/주황 계열이 아닌 밝은 회색으로 고정합니다.
+/* === DBê´ë¦¬ v34: ì´ ëë¹ ì¡°ì  êµ¬ë¶ì  ìì ë³´ì  ===
+   - DBê´ë¦¬ íìì ì´ ëë¹ ì¡°ì  ëª¨ë ì ë³´ì´ë ì¸ë¡ êµ¬ë¶ì ì
+     ê²ì /ì£¼í© ê³ì´ì´ ìë ë°ì íìì¼ë¡ ê³ ì í©ëë¤.
 */
 .quote-db-col-resize-handle::after{
   background:#cbd5e1!important;
@@ -17520,10 +17512,10 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 
 
 /* =========================
-   DB관리 세로 구분선 회색 변경
+   DBê´ë¦¬ ì¸ë¡ êµ¬ë¶ì  íì ë³ê²½
    ========================= */
 
-/* 기존 검정 구분선 제거 */
+/* ê¸°ì¡´ ê²ì  êµ¬ë¶ì  ì ê±° */
 .db-divider,
 .vertical-divider,
 .quote-db-manage-col::before{
@@ -17532,7 +17524,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   border:none !important;
 }
 
-/* 새 회색 구분선 */
+/* ì íì êµ¬ë¶ì  */
 .quote-db-manage-col{
   position:relative;
 }
@@ -17550,7 +17542,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* === 2026-05-22 요청 반영: 텍스트/카테고리는 검정, DB 세로 구분선만 회색 === */
+/* === 2026-05-22 ìì²­ ë°ì: íì¤í¸/ì¹´íê³ ë¦¬ë ê²ì , DB ì¸ë¡ êµ¬ë¶ì ë§ íì === */
 :root{
   --text:#111827;
 }
@@ -17586,7 +17578,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:#94a3b8 !important;
 }
 
-/* === 2026-05-22 추가 수정: DB관리 프로젝트명 폭/프로젝트 연결 테두리/회색 글씨 복구 === */
+/* === 2026-05-22 ì¶ê° ìì : DBê´ë¦¬ íë¡ì í¸ëª í­/íë¡ì í¸ ì°ê²° íëë¦¬/íì ê¸ì¨ ë³µêµ¬ === */
 #estimateDbManage,
 #estimateDbManage .work-section-title,
 #estimateDbManage .quote-db-report-head,
@@ -17611,7 +17603,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color:#fff !important;
 }
 
-/* 프로젝트명 셀: 2줄 사용은 유지하되 폭과 줄높이를 컴팩트하게 고정 */
+/* íë¡ì í¸ëª ì: 2ì¤ ì¬ì©ì ì ì§íë í­ê³¼ ì¤ëì´ë¥¼ ì»´í©í¸íê² ê³ ì  */
 #estimateDbManage .quote-db-table .quote-db-wrap-text-td,
 #estimateDbManage .quote-db-table .quote-db-wrap-text-cell{
   white-space:normal !important;
@@ -17623,7 +17615,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   padding:6px 8px !important;
 }
 
-/* 프로젝트 연결 셀: 우측 Enter 띠지는 유지하고, 셀 전체 주황색 테두리만 제거 */
+/* íë¡ì í¸ ì°ê²° ì: ì°ì¸¡ Enter ë ì§ë ì ì§íê³ , ì ì ì²´ ì£¼í©ì íëë¦¬ë§ ì ê±° */
 #estimateDbManage .quote-db-table .quote-db-project-link-td,
 #estimateDbManage .quote-db-table .quote-db-project-link-td:focus-within{
   box-shadow:none !important;
@@ -17635,17 +17627,17 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:transparent !important;
 }
 
-/* DB관리 영역 세로 구분선은 밝은 회색으로 유지 */
+/* DBê´ë¦¬ ìì­ ì¸ë¡ êµ¬ë¶ì ì ë°ì íìì¼ë¡ ì ì§ */
 #estimateDbManage .quote-db-table th.quote-db-group-boundary,
 #estimateDbManage .quote-db-table td.quote-db-group-boundary{
   border-right:6px solid #cbd5e1 !important;
   box-shadow:none !important;
 }
 
-/* === 2026-05-22 재수정: Enter 기능 셀 전체 주황 테두리 제거 + 회색 텍스트 검정 복구 ===
-   - Enter 명령 기능이 들어간 모든 셀의 전체 주황색 테두리/아웃라인을 제거합니다.
-   - 우측 Enter 주황 띠지는 유지합니다.
-   - 상단 메뉴/버튼/DB관리 보조 영역의 회색 텍스트를 검정색으로 통일합니다.
+/* === 2026-05-22 ì¬ìì : Enter ê¸°ë¥ ì ì ì²´ ì£¼í© íëë¦¬ ì ê±° + íì íì¤í¸ ê²ì  ë³µêµ¬ ===
+   - Enter ëªë ¹ ê¸°ë¥ì´ ë¤ì´ê° ëª¨ë  ìì ì ì²´ ì£¼í©ì íëë¦¬/ììë¼ì¸ì ì ê±°í©ëë¤.
+   - ì°ì¸¡ Enter ì£¼í© ë ì§ë ì ì§í©ëë¤.
+   - ìë¨ ë©ë´/ë²í¼/DBê´ë¦¬ ë³´ì¡° ìì­ì íì íì¤í¸ë¥¼ ê²ì ìì¼ë¡ íµì¼í©ëë¤.
 */
 #estimateDbManage .quote-db-table .quote-db-command-td,
 #estimateDbManage .quote-db-table .quote-db-command-td:focus-within,
@@ -17675,7 +17667,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   border-color:transparent !important;
 }
 
-/* Enter 주황 띠지는 유지 */
+/* Enter ì£¼í© ë ì§ë ì ì§ */
 #estimateDbManage .quote-db-command-open-btn::before{
   background:#f97316 !important;
 }
@@ -17683,7 +17675,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:#ea580c !important;
 }
 
-/* 회색 글씨 검정 복구: 상단 메뉴/사용자 영역/일반 버튼/DB관리 컨트롤 */
+/* íì ê¸ì¨ ê²ì  ë³µêµ¬: ìë¨ ë©ë´/ì¬ì©ì ìì­/ì¼ë° ë²í¼/DBê´ë¦¬ ì»¨í¸ë¡¤ */
 .top-tabs,
 .top-tabs span,
 .top-tabs .active,
@@ -17717,7 +17709,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color:#111827 !important;
 }
 
-/* 배경이 진한 활성/주요 버튼은 흰색 텍스트 유지 */
+/* ë°°ê²½ì´ ì§í íì±/ì£¼ì ë²í¼ì í°ì íì¤í¸ ì ì§ */
 .side-main.active,
 .side-item.active,
 .project-receive-side-group > .side-main.active,
@@ -17732,7 +17724,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color:#fff !important;
 }
 
-/* 로고/아이콘 내부 색상은 기존 디자인 유지 */
+/* ë¡ê³ /ìì´ì½ ë´ë¶ ììì ê¸°ì¡´ ëìì¸ ì ì§ */
 .brand,
 .brand *,
 .brand-mark,
@@ -17740,7 +17732,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color:inherit;
 }
 
-/* === 프로젝트 작성: 첨부파일 관리 카드 / 모달 === */
+/* === íë¡ì í¸ ìì±: ì²¨ë¶íì¼ ê´ë¦¬ ì¹´ë / ëª¨ë¬ === */
 .quote-attachment-card {
   align-self: stretch;
 }
@@ -17921,7 +17913,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   }
 }
 
-/* === 프로젝트 작성: 첨부파일 관리 v2 - 접수자료 분류 통일 === */
+/* === íë¡ì í¸ ìì±: ì²¨ë¶íì¼ ê´ë¦¬ v2 - ì ììë£ ë¶ë¥ íµì¼ === */
 .quote-attachment-note {
   display: grid;
   gap: 8px;
@@ -17955,7 +17947,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* === 견적서 종류별 관리 v1: 4종 견적서 엑셀 양식 웹 구현 === */
+/* === ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ v1: 4ì¢ ê²¬ì ì ìì ìì ì¹ êµ¬í === */
 .estimate-sheet-shell {
   gap: 18px;
 }
@@ -18195,7 +18187,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   }
 }
 
-/* === 견적서 종류별 관리 v2: 엑셀 원본 양식 1:1 표시 보정 === */
+/* === ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ v2: ìì ìë³¸ ìì 1:1 íì ë³´ì  === */
 .estimate-excel-grid-wrap {
   position: relative;
   overflow: auto;
@@ -18274,9 +18266,9 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 /* =========================================================
-   견적서 종류별 관리 - 엑셀 원본 정밀 표시 보정
-   - 분할 JS 적용 후 이미지가 일반 흐름으로 밀려 보이는 현상 방지
-   - 엑셀의 행/열 치수를 우선 적용하기 위해 기존 grid 공통 min-width/padding 무력화
+   ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ - ìì ìë³¸ ì ë° íì ë³´ì 
+   - ë¶í  JS ì ì© í ì´ë¯¸ì§ê° ì¼ë° íë¦ì¼ë¡ ë°ë ¤ ë³´ì´ë íì ë°©ì§
+   - ììì í/ì´ ì¹ìë¥¼ ì°ì  ì ì©íê¸° ìí´ ê¸°ì¡´ grid ê³µíµ min-width/padding ë¬´ë ¥í
    ========================================================= */
 .estimate-sheet-grid.estimate-exact-grid {
   position: relative;
@@ -18317,7 +18309,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   white-space: nowrap !important;
   word-break: normal !important;
   color: #000 !important;
-  font-family: Arial, '맑은 고딕', Malgun Gothic, sans-serif;
+  font-family: Arial, 'ë§ì ê³ ë', Malgun Gothic, sans-serif;
 }
 
 .estimate-sheet-grid.estimate-exact-grid .estimate-exact-table thead th,
@@ -18356,7 +18348,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
 }
 
-/* === 견적서 종류별 관리: 엑셀 원본 1:1 렌더링 보정 === */
+/* === ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬: ìì ìë³¸ 1:1 ë ëë§ ë³´ì  === */
 .estimate-sheet-editor {
   overflow: hidden;
 }
@@ -18375,7 +18367,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   table-layout: fixed;
   background: #ffffff;
   color: #000000;
-  font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+  font-family: 'Malgun Gothic', 'ë§ì ê³ ë', Arial, sans-serif;
 }
 .estimate-sheet-grid.estimate-excel-grid col {
   box-sizing: border-box;
@@ -18443,9 +18435,9 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color: #000000 !important;
 }
 
-/* === 2026-05-25 견적서 종류별 관리 엑셀 원본 표시 보정 ===
-   - 엑셀 Page Break Preview의 출력범위 외부 회색 영역과 파란 출력 경계선 우선 적용
-   - JS에서 계산한 원본 엑셀 열너비/행높이를 브라우저 테이블 레이아웃이 임의 확장하지 않도록 보정
+/* === 2026-05-25 ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ ìì ìë³¸ íì ë³´ì  ===
+   - ìì Page Break Previewì ì¶ë ¥ë²ì ì¸ë¶ íì ìì­ê³¼ íë ì¶ë ¥ ê²½ê³ì  ì°ì  ì ì©
+   - JSìì ê³ì°í ìë³¸ ìì ì´ëë¹/íëì´ë¥¼ ë¸ë¼ì°ì  íì´ë¸ ë ì´ììì´ ìì íì¥íì§ ìëë¡ ë³´ì 
 */
 .estimate-sheet-grid.estimate-excel-grid,
 .estimate-excel-grid {
@@ -18466,9 +18458,9 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* === 2026-05-25 개산견적 엑셀 1:1 보정 ===
-   - 병합되지 않은 셀의 긴 문구가 Excel처럼 오른쪽 빈 셀 영역으로 보이도록 overflow 허용
-   - 셀 치수는 JS에서 지정한 원본 Excel px값을 유지
+/* === 2026-05-25 ê°ì°ê²¬ì  ìì 1:1 ë³´ì  ===
+   - ë³í©ëì§ ìì ìì ê¸´ ë¬¸êµ¬ê° Excelì²ë¼ ì¤ë¥¸ìª½ ë¹ ì ìì­ì¼ë¡ ë³´ì´ëë¡ overflow íì©
+   - ì ì¹ìë JSìì ì§ì í ìë³¸ Excel pxê°ì ì ì§
 */
 .estimate-excel-grid,
 .estimate-sheet-grid.estimate-excel-grid {
@@ -18498,9 +18490,9 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   overflow: hidden !important;
 }
 
-/* === 2026-05-25 개산견적 폰트/긴문구/하단서명 보정 ===
-   - 제목 28pt, 기본 11pt 유지
-   - 병합되지 않은 긴 문구가 Excel처럼 오른쪽 빈 셀 위로 보이도록 상위 z-index 적용
+/* === 2026-05-25 ê°ì°ê²¬ì  í°í¸/ê¸´ë¬¸êµ¬/íë¨ìëª ë³´ì  ===
+   - ì ëª© 28pt, ê¸°ë³¸ 11pt ì ì§
+   - ë³í©ëì§ ìì ê¸´ ë¬¸êµ¬ê° Excelì²ë¼ ì¤ë¥¸ìª½ ë¹ ì ìë¡ ë³´ì´ëë¡ ìì z-index ì ì©
 */
 .estimate-excel-cell.overflow-text-cell {
   overflow: visible !important;
@@ -18522,7 +18514,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 
 
-/* 기간별 견적서 관리 */
+/* ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬ */
 .estimate-period-shell .quote-hero{margin-bottom:18px;}
 .estimate-period-count{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid #dbe3ee;border-radius:999px;background:#fff;font-weight:800;color:#111827;}
 .estimate-period-card{overflow:hidden;}
@@ -18530,7 +18522,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-toolbar strong{font-size:15px;color:#111827;}
 .estimate-period-toolbar span{color:#64748b;font-weight:700;}
 .estimate-period-sheet-wrap{width:100%;max-height:620px;overflow:auto;background:#f3f4f6;border:1px solid #dbe3ee;border-radius:12px;}
-.estimate-period-grid{border-collapse:collapse;table-layout:fixed;background:#fff;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;font-size:11px;color:#111827;}
+.estimate-period-grid{border-collapse:collapse;table-layout:fixed;background:#fff;font-family:'Malgun Gothic','ë§ì ê³ ë',Arial,sans-serif;font-size:11px;color:#111827;}
 .estimate-period-cell{border:1px solid #222;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:clip;vertical-align:middle;background:#fff;line-height:1.25;}
 .estimate-period-cell.title{font-size:20px;font-weight:900;text-align:center;background:#fff;height:44px;}
 .estimate-period-cell.header{background:#f1f5f9;font-weight:900;text-align:center;}
@@ -18541,14 +18533,14 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-cell.c3,.estimate-period-cell.c4,.estimate-period-cell.c8,.estimate-period-cell.c13,.estimate-period-cell.c16,.estimate-period-cell.c17,.estimate-period-cell.c18{text-align:left;}
 .estimate-period-grid tr:nth-child(n+9) .estimate-period-cell{height:24px;}
 
-/* 추천 구조: 기간별 견적서 관리와 견적서 종류별 관리 연결 표시 */
+/* ì¶ì² êµ¬ì¡°: ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬ì ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ ì°ê²° íì */
 .estimate-period-data-row.linked{cursor:pointer;}
 .estimate-period-data-row.linked:hover .estimate-period-cell{background:#ffedd5!important;}
 .estimate-period-view-btn{margin-left:6px;padding:2px 7px;border:1px solid #fb923c;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:10px;font-weight:900;cursor:pointer;}
 .estimate-period-view-btn:hover{background:#fed7aa;}
 
 
-/* 2026-05 기간별 견적서 관리: 리스트형 관리 화면 */
+/* 2026-05 ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: ë¦¬ì¤í¸í ê´ë¦¬ íë©´ */
 .estimate-period-hero-actions{gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
 .estimate-period-summary-cards{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:960px;}
 .estimate-period-summary-card{min-width:86px;padding:8px 10px;border:1px solid #dbe3ee;border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.04);}
@@ -18562,7 +18554,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-filter-field input,.estimate-period-filter-field select{height:34px;min-width:118px;border:1px solid #cbd5e1;border-radius:10px;padding:0 9px;font-size:12px;background:#fff;color:#111827;}
 .estimate-period-filter-field.search input{min-width:220px;}
 .estimate-period-manage-wrap{width:100%;max-height:650px;overflow:auto;background:#f8fafc;border:1px solid #dbe3ee;border-radius:12px;}
-.estimate-period-manage-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;background:#fff;font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif;font-size:12px;color:#111827;}
+.estimate-period-manage-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;background:#fff;font-family:'Malgun Gothic','ë§ì ê³ ë',Arial,sans-serif;font-size:12px;color:#111827;}
 .estimate-period-manage-table th{position:sticky;top:0;z-index:5;height:38px;background:#f1f5f9;border-bottom:1px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:0 8px;text-align:center;font-weight:900;white-space:nowrap;}
 .estimate-period-manage-table td{height:34px;border-bottom:1px solid #e2e8f0;border-right:1px solid #eef2f7;padding:4px 8px;white-space:nowrap;vertical-align:middle;background:#fff;}
 .estimate-period-manage-table tr.is-linked td{background:#fff7ed;}
@@ -18580,7 +18572,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-period-save-hint{font-size:11px;color:#64748b;font-weight:800;padding:8px 2px 0;}
 
 
-/* === 견적 의뢰관리 workflow patch === */
+/* === ê²¬ì  ìë¢°ê´ë¦¬ workflow patch === */
 .estimate-workflow-shell .quote-hero { align-items:flex-start; }
 .estimate-workflow-card { display:flex; flex-direction:column; gap:14px; }
 .estimate-workflow-stepbar { display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:10px; }
@@ -18693,15 +18685,15 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   font-size:14px !important;
   font-weight:700 !important;
 }
-.estimate-workflow-table tr.estimate-request-status-작업취소 td{background:#f1f5f9 !important;color:#64748b !important;text-decoration:none;}
-.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after{content:"작업취소 완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
-.estimate-workflow-table tr.estimate-request-status-승인완료 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-선착수 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after{content:"처리완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#2563eb;}
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td{background:#f1f5f9 !important;color:#64748b !important;text-decoration:none;}
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td:nth-child(2)::after{content:"ììì·¨ì ìë£";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
+.estimate-workflow-table tr.estimate-request-status-ì¹ì¸ìë£ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì ì°©ì td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì°©ììë£ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-DBë±ë¡ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ë°ì¡ìë£ td:nth-child(2)::after{content:"ì²ë¦¬ìë£";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#2563eb;}
 
-/* === 견적 의뢰관리 2026-05 수정: 열 너비/드롭다운 표시/작업취소 행 강조 === */
+/* === ê²¬ì  ìë¢°ê´ë¦¬ 2026-05 ìì : ì´ ëë¹/ëë¡­ë¤ì´ íì/ììì·¨ì í ê°ì¡° === */
 .estimate-workflow-table col.col-date{width:90px !important;}
 .estimate-workflow-table col.col-memo{width:80px !important;}
 .estimate-workflow-table th:nth-child(1),
@@ -18716,17 +18708,17 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-select-wrap .estimate-select-value{position:absolute;left:10px;right:28px;top:0;height:34px;line-height:34px;color:#0f172a !important;font-size:13px;font-weight:900;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:3;}
 .estimate-select-wrap::after{content:"";position:absolute;right:10px;top:50%;margin-top:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #475569;z-index:4;pointer-events:none;}
 .estimate-select-wrap select.estimate-request-select option{color:#0f172a !important;-webkit-text-fill-color:#0f172a !important;background:#fff !important;}
-.estimate-workflow-table tr[data-request-status="작업취소"] td,
-.estimate-workflow-table tr.estimate-request-status-작업취소 td{background:#e5e7eb !important;color:#64748b !important;}
-.estimate-workflow-table tr[data-request-status="작업취소"] td:first-child,
-.estimate-workflow-table tr.estimate-request-status-작업취소 td:first-child{box-shadow:inset 4px 0 0 #9ca3af;}
-.estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after{content:"작업취소 완료";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
+.estimate-workflow-table tr[data-request-status="ììì·¨ì"] td,
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td{background:#e5e7eb !important;color:#64748b !important;}
+.estimate-workflow-table tr[data-request-status="ììì·¨ì"] td:first-child,
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td:first-child{box-shadow:inset 4px 0 0 #9ca3af;}
+.estimate-workflow-table tr[data-request-status="ììì·¨ì"] td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td:nth-child(2)::after{content:"ììì·¨ì ìë£";display:block;margin-top:4px;font-size:11px;font-weight:900;color:#dc2626;}
 
 
-/* === 견적 하위 카테고리 선택 표시 강제 보정 ===
-   다른 클릭 보정 스크립트가 active 클래스를 다시 지우더라도
-   work-side-selected/data-work-selected 기준으로 선택 액션을 유지합니다. */
+/* === ê²¬ì  íì ì¹´íê³ ë¦¬ ì í íì ê°ì  ë³´ì  ===
+   ë¤ë¥¸ í´ë¦­ ë³´ì  ì¤í¬ë¦½í¸ê° active í´ëì¤ë¥¼ ë¤ì ì§ì°ëë¼ë
+   work-side-selected/data-work-selected ê¸°ì¤ì¼ë¡ ì í ì¡ìì ì ì§í©ëë¤. */
 .estimate-quote-side-group > .side-main.active,
 .estimate-quote-side-group > .side-main.work-side-selected,
 .estimate-quote-side-group > .side-main[data-work-selected="true"]{
@@ -18750,7 +18742,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   color:#fff !important;
 }
 
-/* === 견적 의뢰관리 행 깨짐/빈공간 제거 최종 보정 === */
+/* === ê²¬ì  ìë¢°ê´ë¦¬ í ê¹¨ì§/ë¹ê³µê° ì ê±° ìµì¢ ë³´ì  === */
 .estimate-workflow-table-wrap{
   overflow-x:auto;
 }
@@ -18780,13 +18772,13 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table td:nth-child(7) small{
   display:none !important;
 }
-.estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-승인완료 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-선착수 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after{
+.estimate-workflow-table tr[data-request-status="ììì·¨ì"] td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì¹ì¸ìë£ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì ì°©ì td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì°©ììë£ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-DBë±ë¡ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ë°ì¡ìë£ td:nth-child(2)::after{
   display:none !important;
   content:"" !important;
 }
@@ -18875,8 +18867,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   max-width:320px !important;
 }
 
-/* === 견적 의뢰관리 상태/관리 드롭다운 구조 정리 ===
-   상태 칸은 현재 상태만 표시하고, 상태 변경 드롭다운은 관리 칸으로 통합합니다. */
+/* === ê²¬ì  ìë¢°ê´ë¦¬ ìí/ê´ë¦¬ ëë¡­ë¤ì´ êµ¬ì¡° ì ë¦¬ ===
+   ìí ì¹¸ì íì¬ ìíë§ íìíê³ , ìí ë³ê²½ ëë¡­ë¤ì´ì ê´ë¦¬ ì¹¸ì¼ë¡ íµí©í©ëë¤. */
 .estimate-workflow-table td.estimate-request-current-status{
   text-align:center !important;
   vertical-align:middle !important;
@@ -18896,18 +18888,18 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   font-weight:900 !important;
   white-space:nowrap !important;
 }
-.estimate-workflow-table tr.estimate-request-status-작업취소 .estimate-status-pill,
-.estimate-workflow-table tr[data-request-status="작업취소"] .estimate-status-pill{
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì .estimate-status-pill,
+.estimate-workflow-table tr[data-request-status="ììì·¨ì"] .estimate-status-pill{
   background:#d1d5db !important;
   color:#475569 !important;
 }
-.estimate-workflow-table tr.estimate-request-status-작업취소 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-승인완료 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-선착수 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-착수완료 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-DB등록 td:nth-child(2)::after,
-.estimate-workflow-table tr.estimate-request-status-발송완료 td:nth-child(2)::after,
-.estimate-workflow-table tr[data-request-status="작업취소"] td:nth-child(2)::after{
+.estimate-workflow-table tr.estimate-request-status-ììì·¨ì td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì¹ì¸ìë£ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì ì°©ì td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ì°©ììë£ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-DBë±ë¡ td:nth-child(2)::after,
+.estimate-workflow-table tr.estimate-request-status-ë°ì¡ìë£ td:nth-child(2)::after,
+.estimate-workflow-table tr[data-request-status="ììì·¨ì"] td:nth-child(2)::after{
   content:none !important;
   display:none !important;
 }
@@ -18927,9 +18919,9 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   max-width:340px !important;
 }
 
-/* === 견적 의뢰관리 관리칸 행간/가로선 최종 정렬 보정 ===
-   관리 칸만 행 높이가 달라 보이는 현상을 제거하고,
-   행 구분선이 카드 끝까지 이어지도록 테이블/셀 높이와 border를 통일합니다. */
+/* === ê²¬ì  ìë¢°ê´ë¦¬ ê´ë¦¬ì¹¸ íê°/ê°ë¡ì  ìµì¢ ì ë ¬ ë³´ì  ===
+   ê´ë¦¬ ì¹¸ë§ í ëì´ê° ë¬ë¼ ë³´ì´ë íìì ì ê±°íê³ ,
+   í êµ¬ë¶ì ì´ ì¹´ë ëê¹ì§ ì´ì´ì§ëë¡ íì´ë¸/ì ëì´ì borderë¥¼ íµì¼í©ëë¤. */
 .estimate-workflow-table-wrap{
   width:100% !important;
   overflow-x:auto !important;
@@ -19045,8 +19037,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   content:none !important;
 }
 
-/* === 견적 의뢰관리: 관리 칸 내부 흰색 줄/빈 틈 제거 ===
-   관리 셀 안의 버튼 그룹 배경/간격 때문에 생기던 흰색 가로·세로 줄을 제거합니다. */
+/* === ê²¬ì  ìë¢°ê´ë¦¬: ê´ë¦¬ ì¹¸ ë´ë¶ í°ì ì¤/ë¹ í ì ê±° ===
+   ê´ë¦¬ ì ìì ë²í¼ ê·¸ë£¹ ë°°ê²½/ê°ê²© ëë¬¸ì ìê¸°ë í°ì ê°ë¡Â·ì¸ë¡ ì¤ì ì ê±°í©ëë¤. */
 .estimate-workflow-table tbody tr > td:nth-child(9){
   background:inherit !important;
   padding:0 8px !important;
@@ -19060,10 +19052,10 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table tbody tr:nth-child(even) > td:nth-child(9) .estimate-workflow-row-actions{
   background:#f8fafc !important;
 }
-.estimate-workflow-table tbody tr.estimate-request-status-작업취소 > td:nth-child(9),
-.estimate-workflow-table tbody tr.estimate-request-status-작업취소 > td:nth-child(9) .estimate-workflow-row-actions,
-.estimate-workflow-table tbody tr[data-request-status="작업취소"] > td:nth-child(9),
-.estimate-workflow-table tbody tr[data-request-status="작업취소"] > td:nth-child(9) .estimate-workflow-row-actions{
+.estimate-workflow-table tbody tr.estimate-request-status-ììì·¨ì > td:nth-child(9),
+.estimate-workflow-table tbody tr.estimate-request-status-ììì·¨ì > td:nth-child(9) .estimate-workflow-row-actions,
+.estimate-workflow-table tbody tr[data-request-status="ììì·¨ì"] > td:nth-child(9),
+.estimate-workflow-table tbody tr[data-request-status="ììì·¨ì"] > td:nth-child(9) .estimate-workflow-row-actions{
   background:#e5e7eb !important;
 }
 .estimate-workflow-table td:nth-child(9) .estimate-workflow-row-actions,
@@ -19099,8 +19091,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   border-right:0 !important;
 }
 
-/* === 견적 의뢰관리: 관리 열 테이블 라인/빈 줄 강제 정리 ===
-   td 자체를 flex/grid로 만들던 기존 규칙을 무효화하고, 내부 div만 버튼 정렬을 담당하게 합니다. */
+/* === ê²¬ì  ìë¢°ê´ë¦¬: ê´ë¦¬ ì´ íì´ë¸ ë¼ì¸/ë¹ ì¤ ê°ì  ì ë¦¬ ===
+   td ìì²´ë¥¼ flex/gridë¡ ë§ë¤ë ê¸°ì¡´ ê·ì¹ì ë¬´í¨ííê³ , ë´ë¶ divë§ ë²í¼ ì ë ¬ì ë´ë¹íê² í©ëë¤. */
 .estimate-workflow-table th:nth-child(9),
 .estimate-workflow-table td:nth-child(9),
 .estimate-workflow-table td.estimate-actions-cell{
@@ -19122,8 +19114,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 }
 .estimate-workflow-table tbody tr:nth-child(odd) > td.estimate-actions-cell{background:#fff !important;}
 .estimate-workflow-table tbody tr:nth-child(even) > td.estimate-actions-cell{background:#f8fafc !important;}
-.estimate-workflow-table tbody tr.estimate-request-status-작업취소 > td.estimate-actions-cell,
-.estimate-workflow-table tbody tr[data-request-status="작업취소"] > td.estimate-actions-cell{background:#e5e7eb !important;}
+.estimate-workflow-table tbody tr.estimate-request-status-ììì·¨ì > td.estimate-actions-cell,
+.estimate-workflow-table tbody tr[data-request-status="ììì·¨ì"] > td.estimate-actions-cell{background:#e5e7eb !important;}
 .estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact{
   display:grid !important;
   grid-template-columns:44px 82px 104px 44px !important;
@@ -19178,25 +19170,25 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   border-bottom:1px solid #e5edf7 !important;
 }
 
-/* === 견적 의뢰관리: 상태 단순화 및 관리 헤더 색상 보정 === */
+/* === ê²¬ì  ìë¢°ê´ë¦¬: ìí ë¨ìí ë° ê´ë¦¬ í¤ë ìì ë³´ì  === */
 .estimate-workflow-table thead th:nth-child(9),
 .estimate-workflow-table th.estimate-actions-header{
   background:#f3f6fa !important;
   color:#334155 !important;
   border-bottom:1px solid #dbe4ef !important;
 }
-.estimate-workflow-table tr.estimate-request-status-작업시작 .estimate-status-pill,
-.estimate-workflow-table tr[data-request-status="작업시작"] .estimate-status-pill{
+.estimate-workflow-table tr.estimate-request-status-ìììì .estimate-status-pill,
+.estimate-workflow-table tr[data-request-status="ìììì"] .estimate-status-pill{
   background:#e0f2fe !important;
   color:#075985 !important;
 }
-.estimate-workflow-table tr.estimate-request-status-선착수 .estimate-status-pill,
-.estimate-workflow-table tr[data-request-status="선착수"] .estimate-status-pill{
+.estimate-workflow-table tr.estimate-request-status-ì ì°©ì .estimate-status-pill,
+.estimate-workflow-table tr[data-request-status="ì ì°©ì"] .estimate-status-pill{
   background:#fef3c7 !important;
   color:#92400e !important;
 }
-.estimate-workflow-table tr.estimate-request-status-대기중 .estimate-status-pill,
-.estimate-workflow-table tr[data-request-status="대기중"] .estimate-status-pill{
+.estimate-workflow-table tr.estimate-request-status-ëê¸°ì¤ .estimate-status-pill,
+.estimate-workflow-table tr[data-request-status="ëê¸°ì¤"] .estimate-status-pill{
   background:#eef2ff !important;
   color:#3730a3 !important;
 }
@@ -19205,8 +19197,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background-clip:padding-box !important;
 }
 
-/* === 견적 의뢰관리: 연계 열 제거 후 8열 구조 최종 정리 ===
-   DB관리 연결 여부는 내부 데이터로만 유지하고 화면에서는 표시하지 않습니다. */
+/* === ê²¬ì  ìë¢°ê´ë¦¬: ì°ê³ ì´ ì ê±° í 8ì´ êµ¬ì¡° ìµì¢ ì ë¦¬ ===
+   DBê´ë¦¬ ì°ê²° ì¬ë¶ë ë´ë¶ ë°ì´í°ë¡ë§ ì ì§íê³  íë©´ììë íìíì§ ììµëë¤. */
 .estimate-workflow-table col.col-link{
   display:none !important;
   width:0 !important;
@@ -19263,8 +19255,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table tbody tr:nth-child(even) > td.estimate-actions-cell{
   background:#f8fafc !important;
 }
-.estimate-workflow-table tbody tr.estimate-request-status-작업취소 > td.estimate-actions-cell,
-.estimate-workflow-table tbody tr[data-request-status="작업취소"] > td.estimate-actions-cell{
+.estimate-workflow-table tbody tr.estimate-request-status-ììì·¨ì > td.estimate-actions-cell,
+.estimate-workflow-table tbody tr[data-request-status="ììì·¨ì"] > td.estimate-actions-cell{
   background:#e5e7eb !important;
 }
 .estimate-workflow-table td.estimate-actions-cell > .estimate-workflow-row-actions.compact{
@@ -19323,7 +19315,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
 .estimate-workflow-table th:nth-child(7), .estimate-workflow-table td:nth-child(7){width:170px !important;min-width:170px !important;max-width:170px !important;}
 
 
-/* 기간별 견적서 관리 열 너비/방향키 이동 보정 */
+/* ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬ ì´ ëë¹/ë°©í¥í¤ ì´ë ë³´ì  */
 .estimate-period-manage-table{
   table-layout:fixed !important;
   width:max-content !important;
@@ -19350,7 +19342,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   background:#fff !important;
 }
 
-/* 기간별 견적서 관리: 열 너비/단일 스크롤/세부보기 보정 */
+/* ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: ì´ ëë¹/ë¨ì¼ ì¤í¬ë¡¤/ì¸ë¶ë³´ê¸° ë³´ì  */
 .estimate-period-sheet-wrap{
   width:100% !important;
   max-height:650px !important;
@@ -19393,7 +19385,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   cursor:pointer !important;
 }
 
-/* DB관리 대량 더미데이터 성능 개선: 50행 단위 페이지 표시 */
+/* DBê´ë¦¬ ëë ëë¯¸ë°ì´í° ì±ë¥ ê°ì : 50í ë¨ì íì´ì§ íì */
 .quote-db-pager {
   display: flex;
   align-items: center;
@@ -19414,7 +19406,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   cursor: not-allowed;
 }
 
-/* === 2026-05 기간별 견적서 관리 보정: 상단/헤더 틀고정 + 날짜 미니달력 === */
+/* === 2026-05 ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬ ë³´ì : ìë¨/í¤ë íê³ ì  + ë ì§ ë¯¸ëë¬ë ¥ === */
 .estimate-period-shell .project-receive-hero.quote-hero{
   position: sticky !important;
   top: 0 !important;
@@ -19451,7 +19443,7 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   cursor: pointer !important;
 }
 
-/* === 2026-05 견적 의뢰관리 보정: 테이블 타이틀 행 틀고정 === */
+/* === 2026-05 ê²¬ì  ìë¢°ê´ë¦¬ ë³´ì : íì´ë¸ íì´í í íê³ ì  === */
 .estimate-workflow-table-wrap{
   position: relative !important;
   overflow: auto !important;
@@ -19468,8 +19460,8 @@ body.estimate-db-resizing .quote-db-col-resize-handle::after{
   box-shadow: 0 1px 0 #dbe4ef, 0 3px 8px rgba(15, 23, 42, .06) !important;
 }
 
-/* === 2026-05-28 사용자 요청 반영: 버튼/견적관리/프로젝트관리 화면 보정 === */
-/* 주황색 주요 버튼은 항상 흰색 글씨로 표시 */
+/* === 2026-05-28 ì¬ì©ì ìì²­ ë°ì: ë²í¼/ê²¬ì ê´ë¦¬/íë¡ì í¸ê´ë¦¬ íë©´ ë³´ì  === */
+/* ì£¼í©ì ì£¼ì ë²í¼ì í­ì í°ì ê¸ì¨ë¡ íì */
 .btn-primary,
 .btn.btn-primary,
 button.btn-primary,
@@ -19482,7 +19474,7 @@ button.btn-orange{
   -webkit-text-fill-color:#fff !important;
 }
 
-/* 견적서 종류별 관리 리스트의 본문 굵은글씨 해제 */
+/* ê²¬ì ì ì¢ë¥ë³ ê´ë¦¬ ë¦¬ì¤í¸ì ë³¸ë¬¸ êµµìê¸ì¨ í´ì  */
 .estimate-sheet-list-table tbody td,
 .estimate-sheet-list-table tbody td strong,
 .estimate-sheet-list-table tbody td small{
@@ -19492,7 +19484,7 @@ button.btn-orange{
   font-weight:700 !important;
 }
 
-/* 견적 의뢰관리: 카드 내부 세로 스크롤 제거, 전체 페이지 스크롤로 확인 */
+/* ê²¬ì  ìë¢°ê´ë¦¬: ì¹´ë ë´ë¶ ì¸ë¡ ì¤í¬ë¡¤ ì ê±°, ì ì²´ íì´ì§ ì¤í¬ë¡¤ë¡ íì¸ */
 .estimate-workflow-card,
 .estimate-workflow-board,
 .estimate-workflow-table-wrap{
@@ -19507,7 +19499,7 @@ button.btn-orange{
   z-index:40 !important;
 }
 
-/* 기간별 견적서 관리: 카드 내부 세로 스크롤 제거, 전체 페이지 스크롤로 확인 */
+/* ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: ì¹´ë ë´ë¶ ì¸ë¡ ì¤í¬ë¡¤ ì ê±°, ì ì²´ íì´ì§ ì¤í¬ë¡¤ë¡ íì¸ */
 .estimate-period-card,
 .estimate-period-sheet-wrap,
 .estimate-period-manage-wrap{
@@ -19522,7 +19514,7 @@ button.btn-orange{
   z-index:35 !important;
 }
 
-/* 프로젝트 관리: 리스트 선표시 + 상세 화면 전체폭 구성 */
+/* íë¡ì í¸ ê´ë¦¬: ë¦¬ì¤í¸ ì íì + ìì¸ íë©´ ì ì²´í­ êµ¬ì± */
 .project-manage-card{
   overflow:visible !important;
 }
@@ -19658,7 +19650,7 @@ button.btn-orange{
 }
 
 
-/* === 2026-05-28 프로젝트 관리 리스트 1행 표시 및 새 창 상세 보정 === */
+/* === 2026-05-28 íë¡ì í¸ ê´ë¦¬ ë¦¬ì¤í¸ 1í íì ë° ì ì°½ ìì¸ ë³´ì  === */
 #projectManage .pm-project-list-screen .pm-project-list-table-wrap{
   overflow:hidden !important;
 }
@@ -19707,7 +19699,7 @@ button.btn-orange{
 }
 
 
-/* === 2026-05-28 추가 보정: 기간별 견적서 관리 가로 스크롤/건물용도 열/내부 메모 미반영 후속 === */
+/* === 2026-05-28 ì¶ê° ë³´ì : ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬ ê°ë¡ ì¤í¬ë¡¤/ê±´ë¬¼ì©ë ì´/ë´ë¶ ë©ëª¨ ë¯¸ë°ì íì === */
 .estimate-period-sheet-wrap{
   width:100% !important;
   max-width:100% !important;
@@ -19733,7 +19725,7 @@ button.btn-orange{
   max-width:70px !important;
 }
 
-/* === 2026-05-28 업무관리 연계 개선: 자동/계산/수동 필드 표시 + 검증 모달 === */
+/* === 2026-05-28 ìë¬´ê´ë¦¬ ì°ê³ ê°ì : ìë/ê³ì°/ìë íë íì + ê²ì¦ ëª¨ë¬ === */
 .estimate-period-manage-table td.period-cell-auto{
   background:#fff !important;
 }
@@ -19851,7 +19843,7 @@ button.btn-orange{
 .estimate-linkage-audit-table-wrap th:nth-child(3),
 .estimate-linkage-audit-table-wrap td:nth-child(3){width:170px;}
 
-/* 2026-05-28 프로젝트 리스트 중심 연계 UI 보정 */
+/* 2026-05-28 íë¡ì í¸ ë¦¬ì¤í¸ ì¤ì¬ ì°ê³ UI ë³´ì  */
 .checklist-project-context{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 12px;padding:10px 12px;border:1px solid #dbe3ef;border-radius:14px;background:#f8fafc;box-shadow:0 2px 8px rgba(15,23,42,.04)}
 .checklist-project-context>div{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 .checklist-project-context strong{font-size:13px;color:#0f172a}
@@ -19865,7 +19857,7 @@ button.btn-orange{
 .checklist-category-filter .category-count{font-size:11px;min-width:24px;height:22px}
 .pm-project-list-row td:first-child,.pm-project-list-row td:nth-child(2){font-weight:700}
 
-/* DB관리 PJ관리: 거래처 상세열은 화면에서는 숨기고 엑셀 내보내기에는 유지 */
+/* DBê´ë¦¬ PJê´ë¦¬: ê±°ëì² ìì¸ì´ì íë©´ììë ì¨ê¸°ê³  ìì ë´ë³´ë´ê¸°ìë ì ì§ */
 .quote-db-pj-contact-hidden,.quote-db-pj-screen-hidden{display:none!important;}
 .estimate-db-contact-box{max-width:min(1480px,96vw)!important;}
 .estimate-db-contact-grid-wrap{overflow:auto;max-height:62vh;}
@@ -19878,9 +19870,9 @@ button.btn-orange{
 .estimate-db-contact-grid input[data-contact-field="webhard"]{min-width:150px;}
 
 
-/* === DB관리 PJ관리 열 폭/스크롤 겹침 보정 ===
-   - 국내/해외 축소, 거래처명 2줄 표시, 프로젝트명 대폭 확장
-   - 세로 스크롤 시 본문 주황 구분선/Enter 띠지가 고정 헤더 위로 겹쳐 보이지 않도록 z-index 정리
+/* === DBê´ë¦¬ PJê´ë¦¬ ì´ í­/ì¤í¬ë¡¤ ê²¹ì¹¨ ë³´ì  ===
+   - êµ­ë´/í´ì¸ ì¶ì, ê±°ëì²ëª 2ì¤ íì, íë¡ì í¸ëª ëí­ íì¥
+   - ì¸ë¡ ì¤í¬ë¡¤ ì ë³¸ë¬¸ ì£¼í© êµ¬ë¶ì /Enter ë ì§ê° ê³ ì  í¤ë ìë¡ ê²¹ì³ ë³´ì´ì§ ìëë¡ z-index ì ë¦¬
 */
 #estimateDbManage .quote-db-grid-wrap{
   position:relative !important;
@@ -19933,9 +19925,9 @@ button.btn-orange{
   max-width:100% !important;
 }
 
-/* === DB관리 PJ관리 고정 열 폭 강제 보정 ===
-   프로젝트명 열이 브라우저 저장 열폭, 열 위치 변경, 기존 CSS보다 항상 우선 적용되도록
-   컬럼 class + !important 기준으로 강제합니다. */
+/* === DBê´ë¦¬ PJê´ë¦¬ ê³ ì  ì´ í­ ê°ì  ë³´ì  ===
+   íë¡ì í¸ëª ì´ì´ ë¸ë¼ì°ì  ì ì¥ ì´í­, ì´ ìì¹ ë³ê²½, ê¸°ì¡´ CSSë³´ë¤ í­ì ì°ì  ì ì©ëëë¡
+   ì»¬ë¼ class + !important ê¸°ì¤ì¼ë¡ ê°ì í©ëë¤. */
 #estimateDbManage .quote-db-table th.quote-db-col-domestic,
 #estimateDbManage .quote-db-table td.quote-db-col-domestic{
   min-width:58px !important;
@@ -19982,7 +19974,7 @@ button.btn-orange{
   overflow:hidden !important;
 }
 
-/* DB관리 > 기전업체 전용: 상단 업체 리스트 + 하단 계약/지급 내역 */
+/* DBê´ë¦¬ > ê¸°ì ìì²´ ì ì©: ìë¨ ìì²´ ë¦¬ì¤í¸ + íë¨ ê³ì½/ì§ê¸ ë´ì­ */
 .quote-db-mep-layout-cell {
   padding: 0 !important;
   background: #fff !important;
@@ -20098,7 +20090,7 @@ button.btn-orange{
   text-align: center;
 }
 
-/* DB관리 > 기전업체: 업체 리스트 입력형 카드 UI 보정 */
+/* DBê´ë¦¬ > ê¸°ì ìì²´: ìì²´ ë¦¬ì¤í¸ ìë ¥í ì¹´ë UI ë³´ì  */
 .quote-db-mep-panel {
   gap: 12px;
 }
@@ -20194,7 +20186,7 @@ button.btn-orange{
 }
 
 /* =========================================================
-   중앙 프로젝트 저장소 / 납품 및 데이터관리 / 업무일지 진행률
+   ì¤ì íë¡ì í¸ ì ì¥ì / ë©í ë° ë°ì´í°ê´ë¦¬ / ìë¬´ì¼ì§ ì§íë¥ 
 ========================================================= */
 .central-project-shell {
   display: grid;
@@ -20418,7 +20410,7 @@ button.btn-orange{
 }
 
 
-/* === 2026-06-01 견적 의뢰관리 버튼 순서/저장 위치 조정 === */
+/* === 2026-06-01 ê²¬ì  ìë¢°ê´ë¦¬ ë²í¼ ìì/ì ì¥ ìì¹ ì¡°ì  === */
 .estimate-workflow-table col.col-actions{width:340px !important;}
 .estimate-workflow-table th:nth-child(8),
 .estimate-workflow-table td:nth-child(8),
@@ -20449,7 +20441,7 @@ button.btn-orange{
   color:#0f172a !important;
 }
 
-/* 기간별 견적서 관리: 방향키 이동 포커스 고정 보강 */
+/* ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: ë°©í¥í¤ ì´ë í¬ì»¤ì¤ ê³ ì  ë³´ê° */
 .estimate-period-manage-table td.period-cell-focused{
   box-shadow:inset 0 0 0 2px #22c55e !important;
   background:#fff !important;
@@ -20460,7 +20452,7 @@ button.btn-orange{
 }
 
 
-/* 기간별 견적서 관리: 셀 내부 입력 고정형 방향키 이동 */
+/* ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: ì ë´ë¶ ìë ¥ ê³ ì í ë°©í¥í¤ ì´ë */
 .estimate-period-manage-table td.editable{
   padding:0 !important;
 }
@@ -20481,7 +20473,7 @@ button.btn-orange{
 }
 
 
-/* === DB관리 계좌정보 입력 모달 폭 확장 보정 === */
+/* === DBê´ë¦¬ ê³ì¢ì ë³´ ìë ¥ ëª¨ë¬ í­ íì¥ ë³´ì  === */
 .estimate-db-account-box{
   width:min(1280px,calc(100vw - 72px))!important;
   max-width:min(1280px,calc(100vw - 72px))!important;
@@ -20511,7 +20503,7 @@ button.btn-orange{
   min-width:0!important;
 }
 
-/* === 2026-06-01 기성관리 담당자 Enter 팝업 === */
+/* === 2026-06-01 ê¸°ì±ê´ë¦¬ ë´ë¹ì Enter íì === */
 .estimate-db-billing-client-box{width:min(980px,calc(100vw - 48px));max-height:min(720px,calc(100vh - 48px));}
 .estimate-db-billing-client-grid{min-width:760px;}
 .estimate-db-billing-manager-box{width:min(760px,calc(100vw - 48px));max-height:min(680px,calc(100vh - 48px));}
@@ -20536,9 +20528,9 @@ button.btn-orange{
 .estimate-db-manager-search-item em{font-style:normal;font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .estimate-db-manager-search-empty{border:1px dashed #dbe5f0;border-radius:10px;background:#f8fafc;color:#64748b;font-size:12px;font-weight:800;padding:10px 12px;}
 
-/* === 프로젝트 질의응답 관리: 진한 세로 구분선 제거 ===
-   전역 .excel-grid 구분선 보정이 프로젝트 질의응답 표에도 적용되어
-   검토항목/체크여부 주변에 굵은 세로선이 생기는 문제를 방지합니다. */
+/* === íë¡ì í¸ ì§ììëµ ê´ë¦¬: ì§í ì¸ë¡ êµ¬ë¶ì  ì ê±° ===
+   ì ì­ .excel-grid êµ¬ë¶ì  ë³´ì ì´ íë¡ì í¸ ì§ììëµ íìë ì ì©ëì´
+   ê²í í­ëª©/ì²´í¬ì¬ë¶ ì£¼ë³ì êµµì ì¸ë¡ì ì´ ìê¸°ë ë¬¸ì ë¥¼ ë°©ì§í©ëë¤. */
 #qcReview .excel-grid th,
 #qcReview .excel-grid td,
 #qcReview .excel-grid thead th,
@@ -20571,7 +20563,7 @@ button.btn-orange{
   border-bottom:1px solid #cbd5e1 !important;
 }
 
-/* QC 프로젝트 질의응답 접속 경로 보강 */
+/* QC íë¡ì í¸ ì§ììëµ ì ì ê²½ë¡ ë³´ê° */
 .checklist-project-search-route .checklist-project-search-line{display:flex;align-items:center;gap:8px}
 .checklist-project-search-route .checklist-project-search-line input{flex:1;min-width:0}
 .checklist-project-open-btn{white-space:nowrap;height:42px}
@@ -20596,7 +20588,7 @@ button.btn-orange{
 @media(max-width:1100px){.qc-route-grid{grid-template-columns:1fr}.qc-project-route-row{grid-template-columns:80px 1fr}}
 
 
-/* QC 프로젝트 접속 경로 정리: 새 창 제거 / 현재 진행중 프로젝트 가로형 */
+/* QC íë¡ì í¸ ì ì ê²½ë¡ ì ë¦¬: ì ì°½ ì ê±° / íì¬ ì§íì¤ íë¡ì í¸ ê°ë¡í */
 #qcReview .checklist-project-access-routes.is-collapsed{display:none!important;}
 #qcReview .checklist-project-toggle-btn{min-width:128px;height:42px;white-space:nowrap;}
 #qcReview .qc-project-route-card{border:1px solid #dbe3ef;background:#fff;border-radius:18px;padding:16px;box-shadow:0 12px 34px rgba(15,23,42,.05);}
@@ -20617,7 +20609,7 @@ button.btn-orange{
 #qcReview .qc-route-section:not(.qc-route-current-only){display:none!important;}
 
 
-/* QC 프로젝트 선택 UX 정리: 선택 전 리스트 숨김 / 선택 후 프로젝트 선택 영역 접기 */
+/* QC íë¡ì í¸ ì í UX ì ë¦¬: ì í ì  ë¦¬ì¤í¸ ì¨ê¹ / ì í í íë¡ì í¸ ì í ìì­ ì ê¸° */
 #qcReview .checklist-project-toggle-btn::after{content:"";}
 #qcReview.qc-project-picked .checklist-toolbar,
 #qcReview.qc-project-picked #checklistProjectAccessRoutes,
@@ -20638,7 +20630,7 @@ button.btn-orange{
   border-color:#f97316!important;
 }
 
-/* QC 중분류 필터: 구조/마감/토목 표시 제어 */
+/* QC ì¤ë¶ë¥ íí°: êµ¬ì¡°/ë§ê°/í ëª© íì ì ì´ */
 .checklist-middle-filter-bar{
   display:flex;
   align-items:center;
@@ -20719,8 +20711,8 @@ button.btn-orange{
 
 /* =========================================================
    QC checklist compact density patch
-   - 행간/셀 패딩/버튼 높이를 줄여 한 화면에 더 많은 리스트 표시
-   - 기능 구조는 유지하고 시각 밀도만 조정
+   - íê°/ì í¨ë©/ë²í¼ ëì´ë¥¼ ì¤ì¬ í íë©´ì ë ë§ì ë¦¬ì¤í¸ íì
+   - ê¸°ë¥ êµ¬ì¡°ë ì ì§íê³  ìê° ë°ëë§ ì¡°ì 
    ========================================================= */
 #qcReview .excel-grid thead th,
 #qcReview .excel-grid tbody td{
@@ -20907,9 +20899,9 @@ button.btn-orange{
 }
 
 /* =========================================================
-   QC 가독성 개선 우선순위 반영
-   1) 현재 프로젝트 표시 강화 2) 필터 상태 칩 3) 헤더 고정
-   4) 버튼 중요도 구분 5) 리스트 밀도/필터 밀도 재조정
+   QC ê°ëì± ê°ì  ì°ì ìì ë°ì
+   1) íì¬ íë¡ì í¸ íì ê°í 2) íí° ìí ì¹© 3) í¤ë ê³ ì 
+   4) ë²í¼ ì¤ìë êµ¬ë¶ 5) ë¦¬ì¤í¸ ë°ë/íí° ë°ë ì¬ì¡°ì 
    ========================================================= */
 #qcReview.qc-project-picked .checklist-category-filter{
   display:block!important;
@@ -21205,7 +21197,7 @@ button.btn-orange{
   color:#334155!important;
 }
 
-/* 중분류별 전문용어 사전 */
+/* ì¤ë¶ë¥ë³ ì ë¬¸ì©ì´ ì¬ì  */
 .checklist-term-scope-tabs{
   display:flex;
   gap:8px;
@@ -21292,8 +21284,8 @@ button.btn-orange{
   box-shadow:0 0 0 2px rgba(239,68,68,.08);
 }
 
-/* 2026-06-02 기간별 견적서 관리: Enter 전용 드롭다운 선택 후에도 셀 선택 표시 유지
-   선택 기준을 select:focus가 아니라 td.period-cell-focused로 통일합니다. */
+/* 2026-06-02 ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: Enter ì ì© ëë¡­ë¤ì´ ì í íìë ì ì í íì ì ì§
+   ì í ê¸°ì¤ì select:focusê° ìëë¼ td.period-cell-focusedë¡ íµì¼í©ëë¤. */
 .estimate-period-manage-table td.period-cell-focused .status-select{
   outline:none !important;
   box-shadow:inset 0 0 0 2px #22c55e !important;
@@ -21303,8 +21295,8 @@ button.btn-orange{
   outline:none !important;
 }
 
-/* 2026-06-02 기간별 견적서 관리 Enter 셀렉트 근본 보정
-   select는 값 보관/표시용으로만 두고, 키보드 포커스와 선택 표시는 td.period-cell-focused 기준으로 고정합니다. */
+/* 2026-06-02 ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬ Enter ìë í¸ ê·¼ë³¸ ë³´ì 
+   selectë ê° ë³´ê´/íìì©ì¼ë¡ë§ ëê³ , í¤ë³´ë í¬ì»¤ì¤ì ì í íìë td.period-cell-focused ê¸°ì¤ì¼ë¡ ê³ ì í©ëë¤. */
 .estimate-period-manage-table td.period-select-cell{
   cursor:default !important;
 }
@@ -21327,7 +21319,7 @@ button.btn-orange{
   background:#fff !important;
 }
 
-/* 2026-06-02 기간별 견적서 관리: native select 제거 후 td 기반 Enter 셀렉트 표시 */
+/* 2026-06-02 ê¸°ê°ë³ ê²¬ì ì ê´ë¦¬: native select ì ê±° í td ê¸°ë° Enter ìë í¸ íì */
 .estimate-period-manage-table td.period-select-cell{
   cursor:default !important;
 }
