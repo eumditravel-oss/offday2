@@ -81,6 +81,7 @@
 
   function saveUnitPrices(prices) {
     try { localStorage.setItem(UNIT_PRICE_KEY, JSON.stringify(prices)); } catch (_) {}
+    if (typeof showToast === 'function') showToast('단가 설정이 저장되었습니다.');
   }
 
   function saveAnalysis(projectUid, analysis) {
@@ -563,6 +564,7 @@
     a.rounds[_state.currentRound - 1].endDate   = endEl.value;
     saveAnalysis(_state.currentProjectUid, a);
     render();
+    if (typeof showToast === 'function') showToast('기간 정보가 저장되었습니다.');
   }
 
   function _showAddMemberModal() {
