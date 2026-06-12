@@ -786,6 +786,7 @@
             <div class="side-group"><button class="side-main" data-work-main="qcReview">프로젝트 질의응답 관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="deliveryData">납품 및 데이터관리</button></div>
             <div class="side-group"><button class="side-main" data-work-main="dailyReport">업무일지 / 진행률</button></div>
+            <div class="side-group"><button class="side-main" data-work-main="profitAnalysis">수지분석</button></div>
           </aside>
 
           <section class="main-area">
@@ -1434,7 +1435,12 @@
 
 
 
-            <section id="projectManage" class="work-panel">
+            
+
+            <section id="profitAnalysis" class="work-panel">
+              <div id="profit-analysis-root" style="padding:20px;min-height:400px"></div>
+            </section>
+<section id="projectManage" class="work-panel">
               <article class="card project-manage-card">
                 <div class="card-head project-manage-head pm-project-global-head">
                   <div>
@@ -1717,6 +1723,7 @@
   <script src="./work-pm-schedule.js"></script>
   <script src="./work-project-managements.js"></script>
   <script src="./work-delivery-daily.js"></script>
+  <script src="./work-profit-analysis.js"></script>
   <script src="./app.js"></script>
 
   <div class="modal-backdrop" id="objectionModal">
