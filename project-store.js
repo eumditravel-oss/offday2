@@ -82,8 +82,10 @@
       receive: {},
       estimate: {},
       pmSchedule: { assignments: {}, tasks: [], approvals: [] },
-      qaQc: { checklistStatus: "미확인", qcStatus: "검토대기", openQuestionCount: 0 },
-      delivery: { files: [], records: [] },
+      qaQc: { checklistStatus: "미확인", qcStatus: "검토대기", openQuestionCount: 0, questions: [], estimateConditions: { pm: "", worker: "", merged: "" } },
+      delivery: { files: [], records: [], downloadRequests: [] },
+      profitAnalysis: null,
+      escalations: [],
       dailyReports: [],
       progress: { progressRate: 0, currentStep: "대기" },
       history: [],
@@ -116,6 +118,12 @@
       project.receive.startDate = data.startDate || project.receive.startDate || "";
     }
     if (options.estimate) project.estimate = { ...(project.estimate || {}), ...clone(options.estimate) };
+    // 기존 프로젝트 누락 필드 자동 보충 (v2 업그레이드)
+    if (!Array.isArray(project.escalations)) project.escalations = [];
+    if (project.profitAnalysis === undefined) project.profitAnalysis = null;
+    if (!Array.isArray(project.delivery?.downloadRequests)) { if(project.delivery) project.delivery.downloadRequests = []; }
+    if (!Array.isArray(project.qaQc?.questions)) { if(project.qaQc) project.qaQc.questions = []; }
+    if (!project.qaQc?.estimateConditions) { if(project.qaQc) project.qaQc.estimateConditions = { pm:"", worker:"", merged:"" }; }
     if (!state.projects[project.projectUid]) {
       state.order.unshift(project.projectUid);
       addHistory(project, "중앙 프로젝트 생성", `${project.projectName} / ${source}`);
@@ -244,8 +252,9 @@
       delayReason: text(report.delayReason),
       overtimeReason: text(report.overtimeReason),
       approval: {
-        pm: report.overtimeReason ? "PM승인대기" : (report.delayReason ? "PM확인대기" : "해당없음"),
-        director: report.overtimeReason ? "실장승인대기" : "해당없음"
+        pm: (report.overtimeReason || report.delayReason) ? "PM승인대기" : "해당없음",
+        director: report.overtimeReason ? "실장승인대기" : "해당없음",
+        vp: report.delayReason ? "부사장결재대기" : "해당없음"
       },
       createdAt: now(),
       writer: text(report.writer) || "작성자"
@@ -272,8 +281,9 @@
     const report = (project.dailyReports || []).find(r => r.reportUid === reportUid);
     if (!report) return null;
     report.approval = report.approval || {};
-    if (role === "pm") report.approval.pm = "PM승인완료";
+    if (role === "pm") { report.approval.pm = "PM승인완료"; if(report.delayReason) report.approval.vp = "부사장결재대기"; }
     if (role === "director") report.approval.director = "실장승인완료";
+    if (role === "vp") report.approval.vp = "부사장결재완료";
     addHistory(project, role === "pm" ? "PM 업무일지 승인" : "실장 야근 승인", `${report.stage} · ${report.date}`);
     save(); emit();
     return clone(report);
@@ -287,9 +297,9 @@
     const newDays = Math.max(1, Number(payload.days || 1));
     if (activeTask) {
       activeTask.interruptions = Array.isArray(activeTask.interruptions) ? activeTask.interruptions : [];
-      activeTask.interruptions.push({ at: start, days: newDays, reason: text(payload.reason) || "추가 업무 배정", newTaskTitle: text(payload.title) });
+      activeTask.interruptions.push({ interruptionUid: uid("INT"), at: start, days: newDays, reason: text(payload.reason) || "추가 업무 배정", newTaskTitle: text(payload.title), approvalStatus: "PM승인대기", pmApprovedAt: "", directorApprovedAt: "" });
       activeTask.plannedEndDate = addDays(activeTask.plannedEndDate || start, newDays);
-      activeTask.status = "일시중지";
+      activeTask.status = "일시중지(승인대기)";
       addHistory(project, "기존 업무 일시중지", `${activeTask.title} · ${newDays}일 밀림`);
     }
     const newTask = ensureTask(projectUid, {
@@ -308,7 +318,81 @@
     save(); emit();
     return clone({ pausedTask: activeTask, newTask });
   }
-  function clear(){ state = { version:1, projects:{}, order:[], updatedAt: now() }; save(); emit(); }
+  /* ---- 수지분석 ---- */
+  function upsertProfitAnalysis(projectUid, analysisData){
+    return mutateProject(projectUid, p=>{ p.profitAnalysis = analysisData||null; }, "수지분석 업데이트");
+  }
+  /* ---- 납품 다운로드 권한 (PDF STEP5: PM요청 → 실장승인) ---- */
+  function requestDownloadApproval(projectUid, requestData){
+    const p = state.projects[projectUid]; if(!p) return null;
+    p.delivery = p.delivery||{files:[],records:[],downloadRequests:[]};
+    p.delivery.downloadRequests = Array.isArray(p.delivery.downloadRequests)?p.delivery.downloadRequests:[];
+    const item = { requestUid:uid("DLA"), requestedAt:now(), requestedBy:text(requestData?.requestedBy)||"PM", reason:text(requestData?.reason), targetFile:text(requestData?.targetFile)||"전체", status:"실장승인대기", approvedBy:"", approvedAt:"" };
+    p.delivery.downloadRequests.unshift(item);
+    addHistory(p,"납품자료 다운로드 권한 요청",item.requestedBy+"·"+item.targetFile);
+    save();emit();return clone(item);
+  }
+  function approveDownload(projectUid, requestUid, approverName){
+    const p = state.projects[projectUid]; if(!p) return null;
+    const req=(p.delivery?.downloadRequests||[]).find(r=>r.requestUid===requestUid); if(!req) return null;
+    req.status="승인완료"; req.approvedBy=text(approverName)||"실장"; req.approvedAt=now();
+    addHistory(p,"납품자료 다운로드 승인",req.requestedBy); save();emit();return clone(req);
+  }
+  /* ---- 부사장 결재 에스컬레이션 (지연사유/납품일정변경) ---- */
+  function escalateToVP(projectUid, payload){
+    const p = state.projects[projectUid]; if(!p) return null;
+    p.escalations = Array.isArray(p.escalations)?p.escalations:[];
+    const item = { escalationUid:uid("ESC"), type:text(payload?.type)||"지연사유", reason:text(payload?.reason), requester:text(payload?.requester)||"PM", linkedReportUid:text(payload?.linkedReportUid), status:"부사장결재대기", escalatedAt:now(), approvedAt:"", approvedBy:"" };
+    p.escalations.unshift(item);
+    addHistory(p,item.type+" 부사장 결재 요청",item.requester+": "+item.reason);
+    save();emit();return clone(item);
+  }
+  function approveEscalation(projectUid, escalationUid, approverName){
+    const p = state.projects[projectUid]; if(!p) return null;
+    const item=(p.escalations||[]).find(e=>e.escalationUid===escalationUid); if(!item) return null;
+    item.status="부사장결재완료"; item.approvedBy=text(approverName)||"부사장"; item.approvedAt=now();
+    addHistory(p,item.type+" 부사장 결재 완료",item.approvedBy); save();emit();return clone(item);
+  }
+  /* ---- 추가업무 승인 체인 (작업자→PM→실장) ---- */
+  function approveInterruption(projectUid, taskUid, interruptionUid, role){
+    const p = state.projects[projectUid]; if(!p) return null;
+    const task=(p.pmSchedule?.tasks||[]).find(t=>t.taskUid===taskUid); if(!task) return null;
+    const inter=(task.interruptions||[]).find(i=>i.interruptionUid===interruptionUid); if(!inter) return null;
+    if(role==="pm"){ inter.approvalStatus="실장승인대기"; inter.pmApprovedAt=now(); }
+    else if(role==="director"){ inter.approvalStatus="승인완료"; inter.directorApprovedAt=now(); task.plannedEndDate=addDays(task.plannedEndDate||inter.at,inter.days); }
+    addHistory(p,"추가업무 "+(role==="pm"?"PM":"실장")+" 승인",task.title+"·"+inter.days+"일");
+    save();emit();return clone(task);
+  }
+  /* ---- QC 질의사항 ---- */
+  function addQcQuestion(projectUid, questionData){
+    const p = state.projects[projectUid]; if(!p) return null;
+    p.qaQc = p.qaQc||{}; p.qaQc.questions = Array.isArray(p.qaQc.questions)?p.qaQc.questions:[];
+    const item = { questionUid:uid("QST"), createdAt:now(), category:text(questionData?.category)||"일반", content:text(questionData?.content), targetRecipient:text(questionData?.targetRecipient)||"PM", status:"미회신", answer:"", answeredAt:"" };
+    p.qaQc.questions.unshift(item);
+    p.qaQc.openQuestionCount = p.qaQc.questions.filter(q=>q.status==="미회신").length;
+    addHistory(p,"QC 질의사항 등록",item.content.slice(0,50)); save();emit();return clone(item);
+  }
+  /* ---- 견적조건 (PM+작업자 결합) ---- */
+  function updateEstimateConditions(projectUid, role, content){
+    const p = state.projects[projectUid]; if(!p) return null;
+    p.qaQc = p.qaQc||{}; p.qaQc.estimateConditions = p.qaQc.estimateConditions||{pm:"",worker:"",merged:""};
+    if(role==="pm") p.qaQc.estimateConditions.pm=text(content);
+    if(role==="worker") p.qaQc.estimateConditions.worker=text(content);
+    addHistory(p,"견적조건 작성",(role==="pm"?"PM":"작업자")); save();emit();return clone(p.qaQc.estimateConditions);
+  }
+  function mergeEstimateConditions(projectUid){
+    const p = state.projects[projectUid]; if(!p) return null;
+    const ec = p.qaQc?.estimateConditions||{};
+    const parts = [ec.pm&&"[PM 작성]
+"+ec.pm, ec.worker&&"[작업자 작성]
+"+ec.worker].filter(Boolean);
+    ec.merged = parts.join("
+
+"); ec.mergedAt = now();
+    addHistory(p,"견적조건 결합완료",""); save();emit();return clone(ec);
+  }
+
+    function clear(){ state = { version:1, projects:{}, order:[], updatedAt: now() }; save(); emit(); }
 
   Object.assign(exposed, {
     upsertProject,
@@ -322,6 +406,15 @@
     addDailyReport,
     approveDailyReport,
     assignInterruptingWork,
+    approveInterruption,
+    upsertProfitAnalysis,
+    requestDownloadApproval,
+    approveDownload,
+    escalateToVP,
+    approveEscalation,
+    addQcQuestion,
+    updateEstimateConditions,
+    mergeEstimateConditions,
     keyFromData,
     today,
     now,
