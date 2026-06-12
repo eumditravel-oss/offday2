@@ -2583,6 +2583,7 @@ function saveEstimateDbAccountModal() {
   const summary = summarizeEstimateDbAccountInfo(accounts);
   const value = stringifyEstimateDbRichCellValue({ type: "accountInfo", summary, accounts });
   updateEstimateDbCell(state.rowIndex, state.colIndex, value, { commit: true, silentRender: true });
+  showToast('계좌 정보가 저장되었습니다.');
   closeEstimateDbAccountModal();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
@@ -2705,6 +2706,7 @@ function saveEstimateDbBillingClientModal() {
   const contacts = collectEstimateDbBillingClientModalRows();
   const summary = summarizeEstimateDbBillingClientContacts(contacts);
   updateEstimateDbCell(state.rowIndex, state.colIndex, stringifyEstimateDbRichCellValue({ type: "progressBillingClientContact", summary, contacts }), { commit: true, silentRender: true });
+  showToast('청구처 정보가 저장되었습니다.');
   closeEstimateDbBillingClientModal();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
@@ -2974,6 +2976,7 @@ function saveEstimateDbBillingManagerModal() {
   const managers = collectEstimateDbBillingManagerModalRows();
   const summary = summarizeEstimateDbBillingManagers(managers);
   updateEstimateDbCell(state.rowIndex, state.colIndex, stringifyEstimateDbRichCellValue({ type: "progressBillingManager", summary, managers }), { commit: true, silentRender: true });
+  showToast('담당 정보가 저장되었습니다.');
   closeEstimateDbBillingManagerModal();
   renderEstimateDbManage();
   requestAnimationFrame(() => focusEstimateDbCell(state.rowIndex, state.colIndex));
@@ -3119,6 +3122,7 @@ function saveEstimateDbContactModal() {
   });
   setEstimateDbRowContacts(row, contacts);
   recalcEstimateDbRow("pj", row);
+  showToast('담당자 정보가 저장되었습니다.');
   closeEstimateDbContactModal();
   renderEstimateDbManage();
 }
@@ -3529,6 +3533,7 @@ function saveEstimateDbAmountModal() {
   if (state.tab === "progress") {
     upsertEstimateDbMepContractFromProgressAmount(state.rowIndex, state.colIndex, company, amount);
   }
+  showToast('금액 정보가 저장되었습니다.');
   closeEstimateDbAmountModal();
   renderEstimateDbManage({ forceRecalc: true, renderReportsNow: false });
 }
