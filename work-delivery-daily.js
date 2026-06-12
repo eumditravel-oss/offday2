@@ -47,6 +47,7 @@
     }
     const files = project?.delivery?.files || [];
     const records = project?.delivery?.records || [];
+    const downloadRequests = project?.delivery?.downloadRequests || [];
     root.innerHTML = `
       <div class="central-toolbar">
         <label><span>프로젝트 선택</span><select id="deliveryProjectSelect" onchange="setDeliveryProject(this.value)">${projectOptions(projects, project.projectUid)}</select></label>
@@ -72,6 +73,31 @@
           <div class="central-actions"><button class="btn btn-line" type="button" onclick="saveDeliveryRecord()">기록 추가</button></div>
         </section>
       </div>
+
+      <section class="central-card">
+        <h3>납품자료 다운로드 권한 요청 <span style="font-size:12px;color:#64748b;font-weight:normal">PDF STEP5 · PM요청 → 실장승인</span></h3>
+        <div class="central-form-grid" style="margin-bottom:10px">
+          <label><span>요청자</span><input id="dlReqBy" placeholder="예: PM 홍길동" /></label>
+          <label><span>대상파일</span><input id="dlReqFile" placeholder="예: 2차 납품자료 전체" /></label>
+          <label class="wide"><span>요청 사유</span><input id="dlReqReason" placeholder="기존 타 프로젝트 납품 데이터 참고 목적 등" /></label>
+        </div>
+        <div class="central-actions" style="margin-bottom:14px">
+          <button class="btn btn-line" type="button" onclick="saveDownloadRequest()">다운로드 권한 요청</button>
+        </div>
+        <div class="central-table-wrap">
+          <table class="central-table"><thead><tr><th>요청일시</th><th>요청자</th><th>대상파일</th><th>사유</th><th>상태</th><th>승인처리</th></tr></thead><tbody>
+            ${downloadRequests.map(r => `<tr>
+              <td>${esc(r.requestedAt)}</td>
+              <td>${esc(r.requestedBy)}</td>
+              <td>${esc(r.targetFile)}</td>
+              <td>${esc(r.reason)}</td>
+              <td><span class="status-chip ${r.status === '승인완료' ? 'chip-green' : 'chip-orange'}">${esc(r.status)}</span></td>
+              <td>${r.status !== '승인완료' ? `<button class="mini-btn mini-btn-green" onclick="approveDownloadRequest('${esc(project.projectUid)}','${esc(r.requestUid)}')">실장승인</button>` : `<span style="color:#16a34a;font-size:12px">${esc(r.approvedBy)} 승인완료</span>`}</td>
+            </tr>`).join("") || `<tr><td colspan="6" class="central-muted">등록된 다운로드 권한 요청이 없습니다.</td></tr>`}
+          </tbody></table>
+        </div>
+      </section>
+
       <section class="central-card">
         <h3>프로젝트별 납품자료</h3>
         <div class="central-table-wrap">
@@ -113,6 +139,30 @@
     const tasks = project?.pmSchedule?.tasks || [];
     return tasks.map(t => `<option value="${esc(t.taskUid)}">${esc(t.personName)} · ${esc(t.title)} · ${esc(t.startDate)}~${esc(t.plannedEndDate)}</option>`).join("");
   }
+  function saveDownloadRequest(){
+    if (!selectedDeliveryProjectUid) return;
+    const by = val("dlReqBy").trim();
+    const targetFile = val("dlReqFile").trim();
+    if (!by || !targetFile) { toast("요청자와 대상파일을 입력해 주세요."); return; }
+    centralProjectStore.requestDownloadApproval(selectedDeliveryProjectUid, {
+      requestedBy: by, targetFile, reason: val("dlReqReason")
+    });
+    setVal("dlReqBy", ""); setVal("dlReqFile", ""); setVal("dlReqReason", "");
+    renderDeliveryData();
+    toast("다운로드 권한 요청이 등록되었습니다. 실장 승인 후 다운로드 가능합니다.");
+  }
+  function approveDownloadRequest(projectUid, requestUid){
+    const approver = prompt("승인자 이름을 입력하세요 (실장):", "실장");
+    if (!approver) return;
+    centralProjectStore.approveDownload(projectUid, requestUid, approver);
+    renderDeliveryData();
+    toast(`${approver}님이 다운로드 권한 요청을 승인했습니다.`);
+  }
+  function approvalChipHtml(status){
+    if (!status || status === "해당없음") return `<span style="color:#94a3b8;font-size:11px">-</span>`;
+    const cls = status.includes("완료") ? "chip-green" : "chip-orange";
+    return `<span class="status-chip ${cls}">${esc(status)}</span>`;
+  }
   function renderDailyReport(){
     const root = document.getElementById("dailyReportBoard");
     if (!root || !window.centralProjectStore) return;
@@ -123,6 +173,17 @@
     }
     const tasks = project?.pmSchedule?.tasks || [];
     const reports = project?.dailyReports || [];
+    const escalations = project?.escalations || [];
+
+    // 인터럽션 승인 대기 목록
+    const pendingInterruptions = [];
+    tasks.forEach(t => {
+      (t.interruptions || []).forEach(inter => {
+        if (inter.approvalStatus && inter.approvalStatus !== "승인완료") {
+          pendingInterruptions.push({ task: t, inter });
+        }
+      });
+    });
     root.innerHTML = `
       <div class="central-toolbar">
         <label><span>프로젝트 선택</span><select id="dailyProjectSelect" onchange="setDailyProject(this.value)">${projectOptions(projects, project.projectUid)}</select></label>
@@ -154,6 +215,27 @@
             <label class="wide"><span>지연사유 / 배정사유</span><textarea id="interruptReason" placeholder="기존 일정이 밀리는 사유를 작성. PM/실장 전달 이력으로 기록"></textarea></label>
           </div>
           <div class="central-actions"><button class="btn btn-line" type="button" onclick="saveInterruptingWork()">추가업무 배정 및 일정 자동 변경</button></div>
+        
+          ${pendingInterruptions.length ? `
+            <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:12px">
+              <b style="font-size:13px;color:#1d4ed8">결재 대기 중인 추가업무 (${pendingInterruptions.length}건)</b>
+              <div class="central-table-wrap" style="margin-top:8px">
+                <table class="central-table"><thead><tr><th>담당자</th><th>추가업무명</th><th>기간</th><th>사유</th><th>결재상태</th><th>승인처리</th></tr></thead><tbody>
+                  ${pendingInterruptions.map(({ task: t, inter: i }) => `<tr>
+                    <td>${esc(t.personName)}</td>
+                    <td>${esc(i.newTaskTitle || "-")}</td>
+                    <td>${esc(i.at)} · ${esc(i.days)}일</td>
+                    <td>${esc(i.reason)}</td>
+                    <td><span class="status-chip chip-orange">${esc(i.approvalStatus)}</span></td>
+                    <td>
+                      ${i.approvalStatus === "PM승인대기" ? `<button class="mini-btn" onclick="approveInterruptWork('${esc(project.projectUid)}','${esc(t.taskUid)}','${esc(i.interruptionUid)}','pm')">PM승인</button>` : ""}
+                      ${i.approvalStatus === "실장승인대기" ? `<button class="mini-btn mini-btn-green" onclick="approveInterruptWork('${esc(project.projectUid)}','${esc(t.taskUid)}','${esc(i.interruptionUid)}','director')">실장승인</button>` : ""}
+                    </td>
+                  </tr>`).join("")}
+                </tbody></table>
+              </div>
+            </div>
+          ` : ""}
         </section>
       </div>
       <section class="central-card">
@@ -167,11 +249,54 @@
       <section class="central-card">
         <h3>업무일지 / 승인요청 기록</h3>
         <div class="central-table-wrap">
-          <table class="central-table"><thead><tr><th>일자</th><th>단계</th><th>공정률</th><th>지연/야근 사유</th><th>PM</th><th>실장</th><th>관리</th></tr></thead><tbody>
-          ${reports.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.stage)}</td><td>${esc(r.progressRate)}%</td><td>${esc(r.delayReason || r.overtimeReason || "-")}</td><td>${esc(r.approval?.pm || "-")}</td><td>${esc(r.approval?.director || "-")}</td><td><button class="mini-btn" onclick="approveDailyReport('${esc(project.projectUid)}','${esc(r.reportUid)}','pm')">PM승인</button><button class="mini-btn" onclick="approveDailyReport('${esc(project.projectUid)}','${esc(r.reportUid)}','director')">실장승인</button></td></tr>`).join("") || `<tr><td colspan="7" class="central-muted">작성된 업무일지가 없습니다.</td></tr>`}
+          <table class="central-table"><thead><tr>
+            <th>일자</th><th>단계</th><th>공정률</th><th>지연/야근 사유</th>
+            <th>PM 확인</th><th>실장 승인</th><th>부사장 결재</th><th>관리</th>
+          </tr></thead><tbody>
+          ${reports.map(r => {
+            const hasDelay = !!r.delayReason;
+            const hasOvertime = !!r.overtimeReason;
+            const pmApproved = r.approval?.pm === "PM승인완료";
+            const directorApproved = r.approval?.director === "실장승인완료";
+            const vpPending = r.approval?.vp === "부사장결재대기";
+            const vpDone = r.approval?.vp === "부사장결재완료";
+            return `<tr>
+              <td>${esc(r.date)}</td>
+              <td>${esc(r.stage)}</td>
+              <td>${esc(r.progressRate)}%</td>
+              <td style="max-width:200px;font-size:12px">${esc(r.delayReason || r.overtimeReason || "-")}</td>
+              <td>${approvalChipHtml(r.approval?.pm)}</td>
+              <td>${approvalChipHtml(r.approval?.director)}</td>
+              <td>${approvalChipHtml(r.approval?.vp)}</td>
+              <td style="white-space:nowrap">
+                ${!pmApproved && (hasDelay || hasOvertime) ? `<button class="mini-btn" onclick="approveDailyReport('${esc(project.projectUid)}','${esc(r.reportUid)}','pm')">PM승인</button>` : ""}
+                ${pmApproved && hasOvertime && !directorApproved ? `<button class="mini-btn mini-btn-green" onclick="approveDailyReport('${esc(project.projectUid)}','${esc(r.reportUid)}','director')">실장승인</button>` : ""}
+                ${pmApproved && hasDelay && vpPending ? `<button class="mini-btn mini-btn-red" onclick="approveDailyReport('${esc(project.projectUid)}','${esc(r.reportUid)}','vp')">부사장결재</button>` : ""}
+                ${!hasDelay && !hasOvertime ? `<span style="color:#94a3b8;font-size:11px">결재없음</span>` : ""}
+              </td>
+            </tr>`;
+          }).join("") || `<tr><td colspan="8" class="central-muted">작성된 업무일지가 없습니다.</td></tr>`}
           </tbody></table>
         </div>
-      </section>`;
+      </section>
+
+      ${escalations.length ? `
+      <section class="central-card">
+        <h3>부사장 결재 현황 <span style="font-size:12px;color:#64748b;font-weight:normal">지연사유 / 납품일정변경</span></h3>
+        <div class="central-table-wrap">
+          <table class="central-table"><thead><tr><th>구분</th><th>요청자</th><th>사유</th><th>요청일시</th><th>상태</th><th>처리</th></tr></thead><tbody>
+            ${escalations.map(e => `<tr>
+              <td>${esc(e.type)}</td>
+              <td>${esc(e.requester)}</td>
+              <td style="max-width:220px;font-size:12px">${esc(e.reason)}</td>
+              <td>${esc(e.escalatedAt)}</td>
+              <td><span class="status-chip ${e.status === '부사장결재완료' ? 'chip-green' : 'chip-orange'}">${esc(e.status)}</span></td>
+              <td>${e.status !== '부사장결재완료' ? `<button class="mini-btn mini-btn-red" onclick="approveVPEscalation('${esc(project.projectUid)}','${esc(e.escalationUid)}')">부사장결재</button>` : `<span style="font-size:11px;color:#16a34a">${esc(e.approvedBy)}</span>`}</td>
+            </tr>`).join("")}
+          </tbody></table>
+        </div>
+      </section>
+      ` : ""}`;
   }
   function setDailyProject(uid){ selectedDailyProjectUid = uid; renderDailyReport(); }
   function saveDailyReport(){
@@ -199,9 +324,21 @@
   function approveDailyReport(projectUid, reportUid, role){
     centralProjectStore.approveDailyReport(projectUid, reportUid, role);
     renderDailyReport();
-    toast(role === "pm" ? "PM 승인 처리했습니다." : "실장 최종 승인 처리했습니다.");
+    const msg = { pm:"PM 확인 처리했습니다.", director:"실장 야근 최종 승인 처리했습니다.", vp:"부사장 결재가 완료되었습니다." };
+    toast(msg[role] || "승인 처리했습니다.");
   }
-
+  function approveInterruptWork(projectUid, taskUid, interruptionUid, role){
+    centralProjectStore.approveInterruption(projectUid, taskUid, interruptionUid, role);
+    renderDailyReport();
+    toast(role === "pm" ? "PM 승인 완료. 실장 최종 승인 대기 중입니다." : "실장 최종 승인 완료. 일정이 자동 변경되었습니다.");
+  }
+  function approveVPEscalation(projectUid, escalationUid){
+    const approver = prompt("부사장 이름을 입력하세요:", "부사장");
+    if (!approver) return;
+    centralProjectStore.approveEscalation(projectUid, escalationUid, approver);
+    renderDailyReport();
+    toast("부사장 결재가 완료되었습니다.");
+  }
   function buildTasksFromPmSchedule(item){
     if (!item) return [];
     const start = String(item.scheduleStartDate || item.project?.startDate || centralProjectStore.today()).replaceAll(".", "-");
@@ -324,15 +461,39 @@
     switchWorkPanel = window.switchWorkPanel;
   }
 
+  /* CSS 인젝션 - status-chip 스타일 */
+  (function injectChipCss(){
+    if (document.getElementById("deliveryDailyChipCss")) return;
+    const style = document.createElement("style");
+    style.id = "deliveryDailyChipCss";
+    style.textContent = `
+      .status-chip{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;white-space:nowrap}
+      .chip-green{background:#dcfce7;color:#16a34a}
+      .chip-orange{background:#fff7ed;color:#d97706}
+      .chip-red{background:#fef2f2;color:#dc2626}
+      .mini-btn{border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:900;cursor:pointer;margin:2px}
+      .mini-btn:hover{background:#f8fafc}
+      .mini-btn-green{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}
+      .mini-btn-green:hover{background:#dcfce7}
+      .mini-btn-red{border-color:#fecaca;background:#fef2f2;color:#dc2626}
+      .mini-btn-red:hover{background:#fee2e2}
+    `;
+    document.head.appendChild(style);
+  })();
+
   window.renderDeliveryData = renderDeliveryData;
   window.setDeliveryProject = setDeliveryProject;
   window.saveDeliveryUpload = saveDeliveryUpload;
   window.saveDeliveryRecord = saveDeliveryRecord;
+  window.saveDownloadRequest = saveDownloadRequest;
+  window.approveDownloadRequest = approveDownloadRequest;
   window.renderDailyReport = renderDailyReport;
   window.setDailyProject = setDailyProject;
   window.saveDailyReport = saveDailyReport;
   window.saveInterruptingWork = saveInterruptingWork;
   window.approveDailyReport = approveDailyReport;
+  window.approveInterruptWork = approveInterruptWork;
+  window.approveVPEscalation = approveVPEscalation;
   window.syncPmScheduleToCentral = syncPmScheduleToCentral;
   window.refreshCentralProjectStore = refreshCentralStore;
 
