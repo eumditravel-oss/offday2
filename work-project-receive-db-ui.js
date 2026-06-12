@@ -4383,6 +4383,10 @@ document.addEventListener("click", event => {
     if (typeof syncWorkSideAccordion === "function") syncWorkSideAccordion(targetPanelId);
     if (typeof activateWorkSideSelection === "function") {
       activateWorkSideSelection(targetPanelId);
+      // 패널 활성화 시 렌더 함수 호출 (납품 데이터/업무일지/수지분석)
+      if (targetPanelId === 'deliveryData' && typeof renderDeliveryData === 'function') renderDeliveryData();
+      else if (targetPanelId === 'dailyReport' && typeof renderDailyReport === 'function') renderDailyReport();
+      else if (targetPanelId === 'profitAnalysis' && typeof profitAnalysisModule !== 'undefined') profitAnalysisModule.render();
       return;
     }
     if (["estimateRequestManage", "estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList", "projectReceive", "projectReceiveList"].includes(targetPanelId)) {
