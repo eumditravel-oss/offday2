@@ -162,6 +162,8 @@ function pmOpenProjectDetailWindow(index = 0) {
 }
 
 function pmBuildProjectDetailWindowHtml(p, index = 0) {
+  const centralUid = pmEscapeJs(p.__centralProjectUid || "");
+  const pmName = pmEscapeJs(p.pm || "PM");
   const title = pmEscapeHtml(p.name || "프로젝트 상세");
   const subtitle = pmEscapeHtml(`${p.client || "-"} · ${p.dept || "-"} · ${p.pm || "-"}`);
   return `<!doctype html>
@@ -190,7 +192,7 @@ function pmBuildProjectDetailWindowHtml(p, index = 0) {
     <div class="pm-popup-fixed">
       <div class="pm-popup-head">
         <div class="pm-popup-title"><div><h1>프로젝트 운영현황</h1><p class="subcopy">프로젝트별 개요, 회의록, 배정인원, 관련메일, 수주일정, 완료시점, 납품관리를 한 화면에서 확인합니다.</p></div></div>
-        <div class="actions"><button class="btn btn-line" onclick="alert('착수지연 사유서 작성 화면 준비 영역입니다.')">착수지연 사유서 작성</button><button class="btn btn-line" onclick="alert('상부 승인 처리 화면 준비 영역입니다.')">상부 승인 처리</button><button class="btn btn-primary" onclick="alert('완료일정 변경 화면 준비 영역입니다.')">완료일정 변경</button></div>
+        <div class="actions"><button class="btn btn-line" onclick="pmPopupEscalateDelay('${centralUid}','${pmName}')">착수지연 사유서 작성</button><button class="btn btn-line" onclick="alert('상부 승인 처리 화면 준비 영역입니다.')">상부 승인 처리</button><button class="btn btn-primary" onclick="pmPopupEscalateCompletion('${centralUid}','${pmName}')">완료일정 변경</button></div>
       </div>
       <div class="pm-popup-tabs">
         <button class="btn btn-line pm-back-list-btn" onclick="window.close()">프로젝트 목록 바로가기</button>
@@ -201,7 +203,24 @@ function pmBuildProjectDetailWindowHtml(p, index = 0) {
       ${pmBuildProjectDetailContentHtml(p, title, subtitle)}
     </div>
   </div>
-</body>
+<script>
+  function pmPopupEscalateDelay(centralUid, pmName) {
+    var reason = prompt('착수지연 사유를 입력하세요 (부사장 결재로 전달됩니다):', '');
+    if (!reason) return;
+    if (centralUid && window.opener && window.opener.centralProjectStore) {
+      window.opener.centralProjectStore.escalateToVP(centralUid, { type: '지연사유', reason: reason, requester: pmName || 'PM' });
+      alert('착수지연 사유서가 부사장 결재 요청으로 등록되었습니다.');
+    }
+  }
+  function pmPopupEscalateCompletion(centralUid, pmName) {
+    var reason = prompt('완료일정 변경 사유를 입력하세요 (부사장 결재로 전달됩니다):', '');
+    if (!reason) return;
+    if (centralUid && window.opener && window.opener.centralProjectStore) {
+      window.opener.centralProjectStore.escalateToVP(centralUid, { type: '납품일정변경', reason: reason, requester: pmName || 'PM' });
+      alert('완료일정 변경 사유서가 부사장 결재 요청으로 등록되었습니다.');
+    }
+  }
+</script></body>
 </html>`;
 }
 
@@ -393,6 +412,20 @@ pmRefreshLinkedEstimateProjects = function pmRefreshProjectListMirror() {
   pmProjectData.splice(0, pmProjectData.length, ...items.map(pmBuildProjectFromReceiveItem));
 };
 window.pmRefreshLinkedEstimateProjects = pmRefreshLinkedEstimateProjects;
+  window.pmEscalateDelay = function(centralUid, pm){
+    if(!centralUid||!window.centralProjectStore) return;
+    var reason = prompt('착수지연 사유를 입력하세요:','');
+    if(!reason) return;
+    centralProjectStore.escalateToVP(centralUid,{type:'지연사유',reason,requester:pm||'PM'});
+    if(typeof showToast==='function') showToast('착수지연 사유서가 부사장 결재 요청으로 등록되었습니다.');
+  };
+  window.pmEscalateCompletion = function(centralUid, pm){
+    if(!centralUid||!window.centralProjectStore) return;
+    var reason = prompt('완료일정 변경 사유를 입력하세요:','');
+    if(!reason) return;
+    centralProjectStore.escalateToVP(centralUid,{type:'납품일정변경',reason,requester:pm||'PM'});
+    if(typeof showToast==='function') showToast('완료일정 변경 사유서가 부사장 결재 요청으로 등록되었습니다.');
+  }
 
 /* =========================================================
    2026-05-28 프로젝트 관리 상세 이력 보존 패치
