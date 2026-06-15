@@ -21345,3 +21345,45 @@ button.btn-orange{
   box-shadow:inset 0 0 0 2px #22c55e !important;
   background:#fff !important;
 }
+
+/* 2026-06-15 estimate sheet stability guard */
+.estimate-sheet-grid-wrap.estimate-excel-grid-wrap{
+  overscroll-behavior:contain !important;
+  contain:layout paint !important;
+  isolation:isolate !important;
+}
+.estimate-sheet-grid.estimate-excel-grid,
+.estimate-excel-grid{
+  isolation:isolate !important;
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+}
+.estimate-sheet-grid.estimate-excel-grid th,
+.estimate-sheet-grid.estimate-excel-grid td,
+.estimate-excel-grid th,
+.estimate-excel-grid td{
+  overflow:hidden !important;
+  text-overflow:clip !important;
+}
+.estimate-excel-cell,
+.estimate-excel-cell.overflow-text-cell,
+.estimate-excel-cell.overflow-text-cell.outside-print{
+  overflow:hidden !important;
+  white-space:nowrap !important;
+  text-overflow:clip !important;
+  position:relative !important;
+  z-index:2 !important;
+  max-width:100% !important;
+}
+.estimate-excel-cell:focus,
+.estimate-excel-cell.active-cell{
+  z-index:60 !important;
+  overflow:hidden !important;
+}
+.estimate-excel-image{
+  z-index:3 !important;
+  pointer-events:none !important;
+}
+.estimate-excel-col-head{z-index:80 !important;}
+.estimate-excel-row-head{z-index:70 !important;}
+.estimate-excel-corner{z-index:90 !important;}

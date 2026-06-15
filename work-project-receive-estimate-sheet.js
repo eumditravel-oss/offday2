@@ -4154,7 +4154,7 @@ function estimateRequestRowHtml(row) {
   const safeId = estimateRequestHtml(row.id);
   const estimateOpenDisabled = linkedEstimate ? "" : "disabled";
   const estimateOpenTitle = linkedEstimate ? "연결된 견적서를 엽니다." : "실행 버튼을 먼저 눌러 견적서를 생성하면 활성화됩니다.";
-  const estimateOpenAction = linkedEstimate ? `openEstimateSheetById('${estimateRequestHtml(row.estimateId)}')` : "";
+  const estimateOpenAction = linkedEstimate ? `openEstimateSheetFromRequest('${safeId}')` : "";
   const currentStatus = ESTIMATE_REQUEST_STATUS.includes(row.status) ? row.status : "의뢰메모";
   const currentEstimateType = ESTIMATE_SHEET_TYPE_ORDER.includes(row.estimateType) ? row.estimateType : "개산견적";
   const statusOptions = ESTIMATE_REQUEST_STATUS.map(s => `<option value="${estimateRequestHtml(s)}" ${currentStatus === s ? "selected" : ""}>${estimateRequestHtml(s)}</option>`).join("");
@@ -6522,6 +6522,318 @@ if (typeof estimateLinkageOriginalCommitDbPending === "function") {
   }
 })();
 
+/* Keep the request row estimate type connected to the sheet opened from it. */
+(function estimateRequestOpenTypeSyncGuard(){
+  if (typeof window !== "undefined" && window.__estimateRequestOpenTypeSyncGuard) return;
+  if (typeof window !== "undefined") window.__estimateRequestOpenTypeSyncGuard = true;
+
+  function estimateRequestOpenTypeOrder() {
+    return Array.isArray(ESTIMATE_SHEET_TYPE_ORDER) ? ESTIMATE_SHEET_TYPE_ORDER : [];
+  }
+
+  function estimateRequestOpenNormalizeType(value) {
+    const order = estimateRequestOpenTypeOrder();
+    const fallback = order[0] || "";
+    const raw = String(value || "").trim();
+    if (!raw) return fallback;
+    if (order.includes(raw)) return raw;
+    const compact = raw.replace(/\s+/g, "");
+    return order.find(type => String(type || "").replace(/\s+/g, "") === compact) || fallback;
+  }
+
+  function estimateRequestOpenRows() {
+    return typeof estimateRequestRows !== "undefined" && Array.isArray(estimateRequestRows) ? estimateRequestRows : [];
+  }
+
+  function estimateRequestOpenRecords() {
+    return typeof estimateSheetRecords !== "undefined" && Array.isArray(estimateSheetRecords) ? estimateSheetRecords : [];
+  }
+
+  function estimateRequestOpenRowElement(id) {
+    if (typeof document === "undefined") return null;
+    const root = document.getElementById("estimateWorkflowBoard") || document;
+    return Array.from(root.querySelectorAll("tr[data-request-id]")).find(tr => tr.getAttribute("data-request-id") === String(id)) || null;
+  }
+
+  function estimateRequestOpenVisibleType(id) {
+    const tr = estimateRequestOpenRowElement(id);
+    const field = tr?.querySelector?.('select[data-request-field="estimateType"], [data-request-field="estimateType"]');
+    return field ? (field.value || field.textContent || "") : "";
+  }
+
+  function estimateRequestOpenRequestIndex(id) {
+    const rows = estimateRequestOpenRows();
+    return rows.findIndex(row => row && row.id === id);
+  }
+
+  function estimateRequestOpenFindRequestByEstimateId(estimateId) {
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    const rows = estimateRequestOpenRows();
+    return rows.find(row => row && (row.estimateId === estimateId || row.id === estimateId)) || null;
+  }
+
+  function estimateRequestOpenSyncVisibleTypeToRow(id) {
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    const idx = estimateRequestOpenRequestIndex(id);
+    if (idx < 0) return null;
+    const rows = estimateRequestOpenRows();
+    const row = typeof estimateRequestNormalizeRow === "function" ? estimateRequestNormalizeRow(rows[idx]) : { ...rows[idx] };
+    const nextType = estimateRequestOpenNormalizeType(estimateRequestOpenVisibleType(id) || row.estimateType);
+    row.estimateType = nextType;
+    rows[idx] = row;
+    if (typeof estimateRequestSaveRows === "function") estimateRequestSaveRows();
+    return row;
+  }
+
+  function estimateRequestOpenSyncLinkedSheet(id) {
+    const row = estimateRequestOpenSyncVisibleTypeToRow(id);
+    if (!row) return null;
+    if (typeof estimateRequestApplyEstimateTypeToLinkedSheet === "function") {
+      estimateRequestApplyEstimateTypeToLinkedSheet(id, { row, silent: true });
+    }
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    return estimateRequestOpenRows().find(item => item && item.id === id) || row;
+  }
+
+  const previousCreateFromRequest = typeof createEstimateSheetFromRequest === "function" ? createEstimateSheetFromRequest : null;
+  if (previousCreateFromRequest) {
+    createEstimateSheetFromRequest = function estimateRequestCreateSheetWithVisibleType(id, options = {}) {
+      estimateRequestOpenSyncVisibleTypeToRow(id);
+      return previousCreateFromRequest(id, options);
+    };
+    if (typeof window !== "undefined") window.createEstimateSheetFromRequest = createEstimateSheetFromRequest;
+  }
+
+  window.openEstimateSheetFromRequest = function estimateRequestOpenSheetFromRequest(id) {
+    const row = estimateRequestOpenSyncLinkedSheet(id);
+    const targetId = row?.estimateId || estimateRequestOpenRecords().find(record => record?.requestId === id)?.id || "";
+    if (targetId && typeof openEstimateSheetById === "function") return openEstimateSheetById(targetId);
+    return undefined;
+  };
+
+  const previousOpenById = typeof openEstimateSheetById === "function" ? openEstimateSheetById : null;
+  if (previousOpenById) {
+    openEstimateSheetById = function estimateRequestOpenSyncedSheetById(estimateId) {
+      let targetId = estimateId;
+      const request = estimateRequestOpenFindRequestByEstimateId(estimateId);
+      if (request?.id) {
+        const row = estimateRequestOpenSyncLinkedSheet(request.id);
+        targetId = row?.estimateId || targetId;
+      }
+      return previousOpenById(targetId);
+    };
+    if (typeof window !== "undefined") window.openEstimateSheetById = openEstimateSheetById;
+  }
+})();
+
+/* 2026-06-15 estimate sheet stability patch
+   Keep the worksheet surface predictable while preserving the source template. */
+(function estimateSheetStabilityPatch(){
+  if (typeof window !== "undefined" && window.__estimateSheetStabilityPatch) return;
+  if (typeof window !== "undefined") window.__estimateSheetStabilityPatch = true;
+
+  const safeCssAppend = (styleText, rules) => {
+    const blocked = /(?:^|;)\s*(?:position|z-index|overflow|overflow-x|overflow-y|text-overflow|white-space)\s*:[^;]*/gi;
+    const base = String(styleText || "").replace(blocked, "").replace(/;;+/g, ";").replace(/^;|;$/g, "").trim();
+    return `${base}${base ? ";" : ""}${rules}`;
+  };
+
+  const baseCellInlineStyle = typeof estimateSheetCellInlineStyle === "function" ? estimateSheetCellInlineStyle : null;
+  estimateSheetCellInlineStyle = function estimateSheetStableCellInlineStyle(styleText) {
+    const source = baseCellInlineStyle ? baseCellInlineStyle(styleText) : styleText;
+    return safeCssAppend(source, "overflow:hidden;text-overflow:clip;white-space:nowrap;max-width:100%");
+  };
+  if (typeof window !== "undefined") window.estimateSheetCellInlineStyle = estimateSheetCellInlineStyle;
+
+  estimateSheetShouldOverflowText = function estimateSheetStableShouldOverflowText() {
+    return false;
+  };
+  if (typeof window !== "undefined") window.estimateSheetShouldOverflowText = estimateSheetShouldOverflowText;
+
+  const basePopupCss = typeof estimateSheetGetPopupCss === "function" ? estimateSheetGetPopupCss : null;
+  estimateSheetGetPopupCss = function estimateSheetStablePopupCss() {
+    const css = basePopupCss ? basePopupCss() : "";
+    return `${css}
+      .excel-grid-host{overscroll-behavior:contain;contain:layout paint;isolation:isolate;}
+      .excel-grid-canvas{isolation:isolate;}
+      .estimate-excel-grid{position:relative;z-index:2;}
+      .estimate-excel-cell{overflow:hidden!important;text-overflow:clip!important;white-space:nowrap!important;position:relative!important;z-index:2!important;max-width:100%;}
+      .estimate-excel-cell.overflow-text-cell,.estimate-excel-cell.overflow-text-cell.outside-print{overflow:hidden!important;z-index:2!important;}
+      .estimate-excel-cell:focus,.estimate-excel-cell.active-cell{overflow:hidden!important;z-index:60!important;}
+      .estimate-excel-image{z-index:3!important;pointer-events:none!important;}
+      .estimate-excel-col-head{z-index:80!important;}
+      .estimate-excel-row-head{z-index:70!important;}
+      .estimate-excel-corner{z-index:90!important;}
+    `;
+  };
+  if (typeof window !== "undefined") window.estimateSheetGetPopupCss = estimateSheetGetPopupCss;
+
+  function estimateSheetStableClone(value) {
+    if (!value || typeof value !== "object") return value;
+    try { return JSON.parse(JSON.stringify(value)); }
+    catch (_) { return value; }
+  }
+
+  function estimateSheetStablePatchExcelStyle(style, text) {
+    const next = estimateSheetStableClone(style) || {};
+    next.alignment = {
+      ...(next.alignment || {}),
+      wrapText: false,
+      shrinkToFit: false
+    };
+    if (!next.alignment.vertical) next.alignment.vertical = "middle";
+    const raw = String(text ?? "");
+    if (raw.length > 18 && !next.alignment.horizontal) next.alignment.horizontal = "left";
+    return next;
+  }
+
+  function estimateSheetStableSetExcelValue(cell, obj, state, r, c) {
+    if (obj?.formula) {
+      cell.value = {
+        formula: String(obj.formula).replace(/^=/, ""),
+        result: estimateSheetGetRawValue(state, r, c)
+      };
+      return;
+    }
+    const value = obj?.value;
+    if (typeof value === "number") cell.value = value;
+    else if (typeof estimateSheetCellNeedsXlsxNumber === "function" && estimateSheetCellNeedsXlsxNumber(value)) {
+      cell.value = Number(String(value).replace(/,/g, ""));
+    } else {
+      cell.value = String(value ?? "");
+    }
+  }
+
+  function estimateSheetStableApplyCellStyle(worksheet, state, spec, r, c) {
+    const obj = estimateSheetGetCellObj(state, r, c);
+    const tmpl = estimateSheetCellTemplate(spec, estimateSheetTemplateRowForState(state, r), c);
+    const text = obj.formula ? estimateSheetGetRawValue(state, r, c) : obj.value;
+    const style = estimateSheetCssToExcelJsStyle(estimateSheetCellEffectiveStyle(obj, tmpl), tmpl?.s || "");
+    worksheet.getCell(r, c).style = estimateSheetStablePatchExcelStyle(style, text);
+  }
+
+  function estimateSheetStableApplyMergeEdgeBorders(worksheet, state, spec) {
+    (state.merges || []).forEach(range => {
+      const [r1, c1, r2, c2] = range.map(Number);
+      if (!r1 || !c1 || !r2 || !c2) return;
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = worksheet.getCell(r, c);
+          const border = { ...(cell.border || {}) };
+          if (r === r1) border.top = border.top || worksheet.getCell(r1, c1).border?.top;
+          if (r === r2) border.bottom = border.bottom || worksheet.getCell(r1, c1).border?.bottom;
+          if (c === c1) border.left = border.left || worksheet.getCell(r1, c1).border?.left;
+          if (c === c2) border.right = border.right || worksheet.getCell(r1, c1).border?.right;
+          cell.border = border;
+          if (r === r1 && c === c1) estimateSheetStableApplyCellStyle(worksheet, state, spec, r, c);
+        }
+      }
+    });
+  }
+
+  const fallbackExportExcelJsNow = typeof estimateSheetExportExcelJsNow === "function" ? estimateSheetExportExcelJsNow : null;
+  estimateSheetExportExcelJsNow = async function estimateSheetStableExportExcelJsNow() {
+    if (typeof ExcelJS === "undefined") {
+      if (fallbackExportExcelJsNow) return fallbackExportExcelJsNow();
+      throw new Error("ExcelJS is not available");
+    }
+    if (!estimateSheetEditorState) estimateSheetEditorState = estimateSheetCreateState(estimateSheetActiveType);
+    if (typeof estimateSheetRecalculateLinkedFormula === "function") estimateSheetRecalculateLinkedFormula(estimateSheetEditorState);
+
+    const exportData = typeof estimateSheetExtractQuoteDataFromState === "function"
+      ? estimateSheetExtractQuoteDataFromState(estimateSheetEditorState)
+      : null;
+    if (exportData) exportData.type = estimateSheetActiveType;
+    const state = exportData && typeof estimateSheetApplyQuoteDataToTemplate === "function"
+      ? estimateSheetApplyQuoteDataToTemplate(exportData)
+      : estimateSheetCloneState(estimateSheetEditorState);
+    if (typeof estimateSheetRecalculateLinkedFormula === "function") estimateSheetRecalculateLinkedFormula(state);
+
+    const spec = estimateSheetGetSpec(state.type);
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "CON-COST Groupware";
+    workbook.created = new Date();
+    workbook.modified = new Date();
+    workbook.calcProperties = { fullCalcOnLoad: true };
+
+    const worksheet = workbook.addWorksheet(state.type || spec.sheet || "Estimate", {
+      properties: { defaultRowHeight: 18 },
+      pageSetup: {
+        paperSize: 9,
+        orientation: "portrait",
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 1,
+        horizontalCentered: false,
+        verticalCentered: false,
+        margins: { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0, footer: 0 }
+      }
+    });
+
+    const printCols = Math.max(1, Math.min(Number(spec.printCols || 7), Number(state.maxCol || spec.maxCol || 7)));
+    worksheet.pageSetup.printArea = `A1:${estimateSheetColumnA1(printCols)}${state.maxRow || spec.maxRow || 33}`;
+    worksheet.views = [{
+      state: "normal",
+      style: "pageBreakPreview",
+      activeCell: "A1",
+      showGridLines: false,
+      zoomScale: Number(spec.zoom || 100),
+      zoomScaleNormal: Number(spec.zoom || 100)
+    }];
+
+    for (let c = 1; c <= state.maxCol; c += 1) {
+      const col = worksheet.getColumn(c);
+      col.width = state.colWidthUnits?.[c - 1] || estimateSheetWidthUnitFromCol(state, c);
+      col.hidden = false;
+    }
+
+    for (let r = 1; r <= state.maxRow; r += 1) {
+      const row = worksheet.getRow(r);
+      row.height = Math.round(((state.rowHeights?.[r - 1] || 20) * 0.75) * 100) / 100;
+      for (let c = 1; c <= state.maxCol; c += 1) {
+        const obj = estimateSheetGetCellObj(state, r, c);
+        const cell = worksheet.getCell(r, c);
+        estimateSheetStableSetExcelValue(cell, obj, state, r, c);
+        estimateSheetStableApplyCellStyle(worksheet, state, spec, r, c);
+      }
+    }
+
+    (state.merges || []).forEach(range => {
+      try { worksheet.mergeCells(range[0], range[1], range[2], range[3]); }
+      catch (error) { console.warn("estimate sheet merge skipped", range, error); }
+    });
+    estimateSheetStableApplyMergeEdgeBorders(worksheet, state, spec);
+
+    (spec.images || []).forEach(img => {
+      try {
+        const match = String(img.data || "").match(/^data:image\/(\w+);base64,(.*)$/);
+        const extension = (match?.[1] || "png").replace("jpeg", "jpg");
+        const base64 = match?.[2] || String(img.data || "");
+        if (!base64) return;
+        const imageId = workbook.addImage({ base64, extension });
+        const rowShift = (Number(state.itemExtraRows || 0) && img.from.row >= 29) ? Number(state.itemExtraRows || 0) : 0;
+        worksheet.addImage(imageId, {
+          tl: { col: img.from.col, row: img.from.row + rowShift },
+          br: { col: img.to.col, row: img.to.row + rowShift },
+          editAs: "oneCell"
+        });
+      } catch (error) {
+        console.warn("estimate sheet image skipped", error);
+      }
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `CONCOST_${state.type}_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+  if (typeof window !== "undefined") window.estimateSheetExportExcelJsNow = estimateSheetExportExcelJsNow;
+})();
+
 
 /* === 2026-05-28 기성관리 탭 멈춤 방지 최종 패치
    - 기성관리(progress) 탭 전환 시 전체 DB/견적 연계 재동기화, 전체 리포트 렌더링, 전체 행 합계 재계산을 실행하지 않는다.
@@ -8510,4 +8822,117 @@ function bindEstimateRequestKeyboardNavigation(root = document) {
   window.addEventListener("resize", () => {
     if (menu && activeCell?.isConnected) openMenu(activeCell);
   });
+})();
+
+/* Final estimate popup guard. This block intentionally runs after all patches above. */
+(function estimateSheetFinalStabilityGuard(){
+  if (typeof window !== "undefined" && window.__estimateSheetFinalStabilityGuard) return;
+  if (typeof window !== "undefined") window.__estimateSheetFinalStabilityGuard = true;
+
+  const previousPopupCss = typeof estimateSheetGetPopupCss === "function" ? estimateSheetGetPopupCss : null;
+  if (previousPopupCss) {
+    estimateSheetGetPopupCss = function estimateSheetFinalPopupCss() {
+      return `${previousPopupCss()}
+        .excel-grid-host{
+          position:relative!important;
+          overflow:auto!important;
+          overscroll-behavior:contain!important;
+          contain:layout paint!important;
+          isolation:isolate!important;
+          clip-path:inset(0)!important;
+        }
+        .excel-grid-canvas{
+          position:relative!important;
+          display:inline-block!important;
+          overflow:visible!important;
+          isolation:isolate!important;
+          min-width:max-content!important;
+        }
+        .estimate-excel-grid{
+          border-collapse:separate!important;
+          border-spacing:0!important;
+          table-layout:fixed!important;
+          position:relative!important;
+          z-index:10!important;
+        }
+        .estimate-excel-grid th,
+        .estimate-excel-grid td{
+          overflow:hidden!important;
+          text-overflow:clip!important;
+          white-space:nowrap!important;
+          background-clip:padding-box!important;
+        }
+        .estimate-excel-cell,
+        .estimate-excel-cell.overflow-text-cell,
+        .estimate-excel-cell.overflow-text-cell.outside-print{
+          overflow:hidden!important;
+          text-overflow:clip!important;
+          white-space:nowrap!important;
+          position:relative!important;
+          z-index:11!important;
+        }
+        .estimate-excel-cell:focus,
+        .estimate-excel-cell.active-cell{
+          z-index:70!important;
+          box-shadow:inset 0 0 0 2px #16a34a!important;
+        }
+        .estimate-excel-col-head{
+          position:sticky!important;
+          top:0!important;
+          z-index:120!important;
+        }
+        .estimate-excel-row-head{
+          position:sticky!important;
+          left:0!important;
+          z-index:110!important;
+        }
+        .estimate-excel-corner{
+          position:sticky!important;
+          top:0!important;
+          left:0!important;
+          z-index:130!important;
+        }
+        .estimate-excel-image{
+          position:absolute!important;
+          z-index:12!important;
+          pointer-events:none!important;
+          object-fit:contain!important;
+          transform:translateZ(0);
+        }
+      `;
+    };
+    if (typeof window !== "undefined") window.estimateSheetGetPopupCss = estimateSheetGetPopupCss;
+  }
+
+  const previousRenderExcelWindow = typeof estimateSheetRenderExcelWindow === "function" ? estimateSheetRenderExcelWindow : null;
+  if (previousRenderExcelWindow) {
+    estimateSheetRenderExcelWindow = function estimateSheetFinalRenderExcelWindow() {
+      previousRenderExcelWindow();
+      const win = estimateSheetExcelWindowRef;
+      if (!win || win.closed) return;
+      const doc = win.document;
+      const host = doc.getElementById("estimateSheetPopupGridHost");
+      const canvas = host?.querySelector?.(".excel-grid-canvas");
+      const grid = doc.getElementById("estimateSheetPopupGrid");
+      if (host) {
+        host.style.overflow = "auto";
+        host.style.overscrollBehavior = "contain";
+        host.style.contain = "layout paint";
+        host.style.isolation = "isolate";
+        host.style.clipPath = "inset(0)";
+      }
+      if (canvas && estimateSheetEditorState) {
+        const width = estimateSheetGridPixelWidth(estimateSheetEditorState);
+        const height = estimateSheetGridPixelHeight(estimateSheetEditorState);
+        canvas.style.width = `${width}px`;
+        canvas.style.minWidth = `${width}px`;
+        canvas.style.minHeight = `${height}px`;
+      }
+      if (grid) {
+        grid.style.borderCollapse = "separate";
+        grid.style.borderSpacing = "0";
+      }
+    };
+    if (typeof window !== "undefined") window.estimateSheetRenderExcelWindow = estimateSheetRenderExcelWindow;
+  }
 })();
