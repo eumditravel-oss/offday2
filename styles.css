@@ -21387,3 +21387,279 @@ button.btn-orange{
 .estimate-excel-col-head{z-index:80 !important;}
 .estimate-excel-row-head{z-index:70 !important;}
 .estimate-excel-corner{z-index:90 !important;}
+
+/* 2026-06-15 QC review filter redesign */
+#qcReview .checklist-filter-shell.qc-filter-redesign{
+  border:1px solid #dbe3ef;
+  border-radius:8px;
+  background:#fff;
+  box-shadow:0 8px 20px rgba(15,23,42,.045);
+  overflow:hidden;
+}
+#qcReview .qc-filter-topbar{
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  border-bottom:1px solid #e8eef7;
+  background:#f8fafc;
+}
+#qcReview .qc-filter-project{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+#qcReview .qc-filter-project span,
+#qcReview .qc-filter-current span,
+#qcReview .qc-category-lane h3{
+  margin:0;
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+#qcReview .qc-filter-project strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#0f172a;
+  font-size:14px;
+  font-weight:900;
+}
+#qcReview .qc-filter-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+#qcReview .qc-filter-quiet-btn{
+  height:28px;
+  padding:0 10px;
+  border:1px solid #dbe3ef;
+  border-radius:8px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+#qcReview .qc-filter-quiet-btn:hover{
+  border-color:#93c5fd;
+  color:#1d4ed8;
+}
+#qcReview .qc-filter-overview{
+  display:grid;
+  grid-template-columns:170px minmax(0,1fr);
+  gap:10px;
+  align-items:stretch;
+  padding:10px 12px;
+  border-bottom:1px solid #e8eef7;
+}
+#qcReview .qc-filter-current{
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  background:#fbfdff;
+}
+#qcReview .qc-filter-status-row{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+#qcReview .qc-filter-status-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  height:24px;
+  max-width:260px;
+  padding:0 8px;
+  border:1px solid #dbeafe;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+#qcReview .qc-filter-status-chip b{
+  color:#475569;
+  font-weight:900;
+}
+#qcReview .qc-filter-status-chip.strong{
+  border-color:#fed7aa;
+  background:#fff7ed;
+  color:#c2410c;
+}
+#qcReview .qc-filter-middle-wrap .checklist-middle-filter-bar{
+  margin:0 !important;
+  padding:8px 12px !important;
+  border-top:0 !important;
+  border-bottom:1px solid #e8eef7 !important;
+  background:#fff !important;
+}
+#qcReview .qc-category-lanes{
+  display:grid;
+  grid-template-columns:minmax(150px,.8fr) minmax(170px,.9fr) minmax(280px,1.5fr) minmax(150px,.75fr);
+  gap:8px;
+  padding:10px 12px 12px;
+  background:#f8fafc;
+}
+#qcReview .qc-category-lane{
+  min-width:0;
+  display:grid;
+  gap:6px;
+  align-content:start;
+  padding:8px;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  background:#fff;
+}
+#qcReview .qc-category-lane h3{
+  color:#334155;
+}
+#qcReview .qc-category-lane-items{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+#qcReview .qc-category-pill{
+  min-width:0;
+  height:30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:0 9px;
+  border:1px solid #dbe3ef;
+  border-radius:8px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+#qcReview .qc-category-pill span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#qcReview .qc-category-pill em{
+  min-width:22px;
+  height:18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 5px;
+  border-radius:999px;
+  background:#f1f5f9;
+  color:#475569;
+  font-size:10px;
+  font-style:normal;
+}
+#qcReview .qc-category-pill:hover{
+  border-color:#93c5fd;
+  background:#f8fbff;
+  color:#1d4ed8;
+}
+#qcReview .qc-category-pill.active{
+  border-color:#2563eb;
+  background:#eff6ff;
+  color:#1d4ed8;
+  box-shadow:inset 0 0 0 1px #2563eb;
+}
+#qcReview .qc-category-pill.active em{
+  background:#2563eb;
+  color:#fff;
+}
+#qcReview .qc-category-pill.all{
+  width:100%;
+  height:100%;
+  min-height:42px;
+  border-color:#fed7aa;
+  background:#fff7ed;
+  color:#c2410c;
+}
+#qcReview .qc-category-pill.all.active{
+  border-color:#f97316;
+  background:#ffedd5;
+  color:#9a3412;
+  box-shadow:inset 0 0 0 1px #f97316;
+}
+#qcReview .qc-category-lane.question .qc-category-pill{
+  flex:1 1 92px;
+}
+#qcReview .qc-category-lane.final .qc-category-pill{
+  width:100%;
+}
+
+#qcReview .qc-filter-redesign .qc-filter-topbar{
+  padding:8px 10px;
+}
+#qcReview .qc-filter-redesign .qc-filter-overview{
+  grid-template-columns:150px minmax(0,1fr);
+  padding:8px 10px;
+}
+#qcReview .qc-filter-redesign .qc-filter-current{
+  padding:6px 8px;
+}
+#qcReview .qc-filter-redesign .qc-filter-middle-wrap .checklist-middle-filter-bar{
+  padding:6px 10px !important;
+}
+#qcReview .qc-filter-redesign .qc-category-lanes{
+  grid-template-columns:minmax(150px,.85fr) minmax(190px,1fr) minmax(220px,1.25fr) minmax(170px,.9fr);
+  gap:6px;
+  padding:8px 10px 10px;
+  align-items:start;
+}
+#qcReview .qc-filter-redesign .qc-category-lane{
+  min-height:0;
+  gap:5px;
+  padding:7px;
+  align-content:start;
+}
+#qcReview .qc-filter-redesign .qc-category-lane h3{
+  line-height:1;
+}
+#qcReview .qc-filter-redesign .qc-category-lane-items{
+  gap:5px;
+}
+#qcReview .qc-filter-redesign .qc-category-pill{
+  height:28px;
+  padding:0 8px;
+}
+#qcReview .qc-filter-redesign .qc-category-pill.all{
+  min-height:38px;
+}
+#qcReview .qc-filter-redesign .qc-category-lane.question .qc-category-pill{
+  flex:0 1 auto;
+}
+@media(max-width:1200px){
+  #qcReview .qc-category-lanes{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:760px){
+  #qcReview .qc-filter-topbar,
+  #qcReview .qc-filter-overview,
+  #qcReview .qc-filter-current,
+  #qcReview .qc-category-lanes{
+    grid-template-columns:1fr;
+  }
+  #qcReview .qc-filter-actions{
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+  #qcReview .qc-filter-status-chip{
+    max-width:100%;
+  }
+}
