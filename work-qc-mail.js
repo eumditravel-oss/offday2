@@ -14160,6 +14160,176 @@ setTimeout(() => {
   window.duplicateCheckedRows = duplicateCheckedRows;
 })();
 
+/* 2026-06-16 QC review central project sync */
+(function installChecklistCentralProjectSync(){
+  let lastSyncSignature = "";
+  let syncTimer = 0;
+
+  function syncText(value) {
+    return String(value ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  function selectedProjectData() {
+    const value = document.getElementById("checklistProject")?.value || "";
+    try {
+      if (typeof qcFindProjectByText === "function") return qcFindProjectByText(value);
+    } catch (_) {}
+    try {
+      if (typeof checklistFindProjectByInput === "function") return checklistFindProjectByInput(value);
+    } catch (_) {}
+    return null;
+  }
+
+  function centralProjectForChecklist(projectData) {
+    if (!window.centralProjectStore || !projectData) return null;
+    const key = centralProjectStore.keyFromData(projectData);
+    const found = centralProjectStore.getProjects().find(project => (project.keys || []).includes(key));
+    return found || centralProjectStore.upsertProject(projectData, "project-receive", { log: false });
+  }
+
+  function rowMatchesProject(row, projectData) {
+    const rowKey = syncText(row.projectLinkKey || row.linkedReceiveId || row.linkedProjectNo || row.projectNo || row.pjNo);
+    if (!rowKey) return true;
+    const values = [
+      projectData.receiveId,
+      projectData.internalReceiveId,
+      projectData.linkedReceiveId,
+      projectData.projectNo,
+      projectData.pjNo,
+      projectData.dbPjNo,
+      projectData.id
+    ].map(syncText).filter(Boolean);
+    return values.includes(rowKey);
+  }
+
+  function rowCategory(row) {
+    try { return normalizeChecklistGroupName(row.group); } catch (_) { return syncText(row.group); }
+  }
+
+  function rowContent(row) {
+    return [
+      row.item,
+      row.method,
+      row.comment
+    ].map(syncText).filter(Boolean).join("\n");
+  }
+
+  function isQuestionRow(row) {
+    const group = rowCategory(row);
+    return /^Z[1-6]\./.test(group) || group.includes("질의사항");
+  }
+
+  function isEstimateConditionRow(row) {
+    const group = rowCategory(row);
+    return /^Z7\./.test(group) || group.includes("견적조건");
+  }
+
+  function questionStatus(row) {
+    if (row.done || row.status === "확인완료") return "확인완료";
+    if (row.status) return syncText(row.status);
+    return row.checked ? "진행중" : "미회신";
+  }
+
+  function buildChecklistCentralSnapshot(projectData) {
+    const rows = (Array.isArray(checklistRows) ? checklistRows : [])
+      .map(row => {
+        try { return normalizeChecklistRow(row); } catch (_) { return row; }
+      })
+      .filter(row => row && rowMatchesProject(row, projectData));
+
+    const questions = rows.filter(isQuestionRow).map((row, index) => {
+      const group = rowCategory(row);
+      const content = rowContent(row) || syncText(row.item || row.method || group);
+      const status = questionStatus(row);
+      return {
+        questionUid: row.questionUid || `CHK-${syncText(projectData.receiveId || projectData.projectNo || projectData.projectName)}-${group}-${syncText(row.no || index)}`,
+        createdAt: row.createdAt || "",
+        category: group,
+        content,
+        targetRecipient: Array.isArray(row.targets) ? row.targets.join(", ") : syncText(row.targets || row.target || row.creator || "PM"),
+        status,
+        answer: syncText(row.answer || row.result || row.workerComment || ""),
+        answeredAt: row.answeredAt || "",
+        checklistNo: row.no || "",
+        middleCategory: row.middleCategory || "",
+        subCategory: row.subCategory || ""
+      };
+    });
+
+    const conditionText = rows.filter(isEstimateConditionRow).map(row => {
+      const label = [row.no, row.item].map(syncText).filter(Boolean).join(". ");
+      const body = [row.method, row.comment].map(syncText).filter(Boolean).join("\n");
+      return [label, body].filter(Boolean).join("\n");
+    }).filter(Boolean).join("\n\n");
+
+    return { questions, conditionText };
+  }
+
+  function syncChecklistToCentralProject() {
+    if (!window.centralProjectStore || !Array.isArray(checklistRows)) return null;
+    const projectData = selectedProjectData();
+    const centralProject = centralProjectForChecklist(projectData);
+    if (!centralProject?.projectUid) return null;
+    const snapshot = buildChecklistCentralSnapshot(projectData);
+    const signature = JSON.stringify({ uid: centralProject.projectUid, snapshot });
+    if (signature === lastSyncSignature) return centralProject;
+    lastSyncSignature = signature;
+
+    return centralProjectStore.mutateProject(centralProject.projectUid, project => {
+      project.qaQc = project.qaQc || {};
+      project.qaQc.questions = snapshot.questions;
+      project.qaQc.openQuestionCount = snapshot.questions.filter(question => question.status !== "확인완료").length;
+      project.qaQc.checklistStatus = snapshot.questions.length ? "연동완료" : (project.qaQc.checklistStatus || "미확인");
+      project.qaQc.qcStatus = project.qaQc.openQuestionCount ? "질의진행" : (snapshot.questions.length ? "확인완료" : project.qaQc.qcStatus || "검토대기");
+      project.qaQc.estimateConditions = project.qaQc.estimateConditions || { pm: "", worker: "", merged: "" };
+      project.qaQc.estimateConditions.checklist = snapshot.conditionText;
+      if (snapshot.conditionText) {
+        const parts = [
+          project.qaQc.estimateConditions.pm && `[PM]\n${project.qaQc.estimateConditions.pm}`,
+          project.qaQc.estimateConditions.worker && `[작업자]\n${project.qaQc.estimateConditions.worker}`,
+          `[체크리스트]\n${snapshot.conditionText}`
+        ].filter(Boolean);
+        project.qaQc.estimateConditions.merged = parts.join("\n\n");
+      }
+    }, "QC 질의응답 동기화");
+  }
+
+  function scheduleChecklistCentralSync(delay = 0) {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      try { syncChecklistToCentralProject(); } catch (error) { console.warn("QC central sync failed", error); }
+    }, delay);
+  }
+
+  function wrapFunction(name) {
+    const base = window[name] || (typeof globalThis !== "undefined" ? globalThis[name] : null);
+    if (typeof base !== "function") return;
+    const wrapped = function checklistCentralSyncWrapper() {
+      const result = base.apply(this, arguments);
+      scheduleChecklistCentralSync(0);
+      return result;
+    };
+    window[name] = wrapped;
+    try { globalThis[name] = wrapped; } catch (_) {}
+    try { eval(`${name} = window.${name}`); } catch (_) {}
+  }
+
+  [
+    "renderChecklistGrid",
+    "updateChecklistCell",
+    "saveChecklistModal",
+    "saveChecklistQuickAddModal",
+    "insertChecklistRowInGroup",
+    "deleteChecklistRow",
+    "deleteCheckedRows",
+    "duplicateCheckedRows"
+  ].forEach(wrapFunction);
+
+  window.syncChecklistToCentralProject = syncChecklistToCentralProject;
+  window.scheduleChecklistCentralSync = scheduleChecklistCentralSync;
+  setTimeout(scheduleChecklistCentralSync, 0);
+})();
+
 
 
 /* =========================================================
