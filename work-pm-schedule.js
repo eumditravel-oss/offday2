@@ -1972,20 +1972,22 @@ let pmGanttMonth = new Date().getMonth() + 1;
 function injectPmGanttToggleButton() {
   const shell = document.getElementById('pmScheduleShell');
   if (!shell || document.getElementById('pmGanttToggleBtn')) return;
-  // Inject Gantt toggle button + container into the shell
   const wrapper = document.createElement('div');
   wrapper.id = 'pmGanttWrapper';
-  wrapper.style.cssText = 'padding:0 0 8px 0;';
+  wrapper.className = 'pm-gantt-wrapper';
   wrapper.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 4px;">
-      <button id="pmGanttToggleBtn" onclick="togglePmGanttView()" style="background:#0f172a;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-        📅 월간 스케줄표
+    <div class="pm-gantt-toolbar">
+      <button id="pmGanttToggleBtn" class="pm-gantt-toggle-btn" onclick="togglePmGanttView()">
+        <span>월간 스케줄표</span>
       </button>
-      <span id="pmGanttMonthLabel" style="font-size:13px;color:#64748b;display:none;"></span>
-      <button id="pmGanttPrevBtn" onclick="pmGanttNav(-1)" style="display:none;background:#e2e8f0;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">◀</button>
-      <button id="pmGanttNextBtn" onclick="pmGanttNav(1)" style="display:none;background:#e2e8f0;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">▶</button>
+      <div class="pm-gantt-month-controls">
+        <button id="pmGanttPrevBtn" class="pm-gantt-nav-btn" onclick="pmGanttNav(-1)" hidden>‹</button>
+        <span id="pmGanttMonthLabel" hidden></span>
+        <button id="pmGanttNextBtn" class="pm-gantt-nav-btn" onclick="pmGanttNav(1)" hidden>›</button>
+      </div>
+      <div class="pm-gantt-toolbar-note">팀별 인력 배정과 프로젝트 기간을 월 단위로 확인합니다.</div>
     </div>
-    <div id="pmGanttView" style="display:none;overflow-x:auto;padding:0 16px 16px;"></div>
+    <div id="pmGanttView" class="pm-gantt-view" hidden></div>
   `;
   shell.prepend(wrapper);
   injectPmGanttCss();
@@ -1996,12 +1998,15 @@ function togglePmGanttView() {
   const label = document.getElementById('pmGanttMonthLabel');
   const prev = document.getElementById('pmGanttPrevBtn');
   const next = document.getElementById('pmGanttNextBtn');
+  const toggle = document.getElementById('pmGanttToggleBtn');
   if (!view) return;
-  const showing = view.style.display !== 'none';
-  view.style.display = showing ? 'none' : 'block';
-  if (label) label.style.display = showing ? 'none' : '';
-  if (prev) prev.style.display = showing ? 'none' : '';
-  if (next) next.style.display = showing ? 'none' : '';
+  const showing = !view.hidden;
+  view.hidden = showing;
+  view.classList.toggle('open', !showing);
+  if (label) label.hidden = showing;
+  if (prev) prev.hidden = showing;
+  if (next) next.hidden = showing;
+  if (toggle) toggle.classList.toggle('active', !showing);
   if (!showing) renderPmGanttCalendar(pmGanttYear, pmGanttMonth);
 }
 
@@ -2012,52 +2017,142 @@ function pmGanttNav(delta) {
   renderPmGanttCalendar(pmGanttYear, pmGanttMonth);
 }
 
+function getPmGanttDateWindow(year, month) {
+  return {
+    start: new Date(year, month - 1, 1),
+    end: new Date(year, month, 0),
+    days: new Date(year, month, 0).getDate()
+  };
+}
+
+function getPmGanttClampedDay(date, monthStart, monthEnd) {
+  if (!date || !Number.isFinite(date.getTime())) return null;
+  if (date < monthStart) return 1;
+  if (date > monthEnd) return monthEnd.getDate();
+  return date.getDate();
+}
+
+function getPmGanttAssignments(year, month, colors) {
+  const { start: monthStart, end: monthEnd } = getPmGanttDateWindow(year, month);
+  const byEmployee = {};
+  const legend = [];
+
+  (pmScheduleProjects || []).forEach((item, idx) => {
+    const project = item?.project || {};
+    const projectNo = project.projectNo || '';
+    const projectName = project.projectName || projectNo || `프로젝트 ${idx + 1}`;
+    const color = colors[idx % colors.length];
+    const startRaw = String(project.startDate || project.firstDelivery || '').trim();
+    const endRaw = String(project.firstDelivery || project.startDate || '').trim();
+    let startDate = parsePmScheduleDate(startRaw);
+    let endDate = parsePmScheduleDate(endRaw);
+
+    if (!startDate && !endDate) {
+      startDate = new Date(monthStart);
+      endDate = new Date(monthEnd);
+    } else if (!startDate) {
+      startDate = new Date(endDate);
+    } else if (!endDate) {
+      endDate = new Date(startDate);
+    }
+    if (endDate < startDate) [startDate, endDate] = [endDate, startDate];
+    if (endDate < monthStart || startDate > monthEnd) return;
+
+    const startDay = getPmGanttClampedDay(startDate, monthStart, monthEnd);
+    const endDay = getPmGanttClampedDay(endDate, monthStart, monthEnd);
+    if (!startDay || !endDay) return;
+
+    const selectedPlan = item.approvedPlan || item.selectedProposal || 'plan1';
+    const rows = item?.proposals?.[selectedPlan]?.rows || [];
+    let hasVisibleAssignment = false;
+    rows.forEach(row => {
+      const planData = selectedPlan === 'plan2' ? row.plan2 : row.plan1;
+      const assigned = Boolean(
+        row.rc ||
+        row.sc ||
+        Number(planData?.people || 0) > 0 ||
+        Number(planData?.totalDays || planData?.workDays || 0) > 0
+      );
+      if (!assigned || !row.empNo) return;
+      hasVisibleAssignment = true;
+      if (!byEmployee[row.empNo]) byEmployee[row.empNo] = [];
+      byEmployee[row.empNo].push({
+        startDay,
+        endDay,
+        projectNo,
+        projectName,
+        scope: row.scope || row.dept || '',
+        color
+      });
+    });
+    if (hasVisibleAssignment) legend.push({ projectNo, projectName, color });
+  });
+
+  return { byEmployee, legend };
+}
+
+function layoutPmGanttAssignmentBars(assignments) {
+  const lanes = [];
+  return [...assignments]
+    .sort((a, b) => a.startDay - b.startDay || a.endDay - b.endDay)
+    .map(assignment => {
+      let lane = lanes.findIndex(lastEnd => assignment.startDay > lastEnd);
+      if (lane === -1) {
+        lane = lanes.length;
+        lanes.push(assignment.endDay);
+      } else {
+        lanes[lane] = assignment.endDay;
+      }
+      return { ...assignment, lane };
+    });
+}
+
+function renderPmGanttDayHeader(year, month, daysInMonth) {
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+  const now = new Date();
+  const isThisMonth = now.getFullYear() === year && now.getMonth() + 1 === month;
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    const dow = new Date(year, month - 1, day).getDay();
+    const classes = [
+      'pm-gantt-day-head',
+      dow === 0 || dow === 6 ? 'weekend' : '',
+      isThisMonth && now.getDate() === day ? 'today' : ''
+    ].filter(Boolean).join(' ');
+    return `<div class="${classes}"><b>${day}</b><span>${dayNames[dow]}</span></div>`;
+  }).join('');
+}
+
+function renderPmGanttDayCells(year, month, daysInMonth) {
+  const now = new Date();
+  const isThisMonth = now.getFullYear() === year && now.getMonth() + 1 === month;
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    const dow = new Date(year, month - 1, day).getDay();
+    const classes = [
+      'pm-gantt-day-cell',
+      dow === 0 || dow === 6 ? 'weekend' : '',
+      isThisMonth && now.getDate() === day ? 'today' : ''
+    ].filter(Boolean).join(' ');
+    return `<span class="${classes}"></span>`;
+  }).join('');
+}
+
 function renderPmGanttCalendar(year, month) {
   const view = document.getElementById('pmGanttView');
   const label = document.getElementById('pmGanttMonthLabel');
   if (!view) return;
-  if (label) label.textContent = year + '년 ' + month + '월';
+  const { days: daysInMonth } = getPmGanttDateWindow(year, month);
+  if (label) label.textContent = `${year}년 ${month}월`;
 
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const DAY_NAMES = ['일','월','화','수','목','금','토'];
-  const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899'];
-
-  // Build project date coverage per empNo
-  const empProjectDay = {}; // empNo -> { day -> {projName, color, scope} }
-  (pmScheduleProjects || []).forEach((item, idx) => {
-    const p = item?.project || {};
-    const projName = p.projectName || p.projectNo || ('프로젝트' + (idx+1));
-    const color = COLORS[idx % COLORS.length];
-    // Parse date range
-    const startRaw = String(p.startDate || p.firstDelivery || '').trim();
-    const endRaw = String(p.firstDelivery || p.startDate || '').trim();
-    const startD = parsePmScheduleDate(startRaw);
-    const endD = parsePmScheduleDate(endRaw);
-    // Determine which days in this month are covered
-    const activeDays = new Set();
-    for (let d = 1; d <= daysInMonth; d++) {
-      const cellDate = new Date(year, month - 1, d);
-      const inRange = (!startD || cellDate >= startD) && (!endD || cellDate <= endD);
-      const sameMonthStart = startD && startD.getFullYear() === year && startD.getMonth() + 1 === month;
-      const sameMonthEnd = endD && endD.getFullYear() === year && endD.getMonth() + 1 === month;
-      if (inRange || sameMonthStart || sameMonthEnd || (!startD && !endD)) activeDays.add(d);
-    }
-    // Get assigned employees
-    const selectedPlan = item.approvedPlan || item.selectedProposal || 'plan1';
-    const rows = item?.proposals?.[selectedPlan]?.rows || [];
-    rows.forEach(row => {
-      if (!row.rc && !row.sc) return;
-      if (!empProjectDay[row.empNo]) empProjectDay[row.empNo] = {};
-      activeDays.forEach(d => {
-        if (!empProjectDay[row.empNo][d]) {
-          empProjectDay[row.empNo][d] = { projName, color, scope: row.scope || '' };
-        }
-      });
-    });
-  });
-
-  // Get employees grouped by dept
+  const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#65a30d', '#db2777'];
   const allStaff = typeof getPmScheduleVietEmployees === 'function' ? getPmScheduleVietEmployees() : [];
+  if (!allStaff.length) {
+    view.innerHTML = '<div class="pm-gantt-empty">배정된 직원 데이터가 없습니다.<br><small>프로젝트 배정 후 스케줄표가 생성됩니다.</small></div>';
+    return;
+  }
+
+  const { byEmployee, legend } = getPmGanttAssignments(year, month, colors);
   const deptGroups = {};
   allStaff.forEach(emp => {
     const dept = (typeof normalizePmScheduleVietDeptName === 'function'
@@ -2067,93 +2162,65 @@ function renderPmGanttCalendar(year, month) {
     deptGroups[dept].push(emp);
   });
 
-  // Build table header
-  let html = '<table class="pm-gantt-table"><thead><tr>';
-  html += '<th class="pm-gantt-th-dept" rowspan="2">팀/부서</th>';
-  html += '<th class="pm-gantt-th-grade" rowspan="2">직급</th>';
-  html += '<th class="pm-gantt-th-name" rowspan="2">이름</th>';
-  html += '<th class="pm-gantt-th-type" rowspan="2">구분</th>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dow = new Date(year, month - 1, d).getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    html += `<th class="pm-gantt-th-day${isWeekend?' pm-gantt-weekend':''}">${d}</th>`;
-  }
-  html += '</tr><tr>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dow = new Date(year, month - 1, d).getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    html += `<th class="pm-gantt-th-dow${isWeekend?' pm-gantt-weekend':''}">${DAY_NAMES[dow]}</th>`;
-  }
-  html += '</tr></thead><tbody>';
+  const dayHeader = renderPmGanttDayHeader(year, month, daysInMonth);
+  const dayCells = renderPmGanttDayCells(year, month, daysInMonth);
+  const assignedEmployeeCount = allStaff.filter(emp => (byEmployee[emp.empNo] || []).length).length;
 
-  // Build rows
-  let prevDept = '';
-  allStaff.forEach((emp, empIdx) => {
-    const dept = (typeof normalizePmScheduleVietDeptName === 'function'
-      ? normalizePmScheduleVietDeptName(emp.dept)
-      : (emp.dept || '기타'));
-    const grade = emp.grade || '';
-    const name = emp.combinedName || emp.name || emp.koreanName || '';
-    const empNo = emp.empNo;
-    const dayMap = empProjectDay[empNo] || {};
-    const isDeptFirst = dept !== prevDept;
-    if (isDeptFirst) prevDept = dept;
+  const body = Object.entries(deptGroups).map(([dept, employees]) => {
+    const deptAssigned = employees.filter(emp => (byEmployee[emp.empNo] || []).length).length;
+    const rows = employees.map(emp => {
+      const name = emp.combinedName || emp.name || emp.koreanName || '-';
+      const grade = emp.grade || '-';
+      const assignments = layoutPmGanttAssignmentBars(byEmployee[emp.empNo] || []);
+      const laneCount = Math.max(1, ...assignments.map(item => item.lane + 1));
+      const bars = assignments.map(item => {
+        const title = [item.projectNo, item.projectName, item.scope].filter(Boolean).join(' · ');
+        return `<div class="pm-gantt-bar" style="--pm-color:${item.color};--pm-lane:${item.lane};grid-column:${item.startDay} / ${item.endDay + 1};" title="${escapePmScheduleHtml(title)}">
+          <strong>${escapePmScheduleHtml(item.projectNo || item.projectName)}</strong>
+          <span>${escapePmScheduleHtml(item.scope || item.projectName)}</span>
+        </div>`;
+      }).join('');
+      return `<div class="pm-gantt-row" style="--pm-gantt-lanes:${laneCount};--pm-days:${daysInMonth};">
+        <div class="pm-gantt-person">
+          <strong>${escapePmScheduleHtml(name)}</strong>
+          <span>${escapePmScheduleHtml(grade)}</span>
+        </div>
+        <div class="pm-gantt-timeline">
+          ${dayCells}
+          ${bars || '<em class="pm-gantt-no-plan">배정 없음</em>'}
+        </div>
+      </div>`;
+    }).join('');
+    return `<section class="pm-gantt-team">
+      <div class="pm-gantt-team-head">
+        <strong>${escapePmScheduleHtml(dept)}</strong>
+        <span>${employees.length}명 · 배정 ${deptAssigned}명</span>
+      </div>
+      ${rows}
+    </section>`;
+  }).join('');
 
-    const deptInGroup = deptGroups[dept] || [];
-    const deptRowSpan = deptInGroup.length * 2;
+  const legendHtml = legend.length
+    ? `<div class="pm-gantt-legend">${legend.map(item => `<span class="pm-gantt-legend-item" style="--pm-color:${item.color};"><i></i>${escapePmScheduleHtml(item.projectNo || item.projectName)}</span>`).join('')}</div>`
+    : '<div class="pm-gantt-legend muted">해당 월에 표시할 배정 프로젝트가 없습니다.</div>';
 
-    // Row 1: 프로젝트
-    html += '<tr class="pm-gantt-row-proj">';
-    if (isDeptFirst) {
-      html += `<td class="pm-gantt-td-dept" rowspan="${deptRowSpan}">${dept}</td>`;
-    }
-    html += `<td class="pm-gantt-td-grade" rowspan="2">${grade}</td>`;
-    html += `<td class="pm-gantt-td-name" rowspan="2">${name}</td>`;
-    html += '<td class="pm-gantt-td-type">프로젝트</td>';
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dow = new Date(year, month - 1, d).getDay();
-      const isWeekend = dow === 0 || dow === 6;
-      const assignment = dayMap[d];
-      if (assignment) {
-        html += `<td class="pm-gantt-cell${isWeekend?' pm-gantt-weekend':''}" style="background:${assignment.color};color:#fff;" title="${assignment.projName}">${assignment.projName.slice(0,4)}</td>`;
-      } else {
-        html += `<td class="pm-gantt-cell${isWeekend?' pm-gantt-weekend':''}">&nbsp;</td>`;
-      }
-    }
-    html += '</tr>';
-
-    // Row 2: 범위
-    html += '<tr class="pm-gantt-row-scope">';
-    html += '<td class="pm-gantt-td-type">범위</td>';
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dow = new Date(year, month - 1, d).getDay();
-      const isWeekend = dow === 0 || dow === 6;
-      const assignment = dayMap[d];
-      if (assignment && assignment.scope) {
-        html += `<td class="pm-gantt-cell pm-gantt-cell-scope${isWeekend?' pm-gantt-weekend':''}" style="background:${assignment.color}22;border-bottom:2px solid ${assignment.color};" title="${assignment.scope}">${assignment.scope.slice(0,6)}</td>`;
-      } else {
-        html += `<td class="pm-gantt-cell pm-gantt-cell-scope${isWeekend?' pm-gantt-weekend':''}">&nbsp;</td>`;
-      }
-    }
-    html += '</tr>';
-  });
-
-  html += '</tbody></table>';
-
-  // Add legend
-  html += '<div class="pm-gantt-legend">';
-  (pmScheduleProjects || []).forEach((item, idx) => {
-    const p = item?.project || {};
-    const name = p.projectName || p.projectNo || ('프로젝트' + (idx+1));
-    html += `<span class="pm-gantt-legend-item"><span style="background:${COLORS[idx % COLORS.length]};display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>${name}</span>`;
-  });
-  html += '</div>';
-
-  if (allStaff.length === 0) {
-    html = '<div style="padding:24px;color:#64748b;text-align:center;">배정된 직원 데이터가 없습니다.<br><small>프로젝트 배정 후 스케줄표가 생성됩니다.</small></div>';
-  }
-
-  view.innerHTML = html;
+  view.innerHTML = `
+    <div class="pm-gantt-panel" style="--pm-days:${daysInMonth};">
+      <div class="pm-gantt-summary">
+        <span><b>${Object.keys(deptGroups).length}</b>팀</span>
+        <span><b>${allStaff.length}</b>명</span>
+        <span><b>${assignedEmployeeCount}</b>명 배정</span>
+        <span><b>${legend.length}</b>개 프로젝트</span>
+      </div>
+      <div class="pm-gantt-scroll">
+        <div class="pm-gantt-head" style="--pm-days:${daysInMonth};">
+          <div class="pm-gantt-person-head">직원</div>
+          <div class="pm-gantt-days">${dayHeader}</div>
+        </div>
+        ${body}
+      </div>
+      ${legendHtml}
+    </div>`;
 }
 
 function injectPmGanttCss() {
@@ -2161,25 +2228,314 @@ function injectPmGanttCss() {
   const style = document.createElement('style');
   style.id = 'pmGanttCss';
   style.textContent = `
-    .pm-gantt-table { border-collapse:collapse; font-size:11px; white-space:nowrap; min-width:100%; }
-    .pm-gantt-table th, .pm-gantt-table td { border:1px solid #e2e8f0; padding:2px 4px; text-align:center; }
-    .pm-gantt-th-dept { background:#1e293b; color:#fff; min-width:80px; font-size:11px; }
-    .pm-gantt-th-grade { background:#334155; color:#fff; min-width:50px; }
-    .pm-gantt-th-name { background:#334155; color:#fff; min-width:70px; }
-    .pm-gantt-th-type { background:#475569; color:#fff; min-width:52px; }
-    .pm-gantt-th-day { background:#1e293b; color:#e2e8f0; min-width:28px; font-size:10px; }
-    .pm-gantt-th-dow { background:#334155; color:#94a3b8; font-size:10px; }
-    .pm-gantt-weekend { background:#1e3a5f!important; color:#93c5fd!important; }
-    .pm-gantt-td-dept { background:#0f172a; color:#e2e8f0; font-weight:bold; font-size:10px; writing-mode:vertical-rl; text-orientation:mixed; padding:6px 2px; }
-    .pm-gantt-td-grade { background:#f8fafc; font-size:10px; color:#475569; }
-    .pm-gantt-td-name { background:#f8fafc; text-align:left; padding:2px 6px; font-size:11px; }
-    .pm-gantt-td-type { background:#f1f5f9; color:#64748b; font-size:10px; }
-    .pm-gantt-row-proj td { height:20px; }
-    .pm-gantt-row-scope td { height:16px; background:#fafafa; }
-    .pm-gantt-cell { min-width:28px; font-size:9px; overflow:hidden; text-overflow:ellipsis; }
-    .pm-gantt-cell-scope { font-size:9px; }
-    .pm-gantt-legend { display:flex; flex-wrap:wrap; gap:8px; padding:8px 0; font-size:12px; }
-    .pm-gantt-legend-item { display:flex; align-items:center; }
+    .pm-gantt-wrapper {
+      padding: 0 16px 12px;
+    }
+    .pm-gantt-toolbar {
+      display: grid;
+      grid-template-columns: auto auto minmax(220px, 1fr);
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0 8px;
+    }
+    .pm-gantt-toggle-btn,
+    .pm-gantt-nav-btn {
+      border: 1px solid #dbe4ef;
+      background: #fff;
+      color: #0f172a;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+      cursor: pointer;
+      font-weight: 900;
+    }
+    .pm-gantt-toggle-btn {
+      min-height: 34px;
+      border-radius: 9px;
+      padding: 0 14px;
+    }
+    .pm-gantt-toggle-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #fff;
+    }
+    .pm-gantt-month-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pm-gantt-month-controls span {
+      min-width: 92px;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .pm-gantt-nav-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .pm-gantt-toolbar-note {
+      justify-self: end;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .pm-gantt-view {
+      margin-top: 2px;
+    }
+    .pm-gantt-panel {
+      border: 1px solid #dbe4ef;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+      overflow: hidden;
+    }
+    .pm-gantt-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 11px 12px;
+      border-bottom: 1px solid #e5edf6;
+      background: #f8fafc;
+    }
+    .pm-gantt-summary span,
+    .pm-gantt-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #dbe4ef;
+      border-radius: 999px;
+      background: #fff;
+      color: #475569;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pm-gantt-summary b {
+      color: #0f172a;
+    }
+    .pm-gantt-scroll {
+      max-height: 660px;
+      overflow: auto;
+      background: #f8fafc;
+    }
+    .pm-gantt-head,
+    .pm-gantt-row {
+      display: grid;
+      grid-template-columns: 240px max-content;
+      min-width: max-content;
+    }
+    .pm-gantt-head {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      background: #fff;
+      border-bottom: 1px solid #dbe4ef;
+    }
+    .pm-gantt-person-head,
+    .pm-gantt-person {
+      position: sticky;
+      left: 0;
+      z-index: 4;
+      border-right: 1px solid #dbe4ef;
+      background: #fff;
+    }
+    .pm-gantt-person-head {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pm-gantt-days,
+    .pm-gantt-timeline {
+      display: grid;
+      grid-template-columns: repeat(var(--pm-days), 36px);
+      min-width: calc(var(--pm-days) * 36px);
+    }
+    .pm-gantt-day-head {
+      min-height: 48px;
+      border-right: 1px solid #e5edf6;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      background: #fff;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .pm-gantt-day-head b {
+      font-size: 13px;
+      line-height: 1;
+    }
+    .pm-gantt-day-head span {
+      color: #64748b;
+      font-size: 10px;
+    }
+    .pm-gantt-day-head.weekend,
+    .pm-gantt-day-cell.weekend {
+      background: #eef4fb;
+      color: #1d4ed8;
+    }
+    .pm-gantt-day-head.today {
+      background: #fff7ed;
+      color: #c2410c;
+      box-shadow: inset 0 -3px 0 #f97316;
+    }
+    .pm-gantt-team-head {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-top: 1px solid #dbe4ef;
+      border-bottom: 1px solid #dbe4ef;
+      background: #e9f0f8;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pm-gantt-team-head span {
+      color: #64748b;
+      font-size: 11px;
+    }
+    .pm-gantt-person {
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      min-height: calc(52px + (var(--pm-gantt-lanes) - 1) * 28px);
+      padding: 10px 14px;
+      background: #fbfdff;
+    }
+    .pm-gantt-person strong {
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .pm-gantt-person span {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .pm-gantt-timeline {
+      position: relative;
+      min-height: calc(52px + (var(--pm-gantt-lanes) - 1) * 28px);
+      background: #fff;
+    }
+    .pm-gantt-row + .pm-gantt-row .pm-gantt-person,
+    .pm-gantt-row + .pm-gantt-row .pm-gantt-timeline {
+      border-top: 1px solid #edf2f7;
+    }
+    .pm-gantt-day-cell {
+      min-height: 100%;
+      border-right: 1px solid #edf2f7;
+      background: #fff;
+    }
+    .pm-gantt-day-cell.today {
+      background: linear-gradient(90deg, rgba(249, 115, 22, .14), rgba(249, 115, 22, .06));
+      box-shadow: inset 0 0 0 1px rgba(249, 115, 22, .28);
+    }
+    .pm-gantt-bar {
+      align-self: start;
+      z-index: 2;
+      height: 24px;
+      min-width: 0;
+      margin: calc(12px + var(--pm-lane) * 28px) 3px 0;
+      border: 1px solid var(--pm-color);
+      border-radius: 7px;
+      background: var(--pm-color);
+      color: #fff;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, .13);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      overflow: hidden;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .pm-gantt-bar strong,
+    .pm-gantt-bar span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pm-gantt-bar strong {
+      flex: 0 0 auto;
+      max-width: 74px;
+    }
+    .pm-gantt-bar span {
+      opacity: .92;
+      min-width: 0;
+    }
+    .pm-gantt-no-plan {
+      grid-column: 1 / -1;
+      align-self: center;
+      justify-self: start;
+      margin-left: 12px;
+      color: #94a3b8;
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 800;
+    }
+    .pm-gantt-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 10px 12px;
+      border-top: 1px solid #e5edf6;
+      background: #fff;
+    }
+    .pm-gantt-legend.muted {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pm-gantt-legend-item i {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: var(--pm-color);
+    }
+    .pm-gantt-empty {
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      margin: 10px 0 0;
+      padding: 28px;
+      color: #64748b;
+      background: #fff;
+      text-align: center;
+      font-weight: 900;
+    }
+    .pm-gantt-empty small {
+      display: block;
+      margin-top: 5px;
+      color: #94a3b8;
+    }
+    @media (max-width: 1180px) {
+      .pm-gantt-toolbar {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+      .pm-gantt-toolbar-note {
+        justify-self: start;
+      }
+      .pm-gantt-head,
+      .pm-gantt-row {
+        grid-template-columns: 200px max-content;
+      }
+      .pm-gantt-person-head,
+      .pm-gantt-person {
+        width: 200px;
+      }
+    }
   `;
   document.head.appendChild(style);
 }
