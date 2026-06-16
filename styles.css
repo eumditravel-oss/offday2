@@ -486,6 +486,12 @@ tr:hover td{background:#fbfdff}
   gap:18px;
   align-items:start;
 }
+.permission-admin-layout{
+  grid-template-columns:minmax(0,1fr);
+}
+.permission-admin-layout > aside{
+  max-width:none;
+}
 
 .admin-toggle-list{
   display:grid;
@@ -10717,8 +10723,8 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .permission-console{
   display:grid;
-  grid-template-columns:280px minmax(0,1fr) 300px;
-  gap:18px;
+  grid-template-columns:260px minmax(0,1fr);
+  gap:14px;
   align-items:start;
   background:#f8fafc;
 }
@@ -10728,6 +10734,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   min-width:0;
 }
 .permission-console-side{
+  grid-row:1 / span 2;
   position:sticky;
   top:86px;
   display:grid;
@@ -10756,6 +10763,26 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   padding:5px 9px;
   font-size:12px;
   font-weight:900;
+}
+.permission-order-toolbar{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+.permission-order-toolbar button{
+  min-height:34px;
+  border:1px solid #dbe4ef;
+  border-radius:10px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.permission-order-toolbar button:hover{
+  border-color:#2563eb;
+  background:#eff6ff;
+  color:#1d4ed8;
 }
 .permission-search{
   width:100%;
@@ -10794,8 +10821,8 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .permission-employee-card{
   display:grid;
-  grid-template-columns:36px minmax(0,1fr);
-  gap:10px;
+  grid-template-columns:26px 36px minmax(0,1fr);
+  gap:9px;
   align-items:center;
   width:100%;
   border:1px solid #e2e8f0;
@@ -10804,6 +10831,18 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   padding:10px;
   text-align:left;
   cursor:pointer;
+}
+.permission-card-order{
+  width:26px;
+  height:26px;
+  border-radius:9px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#f1f5f9;
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
 }
 .permission-employee-card:hover{
   border-color:#93c5fd;
@@ -11035,6 +11074,25 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   font-size:12px;
   font-weight:900;
 }
+.permission-module-chip-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.permission-module-chip-row span{
+  border:1px solid #e2e8f0;
+  border-radius:999px;
+  background:#fff;
+  color:#94a3b8;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:900;
+}
+.permission-module-chip-row span.allowed{
+  border-color:#bfdbfe;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
 .permission-action-grid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -11065,61 +11123,58 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   color:#fff;
 }
 .permission-preview-pane{
-  position:sticky;
-  top:86px;
+  grid-column:2;
+  position:static;
 }
-.permission-preview-device{
-  border:1px solid #0f172a;
-  border-radius:28px;
-  background:#102033;
-  padding:12px;
-  box-shadow:0 24px 46px rgba(15,23,42,.20);
+.permission-preview-editor{
+  border:1px solid #dbe4ef;
+  border-radius:18px;
+  background:#fff;
+  padding:14px;
+  box-shadow:0 10px 22px rgba(15,23,42,.04);
 }
-.permission-preview-cover{
-  height:150px;
-  border-radius:18px 18px 6px 6px;
-  display:grid;
-  place-items:center;
-  align-content:center;
-  gap:4px;
-  background:linear-gradient(135deg,rgba(15,23,42,.88),rgba(37,99,235,.72)),url("./(주)컨코스트 로고 (1).png");
-  background-size:cover;
-  color:#fff;
+.permission-preview-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #edf2f7;
+  margin-bottom:12px;
 }
-.permission-preview-cover span{
+.permission-preview-head span,
+.permission-preview-head strong{
+  display:block;
+}
+.permission-preview-head span{
+  color:#f97316;
   font-size:12px;
   font-weight:900;
-  opacity:.86;
 }
-.permission-preview-cover strong{
-  font-size:30px;
+.permission-preview-head strong{
+  margin-top:3px;
+  color:#0f172a;
+  font-size:17px;
   font-weight:900;
-  letter-spacing:0;
 }
-.permission-preview-profile,
-.permission-preview-actions,
-.permission-preview-modules{
-  background:#fff;
+.permission-preview-head em{
+  border-radius:999px;
+  background:#dcfce7;
+  color:#15803d;
+  padding:5px 9px;
+  font-size:11px;
+  font-style:normal;
+  font-weight:900;
 }
 .permission-preview-profile{
   display:grid;
-  grid-template-columns:48px minmax(0,1fr);
+  grid-template-columns:36px minmax(0,1fr);
   gap:10px;
   align-items:center;
-  margin-top:8px;
+  border:1px solid #edf2f7;
   border-radius:14px;
-  padding:12px;
-}
-.permission-preview-logo{
-  width:48px;
-  height:48px;
-  border-radius:14px;
-  display:grid;
-  place-items:center;
-  border:1px solid #fed7aa;
-  color:#ea580c;
-  font-size:12px;
-  font-weight:900;
+  background:#fbfdff;
+  padding:10px;
 }
 .permission-preview-profile strong,
 .permission-preview-profile span{
@@ -11143,9 +11198,10 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   display:flex;
   flex-wrap:wrap;
   gap:6px;
-  margin-top:8px;
+  margin-top:10px;
   border-radius:14px;
-  padding:10px;
+  padding:0;
+  background:transparent;
 }
 .permission-preview-actions span{
   border:1px solid #e2e8f0;
@@ -11162,31 +11218,69 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 .permission-preview-modules{
   display:grid;
-  gap:8px;
-  margin-top:8px;
-  border-radius:14px 14px 18px 18px;
-  padding:10px;
+  gap:10px;
+  margin-top:12px;
+  border-radius:0;
+  padding:0;
+  background:transparent;
 }
-.permission-preview-modules div{
-  border:1px solid #edf2f7;
-  border-radius:12px;
-  padding:9px;
+.permission-preview-module{
+  border:1px solid #dbe4ef;
+  border-radius:15px;
+  background:#fff;
+  padding:12px;
 }
-.permission-preview-modules strong,
-.permission-preview-modules span{
+.permission-preview-module-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.permission-preview-module-head strong,
+.permission-preview-module-head span{
   display:block;
 }
-.permission-preview-modules strong{
+.permission-preview-module-head strong{
   color:#0f172a;
-  font-size:12px;
+  font-size:14px;
   font-weight:900;
 }
-.permission-preview-modules span{
+.permission-preview-module-head span{
   margin-top:3px;
   color:#64748b;
   font-size:11px;
   line-height:1.35;
   font-weight:800;
+}
+.permission-preview-toggle-grid{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:6px;
+}
+.permission-preview-toggle{
+  position:relative;
+  min-height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  background:#fff;
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.permission-preview-toggle input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.permission-preview-toggle.checked{
+  border-color:#2563eb;
+  background:#2563eb;
+  color:#fff;
 }
 .permission-empty{
   border:1px dashed #cbd5e1;
@@ -11198,14 +11292,7 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
 }
 @media(max-width:1500px){
   .permission-console{
-    grid-template-columns:260px minmax(0,1fr);
-  }
-  .permission-preview-pane{
-    grid-column:1 / -1;
-    position:static;
-  }
-  .permission-preview-device{
-    max-width:420px;
+    grid-template-columns:240px minmax(0,1fr);
   }
 }
 @media(max-width:1100px){
@@ -11215,10 +11302,17 @@ table.excel-grid tbody tr:not(.group-row) td.comment-col{
   }
   .permission-console-side{
     position:static;
+    grid-row:auto;
   }
   .permission-category-strip,
   .permission-module-board{
     grid-template-columns:1fr;
+  }
+  .permission-preview-pane{
+    grid-column:1;
+  }
+  .permission-preview-toggle-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
   }
   .permission-summary-kpis{
     grid-template-columns:repeat(3,1fr);

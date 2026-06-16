@@ -937,6 +937,7 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
 /* === 2026-06-16 인사카드 기반 권한 카테고리 설정 === */
 (function installEmployeePermissionConsole(){
   const STORAGE_KEY = "concost.employeePermissionSettings.v1";
+  const ORDER_KEY = "concost.employeePermissionOrder.v1";
   const permissionActions = [
     ["view", "보기"],
     ["create", "작성"],
@@ -1022,6 +1023,7 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
   let permissionCompanyFilter = "all";
   let currentPermissionEmployeeId = selectedEmployeeId || employees?.[0]?.empNo || "";
   let employeePermissionSettings = loadEmployeePermissionSettings();
+  let employeePermissionOrder = loadEmployeePermissionOrder();
 
   function permissionHtml(value) {
     return String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[ch]));
@@ -1123,12 +1125,46 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
     }
   }
 
+  function loadEmployeePermissionOrder() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ORDER_KEY) || "[]");
+      if (Array.isArray(saved)) return saved.filter(Boolean);
+    } catch (err) {
+      console.warn("권한 대상 순서 로드 실패", err);
+    }
+    return [];
+  }
+
   function persistEmployeePermissionSettings() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(employeePermissionSettings));
     } catch (err) {
       console.warn("권한 설정 저장 실패", err);
     }
+  }
+
+  function persistEmployeePermissionOrder() {
+    try {
+      localStorage.setItem(ORDER_KEY, JSON.stringify(employeePermissionOrder));
+    } catch (err) {
+      console.warn("권한 대상 순서 저장 실패", err);
+    }
+  }
+
+  function getNormalizedPermissionOrder() {
+    const ids = (employees || []).map(emp => emp.empNo);
+    const seen = new Set();
+    const ordered = employeePermissionOrder.filter(id => ids.includes(id) && !seen.has(id) && seen.add(id));
+    ids.forEach(id => {
+      if (!seen.has(id)) ordered.push(id);
+    });
+    employeePermissionOrder = ordered;
+    return ordered;
+  }
+
+  function getOrderedPermissionEmployees() {
+    const byId = new Map((employees || []).map(emp => [emp.empNo, emp]));
+    return getNormalizedPermissionOrder().map(id => byId.get(id)).filter(Boolean);
   }
 
   function getPermissionRecord(empNo = currentPermissionEmployeeId) {
@@ -1226,7 +1262,7 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
 
   function filteredPermissionEmployees() {
     const keyword = String(document.getElementById("permissionEmployeeSearch")?.value || "").trim().toLowerCase();
-    return (employees || []).filter(emp => {
+    return getOrderedPermissionEmployees().filter(emp => {
       if (permissionCompanyFilter !== "all" && emp.company !== permissionCompanyFilter) return false;
       if (!keyword) return true;
       const haystack = [permissionDisplayName(emp), emp.empNo, emp.company, emp.dept, emp.grade, emp.position, emp.id].join(" ").toLowerCase();
@@ -1252,15 +1288,38 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
     renderEmployeePermissionConsole();
   };
 
+  window.movePermissionEmployeeCard = function(direction) {
+    const rows = filteredPermissionEmployees();
+    if (!rows.length) return;
+    const visibleIds = rows.map(emp => emp.empNo);
+    const currentVisibleIndex = visibleIds.indexOf(currentPermissionEmployeeId);
+    if (currentVisibleIndex < 0) return;
+    const nextVisibleId = visibleIds[currentVisibleIndex + direction];
+    if (!nextVisibleId) return;
+
+    const order = getNormalizedPermissionOrder();
+    const currentIndex = order.indexOf(currentPermissionEmployeeId);
+    const nextIndex = order.indexOf(nextVisibleId);
+    if (currentIndex < 0 || nextIndex < 0) return;
+    [order[currentIndex], order[nextIndex]] = [order[nextIndex], order[currentIndex]];
+    employeePermissionOrder = order;
+    persistEmployeePermissionOrder();
+    renderEmployeePermissionConsole();
+    setTimeout(() => {
+      document.querySelector(`[data-permission-employee-id="${currentPermissionEmployeeId}"]`)?.scrollIntoView?.({ block: "nearest" });
+    }, 0);
+  };
+
   function renderPermissionEmployeeList() {
     const target = document.getElementById("permissionEmployeeList");
     const count = document.getElementById("permissionEmployeeCount");
     if (!target) return;
     const rows = filteredPermissionEmployees();
     if (count) count.textContent = `${(employees || []).length}명`;
-    target.innerHTML = rows.map(emp => {
+    target.innerHTML = rows.map((emp, index) => {
       const record = getPermissionRecord(emp.empNo);
-      return `<button type="button" class="permission-employee-card ${emp.empNo === currentPermissionEmployeeId ? "active" : ""}" onclick="selectPermissionEmployee('${permissionHtml(emp.empNo)}', { closeDropdown:false, silentToast:true })">
+      return `<button type="button" class="permission-employee-card ${emp.empNo === currentPermissionEmployeeId ? "active" : ""}" data-permission-employee-id="${permissionHtml(emp.empNo)}" onclick="selectPermissionEmployee('${permissionHtml(emp.empNo)}', { closeDropdown:false, silentToast:true })">
+        <span class="permission-card-order">${index + 1}</span>
         <span class="permission-avatar">${permissionHtml(permissionDisplayName(emp).slice(0, 1))}</span>
         <span class="permission-employee-meta">
           <strong>${permissionHtml(permissionDisplayName(emp))}</strong>
@@ -1355,13 +1414,8 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
           </div>
           <em>${allowed}/${permissionActions.length}</em>
         </div>
-        <div class="permission-action-grid">
-          ${permissionActions.map(([action, label]) => `
-            <label class="permission-action-toggle ${states[action] ? "checked" : ""}">
-              <input type="checkbox" ${states[action] ? "checked" : ""} onchange="updateEmployeePermission('${permissionHtml(moduleKey)}', '${action}', this.checked)">
-              <span>${permissionHtml(label)}</span>
-            </label>
-          `).join("")}
+        <div class="permission-module-chip-row">
+          ${permissionActions.map(([action, label]) => `<span class="${states[action] ? "allowed" : ""}">${permissionHtml(label)}</span>`).join("")}
         </div>
       </article>`;
     }).join("");
@@ -1371,26 +1425,39 @@ document.addEventListener("DOMContentLoaded", renderPermissionRoleDropdown);
     const emp = permissionEmployee();
     const category = permissionCategories.find(item => item.key === permissionSelectedCategory) || permissionCategories[0];
     const record = getPermissionRecord();
-    const allowedModules = category.modules.filter(([moduleKey]) => {
-      const state = record.modules?.[moduleKey] || {};
-      return Object.values(state).some(Boolean);
-    });
     setText("permissionPreviewCategory", category.title);
-    setText("permissionPreviewTitle", category.visual);
+    setText("permissionPreviewTitle", "권한 편집 미리보기");
     setText("permissionPreviewName", emp ? permissionDisplayName(emp) : "-");
     setText("permissionPreviewRole", record.role || "-");
+    setText("permissionPreviewAvatar", emp ? permissionDisplayName(emp).slice(0, 1) : "-");
     const actions = document.getElementById("permissionPreviewActions");
     if (actions) {
       actions.innerHTML = permissionActions.map(([action, label]) => {
         const enabled = category.modules.some(([moduleKey]) => record.modules?.[moduleKey]?.[action]);
-        return `<span class="${enabled ? "enabled" : ""}">${permissionHtml(label)}</span>`;
+        return `<span class="${enabled ? "enabled" : ""}">${permissionHtml(label)} ${enabled ? "허용" : "해제"}</span>`;
       }).join("");
     }
     const modules = document.getElementById("permissionPreviewModules");
     if (modules) {
-      modules.innerHTML = allowedModules.slice(0, 5).map(([, title, desc]) => `
-        <div><strong>${permissionHtml(title)}</strong><span>${permissionHtml(desc)}</span></div>
-      `).join("") || `<div><strong>허용 모듈 없음</strong><span>권한 토글을 켜면 미리보기에 표시됩니다.</span></div>`;
+      modules.innerHTML = category.modules.map(([moduleKey, title, desc]) => {
+        const states = record.modules?.[moduleKey] || {};
+        return `<article class="permission-preview-module">
+          <div class="permission-preview-module-head">
+            <div>
+              <strong>${permissionHtml(title)}</strong>
+              <span>${permissionHtml(desc)}</span>
+            </div>
+          </div>
+          <div class="permission-preview-toggle-grid">
+            ${permissionActions.map(([action, label]) => `
+              <label class="permission-preview-toggle ${states[action] ? "checked" : ""}">
+                <input type="checkbox" ${states[action] ? "checked" : ""} onchange="updateEmployeePermission('${permissionHtml(moduleKey)}', '${action}', this.checked)">
+                <span>${permissionHtml(label)}</span>
+              </label>
+            `).join("")}
+          </div>
+        </article>`;
+      }).join("");
     }
   }
 

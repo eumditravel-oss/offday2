@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CON-COST Groupware | 경영지원 · 업무관리</title>
-  <link rel="stylesheet" href="./styles.css?v=20260616-permission-schedule-ui" />
+  <link rel="stylesheet" href="./styles.css?v=20260616-permission-editor-refine" />
 </head>
 
 <body>
@@ -665,7 +665,7 @@
           </section>
 
           <section id="admin" class="panel">
-            <div class="admin-layout">
+            <div class="admin-layout permission-admin-layout">
               <section>
                 <article class="card permission-admin-card">
                   <div class="card-head permission-admin-head">
@@ -685,6 +685,10 @@
                         <span id="permissionEmployeeCount">0명</span>
                       </div>
                       <input id="permissionEmployeeSearch" class="permission-search" placeholder="직원명, 부서, 직급 검색" oninput="renderEmployeePermissionConsole()" />
+                      <div class="permission-order-toolbar">
+                        <button type="button" onclick="movePermissionEmployeeCard(-1)">위로 올리기</button>
+                        <button type="button" onclick="movePermissionEmployeeCard(1)">아래로 내리기</button>
+                      </div>
                       <div class="permission-company-tabs" id="permissionCompanyTabs"></div>
                       <div class="permission-employee-list" id="permissionEmployeeList"></div>
                     </aside>
@@ -696,13 +700,16 @@
                     </main>
 
                     <aside class="permission-preview-pane">
-                      <div class="permission-preview-device">
-                        <div class="permission-preview-cover">
-                          <span id="permissionPreviewCategory">업무관리</span>
-                          <strong id="permissionPreviewTitle">PROJECT</strong>
+                      <div class="permission-preview-editor">
+                        <div class="permission-preview-head">
+                          <div>
+                            <span id="permissionPreviewCategory">업무관리</span>
+                            <strong id="permissionPreviewTitle">권한 편집 미리보기</strong>
+                          </div>
+                          <em>실시간 적용</em>
                         </div>
                         <div class="permission-preview-profile">
-                          <div class="permission-preview-logo">CON</div>
+                          <span class="permission-avatar" id="permissionPreviewAvatar">박</span>
                           <div>
                             <strong id="permissionPreviewName">박용진</strong>
                             <span id="permissionPreviewRole">구조PM</span>
@@ -1743,7 +1750,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="./data-core.js"></script>
-  <script src="./support-hr.js?v=20260616-permission-console"></script>
+  <script src="./support-hr.js?v=20260616-permission-editor-refine"></script>
   <script src="./support-org.js"></script>
   <script src="./project-store.js"></script>
   <script src="./work-qc-mail.js?v=20260615-qc-filter-redesign"></script>
