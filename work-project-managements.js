@@ -40,10 +40,7 @@ function pmBuildLinkedProjectFromEstimate(row = {}) {
     delayReasonRequired: false,
     delayReasonApproved: false,
     delayReasonText: "견적관리 연계 프로젝트입니다.",
-    orderHistory: [
-      `${pmEstimateText(row.date) || "-"} : 견적관리에서 프로젝트 후보 생성`,
-      `${statusText || "진행중"} 상태 기준 프로젝트 관리 표시`
-    ],
+    orderHistory: [],
     completionChanged: false,
     completionHistory: ["완료예정일 미입력"],
     meetings: [],
@@ -184,7 +181,7 @@ function pmBuildProjectDetailWindowHtml(p, index = 0) {
     .pm-popup-tabs{display:flex;align-items:center;gap:8px;padding:10px 28px 14px;border-top:1px solid #f1f5f9;}
     .pm-back-list-btn{margin-right:auto}.pm-anchor-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;border:1px solid var(--line2);background:#fbfdff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:900;color:#334155;text-decoration:none}.pm-anchor-link:hover{background:#eff6ff;color:#1d4ed8}
     .pm-popup-scroll{flex:1 1 auto;overflow:auto;padding:28px;background:linear-gradient(180deg,#f8fafc 0,#f4f7fb 100%);}
-    .pm-project-content{display:grid;gap:16px;width:100%;max-width:1500px;margin:0 auto}.pm-card{background:#fff;border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.04);scroll-margin-top:150px}.pm-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.pm-card-header h3{font-size:17px;margin:0;letter-spacing:-.3px}.pm-card-header span{font-size:12px;color:var(--muted);font-weight:900}.pm-project-subtitle{color:var(--muted);font-weight:800;margin:0 0 14px}.status-badge{display:inline-flex;align-items:center;border-radius:999px;background:#eaf7ef;color:#16a34a;padding:6px 10px;font-weight:900;font-size:12px}.pm-overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pm-info-box{border:1px solid var(--line2);border-radius:14px;background:#fbfdff;padding:13px}.pm-info-box span{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}.pm-info-box strong{font-size:15px;line-height:1.35}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;table-layout:fixed}th{height:38px;background:#f8fafc;color:#334155;border-bottom:1px solid var(--line);font-size:12px;text-align:left;padding:0 12px}td{border-bottom:1px solid #edf2f7;padding:12px;color:#334155;font-size:13px;vertical-align:middle}.pm-assignment-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.pm-assignment-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px}.pm-assignment-card h4{font-size:15px;margin:0 0 10px;color:#1d4ed8}.pm-team-row{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:8px 0;border-top:1px solid #edf2f7;font-size:12px}.pm-team-row:first-of-type{border-top:0}.pm-team-row b{color:#6b7280}.pm-team-row span{color:var(--muted);font-weight:800}.pm-timeline{display:grid;gap:8px}.pm-timeline-item{border:1px solid var(--line2);border-radius:13px;background:#fbfdff;padding:11px 12px;font-weight:800;color:#334155}.pm-delivery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.pm-delivery-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px;display:grid;gap:6px}.pm-delivery-card strong{font-size:14px;color:#6b7280}.pm-delivery-card span,.pm-delivery-card small{color:var(--muted);font-weight:800}.pm-delivery-card em{font-style:normal;width:max-content;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}.pm-delivery-card em.done{background:#eaf7ef;color:#16a34a}.pm-delivery-card em.pending{background:#fff7ed;color:#d97706}
+    .pm-project-content{display:grid;gap:16px;width:100%;max-width:1500px;margin:0 auto}.pm-card{background:#fff;border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.04);scroll-margin-top:150px}.pm-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.pm-card-header h3{font-size:17px;margin:0;letter-spacing:-.3px}.pm-card-header span{font-size:12px;color:var(--muted);font-weight:900}.pm-project-subtitle{color:var(--muted);font-weight:800;margin:0 0 14px}.status-badge{display:inline-flex;align-items:center;border-radius:999px;background:#eaf7ef;color:#16a34a;padding:6px 10px;font-weight:900;font-size:12px}.pm-overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pm-info-box{border:1px solid var(--line2);border-radius:14px;background:#fbfdff;padding:13px}.pm-info-box span{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}.pm-info-box strong{font-size:15px;line-height:1.35}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;table-layout:fixed}th{height:38px;background:#f8fafc;color:#334155;border-bottom:1px solid var(--line);font-size:12px;text-align:left;padding:0 12px}td{border-bottom:1px solid #edf2f7;padding:12px;color:#334155;font-size:13px;vertical-align:middle}.pm-assignment-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.pm-assignment-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px}.pm-assignment-card h4{font-size:15px;margin:0 0 10px;color:#1d4ed8}.pm-team-row{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:8px 0;border-top:1px solid #edf2f7;font-size:12px}.pm-team-row:first-of-type{border-top:0}.pm-team-row b{color:#6b7280}.pm-team-row span{color:var(--muted);font-weight:800}.pm-timeline{display:grid;gap:8px}.pm-timeline-item{border:1px solid var(--line2);border-radius:13px;background:#fbfdff;padding:11px 12px;font-weight:800;color:#334155}.pm-order-milestones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.pm-order-milestone{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line2);border-radius:15px;background:#fbfdff;padding:13px}.pm-order-milestone i{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#eff6ff;color:#1d4ed8;font-style:normal;font-weight:900}.pm-order-milestone strong,.pm-order-change strong{display:block;color:#0f172a;font-size:14px}.pm-order-milestone span,.pm-order-change span{display:block;margin-top:4px;color:var(--muted);font-size:12px;line-height:1.45}.pm-order-changes{grid-column:1 / -1;display:grid;gap:8px}.pm-order-change{border:1px solid #fed7aa;border-radius:13px;background:#fff7ed;padding:11px 12px}.pm-delivery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.pm-delivery-card{border:1px solid var(--line2);border-radius:16px;background:#fbfdff;padding:14px;display:grid;gap:6px}.pm-delivery-card strong{font-size:14px;color:#6b7280}.pm-delivery-card span,.pm-delivery-card small{color:var(--muted);font-weight:800}.pm-delivery-card em{font-style:normal;width:max-content;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}.pm-delivery-card em.done{background:#eaf7ef;color:#16a34a}.pm-delivery-card em.pending{background:#fff7ed;color:#d97706}
   </style>
 </head>
 <body>
@@ -237,7 +234,7 @@ function pmBuildProjectDetailContentHtml(p, title, subtitle) {
     <section id="pmPhoneCall" class="pm-card"><div class="pm-card-header"><h3>전화내용</h3><span>통화일시 / 통화자 / 상대방 / 연락처 / 통화내용 / 후속조치</span></div><div class="table-wrap"><table><thead><tr><th style="width:130px">통화일시</th><th style="width:100px">통화자</th><th style="width:170px">상대방</th><th style="width:130px">연락처</th><th>통화내용</th><th>후속조치</th></tr></thead><tbody>${(p.phoneCalls || []).map(call => `<tr><td>${pmEscapeHtml(call.date)}</td><td>${pmEscapeHtml(call.caller)}</td><td>${pmEscapeHtml(call.target)}</td><td>${pmEscapeHtml(call.contact)}</td><td>${pmEscapeHtml(call.memo)}</td><td>${pmEscapeHtml(call.followUp)}</td></tr>`).join("")}</tbody></table></div></section>
     <section id="pmAssignment" class="pm-card"><div class="pm-card-header"><h3>프로젝트 배정인원</h3><span>대분류 / 소분류 / 투입인원</span></div><div class="pm-assignment-grid">${(p.assignments || []).map(group => `<div class="pm-assignment-card"><h4>${pmEscapeHtml(group.category)}</h4>${(group.teams || []).map(team => `<div class="pm-team-row"><b>${pmEscapeHtml(team.name)}</b><span>${(team.members || []).map(pmEscapeHtml).join(" · ")}</span></div>`).join("")}</div>`).join("")}</div></section>
     <section id="pmEmails" class="pm-card"><div class="pm-card-header"><h3>관련메일</h3><span>프로젝트 관련 송수신 메일 리스트</span></div><div class="table-wrap"><table><thead><tr><th>일자</th><th>구분</th><th>발신</th><th>수신</th><th>제목</th></tr></thead><tbody>${(p.emails || []).map(mail => `<tr><td>${pmEscapeHtml(mail.date)}</td><td>${pmEscapeHtml(mail.type)}</td><td>${pmEscapeHtml(mail.from)}</td><td>${pmEscapeHtml(mail.to)}</td><td>${pmEscapeHtml(mail.subject)}</td></tr>`).join("")}</tbody></table></div></section>
-    <section id="pmOrder" class="pm-card"><div class="pm-card-header"><h3>수주일정</h3><span>수주 등록부터 착수 승인까지 이력</span></div><div class="pm-timeline">${(p.orderHistory || []).map(item => `<div class="pm-timeline-item">${pmEscapeHtml(item)}</div>`).join("")}</div></section>
+    <section id="pmOrder" class="pm-card"><div class="pm-card-header"><h3>수주일정</h3><span>수주일자, 착수일자, 변경 승인 이력만 표시</span></div>${pmBuildOrderMilestoneTimelineHtml(p)}</section>
     <section id="pmCompletion" class="pm-card"><div class="pm-card-header"><h3>완료시점 관리</h3><span>완료예정일 변경 이력</span></div><div class="pm-timeline">${(p.completionHistory || []).map(item => `<div class="pm-timeline-item">${pmEscapeHtml(item)}</div>`).join("")}</div></section>
     <section id="pmDelivery" class="pm-card"><div class="pm-card-header"><h3>납품관리</h3><span>차수별 납품 파일과 승인 상태</span></div><div class="pm-delivery-grid">${(p.deliveries || []).map(d => `<div class="pm-delivery-card"><strong>${pmEscapeHtml(d.round)}</strong><span>${pmEscapeHtml(d.date)}</span><small>${pmEscapeHtml(d.fileName)}</small><em class="${d.approved ? 'done' : 'pending'}">${d.approved ? '승인완료' : '승인대기'}</em></div>`).join("")}</div></section>
   </main>`;
@@ -245,6 +242,40 @@ function pmBuildProjectDetailContentHtml(p, title, subtitle) {
 
 function pmInfoBoxHtml(label, value) {
   return `<div class="pm-info-box"><span>${pmEscapeHtml(label)}</span><strong>${pmEscapeHtml(value || "-")}</strong></div>`;
+}
+
+function pmIsMeaningfulOrderChange(item = "") {
+  const text = pmEstimateText(item);
+  if (!text) return false;
+  if (/최신값 반영|중앙 프로젝트 생성|PM배정\/일정 연계|project-receive|pending|후보 생성|표시|수주 후보 등록|착수 상태 확인/.test(text)) return false;
+  return /(변경|수정|지연|승인|확정|수주|착수|작업시작)/.test(text);
+}
+
+function pmBuildOrderMilestones(p = {}) {
+  const changes = [...new Set((p.orderHistory || []).filter(pmIsMeaningfulOrderChange))];
+  return {
+    orderDate: p.orderDate || "-",
+    startDate: p.startDate || "-",
+    changes
+  };
+}
+
+function pmBuildOrderMilestoneTimelineHtml(p = {}) {
+  const milestone = pmBuildOrderMilestones(p);
+  const changeHtml = milestone.changes.length
+    ? `<div class="pm-order-changes">${milestone.changes.map(item => `<div class="pm-order-change"><strong>변경/승인 이력</strong><span>${pmEscapeHtml(item)}</span></div>`).join("")}</div>`
+    : "";
+  return `<div class="pm-order-milestones">
+    <div class="pm-order-milestone"><i>수주</i><div><strong>${pmEscapeHtml(milestone.orderDate)}</strong><span>수주 또는 계약 확정 시점만 기록합니다.</span></div></div>
+    <div class="pm-order-milestone"><i>착수</i><div><strong>${pmEscapeHtml(milestone.startDate)}</strong><span>작업 착수 또는 선착수 승인 시점만 기록합니다.</span></div></div>
+    ${changeHtml}
+  </div>`;
+}
+
+function pmRenderOrderMilestoneTimeline(targetId, p = {}) {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  target.innerHTML = pmBuildOrderMilestoneTimelineHtml(p);
 }
 
 function pmRenderProject(index = 0) {
@@ -272,7 +303,7 @@ function pmRenderProject(index = 0) {
   pmRenderPhoneCalls(p.phoneCalls);
   pmRenderAssignments(p.assignments);
   pmRenderEmails(p.emails);
-  pmRenderTimeline("pmOrderTimeline", p.orderHistory);
+  pmRenderOrderMilestoneTimeline("pmOrderTimeline", p);
   pmRenderTimeline("pmCompletionTimeline", p.completionHistory);
   pmRenderDeliveries(p.deliveries);
 }
@@ -397,7 +428,7 @@ function pmBuildProjectFromReceiveItem(item = {}) {
     delayReasonRequired: false,
     delayReasonApproved: false,
     delayReasonText: "프로젝트 리스트 기준 연계 프로젝트입니다.",
-    orderHistory: [`${item.completedAt || "-"} : 프로젝트 리스트 기준 최신값 반영`],
+    orderHistory: [],
     completionChanged: false,
     completionHistory: [data.finalDelivery || data.firstDelivery ? `완료 예정: ${data.finalDelivery || data.firstDelivery}` : "완료예정일 미입력"],
     meetings: [],

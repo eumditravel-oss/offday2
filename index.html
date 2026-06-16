@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CON-COST Groupware | 경영지원 · 업무관리</title>
-  <link rel="stylesheet" href="./styles.css?v=20260615-qc-filter-redesign" />
+  <link rel="stylesheet" href="./styles.css?v=20260616-permission-schedule-ui" />
 </head>
 
 <body>
@@ -667,16 +667,51 @@
           <section id="admin" class="panel">
             <div class="admin-layout">
               <section>
-                <article class="card">
-                  <div class="card-head">
-                    <h2>관리자 설정</h2>
-                    <span class="badge blue">대분류 카테고리</span>
+                <article class="card permission-admin-card">
+                  <div class="card-head permission-admin-head">
+                    <div>
+                      <h2>권한 카테고리 설정</h2>
+                      <p class="subcopy">인사카드에 등록된 모든 직원을 대상으로 업무 카테고리별 보기, 작성, 승인, 내보내기, 관리자 권한을 설정합니다.</p>
+                    </div>
+                    <div class="actions">
+                      <button class="btn btn-line" type="button" onclick="resetEmployeePermissionSettings()">기본값 복원</button>
+                      <button class="btn btn-primary" type="button" onclick="saveEmployeePermissionSettings()">권한 저장</button>
+                    </div>
                   </div>
-                  <div class="card-body table-wrap">
-                    <table>
-                      <thead><tr><th>항목</th><th>대표/임원</th><th>경영지원 관리자</th><th>경영지원 일반</th><th>직원 본인</th><th>전체 직원</th></tr></thead>
-                      <tbody id="permissionBody"></tbody>
-                    </table>
+                  <div class="card-body permission-console">
+                    <aside class="permission-console-side">
+                      <div class="permission-side-head">
+                        <strong>직원 권한 대상</strong>
+                        <span id="permissionEmployeeCount">0명</span>
+                      </div>
+                      <input id="permissionEmployeeSearch" class="permission-search" placeholder="직원명, 부서, 직급 검색" oninput="renderEmployeePermissionConsole()" />
+                      <div class="permission-company-tabs" id="permissionCompanyTabs"></div>
+                      <div class="permission-employee-list" id="permissionEmployeeList"></div>
+                    </aside>
+
+                    <main class="permission-console-main">
+                      <div class="permission-editor-summary" id="permissionEditorSummary"></div>
+                      <div class="permission-category-strip" id="permissionCategoryTabs"></div>
+                      <div class="permission-module-board" id="permissionModuleBoard"></div>
+                    </main>
+
+                    <aside class="permission-preview-pane">
+                      <div class="permission-preview-device">
+                        <div class="permission-preview-cover">
+                          <span id="permissionPreviewCategory">업무관리</span>
+                          <strong id="permissionPreviewTitle">PROJECT</strong>
+                        </div>
+                        <div class="permission-preview-profile">
+                          <div class="permission-preview-logo">CON</div>
+                          <div>
+                            <strong id="permissionPreviewName">박용진</strong>
+                            <span id="permissionPreviewRole">구조PM</span>
+                          </div>
+                        </div>
+                        <div class="permission-preview-actions" id="permissionPreviewActions"></div>
+                        <div class="permission-preview-modules" id="permissionPreviewModules"></div>
+                      </div>
+                    </aside>
                   </div>
                 </article>
 
@@ -1708,7 +1743,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="./data-core.js"></script>
-  <script src="./support-hr.js"></script>
+  <script src="./support-hr.js?v=20260616-permission-console"></script>
   <script src="./support-org.js"></script>
   <script src="./project-store.js"></script>
   <script src="./work-qc-mail.js?v=20260615-qc-filter-redesign"></script>
@@ -1720,8 +1755,8 @@
   <script src="./work-project-receive-db-ui.js"></script>
   <script src="./work-project-receive-estimate-sheet.js?v=20260615-estimate-stability-linkfix"></script>
   <script src="./work-project-receive-estimate-exact.js"></script>
-  <script src="./work-pm-schedule.js?v=20260616-gantt-readability"></script>
-  <script src="./work-project-managements.js"></script>
+  <script src="./work-pm-schedule.js?v=20260616-all-schedule-resource"></script>
+  <script src="./work-project-managements.js?v=20260616-operation-milestones"></script>
   <script src="./work-delivery-daily.js"></script>
   <script src="./work-profit-analysis.js"></script>
   <script src="./app.js"></script>

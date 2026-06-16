@@ -1646,29 +1646,58 @@ function renderPmScheduleAllSchedule() {
     return;
   }
 
+  const employeeRows = employees.map(emp => {
+    const items = getPmScheduleAllScheduleItemsForEmployee(emp, category);
+    const totalDays = items.reduce((sum, item) => sum + Number(item.days || 0), 0);
+    const activeMonths = new Set(items.map(item => item.month)).size;
+    return { emp, items, totalDays, activeMonths };
+  });
+  const assignedEmployees = employeeRows.filter(row => row.items.length).length;
+  const projectCount = new Set(employeeRows.flatMap(row => row.items.map(item => item.projectNo || item.projectName))).size;
+  const busiest = employeeRows.reduce((max, row) => Math.max(max, row.totalDays), 1);
+
   board.innerHTML = `
-    <table class="pm-all-schedule-table">
-      <thead>
-        <tr>
-          <th class="pm-all-person-col">직원 인사카드</th>
-          <th>부서</th>
-          ${months.map(month => `<th>${month}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${employees.map(emp => {
-          const items = getPmScheduleAllScheduleItemsForEmployee(emp, category);
-          return `<tr>
-            <th class="pm-all-person-cell"><strong>${escapePmScheduleHtml(emp.name || "-")}</strong><span>${escapePmScheduleHtml(emp.koreanName || emp.grade || "")}</span></th>
-            <td>${escapePmScheduleHtml(normalizePmScheduleVietDeptName(emp.dept))}</td>
-            ${months.map(month => {
-              const monthItems = items.filter(item => item.month === month);
-              return `<td>${monthItems.map(item => `<div class="pm-all-schedule-chip"><b>${escapePmScheduleHtml(item.projectNo)}</b><span>${escapePmScheduleHtml(item.projectName)}</span>${item.days ? `<em>${escapePmScheduleHtml(item.days)}일</em>` : ""}</div>`).join("") || `<span class="pm-all-empty">-</span>`}</td>`;
-            }).join("")}
-          </tr>`;
+    <div class="pm-all-resource-board">
+      <div class="pm-all-resource-summary">
+        <div><strong>${escapePmScheduleHtml(category)}</strong><span>선택 팀</span></div>
+        <div><strong>${employees.length}</strong><span>인사카드</span></div>
+        <div><strong>${assignedEmployees}</strong><span>배정 인원</span></div>
+        <div><strong>${projectCount}</strong><span>프로젝트</span></div>
+      </div>
+      <div class="pm-all-month-legend">
+        <span>직원</span>
+        <div>${months.map(month => `<b>${escapePmScheduleHtml(month.replace("2026.", ""))}</b>`).join("")}</div>
+      </div>
+      <div class="pm-all-resource-list">
+        ${employeeRows.map(row => {
+          const emp = row.emp;
+          const percent = Math.min(100, Math.round((row.totalDays / busiest) * 100));
+          return `<article class="pm-all-resource-row">
+            <div class="pm-all-person-profile">
+              <strong>${escapePmScheduleHtml(emp.name || "-")}</strong>
+              <span>${escapePmScheduleHtml(emp.koreanName || emp.grade || "")}</span>
+              <em>${escapePmScheduleHtml(normalizePmScheduleVietDeptName(emp.dept))}</em>
+            </div>
+            <div class="pm-all-load-cell">
+              <div class="pm-all-load-bar"><i style="width:${percent}%"></i></div>
+              <span>${row.totalDays || 0}일 · ${row.activeMonths || 0}개월</span>
+            </div>
+            <div class="pm-all-month-rail">
+              ${months.map(month => {
+                const monthItems = row.items.filter(item => item.month === month);
+                return `<div class="pm-all-month-cell ${monthItems.length ? "filled" : ""}">
+                  ${monthItems.map(item => `<button type="button" class="pm-all-schedule-chip" title="${escapePmScheduleHtml(item.projectName)}">
+                    <b>${escapePmScheduleHtml(item.projectNo)}</b>
+                    <span>${escapePmScheduleHtml(item.projectName)}</span>
+                    ${item.days ? `<em>${escapePmScheduleHtml(item.days)}일</em>` : ""}
+                  </button>`).join("")}
+                </div>`;
+              }).join("")}
+            </div>
+          </article>`;
         }).join("")}
-      </tbody>
-    </table>`;
+      </div>
+    </div>`;
 }
 
 
