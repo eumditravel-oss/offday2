@@ -587,7 +587,7 @@ function renderPmScheduleDashboard() {
   syncPmScheduleHeroButtons();
   injectPmGanttToggleButton();
 
-  if (isPmScheduleManagerRole()) {
+  if (isPmScheduleManagerRole() || pmScheduleActiveSection === "all") {
     if (roleMessage) roleMessage.style.display = "none";
     if (managerView) managerView.style.display = "grid";
     if (editorView) editorView.style.display = "none";
