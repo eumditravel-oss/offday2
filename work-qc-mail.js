@@ -2,6 +2,7 @@
    업무관리 탭 / QC 체크리스트
    ========================= */
 const workPageMeta = {
+  workDashboard: ["업무관리 대시보드", "견적 의뢰부터 수지분석까지 업무 흐름과 현재 큐를 한 화면에서 확인합니다."],
   estimateRequestManage: ["견적 의뢰관리", "클라이언트 최초 의뢰 메모부터 업체등록, 견적서 작성요청, 발송, 선착수, 작업시작까지 연결합니다."],
   estimateSheetManage: ["견적서 종류별 관리", "개산견적, 공내역서, 설계예가, 공사비검증 견적서를 엑셀 양식 그대로 작성·관리합니다."],
   estimatePeriodManage: ["기간별 견적서 관리", "발송 처리된 견적서를 기간별 견적서 관리표에 누적합니다."],
@@ -9198,9 +9199,7 @@ function switchTopModule(moduleName) {
     work?.classList.add("active");
     document.querySelector('[data-module-tab="work"]')?.classList.add("active");
 
-    const activePanel = document.querySelector("#workModule .work-panel.active");
-    const activeSideItem = document.querySelector(".side-sub.active .side-item.active[data-work-main]");
-    switchWorkPanel(activePanel?.id || activeSideItem?.dataset.workMain || "estimateDbManage");
+    switchWorkPanel("workDashboard");
   } else {
     support?.classList.add("active");
     document.querySelector('[data-module-tab="support"]')?.classList.add("active");
@@ -9408,6 +9407,95 @@ function updateBellReviewCount() {
 }
 
 
+function workDashboardSetText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function workDashboardEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
+}
+
+function workDashboardCollectMetrics() {
+  let estimateRows = [];
+  let receiveRows = [];
+  let scheduleRows = [];
+  let reviewRows = [];
+  let centralRows = [];
+
+  try {
+    if (typeof estimateRequestLoadRows === "function") estimateRequestLoadRows();
+    if (typeof estimateRequestRows !== "undefined" && Array.isArray(estimateRequestRows)) estimateRows = estimateRequestRows;
+  } catch (_) {}
+
+  try {
+    if (typeof projectReceiveGetCanonicalListItems === "function") receiveRows = projectReceiveGetCanonicalListItems();
+    else if (typeof getProjectReceiveListItems === "function") receiveRows = getProjectReceiveListItems();
+  } catch (_) {}
+
+  try {
+    if (typeof initPmScheduleProjects === "function") initPmScheduleProjects();
+    if (typeof pmScheduleProjects !== "undefined" && Array.isArray(pmScheduleProjects)) scheduleRows = pmScheduleProjects;
+  } catch (_) {}
+
+  try {
+    if (typeof getChecklistReviewRequestRows === "function") reviewRows = getChecklistReviewRequestRows();
+  } catch (_) {}
+
+  try {
+    if (window.centralProjectStore && typeof window.centralProjectStore.getProjects === "function") centralRows = window.centralProjectStore.getProjects();
+  } catch (_) {}
+
+  const deliveryCount = centralRows.reduce((sum, project) => {
+    const files = Array.isArray(project?.delivery?.files) ? project.delivery.files.length : 0;
+    const records = Array.isArray(project?.delivery?.records) ? project.delivery.records.length : 0;
+    return sum + files + records;
+  }, 0);
+  const dailyCount = centralRows.reduce((sum, project) => sum + (Array.isArray(project?.dailyReports) ? project.dailyReports.length : 0), 0);
+
+  return {
+    estimateCount: estimateRows.length,
+    receiveCount: receiveRows.length || centralRows.length,
+    scheduleCount: scheduleRows.length,
+    reviewCount: reviewRows.length,
+    deliveryCount,
+    dailyCount
+  };
+}
+
+function renderWorkDashboard() {
+  if (!document.getElementById("workDashboard")) return;
+  const metrics = workDashboardCollectMetrics();
+  workDashboardSetText("workDashEstimateCount", metrics.estimateCount);
+  workDashboardSetText("workDashReceiveCount", metrics.receiveCount);
+  workDashboardSetText("workDashScheduleCount", metrics.scheduleCount);
+  workDashboardSetText("workDashReviewCount", metrics.reviewCount);
+  workDashboardSetText("workDashDeliveryCount", metrics.deliveryCount);
+  workDashboardSetText("workDashDailyCount", metrics.dailyCount);
+  workDashboardSetText("workDashFlowEstimate", `${metrics.estimateCount}건`);
+  workDashboardSetText("workDashFlowReceive", `${metrics.receiveCount}건`);
+  workDashboardSetText("workDashFlowSchedule", `${metrics.scheduleCount}건`);
+  workDashboardSetText("workDashUpdatedAt", new Date().toLocaleString("ko-KR", { month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }));
+
+  const queue = document.getElementById("workDashboardQueueList");
+  if (!queue) return;
+  const items = [
+    { label:"견적 의뢰관리", count:metrics.estimateCount, note:"접수와 견적서 작성 요청", target:"estimateRequestManage" },
+    { label:"프로젝트 접수", count:metrics.receiveCount, note:"수주 정보와 착수 조건", target:"projectReceiveList" },
+    { label:"PM 배정 / 일정", count:metrics.scheduleCount, note:"배정·결재·전체 일정", target:"pmSchedule", section:"assign" },
+    { label:"질의응답 관리", count:metrics.reviewCount, note:"검토 요청과 견적조건", target:"qcReview" },
+    { label:"납품 및 데이터", count:metrics.deliveryCount, note:"납품 파일과 승인 기록", target:"deliveryData" },
+    { label:"업무일지 / 진행률", count:metrics.dailyCount, note:"일일 진행률 누적", target:"dailyReport" }
+  ];
+  queue.innerHTML = items.map(item => {
+    const sectionAttr = item.section ? ` data-pm-section="${workDashboardEscape(item.section)}"` : "";
+    const valueText = item.count ? `${item.count}건` : "대기 없음";
+    return `<button type="button" class="work-dashboard-queue-item" data-work-main="${workDashboardEscape(item.target)}"${sectionAttr}>
+      <span><strong>${workDashboardEscape(item.label)}</strong><em>${workDashboardEscape(item.note)}</em></span>
+      <b>${workDashboardEscape(valueText)}</b>
+    </button>`;
+  }).join("");
+}
 function syncWorkSideAccordion(targetPanelId) {
   const target = String(targetPanelId || "estimateDbManage");
   const estimatePanels = ["estimateRequestManage", "estimateSheetManage", "estimatePeriodManage", "estimateDbManage", "estimateQuote", "estimateQuoteList"];
@@ -9427,6 +9515,11 @@ function syncWorkSideAccordion(targetPanelId) {
     btn.classList.remove("active", "work-side-selected");
     btn.removeAttribute("data-work-selected");
   });
+
+  if (target === "workDashboard") {
+    document.querySelector(`.side-main[data-work-main="workDashboard"]`)?.classList.add("active");
+    return;
+  }
 
   if (isEstimateQuote) {
     document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
@@ -9457,6 +9550,11 @@ function activateWorkSideSelection(targetPanelId) {
     el.removeAttribute("data-work-selected");
   });
 
+  if (target === "workDashboard") {
+    markSelected(document.querySelector(`.side-main[data-work-main="workDashboard"]`));
+    return;
+  }
+
   if (estimatePanels.includes(target)) {
     document.querySelectorAll(".estimate-quote-sub-menu").forEach(menu => menu.classList.add("active"));
     document.querySelectorAll(".estimate-quote-side-group > .side-main[data-work-main]").forEach(markSelected);
@@ -9483,7 +9581,7 @@ function activateWorkSideSelection(targetPanelId) {
 }
 
 function switchWorkPanel(panelId) {
-  const targetPanelId = panelId || "estimateDbManage";
+  const targetPanelId = panelId || "workDashboard";
 
   document.querySelectorAll(".work-panel").forEach(panel => panel.classList.remove("active"));
   document.querySelectorAll("[data-work-main]").forEach(btn => {
@@ -9499,9 +9597,13 @@ function switchWorkPanel(panelId) {
     activateWorkSideSelection(targetPanelId);
   }
 
-  const meta = workPageMeta[targetPanelId] || workPageMeta.estimateDbManage || workPageMeta.projectReceive;
+  const meta = workPageMeta[targetPanelId] || workPageMeta.workDashboard || workPageMeta.estimateDbManage || workPageMeta.projectReceive;
   setText("workPageTitle", meta[0]);
   setText("workPageDesc", meta[1]);
+
+  if (targetPanelId === "workDashboard" && typeof renderWorkDashboard === "function") {
+    renderWorkDashboard();
+  }
 
   if (targetPanelId === "estimateRequestManage" && typeof renderEstimateRequestManage === "function") {
     renderEstimateRequestManage();
@@ -12760,6 +12862,9 @@ function markQuestionCategorySent(category) {
 }
 
 
+
+document.addEventListener("DOMContentLoaded", renderWorkDashboard);
+setTimeout(renderWorkDashboard, 0);
 
 document.addEventListener("click", event => {
   const btn = event.target?.closest?.("[data-work-main]");

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CON-COST Groupware | 경영지원 · 업무관리</title>
-  <link rel="stylesheet" href="./styles.css?v=20260617-permission-layout-fix" />
+  <link rel="stylesheet" href="./styles.css?v=20260617-work-dashboard" />
 </head>
 
 <body>
@@ -800,10 +800,13 @@
         <section class="workspace">
           <aside class="side-nav">
             <div class="side-title">업무관리 좌측 카테고리</div>
+            <div class="side-group">
+              <button class="side-main active" data-work-main="workDashboard">업무관리 대시보드</button>
+            </div>
             <div class="side-group estimate-quote-side-group">
-              <button class="side-main active" data-work-main="estimateRequestManage">프로젝트 관리</button>
-              <div class="side-sub active estimate-quote-sub-menu">
-                <button class="side-item active" data-work-main="estimateRequestManage">견적 의뢰관리</button>
+              <button class="side-main" data-work-main="estimateRequestManage">프로젝트 관리</button>
+              <div class="side-sub estimate-quote-sub-menu">
+                <button class="side-item" data-work-main="estimateRequestManage">견적 의뢰관리</button>
                 <button class="side-item" data-work-main="estimateSheetManage">견적서 종류별 관리</button>
                 <button class="side-item" data-work-main="estimatePeriodManage">기간별 견적서 관리</button>
                 <button class="side-item" data-work-main="estimateDbManage">DB관리</button>
@@ -834,7 +837,65 @@
           <section class="main-area">
 
 
-            <section id="estimateRequestManage" class="work-panel active">
+            <section id="workDashboard" class="work-panel active">
+              <article class="work-dashboard-shell">
+                <div class="work-dashboard-head">
+                  <div>
+                    <span class="work-dashboard-eyebrow">WORK DASHBOARD</span>
+                    <h2>업무관리 대시보드</h2>
+                    <p>견적 의뢰부터 프로젝트 접수, PM 배정, 운영현황, 납품, 수지분석까지 현재 업무 흐름을 한 화면에서 확인합니다.</p>
+                  </div>
+                  <div class="work-dashboard-actions">
+                    <button class="btn btn-line" type="button" data-work-main="estimateRequestManage">견적 의뢰</button>
+                    <button class="btn btn-primary" type="button" data-work-main="projectReceive">프로젝트 접수</button>
+                  </div>
+                </div>
+
+                <div class="work-dashboard-kpi-grid">
+                  <button class="work-dashboard-kpi" type="button" data-work-main="estimateRequestManage"><span>견적 의뢰</span><strong id="workDashEstimateCount">0</strong><em>접수/작성 흐름</em></button>
+                  <button class="work-dashboard-kpi" type="button" data-work-main="projectReceiveList"><span>프로젝트 접수</span><strong id="workDashReceiveCount">0</strong><em>중앙 프로젝트</em></button>
+                  <button class="work-dashboard-kpi" type="button" data-work-main="pmSchedule" data-pm-section="assign"><span>PM 일정</span><strong id="workDashScheduleCount">0</strong><em>배정/결재 대상</em></button>
+                  <button class="work-dashboard-kpi" type="button" data-work-main="qcReview"><span>질의응답</span><strong id="workDashReviewCount">0</strong><em>검토 요청</em></button>
+                  <button class="work-dashboard-kpi" type="button" data-work-main="deliveryData"><span>납품 데이터</span><strong id="workDashDeliveryCount">0</strong><em>납품/자료 기록</em></button>
+                  <button class="work-dashboard-kpi" type="button" data-work-main="dailyReport"><span>업무일지</span><strong id="workDashDailyCount">0</strong><em>진행률 기록</em></button>
+                </div>
+
+                <div class="work-dashboard-main-grid">
+                  <section class="work-dashboard-card work-dashboard-flow-card">
+                    <div class="work-dashboard-card-head">
+                      <strong>업무 흐름</strong>
+                      <span id="workDashUpdatedAt">-</span>
+                    </div>
+                    <div class="work-dashboard-flow">
+                      <button type="button" class="work-dashboard-step" data-work-main="estimateRequestManage"><b>01</b><span>견적 의뢰관리</span><em id="workDashFlowEstimate">0건</em></button>
+                      <button type="button" class="work-dashboard-step" data-work-main="estimateSheetManage"><b>02</b><span>견적서 관리</span><em>양식/기간/DB</em></button>
+                      <button type="button" class="work-dashboard-step" data-work-main="projectReceive"><b>03</b><span>프로젝트 접수</span><em id="workDashFlowReceive">0건</em></button>
+                      <button type="button" class="work-dashboard-step" data-work-main="pmSchedule" data-pm-section="all"><b>04</b><span>PM 배정 / 일정</span><em id="workDashFlowSchedule">0건</em></button>
+                      <button type="button" class="work-dashboard-step" data-work-main="projectManage"><b>05</b><span>운영현황</span><em>수주/착수 추적</em></button>
+                      <button type="button" class="work-dashboard-step" data-work-main="profitAnalysis"><b>06</b><span>수지분석</span><em>손익 확인</em></button>
+                    </div>
+                  </section>
+
+                  <section class="work-dashboard-card">
+                    <div class="work-dashboard-card-head">
+                      <strong>업무 큐</strong>
+                      <span>바로가기</span>
+                    </div>
+                    <div class="work-dashboard-queue" id="workDashboardQueueList"></div>
+                  </section>
+                </div>
+
+                <div class="work-dashboard-menu-grid">
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="estimatePeriodManage"><strong>기간별 견적서 관리</strong><span>발송·작성 이력</span></button>
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="estimateDbManage"><strong>DB관리</strong><span>PJ·기성·기전업체 DB</span></button>
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="projectManage"><strong>프로젝트 운영현황</strong><span>수주일자와 착수일자 중심</span></button>
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="qcReview"><strong>프로젝트 질의응답 관리</strong><span>검토 요청과 최종 조건</span></button>
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="deliveryData"><strong>납품 및 데이터관리</strong><span>납품 파일과 승인 상태</span></button>
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="profitAnalysis"><strong>수지분석</strong><span>프로젝트별 손익 흐름</span></button>
+                </div>
+              </article>
+            </section>
+            <section id="estimateRequestManage" class="work-panel">
               <article class="quote-shell estimate-workflow-shell">
                 <div class="project-receive-hero quote-hero">
                   <div>
@@ -1753,8 +1814,8 @@
   <script src="./support-hr.js?v=20260616-permission-editor-refine"></script>
   <script src="./support-org.js"></script>
   <script src="./project-store.js"></script>
-  <script src="./work-qc-mail.js?v=20260615-qc-filter-redesign"></script>
-  <script src="./work-project-receive-core.js"></script>
+  <script src="./work-qc-mail.js?v=20260617-work-dashboard"></script>
+  <script src="./work-project-receive-core.js?v=20260617-work-dashboard"></script>
   <script src="./work-project-receive-quote.js"></script>
   <script src="./work-project-receive-db-seed.js"></script>
   <script src="./work-project-receive-db-core.js"></script>

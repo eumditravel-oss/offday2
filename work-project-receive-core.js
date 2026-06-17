@@ -1211,17 +1211,20 @@ function handleEstimateDbScopedCommand(event) {
 document.addEventListener("keydown", handleEstimateDbScopedCommand, true);
 
 function bootEstimateDbDefaultScreen() {
-  if (typeof switchWorkPanel === "function") {
+  const dashboardActive = document.getElementById("workDashboard")?.classList.contains("active");
+  if (!dashboardActive && typeof switchWorkPanel === "function") {
     switchWorkPanel("estimateSheetManage");
   }
   estimateDbActiveTab = estimateDbActiveTab || "pj";
   estimateDbReportActiveTab = estimateDbReportActiveTab || "summary";
   renderEstimateDbManage();
-  document.querySelectorAll(".side-sub").forEach(menu => {
-    const isEstimate = menu.classList.contains("estimate-quote-sub-menu");
-    menu.classList.toggle("active", isEstimate);
-  });
-  document.querySelectorAll(".project-receive-sub-menu, .pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
+  if (!dashboardActive) {
+    document.querySelectorAll(".side-sub").forEach(menu => {
+      const isEstimate = menu.classList.contains("estimate-quote-sub-menu");
+      menu.classList.toggle("active", isEstimate);
+    });
+    document.querySelectorAll(".project-receive-sub-menu, .pm-schedule-sub-menu").forEach(menu => menu.classList.remove("active"));
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
