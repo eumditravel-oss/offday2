@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CON-COST Groupware | 경영지원 · 업무관리</title>
   <link rel="stylesheet" href="./styles.css?v=20260617-work-dashboard" />
+  <link rel="stylesheet" href="./work-department-requirements.css?v=20260624-260610" />
 </head>
 
 <body>
@@ -807,8 +808,7 @@
               <button class="side-main" data-work-main="estimateRequestManage">프로젝트 관리</button>
               <div class="side-sub estimate-quote-sub-menu">
                 <button class="side-item" data-work-main="estimateRequestManage">견적 의뢰관리</button>
-                <button class="side-item" data-work-main="estimateSheetManage">견적서 종류별 관리</button>
-                <button class="side-item" data-work-main="estimatePeriodManage">기간별 견적서 관리</button>
+                <button class="side-item" data-work-main="estimatePeriodManage">견적서 관리</button>
                 <button class="side-item" data-work-main="estimateDbManage">DB관리</button>
               </div>
             </div>
@@ -868,7 +868,7 @@
                     </div>
                     <div class="work-dashboard-flow">
                       <button type="button" class="work-dashboard-step" data-work-main="estimateRequestManage"><b>01</b><span>견적 의뢰관리</span><em id="workDashFlowEstimate">0건</em></button>
-                      <button type="button" class="work-dashboard-step" data-work-main="estimateSheetManage"><b>02</b><span>견적서 관리</span><em>양식/기간/DB</em></button>
+                      <button type="button" class="work-dashboard-step" data-work-main="estimatePeriodManage"><b>02</b><span>견적서 관리</span><em>양식/제출이력</em></button>
                       <button type="button" class="work-dashboard-step" data-work-main="projectReceive"><b>03</b><span>프로젝트 접수</span><em id="workDashFlowReceive">0건</em></button>
                       <button type="button" class="work-dashboard-step" data-work-main="pmSchedule" data-pm-section="all"><b>04</b><span>PM 배정 / 일정</span><em id="workDashFlowSchedule">0건</em></button>
                       <button type="button" class="work-dashboard-step" data-work-main="projectManage"><b>05</b><span>운영현황</span><em>수주/착수 추적</em></button>
@@ -886,7 +886,7 @@
                 </div>
 
                 <div class="work-dashboard-menu-grid">
-                  <button type="button" class="work-dashboard-menu-card" data-work-main="estimatePeriodManage"><strong>기간별 견적서 관리</strong><span>발송·작성 이력</span></button>
+                  <button type="button" class="work-dashboard-menu-card" data-work-main="estimatePeriodManage"><strong>견적서 관리</strong><span>양식·제출·작성 이력</span></button>
                   <button type="button" class="work-dashboard-menu-card" data-work-main="estimateDbManage"><strong>DB관리</strong><span>PJ·기성·기전업체 DB</span></button>
                   <button type="button" class="work-dashboard-menu-card" data-work-main="projectManage"><strong>프로젝트 운영현황</strong><span>수주일자와 착수일자 중심</span></button>
                   <button type="button" class="work-dashboard-menu-card" data-work-main="qcReview"><strong>프로젝트 질의응답 관리</strong><span>검토 요청과 최종 조건</span></button>
@@ -900,12 +900,12 @@
                 <div class="project-receive-hero quote-hero">
                   <div>
                     <h2>견적 의뢰관리</h2>
-                    <p class="subcopy">클라이언트 최초 의뢰 메모부터 업체등록, 견적서 작성요청, 발송, 선착수, 작업시작까지 한 흐름으로 연결합니다.</p>
+                    <p class="subcopy">클라이언트 최초 의뢰 메모부터 업체등록, 견적서 작성요청, 발송, 수주·실주·취소까지 한 흐름으로 연결합니다.</p>
                   </div>
                   <div class="project-receive-actions estimate-workflow-actions">
                     <button class="btn btn-line" type="button" onclick="renderEstimateRequestManage()">새로고침</button>
                     <button class="btn btn-primary" type="button" onclick="addEstimateRequestMemo()">의뢰등록</button>
-                    <button class="btn btn-primary" type="button" onclick="saveEstimateRequestVisibleRowsFromDom()">저장</button>
+                    <button class="btn btn-primary" type="button" onclick="saveEstimateRequestVisibleRowsFromDom()">목록 수정 저장</button>
                   </div>
                 </div>
 
@@ -998,20 +998,21 @@
               <article class="quote-shell estimate-period-shell">
                 <div class="project-receive-hero quote-hero">
                   <div>
-                    <h2>기간별 견적서 관리</h2>
-                    <p class="subcopy">견적서 종류별 관리와 연결되어 발송 처리된 견적서를 발송일 기준으로 최상단에 누적하고, 리스트 클릭 시 세부 견적서를 새 창으로 확인합니다.</p>
+                    <h2>견적서 관리</h2>
+                    <p class="subcopy">의뢰등록과 연결된 견적서 양식·제출 이력을 한 화면에서 관리하고, 견적서와 원본 의뢰 메모를 바로 확인합니다.</p>
                   </div>
                   <div class="project-receive-actions estimate-period-hero-actions">
                     <div class="estimate-period-summary-cards" id="estimatePeriodSummaryCards" aria-label="기간별 견적서 상태 요약"></div>
                     <span class="estimate-period-count">발송 누적 <strong id="estimatePeriodSentCount">0건</strong></span>
+                    <button class="btn btn-line" type="button" data-work-main="estimateSheetManage">견적서 양식</button>
                     <button class="btn btn-line" type="button" onclick="renderEstimatePeriodManage()">새로고침</button>
                   </div>
                 </div>
                 <section class="project-receive-card quote-card quote-card-full estimate-period-card">
                   <div class="estimate-period-toolbar estimate-period-filter-toolbar">
                     <div class="estimate-period-toolbar-title">
-                      <strong>견적서 기간별 관리표</strong>
-                      <span>엑셀형 화면이 아니라 기간·상태·업체명 기준으로 수정 가능한 관리 리스트로 표시합니다.</span>
+                      <strong>견적서 관리표</strong>
+                      <span>의뢰번호·제출일·상태·업체명 기준으로 정렬·필터하고 연결된 견적서와 의뢰등록을 확인합니다.</span>
                     </div>
                     <div class="estimate-period-filter-controls" id="estimatePeriodFilterControls"></div>
                   </div>
@@ -1285,9 +1286,10 @@
                       <em>05</em>
                     </div>
                     <div class="project-receive-form-grid project-receive-pm-grid">
-                      <label class="receive-field"><span>작업착수일</span><input id="receiveStartDate" /></label>
-                      <label class="receive-field"><span>1차 납품일</span><input id="receiveFirstDelivery" /></label>
-                      <label class="receive-field"><span>최종 납품일</span><input id="receiveFinalDelivery" /></label>
+                      <label class="receive-field"><span>작업착수예정일</span><input id="receiveStartDate" /></label>
+                      <label class="receive-field"><span>1차 납품예정일</span><input id="receiveFirstDelivery" /></label>
+                      <label class="receive-field"><span>2차 납품예정일</span><input id="receiveSecondDelivery" /></label>
+                      <label class="receive-field"><span>3차 납품예정일</span><input id="receiveThirdDelivery" /></label>
                       <label class="receive-field"><span>총괄 PM</span><input id="receivePmTotal" /></label>
                       <label class="receive-field"><span>마감 PM</span><input id="receivePmFinish" /></label>
                       <label class="receive-field"><span>구조팀 PM</span><input id="receivePmStructure" /></label>
@@ -1813,21 +1815,22 @@
   <script src="./data-core.js"></script>
   <script src="./support-hr.js?v=20260616-permission-editor-refine"></script>
   <script src="./support-org.js"></script>
-  <script src="./project-store.js"></script>
+  <script src="./project-store.js?v=20260624-department"></script>
   <script src="./work-qc-mail.js?v=20260617-work-dashboard"></script>
-  <script src="./work-project-receive-core.js?v=20260617-work-dashboard"></script>
+  <script src="./work-project-receive-core.js?v=20260624-department"></script>
   <script src="./work-project-receive-quote.js"></script>
-  <script src="./work-project-receive-db-seed.js"></script>
+  <script src="./work-project-receive-db-seed.js?v=20260624-department"></script>
   <script src="./work-project-receive-db-core.js"></script>
   <script src="./work-project-receive-db-report-template.js"></script>
-  <script src="./work-project-receive-db-ui.js"></script>
-  <script src="./work-project-receive-estimate-sheet.js?v=20260615-estimate-stability-linkfix"></script>
+  <script src="./work-project-receive-db-ui.js?v=20260624-department"></script>
+  <script src="./work-project-receive-estimate-sheet.js?v=20260624-department"></script>
   <script src="./work-project-receive-estimate-exact.js"></script>
   <script src="./work-pm-schedule.js?v=20260617-all-schedule-visible"></script>
   <script src="./work-project-managements.js?v=20260616-operation-milestones"></script>
   <script src="./work-delivery-daily.js"></script>
   <script src="./work-profit-analysis.js"></script>
   <script src="./app.js"></script>
+  <script src="./work-department-requirements.js?v=20260624-260610"></script>
 
   <div class="modal-backdrop" id="objectionModal">
     <div class="modal">
