@@ -112,9 +112,11 @@
     project.updatedAt = now();
     project.source = source || project.source;
     project.receive = { ...(project.receive || {}), ...clone(data), projectUid: project.projectUid };
-    if (data.firstDelivery || data.finalDelivery || data.startDate) {
+    if (data.firstDelivery || data.secondDelivery || data.thirdDelivery || data.finalDelivery || data.startDate) {
       project.receive.firstDelivery = data.firstDelivery || project.receive.firstDelivery || "";
-      project.receive.finalDelivery = data.finalDelivery || project.receive.finalDelivery || "";
+      project.receive.secondDelivery = data.secondDelivery || project.receive.secondDelivery || "";
+      project.receive.thirdDelivery = data.thirdDelivery || project.receive.thirdDelivery || "";
+      project.receive.finalDelivery = data.thirdDelivery || data.secondDelivery || data.finalDelivery || project.receive.finalDelivery || "";
       project.receive.startDate = data.startDate || project.receive.startDate || "";
     }
     if (options.estimate) project.estimate = { ...(project.estimate || {}), ...clone(options.estimate) };

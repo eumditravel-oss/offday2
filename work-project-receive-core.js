@@ -25,6 +25,7 @@ const projectReceiveDefaultData = {
     { label: "본사 입찰", checked: false },
     { label: "본사 실행", checked: false },
     { label: "현장 실행", checked: false },
+    { label: "미정", checked: false },
     { label: "기타", checked: false }
   ],
   scopes: [
@@ -63,7 +64,8 @@ const projectReceiveDefaultData = {
   pmStructure: "",
   startDate: "",
   firstDelivery: "",
-  finalDelivery: "",
+  secondDelivery: "",
+  thirdDelivery: "",
   workContent: "",
   notes: "",
   request: ""
@@ -91,6 +93,7 @@ const projectReceiveSampleData = {
     { label: "본사 입찰", checked: true },
     { label: "본사 실행", checked: false },
     { label: "현장 실행", checked: false },
+    { label: "미정", checked: false },
     { label: "기타", checked: false }
   ],
   scopes: [
@@ -131,7 +134,8 @@ const projectReceiveSampleData = {
   pmStructure: "",
   startDate: "2026.05.12(화)",
   firstDelivery: "2026.06.05(금)",
-  finalDelivery: "",
+  secondDelivery: "",
+  thirdDelivery: "",
   workContent: "구조, 마감, 인테리어, 철거공사 / 공내역서 작성",
   notes: "",
   request: "구조, 마감, 인테리어, 철거공사 / 공내역서 작성\n금회증축 연면적 45,013평이 과업 범위임"
@@ -168,7 +172,8 @@ function createProjectReceiveCompletedProject(config) {
       materials: createProjectReceiveDummyMaterials(config.receivedDate),
       startDate: config.startDate || "",
       firstDelivery: config.firstDelivery || "담당자 협의 필요",
-      finalDelivery: config.finalDelivery || "",
+      secondDelivery: config.secondDelivery || config.finalDelivery || "",
+      thirdDelivery: config.thirdDelivery || "",
       workContent: config.workContent || config.request || config.projectName,
       notes: config.notes || "엑셀 수주소식 기준 작성완료 더미데이터",
       request: config.request || `${config.projectName} 접수 건`
@@ -369,6 +374,7 @@ function projectReceiveBusinessTypesFromLinkedValues(unitWork = "", bid = "", fa
       || (label === "본사 입찰" && /입찰/.test(source))
       || (label === "본사 실행" && /실행/.test(source))
       || (label === "현장 실행" && /현장실행/.test(normalized))
+      || (label === "미정" && /(미정|확인중|검토중)/.test(source))
       || (label === "기타" && /(기타|턴키)/.test(source));
     return { ...option, checked: !!checked };
   });
@@ -379,6 +385,22 @@ function projectReceiveApplyEstimateRequestLink(data = {}, row = {}) {
   if (row.project) data.projectName = row.project;
   if (row.company) data.client = row.company;
   if (row.usage) data.usage = row.usage;
+  if (row.areaPy) data.area = row.areaPy;
+  if (row.floors) {
+    data.floors = row.floors;
+    const parsed = typeof parseProjectReceiveFloors === "function" ? parseProjectReceiveFloors(row.floors) : {};
+    data.basementFloors = parsed.basementFloors || data.basementFloors || "";
+    data.groundFloors = parsed.groundFloors || data.groundFloors || "";
+  }
+  if (row.client || row.contact || row.email) {
+    if (!Array.isArray(data.contacts) || !data.contacts.length) data.contacts = [{ name: "", role: "", dept: "", tel: "", mobile: "", email: "" }];
+    data.contacts[0] = {
+      ...data.contacts[0],
+      name: row.client || data.contacts[0].name || "",
+      mobile: row.contact || data.contacts[0].mobile || "",
+      email: row.email || data.contacts[0].email || ""
+    };
+  }
   const unitWork = String(row.unitWork || row.estimateType || data.unitPrice || "").trim();
   const bid = String(row.bid || row.startMode || "").trim();
   data.unitPrice = unitWork || data.unitPrice || "";
@@ -420,7 +442,8 @@ function renderProjectReceiveDashboard() {
   setProjectReceiveValue("receivePmStructure", projectReceiveState.pmStructure);
   setProjectReceiveValue("receiveStartDate", projectReceiveState.startDate);
   setProjectReceiveValue("receiveFirstDelivery", projectReceiveState.firstDelivery);
-  setProjectReceiveValue("receiveFinalDelivery", projectReceiveState.finalDelivery);
+  setProjectReceiveValue("receiveSecondDelivery", projectReceiveState.secondDelivery || projectReceiveState.finalDelivery);
+  setProjectReceiveValue("receiveThirdDelivery", projectReceiveState.thirdDelivery);
   setProjectReceiveValue("receiveWorkContent", projectReceiveState.workContent);
   setProjectReceiveValue("receiveNotes", projectReceiveState.notes);
   setProjectReceiveValue("receiveRequest", projectReceiveState.request);
@@ -797,7 +820,9 @@ function syncProjectReceiveInputsToState() {
   projectReceiveState.pmStructure = getProjectReceiveValue("receivePmStructure");
   projectReceiveState.startDate = getProjectReceiveValue("receiveStartDate");
   projectReceiveState.firstDelivery = getProjectReceiveValue("receiveFirstDelivery");
-  projectReceiveState.finalDelivery = getProjectReceiveValue("receiveFinalDelivery");
+  projectReceiveState.secondDelivery = getProjectReceiveValue("receiveSecondDelivery");
+  projectReceiveState.thirdDelivery = getProjectReceiveValue("receiveThirdDelivery");
+  projectReceiveState.finalDelivery = projectReceiveState.thirdDelivery || projectReceiveState.secondDelivery;
   projectReceiveState.workContent = getProjectReceiveValue("receiveWorkContent");
   projectReceiveState.notes = getProjectReceiveValue("receiveNotes");
   projectReceiveState.request = getProjectReceiveValue("receiveRequest");
@@ -815,6 +840,15 @@ function saveProjectReceiveDraft() {
     return;
   }
   renderProjectReceiveStatus();
+  const dbRowIndex = Number.isFinite(Number(projectReceiveState.dbPjRowIndex))
+    ? Number(projectReceiveState.dbPjRowIndex)
+    : projectReceiveFindDbPjRowIndex(projectReceiveState.projectNo);
+  if (dbRowIndex >= 0) {
+    projectReceiveSetDbPjCell(dbRowIndex, "작업착수일자", projectReceiveState.startDate);
+    projectReceiveSetDbPjCell(dbRowIndex, "1차납품예정일", projectReceiveState.firstDelivery);
+    projectReceiveSetDbPjCell(dbRowIndex, "2차납품예정일", projectReceiveState.secondDelivery);
+    projectReceiveSetDbPjCell(dbRowIndex, "3차납품예정일", projectReceiveState.thirdDelivery);
+  }
   if (typeof registerPmScheduleProjectFromReceive === "function") {
     registerPmScheduleProjectFromReceive(projectReceiveState);
   } else {
@@ -1016,7 +1050,9 @@ function projectReceiveDataFromDbPjRow(row, sourceIndex = -1) {
   data.pmTotal = [data.pmFinish, data.pmStructure, data.pmBim, data.pmCivil].filter(Boolean).join(" / ");
   data.startDate = projectReceiveFormatDbDate(projectReceiveDbCell(row, "작업착수일자"));
   data.firstDelivery = projectReceiveFormatDbDate(projectReceiveDbCell(row, "1차납품예정일"));
-  data.finalDelivery = projectReceiveFormatDbDate(projectReceiveDbCell(row, "2차납품예정일"));
+  data.secondDelivery = projectReceiveFormatDbDate(projectReceiveDbCell(row, "2차납품예정일"));
+  data.thirdDelivery = projectReceiveFormatDbDate(projectReceiveDbCell(row, "3차납품예정일"));
+  data.finalDelivery = data.thirdDelivery || data.secondDelivery;
   data.workContent = [workType, projectReceiveDbCell(row, "작업구분"), projectReceiveDbCell(row, "업무성격")].filter(Boolean).join(" / ");
   data.notes = memo;
   data.request = memo || projectName;
@@ -1438,8 +1474,9 @@ function openProjectReceiveListViewer(source, index) {
       <div><span>지상층수</span><strong>${escapeProjectReceiveHtml(groundFloors)}</strong></div>
       <div><span>입찰일</span><strong>${escapeProjectReceiveHtml(data.bidDate || "-")}</strong></div>
       <div><span>단가작업여부</span><strong>${escapeProjectReceiveHtml(data.unitPrice || "-")}</strong></div>
-      <div><span>납품기준</span><strong>${escapeProjectReceiveHtml(data.firstDelivery || "미입력")}</strong></div>
-      <div><span>최종 납품</span><strong>${escapeProjectReceiveHtml(data.finalDelivery || "미입력")}</strong></div>
+      <div><span>1차 납품예정</span><strong>${escapeProjectReceiveHtml(data.firstDelivery || "미입력")}</strong></div>
+      <div><span>2차 납품예정</span><strong>${escapeProjectReceiveHtml(data.secondDelivery || data.finalDelivery || "미입력")}</strong></div>
+      <div><span>3차 납품예정</span><strong>${escapeProjectReceiveHtml(data.thirdDelivery || "미입력")}</strong></div>
     </div>
 
     <div class="project-viewer-section">

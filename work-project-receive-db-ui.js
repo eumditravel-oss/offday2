@@ -27,6 +27,12 @@ function ensureEstimateDbPjDeliveryPlanColumnsOnce() {
     const secondActualIndex = colsAfterFirst.findIndex(v => normalizeEstimateDbText(v) === "2차납품일자");
     if (secondActualIndex >= 0) insertEstimateDbColumn(sheet, secondActualIndex, "2차납품예정일", "", "2차 납품 예정일 입력란");
   }
+  const colsAfterSecond = getEstimateDbLeafColumns(sheet);
+  const hasThirdPlan = colsAfterSecond.some(v => normalizeEstimateDbText(v) === "3차납품예정일");
+  if (!hasThirdPlan) {
+    const memoIndex = colsAfterSecond.findIndex(v => normalizeEstimateDbText(v) === "상담 / 이메일 / 특기사항");
+    insertEstimateDbColumn(sheet, memoIndex >= 0 ? memoIndex : colsAfterSecond.length, "3차납품예정일", "", "3차 납품 예정일 입력란");
+  }
 }
 
 
@@ -1769,7 +1775,7 @@ function migrateEstimateDbPjColumns() {
   const sheet = estimateDbSheets?.pj;
   if (!sheet?.headerRows?.[0]) return;
   const desired = [
-    "최초생성날짜","접수번호","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","상담 / 이메일 / 특기사항"
+    "최초생성날짜","접수번호","PJ NO",ESTIMATE_DB_PROJECT_LINK_HEADER,"국내/해외","거래처명","프로젝트명","거래처","거래처담당자","직급","일반전화","휴대폰","직통전화","EMAIL","EMAIL2","웹하드","ID","PW","기타","작업공종","폴더명 / 자료위치","PM(마감)","PM(구조)","PM(토목,조경)","PM(기계)","PM(전기)","PM(인테리어)","PM(철거)","작업구분","업무성격","업무단계2","단가작업여부","건물용도","연면적(m2)","연면적(평)","층수","동수","타입수","세대수","수주일자","작업착수일자","1차납품예정일","1차납품일자","1차납품공종","2차납품예정일","2차납품일자","2차납품공종","3차납품예정일","상담 / 이메일 / 특기사항"
   ];
   const current = sheet.headerRows[0];
   if (desired.every((h, i) => current[i] === h) && current.length === desired.length) return;
