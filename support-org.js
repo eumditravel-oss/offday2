@@ -499,6 +499,7 @@ function openSelectedOrgEmployeeCard() {
 function saveOrgVisualEditor() {
   renderOrgVisualEditor();
   renderOrgChart(currentOrgEditorCompany);
+  if (window.employeeStore) window.employeeStore.saveOrg();
   showToast("조직도 편집 설정이 저장되었습니다.");
 }
 
