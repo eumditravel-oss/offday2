@@ -71,7 +71,7 @@ function updateBellReviewCount() {
   const count = window.mailStore ? window.mailStore.list({ type: '검토요청' }).filter(m => !m.read).length : 0;
   bell.setAttribute("data-count", String(count));
   bell.classList.toggle("has-count", count > 0);
-  bell.title = `窶��� �䇹痍 �𣕑汝 ${count}穇循;
+  bell.title = `새로운 검토요청 ${count}건`;
 }
 
 function showToast(message) {
