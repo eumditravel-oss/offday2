@@ -29,27 +29,24 @@ function switchTopModule(moduleName) {
 
 let reviewNotificationRead = false;
 
-function openReviewNotificationPanel(focusRowIndex = null) {
+function openReviewNotificationPanel() {
   const panel = document.getElementById("reviewNotificationPanel");
   const list = document.getElementById("reviewNotificationList");
   if (!panel || !list) return;
 
-  let requests = getChecklistReviewRequestRows();
-  if (focusRowIndex !== null && focusRowIndex !== undefined) {
-    const focused = requests.find(item => String(item.rowIndex) === String(focusRowIndex));
-    if (focused) requests = [focused, ...requests.filter(item => item.rowIndex !== focused.rowIndex)];
-  }
+  // mailStore에서 '검토요청' 타입 중 안 읽은 메일을 가져옴
+  let requests = window.mailStore ? window.mailStore.list({ type: '검토요청' }).filter(m => !m.read).slice().reverse() : [];
 
   list.innerHTML = requests.length ? requests.slice(0, 6).map(req => `
-    <article class="review-popover-item" onclick="switchTopModule('mail'); renderMailInbox('窶��𥔱�麮�'); closeReviewNotificationPanel();">
+    <article class="review-popover-item" onclick="openMailDetail('${escapeJs(req.id)}'); closeReviewNotificationPanel();">
       <div class="review-popover-title">
         <strong>${escapeHtml(req.title)}</strong>
-        <span>窶��𥔱�麮�</span>
+        <span>검토요청</span>
       </div>
-      <p>${escapeHtml(req.method || req.item || "")}</p>
-      <small>${escapeHtml(req.createdAt)} 繚 諻𨰰��� ${escapeHtml(req.sender)}</small>
+      <p>${escapeHtml(req.body || req.item || "")}</p>
+      <small>${escapeHtml(req.createdAt)} · 발신: ${escapeHtml(req.sender)}</small>
     </article>
-  `).join("") : `<div class="empty-mail-box">��骨�� 窶��� �䇹痍�� ��𠽌��𠹻.</div>`;
+  `).join("") : `<div class="empty-mail-box">새로 도착한 검토 요청이 없습니다.</div>`;
 
   panel.classList.toggle("active");
 }
@@ -67,7 +64,7 @@ function markReviewNotificationsRead() {
 function updateBellReviewCount() {
   const bell = document.querySelector(".bell");
   if (!bell) return;
-  const count = reviewNotificationRead ? 0 : getChecklistReviewRequestRows().length;
+  const count = window.mailStore ? window.mailStore.list({ type: '검토요청' }).filter(m => !m.read).length : 0;
   bell.setAttribute("data-count", String(count));
   bell.classList.toggle("has-count", count > 0);
   bell.title = `窶��� �䇹痍 �𣕑汝 ${count}穇循;

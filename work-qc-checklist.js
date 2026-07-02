@@ -14370,3 +14370,41 @@ setTimeout(() => {
     try { renderChecklistCategoryButtons(); } catch (_) {}
   }, 0);
 })();
+
+
+function sendChecklistReviewMails(group) {
+  if (!window.mailStore) {
+    showToast("메일 스토어가 없습니다.");
+    return;
+  }
+  let count = 0;
+  const projectInput = document.getElementById("checklistProject");
+  const fallbackProject = projectInput?.value || "ㅇㅇ시설 신축공사";
+  
+  checklistRows.forEach((row, index) => {
+    if (normalizeChecklistGroupName(row.group) === group && !row.eliminated) {
+      const itemText = String(row.item || "검토항목").replace(/\s+/g, " ").trim();
+      const existingMails = window.mailStore.list().filter(m => m.type === "검토요청" && m.rowIndex === index);
+      // 이미 같은 rowIndex로 보낸 메일이 있다면 중복 발송하지 않음 (간단한 방어)
+      if (existingMails.length === 0) {
+        window.mailStore.add({
+          type: "검토요청",
+          sender: row.creator || "PM",
+          projectName: row.project || fallbackProject,
+          title: `${row.project || fallbackProject} 검토요청_${itemText}`,
+          body: row.method || "-",
+          rowIndex: index
+        });
+        count++;
+      }
+    }
+  });
+  
+  if (count > 0) {
+    showToast(`${count}건의 검토 요청 메일을 발송했습니다.`);
+    // UI 업데이트 트리거
+    if (typeof refreshShellAlerts === "function") refreshShellAlerts();
+  } else {
+    showToast("새로 발송할 검토 요청 항목이 없습니다.");
+  }
+}

@@ -122,8 +122,15 @@ function formatMailTime(value) {
 function openMailDetail(mailId) {
   const mail = getMailItems().find(item => item.id === mailId);
   if (!mail) return;
+  if (window.mailStore) window.mailStore.markRead(mailId);
+  
   if (mail.type === "검토요청") {
-    openReviewNotificationPanel(mail.rowIndex);
+    if (typeof switchTopModule === "function") switchTopModule('qc');
+    if (typeof openChecklistCheckWindow === "function" && typeof mail.rowIndex !== "undefined") {
+      openChecklistCheckWindow(mail.rowIndex);
+    } else {
+      showToast('연결된 체크리스트 항목을 열 수 없습니다.');
+    }
     return;
   }
   showToast(`${mail.title} 메일을 열었습니다.`);
