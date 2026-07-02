@@ -56,9 +56,13 @@ function closeReviewNotificationPanel() {
 }
 
 function markReviewNotificationsRead() {
-  reviewNotificationRead = true;
+  if (window.mailStore) {
+    window.mailStore.list({ type: '검토요청' }).forEach(m => {
+      if (!m.read) window.mailStore.markRead(m.id);
+    });
+  }
   closeReviewNotificationPanel();
-  updateBellReviewCount();
+  if (typeof updateBellReviewCount === 'function') updateBellReviewCount();
 }
 
 function updateBellReviewCount() {
