@@ -849,6 +849,11 @@ function saveProjectReceiveDraft() {
     projectReceiveSetDbPjCell(dbRowIndex, "2차납품예정일", projectReceiveState.secondDelivery);
     projectReceiveSetDbPjCell(dbRowIndex, "3차납품예정일", projectReceiveState.thirdDelivery);
   }
+  
+  if (window.centralProjectStore) {
+    centralProjectStore.upsertProject(projectReceiveState, "project-receive");
+  }
+
   if (typeof registerPmScheduleProjectFromReceive === "function") {
     registerPmScheduleProjectFromReceive(projectReceiveState);
   } else {
@@ -1270,27 +1275,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 function getProjectReceiveListItems() {
-  const completed = (typeof projectReceiveCompletedProjects !== "undefined" ? projectReceiveCompletedProjects : [])
-    .map((item, index) => ({
-      source: "completed",
-      index,
-      data: item.data || item,
-      status: "작성완료"
-    }));
-
-  const current = (typeof projectReceiveState !== "undefined" && projectReceiveState?.projectNo)
-    ? [{ source: "current", index: -1, data: projectReceiveState, status: "작성중" }]
-    : [];
-
-  const merged = [...current, ...completed];
-  const seen = new Set();
-  return merged.filter(item => {
-    const key = item.data?.projectNo || `${item.data?.projectName || ""}-${item.data?.client || ""}`;
-    if (!key) return true;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  if (!window.centralProjectStore) return [];
+  return centralProjectStore.getProjects().map((p, index) => ({
+    source: p.status === '프로젝트접수' || p.status === '작성완료' ? 'completed' : 'current',
+    index,
+    data: p.receive || p,
+    status: p.status
+  }));
 }
 
 function getProjectReceiveListScopeText(data) {
@@ -1581,24 +1572,14 @@ function projectReceiveFindCompletedIndexByKey(key) {
 function projectReceiveUpsertCompleted(data = {}, meta = {}) {
   if (!data || !projectReceiveLinkText(data.projectName)) return null;
   const record = JSON.parse(JSON.stringify(data));
-  const key = projectReceiveLinkKey(record);
-  const now = new Date();
-  const completedAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const payload = {
     sourceFile: meta.sourceFile || "프로젝트 접수 저장",
-    completedAt,
     data: record
   };
-  const idx = projectReceiveFindCompletedIndexByKey(key);
-  if (idx >= 0) {
-    projectReceiveCompletedProjects[idx] = {
-      ...projectReceiveCompletedProjects[idx],
-      ...payload,
-      completedAt: payload.completedAt || projectReceiveCompletedProjects[idx].completedAt
-    };
-    return projectReceiveCompletedProjects[idx];
+  
+  if (window.centralProjectStore) {
+    centralProjectStore.upsertProject(record, "project-receive");
   }
-  projectReceiveCompletedProjects.unshift(payload);
   return payload;
 }
 function projectReceiveGetCanonicalListItems() {

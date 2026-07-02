@@ -477,9 +477,10 @@ function initPmScheduleProjects() {
 }
 
 function registerPmScheduleProjectFromReceive(data) {
+  if (window.centralProjectStore) {
+     centralProjectStore.upsertPmSchedule(data, { status: "pending" });
+  }
   initPmScheduleProjects();
-  const project = makePmScheduleProject(data, "프로젝트 접수 저장", "pending");
-  pmScheduleProjects.unshift(project);
   pmScheduleSelectedIndex = 0;
   renderPmScheduleDashboard();
   showToast("신규 프로젝트가 접수되었습니다. PM 배정 화면에 등록했습니다.");
@@ -1935,33 +1936,21 @@ window.initPmScheduleProjects = initPmScheduleProjects;
   };
   window.pmScheduleCanonicalReceiveItems = pmScheduleCanonicalReceiveItems;
   initPmScheduleProjects = function initPmScheduleProjectsStableMirror(){
-    const items = pmScheduleCanonicalReceiveItems();
-    const validKeys = new Set(items.map(item => keyFromData(item.data || item)));
-    const existingMap = new Map((pmScheduleProjects || []).map(item => [keyFromData(item.project || {}), item]));
-    const next = [];
-    items.forEach(item => {
-      const data = item.data || item;
-      const key = keyFromData(data);
-      const old = existingMap.get(key);
-      const project = old || makePmScheduleProject(data, item.sourceFile || '프로젝트 리스트 연계', 'pending');
-      const touched = project.assignmentTouched || {};
-      project.project = clonePmScheduleData({ ...(project.project || {}), ...data, receiveId: data.receiveId || data.internalReceiveId || project.project?.receiveId });
-      project.id = project.id || `${data.projectNo || data.receiveId || 'PROJECT'}-${Date.now()}`;
-      project.source = item.sourceFile || project.source || '프로젝트 리스트 연계';
-      project.assignmentTouched = touched;
-      project.assignment = {
-        pmFinish: touched.pmFinish ? (project.assignment?.pmFinish ?? '') : (project.assignment?.pmFinish ?? data.pmFinish ?? ''),
-        pmStructure: touched.pmStructure ? (project.assignment?.pmStructure ?? '') : (project.assignment?.pmStructure ?? data.pmStructure ?? ''),
-        pmBim: touched.pmBim ? (project.assignment?.pmBim ?? '') : (project.assignment?.pmBim ?? data.pmBim ?? ''),
-        pmCivil: touched.pmCivil ? (project.assignment?.pmCivil ?? '') : (project.assignment?.pmCivil ?? data.pmCivil ?? '')
-      };
-      normalizeExistingPmScheduleRows(project);
-      applyPmScheduleSuwonApprovedDummy(project);
-      next.push(project);
-    });
-    pmScheduleProjects = next.filter(item => validKeys.has(keyFromData(item.project || {})));
-  };
-  window.initPmScheduleProjects = initPmScheduleProjects;
+  if (!window.centralProjectStore) return;
+  const centralItems = centralProjectStore.getProjects().filter(p => p.source === 'pm-schedule-approved' || p.source === 'pm-schedule' || p.status === '프로젝트접수' || p.receive?.projectNo);
+  
+  pmScheduleProjects = centralItems.map(p => {
+    return {
+      source: p.source,
+      project: p.receive || p,
+      status: p.pmSchedule?.status || "pending",
+      manager: p.pmSchedule?.assignments?.manager || "-",
+      checker: p.pmSchedule?.assignments?.checker || "-",
+      worker: p.pmSchedule?.assignments?.worker || "-"
+    };
+  });
+};
+window.initPmScheduleProjects = initPmScheduleProjects;
   registerPmScheduleProjectFromReceive = function registerPmScheduleProjectFromReceiveStable(data){
     initPmScheduleProjects();
     const key = keyFromData(data);
