@@ -896,16 +896,7 @@ function renderPermissionRoleDropdown() {
   if (label) label.textContent = `권한: ${currentPermissionRoleValue}`;
 }
 
-function togglePermissionDropdown(event) {
-  event?.stopPropagation?.();
-  const dropdown = document.getElementById("permissionDropdown");
-  const button = document.querySelector(".permission-user-btn");
-  if (!dropdown) return;
-  const willOpen = !dropdown.classList.contains("open");
-  dropdown.classList.toggle("open", willOpen);
-  if (button) button.setAttribute("aria-expanded", willOpen ? "true" : "false");
-  if (willOpen) renderPermissionRoleDropdown();
-}
+
 
 function selectPermissionRole(role) {
   currentPermissionRoleValue = role;

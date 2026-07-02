@@ -1523,14 +1523,7 @@ function closeMiniCardPopup() {
   document.getElementById("miniCardModal")?.classList.remove("active");
 }
 
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
 
-  toast.textContent = message;
-  toast.classList.add("active");
-  setTimeout(() => toast.classList.remove("active"), 2200);
-}
 
 function formatPhoneByCountry(value, country) {
   const digits = value.replace(/\D/g, "");

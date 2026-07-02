@@ -666,6 +666,16 @@
           </section>
 
           <section id="admin" class="panel">
+<article class="card">
+      <div class="card-head">
+        <h2>시스템 데이터 관리</h2>
+      </div>
+      <div class="card-body">
+        <p>현재 브라우저에 저장된 모든 영속화 데이터를 초기화하고 시드(기본 제공 데이터) 상태로 복원합니다.</p>
+        <button class="btn btn-danger" onclick="resetDemoData()">데모 데이터 초기화</button>
+      </div>
+    </article>
+
             <div class="admin-layout permission-admin-layout">
               <section>
                 <article class="card permission-admin-card">
@@ -1812,11 +1822,16 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="./data-core.js"></script>
+    <script src="./data-core.js"></script>
+  <script src="./stores/employee-store.js"></script>
+  <script src="./stores/mail-store.js"></script>
+  <script src="./app-shell.js"></script>
   <script src="./support-hr.js?v=20260616-permission-editor-refine"></script>
   <script src="./support-org.js"></script>
   <script src="./project-store.js?v=20260624-department"></script>
-  <script src="./work-qc-mail.js?v=20260617-work-dashboard"></script>
+  <script src="./work-dashboard.js"></script>
+  <script src="./work-qc-checklist.js"></script>
+  <script src="./mail-module.js"></script>
   <script src="./work-project-receive-core.js?v=20260624-department"></script>
   <script src="./work-project-receive-quote.js"></script>
   <script src="./work-project-receive-db-seed.js?v=20260624-department"></script>
